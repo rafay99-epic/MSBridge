@@ -1,0 +1,36 @@
+import 'package:flutter/material.dart';
+
+class CustomTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextInputType keyboardType;
+
+  const CustomTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.keyboardType = TextInputType.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
+
+    return TextField(
+      obscureText: isPassword,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: theme.surface),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
