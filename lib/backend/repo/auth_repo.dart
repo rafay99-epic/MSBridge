@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as models;
+import 'package:msbridge/backend/models/user_model.dart';
 
 class AuthResult {
   final models.User? user;
@@ -29,12 +30,55 @@ class AuthRepo {
   }
 
   /// 🔹 Register User
-  Future<AuthResult> register(
-      String email, String password, String name) async {
+  // Future<AuthResult> register(
+  //     String email, String password, String name) async {
+  //   try {
+  //     await _account.create(
+  //         userId: ID.unique(), email: email, password: password, name: name);
+  //     return await login(email, password); // Auto-login after registration
+  //   } catch (e) {
+  //     return AuthResult(error: "Registration failed: $e");
+  //   }
+  // }
+
+  /// 🔹 Register User
+  Future<AuthResult> register(String email, String password, String fullName,
+      String phoneNumber) async {
     try {
-      await _account.create(
-          userId: ID.unique(), email: email, password: password, name: name);
-      return await login(email, password); // Auto-login after registration
+      // Step 1: Create the user in Appwrite Authentication
+      final user = await _account.create(
+          userId: ID.unique(),
+          email: email,
+          password: password,
+          name: fullName);
+
+      // Step 2: Create a UserModel instance
+      final userModel = UserModel(
+        id: user.$id,
+        fullName: fullName,
+        email: email,
+        phoneNumber: phoneNumber,
+        password: password,
+      );
+
+      // Step 3: Store user data in the Appwrite Database
+      final client = _account.client;
+      final databases = Databases(client);
+
+      await databases.createDocument(
+        databaseId: '67c0b2f300378eaaa782',
+        collectionId: '67c0bb3c0014db7a367d',
+        documentId: userModel.id,
+        data: userModel.toMap(),
+        permissions: [
+          "read(user:${userModel.id})",
+          "update(user:${userModel.id})",
+          "delete(user:${userModel.id})",
+        ],
+      );
+
+      // Step 4: Auto-login the user after registration
+      return await login(email, password);
     } catch (e) {
       return AuthResult(error: "Registration failed: $e");
     }
