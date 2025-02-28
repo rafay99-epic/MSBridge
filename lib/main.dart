@@ -1,22 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/frontend/screens/splash/splash_screen.dart';
+import 'package:msbridge/backend/repo/auth_gate.dart';
 import 'package:msbridge/frontend/theme/colors.dart';
+import 'package:msbridge/backend/repo/auth_repo.dart';
+import 'package:provider/provider.dart';
+import 'package:appwrite/appwrite.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final client = Client()
+      .setEndpoint("https://cloud.appwrite.io/v1")
+      .setProject("67bb3d10001efe42eb57");
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<AuthRepo>(create: (_) => AuthRepo(client)),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: lightTheme,
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.light,
-      home: const SplashScreen(),
+      home: const AuthGate(), // Calls AuthGate instead of Home directly
     );
   }
 }

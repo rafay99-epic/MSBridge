@@ -5,6 +5,7 @@ class CustomTextField extends StatelessWidget {
   final IconData icon;
   final bool isPassword;
   final TextInputType keyboardType;
+  final TextEditingController? controller;
 
   const CustomTextField({
     super.key,
@@ -12,6 +13,7 @@ class CustomTextField extends StatelessWidget {
     required this.icon,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
+    this.controller, // Optional
   });
 
   @override
@@ -19,6 +21,7 @@ class CustomTextField extends StatelessWidget {
     final theme = Theme.of(context).colorScheme;
 
     return TextField(
+      controller: controller,
       obscureText: isPassword,
       keyboardType: keyboardType,
       decoration: InputDecoration(
