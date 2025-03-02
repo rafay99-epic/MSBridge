@@ -6,6 +6,7 @@ import 'package:msbridge/frontend/screens/auth/forget/forget_password.dart';
 import 'package:msbridge/frontend/screens/auth/register/register.dart';
 
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final isVerified = await authRepo.isEmailVerified();
 
       if (isVerified) {
-        showCustomSnackBar("✅ Welcome ${result.user!.displayName}!",
+        CustomSnackBar.show(context, "✅ Welcome ${result.user!.displayName}!",
             isSuccess: true);
 
         Future.delayed(const Duration(seconds: 1), () {
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         });
       } else {
-        showCustomSnackBar("❌ Please verify your email first.",
+        CustomSnackBar.show(context, "❌ Please verify your email first.",
             isSuccess: false);
         Navigator.pushReplacement(
           context,
@@ -59,39 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      showCustomSnackBar("❌ ${result.error}", isSuccess: false);
+      CustomSnackBar.show(context, "❌ ${result.error}", isSuccess: false);
     }
-  }
-
-  void showCustomSnackBar(String message, {required bool isSuccess}) {
-    final snackBar = SnackBar(
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.red),
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-          ),
-        ],
-      ),
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      behavior: SnackBarBehavior.floating,
-      elevation: 6.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      duration: const Duration(seconds: 5),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override

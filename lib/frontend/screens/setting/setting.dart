@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/frontend/screens/setting/logout_dialog.dart';
+import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
 

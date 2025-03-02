@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/img/img.dart';
-import 'package:msbridge/frontend/screens/setting/logout_dialog.dart';
+import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class EmailVerificationScreen extends StatelessWidget {
   const EmailVerificationScreen({
@@ -63,40 +64,10 @@ class EmailVerificationScreen extends StatelessWidget {
                 final result = await AuthRepo().resendVerificationEmail();
 
                 if (result.isSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(
-                        "Verification email sent successfully!",
-                        style: TextStyle(
-                          color: Colors.black,
-                        ),
-                      ),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      behavior: SnackBarBehavior.floating,
-                      elevation: 6.0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      duration: const Duration(seconds: 5),
-                      showCloseIcon: true,
-                      closeIconColor: Colors.redAccent,
-                    ),
-                  );
+                  CustomSnackBar.show(context, "Verification email sent!");
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(result.error ?? "Something went wrong",
-                          style: const TextStyle(color: Colors.black)),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      behavior: SnackBarBehavior.floating,
-                      elevation: 6.0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      duration: const Duration(seconds: 5),
-                      showCloseIcon: true,
-                      closeIconColor: Colors.redAccent,
-                    ),
-                  );
+                  CustomSnackBar.show(
+                      context, result.error ?? "Something went wrong");
                 }
               },
               style: ElevatedButton.styleFrom(

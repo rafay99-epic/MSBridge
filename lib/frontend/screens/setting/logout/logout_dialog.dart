@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/screens/auth/login/login.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 
 void showLogoutDialog(BuildContext context) {
@@ -96,14 +97,6 @@ void handleLogout(BuildContext context) async {
     );
   } else {
     // ❌ Show error
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Logout Failed: $error",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    CustomSnackBar.show(context, "Logout Failed: $error");
   }
 }

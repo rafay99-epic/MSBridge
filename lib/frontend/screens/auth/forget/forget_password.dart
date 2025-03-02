@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class ForgetPassword extends StatelessWidget {
   const ForgetPassword({super.key});
@@ -12,14 +13,6 @@ class ForgetPassword extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -72,59 +65,10 @@ class ForgetPassword extends StatelessWidget {
                     );
                     if (result.isSuccess) {
                       emailController.clear();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          showCloseIcon: true,
-                          closeIconColor: Colors.red,
-                          content: const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Password reset email sent successfully. Check your inbox.",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          behavior: SnackBarBehavior.floating,
-                          elevation: 6.0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
+                      CustomSnackBar.show(context,
+                          "Password reset successful. Check your inbox.");
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          showCloseIcon: true,
-                          closeIconColor: Colors.red,
-                          content: const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Password reset failed. Please try again.",
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.black),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          behavior: SnackBarBehavior.floating,
-                          elevation: 6.0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
+                      CustomSnackBar.show(context, "Password reset failed.");
                     }
                   },
                   child: Text(
@@ -132,7 +76,7 @@ class ForgetPassword extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: theme.primary, // White text for contrast
+                      color: theme.primary,
                     ),
                   ),
                 ),

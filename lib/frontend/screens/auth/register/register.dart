@@ -3,6 +3,7 @@ import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
 import 'package:msbridge/frontend/widgets/error_dialog.dart';
 import 'package:msbridge/frontend/widgets/loading_dialogbox.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -118,7 +119,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: _registerUser,
+                  onPressed: () => _registerUser(context),
                   child: Text(
                     "Sign Up",
                     style: TextStyle(
@@ -149,27 +150,15 @@ class _RegisterState extends State<Register> {
   }
 
   /// **Register User Function**
-  void _registerUser() async {
+  void _registerUser(BuildContext context) async {
     if (_fullnameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty ||
         _phoneNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            "Please fill in all fields.",
-            style: TextStyle(color: Colors.black),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          duration: const Duration(seconds: 2),
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          behavior: SnackBarBehavior.floating,
-          closeIconColor: Colors.redAccent,
-        ),
+      CustomSnackBar.show(
+        context,
+        "Please fill in all fields.",
       );
       return;
     }
@@ -199,33 +188,8 @@ class _RegisterState extends State<Register> {
     Navigator.pop(context);
 
     if (result.isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Registration successful!",
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 4),
-              Text(
-                "Please check your email to verify your account.",
-                style: TextStyle(color: Colors.black),
-              ),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          duration: const Duration(seconds: 4),
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          behavior: SnackBarBehavior.floating,
-          closeIconColor: Colors.redAccent,
-        ),
-      );
+      CustomSnackBar.show(
+          context, "Account created successfully! Please Veriffy your email.");
 
       _fullnameController.clear();
       _emailController.clear();
