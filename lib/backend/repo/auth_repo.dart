@@ -100,12 +100,12 @@ class AuthRepo {
   }
 
   /// 🔹 Reset Password (sends email with reset link)
-  Future<String?> resetPassword(String email) async {
+  Future<AuthResult> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      return null;
+      return AuthResult(user: _auth.currentUser);
     } catch (e) {
-      return "Password reset failed: $e";
+      return AuthResult(error: "Password reset failed: \$e");
     }
   }
 

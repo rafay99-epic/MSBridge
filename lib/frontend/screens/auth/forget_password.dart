@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
 
 class ForgetPassword extends StatelessWidget {
@@ -7,6 +8,7 @@ class ForgetPassword extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
+    final TextEditingController emailController = TextEditingController();
 
     return Scaffold(
       backgroundColor: theme.surface,
@@ -45,14 +47,14 @@ class ForgetPassword extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Email Field
-              const CustomTextField(
+              CustomTextField(
                 hintText: "Email",
                 icon: Icons.email,
                 isPassword: false,
+                controller: emailController,
               ),
               const SizedBox(height: 24),
 
-              // Reset Password Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -63,8 +65,67 @@ class ForgetPassword extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
-                    // Reset password logic
+                  onPressed: () async {
+                    final authRepo = AuthRepo();
+                    final result = await authRepo.resetPassword(
+                      emailController.text,
+                    );
+                    if (result.isSuccess) {
+                      emailController.clear();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          showCloseIcon: true,
+                          closeIconColor: Colors.red,
+                          content: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Password reset email sent successfully. Check your inbox.",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          behavior: SnackBarBehavior.floating,
+                          elevation: 6.0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          showCloseIcon: true,
+                          closeIconColor: Colors.red,
+                          content: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Password reset failed. Please try again.",
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          behavior: SnackBarBehavior.floating,
+                          elevation: 6.0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    }
                   },
                   child: Text(
                     "Reset Password",
