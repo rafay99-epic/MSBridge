@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/screens/auth/login.dart';
-import 'package:provider/provider.dart';
+import 'package:page_transition/page_transition.dart';
 
 void showLogoutDialog(BuildContext context) {
   final theme = Theme.of(context);
@@ -10,7 +10,7 @@ void showLogoutDialog(BuildContext context) {
     context: context,
     builder: (context) => Dialog(
       backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(), // No rounded corners
+      shape: const RoundedRectangleBorder(),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -50,7 +50,7 @@ void showLogoutDialog(BuildContext context) {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _handleLogout(context);
+                    handleLogout(context);
                   },
                   child: Text(
                     "Yes",
@@ -70,8 +70,8 @@ void showLogoutDialog(BuildContext context) {
 }
 
 /// Handles logout
-void _handleLogout(BuildContext context) async {
-  final authRepo = Provider.of<AuthRepo>(context, listen: false);
+void handleLogout(BuildContext context) async {
+  final authRepo = AuthRepo();
 
   // Show loading indicator
   showDialog(
@@ -88,7 +88,10 @@ void _handleLogout(BuildContext context) async {
     // ✅ Success: Navigate to Login
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      PageTransition(
+        type: PageTransitionType.leftToRight,
+        child: const LoginScreen(),
+      ),
       (route) => false,
     );
   } else {

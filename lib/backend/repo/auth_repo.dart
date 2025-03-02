@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as models;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/backend/models/user_model.dart';
 
 class AuthResult {
-  final models.User? user;
+  final User? user;
   final String? error;
 
   AuthResult({this.user, this.error});
@@ -13,16 +13,14 @@ class AuthResult {
 }
 
 class AuthRepo {
-  final Account _account;
-
-  AuthRepo(Client client) : _account = Account(client);
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// 🔹 Login User
   Future<AuthResult> login(String email, String password) async {
     try {
-      await _account.createEmailPasswordSession(
-          email: email, password: password);
-      final user = await _account.get();
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final user = _auth.currentUser;
       return AuthResult(user: user);
     } catch (e) {
       return AuthResult(error: "Login failed: $e");
@@ -30,55 +28,35 @@ class AuthRepo {
   }
 
   /// 🔹 Register User
-  // Future<AuthResult> register(
-  //     String email, String password, String name) async {
-  //   try {
-  //     await _account.create(
-  //         userId: ID.unique(), email: email, password: password, name: name);
-  //     return await login(email, password); // Auto-login after registration
-  //   } catch (e) {
-  //     return AuthResult(error: "Registration failed: $e");
-  //   }
-  // }
-
-  /// 🔹 Register User
   Future<AuthResult> register(String email, String password, String fullName,
       String phoneNumber) async {
     try {
-      // Step 1: Create the user in Appwrite Authentication
-      final user = await _account.create(
-          userId: ID.unique(),
-          email: email,
-          password: password,
-          name: fullName);
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      // Step 2: Create a UserModel instance
+      User? user = userCredential.user;
+      if (user == null) {
+        return AuthResult(error: "User registration failed.");
+      }
+
+      await user.updateDisplayName(fullName);
+
+      await user.sendEmailVerification();
+
       final userModel = UserModel(
-        id: user.$id,
+        id: user.uid,
         fullName: fullName,
         email: email,
         phoneNumber: phoneNumber,
         password: password,
       );
 
-      // Step 3: Store user data in the Appwrite Database
-      final client = _account.client;
-      final databases = Databases(client);
+      await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
 
-      await databases.createDocument(
-        databaseId: '67c0b2f300378eaaa782',
-        collectionId: '67c0bb3c0014db7a367d',
-        documentId: userModel.id,
-        data: userModel.toMap(),
-        permissions: [
-          "read(user:${userModel.id})",
-          "update(user:${userModel.id})",
-          "delete(user:${userModel.id})",
-        ],
-      );
-
-      // Step 4: Auto-login the user after registration
-      return await login(email, password);
+      return AuthResult(user: user);
     } catch (e) {
       return AuthResult(error: "Registration failed: $e");
     }
@@ -87,49 +65,100 @@ class AuthRepo {
   /// 🔹 Logout User
   Future<String?> logout() async {
     try {
-      await _account.deleteSession(sessionId: 'current');
+      await _auth.signOut();
       _authStateController.add(null);
-      return null; // No error
+      return null;
     } catch (e) {
-      return "Logout failed: $e"; // Return error message
+      return "Logout failed: $e";
     }
   }
 
   /// 🔹 Get Current User (if logged in)
   Future<AuthResult> getCurrentUser() async {
     try {
-      final user = await _account.get();
-      return AuthResult(user: user);
+      final user = _auth.currentUser;
+      if (user != null) {
+        return AuthResult(user: user);
+      }
+      return AuthResult(error: "No user session found.");
     } catch (e) {
       return AuthResult(error: "No user session found.");
     }
   }
 
-  final StreamController<models.User?> _authStateController =
+  final StreamController<User?> _authStateController =
       StreamController.broadcast();
 
-  Stream<models.User?> authStateChanges() {
+  Stream<User?> authStateChanges() {
     _checkAuthState();
-    return _authStateController.stream;
+    return _auth.authStateChanges();
   }
 
   Future<void> _checkAuthState() async {
-    try {
-      final user = await _account.get();
-      _authStateController.add(user);
-    } catch (e) {
-      _authStateController.add(null);
-    }
+    final user = _auth.currentUser;
+    _authStateController.add(user);
   }
 
   /// 🔹 Reset Password (sends email with reset link)
   Future<String?> resetPassword(String email) async {
     try {
-      await _account.createRecovery(
-          email: email, url: "https://yourapp.com/reset-password");
-      return null; // No error
+      await _auth.sendPasswordResetEmail(email: email);
+      return null;
     } catch (e) {
       return "Password reset failed: $e";
+    }
+  }
+
+  /// 🔹 Check if User's Email is Verified
+  Future<AuthResult> checkEmailVerification() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) {
+        return AuthResult(error: "No user logged in.");
+      }
+      await user.reload();
+      user = _auth.currentUser;
+
+      if (user!.emailVerified) {
+        return AuthResult(user: user);
+      } else {
+        return AuthResult(
+            error: "Email not verified. Please check your inbox.");
+      }
+    } catch (e) {
+      return AuthResult(error: "Email verification check failed: $e");
+    }
+  }
+
+  /// 🔹 Check if user's email is verified
+  Future<bool> isEmailVerified() async {
+    final user = _auth.currentUser;
+
+    if (user != null) {
+      await user.reload();
+      return user.emailVerified;
+    }
+
+    return false;
+  }
+
+  /// 🔹 Resend Email Verification
+  Future<AuthResult> resendVerificationEmail() async {
+    try {
+      final user = _auth.currentUser;
+
+      if (user == null) {
+        return AuthResult(error: "No user is currently logged in.");
+      }
+
+      if (user.emailVerified) {
+        return AuthResult(error: "Your email is already verified.");
+      }
+
+      await user.sendEmailVerification();
+      return AuthResult(error: "Verification email sent successfully!");
+    } catch (e) {
+      return AuthResult(error: "Failed to send verification email: $e");
     }
   }
 }
