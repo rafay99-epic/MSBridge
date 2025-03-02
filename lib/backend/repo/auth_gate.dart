@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
-import 'package:msbridge/frontend/screens/auth/verify_email.dart';
+import 'package:msbridge/frontend/screens/auth/verify/verify_email.dart';
 import 'package:msbridge/frontend/screens/home/home.dart';
 import 'package:msbridge/frontend/screens/splash/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';

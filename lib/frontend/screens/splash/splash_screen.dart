@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:msbridge/frontend/img/img.dart';
-import 'package:msbridge/frontend/screens/auth/login.dart';
+import 'package:msbridge/frontend/screens/auth/login/login.dart';
+
 import 'package:page_transition/page_transition.dart';
 
 class SplashScreen extends StatelessWidget {

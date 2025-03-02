@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
-import 'package:msbridge/frontend/screens/auth/login.dart';
+import 'package:msbridge/frontend/screens/auth/login/login.dart';
 import 'package:page_transition/page_transition.dart';
 
 void showLogoutDialog(BuildContext context) {
