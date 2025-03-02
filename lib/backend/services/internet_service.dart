@@ -45,10 +45,6 @@ class _InternetCheckerState extends State<InternetChecker> {
         debugPrint("✅ Internet Reconnected");
         _offlineTimer?.cancel();
         await NotesProvider().fetchNotes();
-
-        if (mounted) {
-          CustomSnackBar.show(context, "✅ Internet Reconnected");
-        }
       } else {
         debugPrint("❌ No Internet");
         if (mounted) {

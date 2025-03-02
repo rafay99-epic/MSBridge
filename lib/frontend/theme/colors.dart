@@ -5,5 +5,6 @@ ThemeData lightTheme = ThemeData(
     primary: Colors.white,
     secondary: Color(0xFF7AA2F7),
     surface: Color(0xFF1F2335),
+    secondaryFixed: Colors.black,
   ),
 );

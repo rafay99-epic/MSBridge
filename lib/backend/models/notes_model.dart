@@ -25,7 +25,7 @@ class MSNote {
   String subject;
 
   @HiveField(7)
-  String body;
+  String? body;
 
   MSNote({
     required this.id,
@@ -35,7 +35,7 @@ class MSNote {
     required this.lectureDraft,
     required this.lectureNumber,
     required this.subject,
-    required this.body,
+    this.body,
   });
 
   factory MSNote.fromJson(Map<String, dynamic> json) {
@@ -47,7 +47,7 @@ class MSNote {
       lectureDraft: json['data']['lecture_draft'],
       lectureNumber: json['data']['lectureNumber'],
       subject: json['data']['subject'],
-      body: json['body'],
+      body: json['data']['body'],
     );
   }
 }
