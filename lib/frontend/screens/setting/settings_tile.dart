@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+
+class SettingsTile extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const SettingsTile({
+    super.key,
+    required this.title,
+    required this.icon,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        splashColor: theme.colorScheme.secondary.withOpacity(0.2),
+        highlightColor: theme.colorScheme.secondary.withOpacity(0.1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ListTile(
+            leading: Icon(icon, color: theme.colorScheme.secondary, size: 24),
+            title:
+                Text(title, style: TextStyle(color: theme.colorScheme.primary)),
+            trailing: onTap != null
+                ? Icon(Icons.chevron_right,
+                    size: 16, color: theme.colorScheme.primary)
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+}
