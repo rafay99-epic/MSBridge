@@ -24,7 +24,7 @@ class MSNoteAdapter extends TypeAdapter<MSNote> {
       lectureDraft: fields[4] as bool,
       lectureNumber: fields[5] as String,
       subject: fields[6] as String,
-      body: fields[7] as String,
+      body: fields[7] as String?,
     );
   }
 
