@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:hive/hive.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/models/notes_model.dart';
