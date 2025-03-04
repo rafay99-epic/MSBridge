@@ -19,7 +19,8 @@ class ApiService {
       var response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        List<dynamic> jsonData = jsonDecode(response.body);
+        List<Map<String, dynamic>> jsonData =
+            (jsonDecode(response.body) as List).cast<Map<String, dynamic>>();
         var box = Hive.box<MSNote>('notesBox');
 
         if (box.isNotEmpty) {
@@ -27,6 +28,9 @@ class ApiService {
         }
 
         for (var item in jsonData) {
+          String bodyText =
+              (item['rendered']?['html'] as String?) ?? ''; // Use null safety
+
           MSNote note = MSNote(
             id: item['id'] ?? 0,
             lectureTitle: item['data']['lecture_title'] ?? '',
@@ -35,7 +39,7 @@ class ApiService {
             lectureDraft: item['data']['lectureDraft'] ?? false,
             lectureNumber: item['data']['lectureNumber'] ?? 0,
             subject: item['data']['subject'] ?? '',
-            body: item['data']['body'] ?? '',
+            body: bodyText,
           );
           await box.put(note.id, note);
         }
