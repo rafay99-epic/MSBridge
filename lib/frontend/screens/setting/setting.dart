@@ -178,6 +178,7 @@ class _SettingState extends State<Setting> {
                     icon: LineIcons.users,
                     onTap: () {
                       // Navigate to app configuration screen
+                      CustomSnackBar.show(context, "Coming Soon");
                     },
                   ),
                 ]),
