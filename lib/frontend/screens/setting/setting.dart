@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/frontend/screens/contact/contact.dart';
 import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
+import 'package:page_transition/page_transition.dart';
 
 class Setting extends StatelessWidget {
   const Setting({super.key});
@@ -44,7 +46,15 @@ class Setting extends StatelessWidget {
             SettingsTile(
               title: "Contact Us",
               icon: LineIcons.envelope,
-              onTap: () => {},
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: ContactPage(),
+                  ),
+                )
+              },
             ),
           ]),
           Divider(color: theme.colorScheme.primary),

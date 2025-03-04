@@ -10,9 +10,9 @@ ThemeData lightTheme = ThemeData(
   ),
   textTheme: GoogleFonts.poppinsTextTheme(
     const TextTheme(
-      bodyLarge: TextStyle(color: Colors.white),
-      bodyMedium: TextStyle(color: Colors.white),
-      bodySmall: TextStyle(color: Colors.white),
+      bodyLarge: TextStyle(color: Colors.black),
+      bodyMedium: TextStyle(color: Colors.black),
+      bodySmall: TextStyle(color: Colors.black),
     ),
   ),
 );

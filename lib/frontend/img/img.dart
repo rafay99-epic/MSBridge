@@ -6,3 +6,7 @@ class IntroScreenImage {
 class VerifyScreenImage {
   static const String verify = 'assets/svg/check_email.svg';
 }
+
+class ContactFormImage {
+  static const String logo = 'assets/svg/logo.svg';
+}
