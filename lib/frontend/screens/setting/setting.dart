@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/backend/repo/auth_repo.dart';
+import 'package:msbridge/backend/repo/webview_repo.dart';
 import 'package:msbridge/frontend/screens/changePassword/change_password.dart';
 import 'package:msbridge/frontend/screens/contact/contact.dart';
 import 'package:msbridge/frontend/screens/setting/delete/delete.dart';
 import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -19,6 +22,8 @@ class Setting extends StatefulWidget {
 class _SettingState extends State<Setting> {
   String appVersion = "Loading...";
   String buildVersion = "Loading...";
+  String _userRole = 'guest';
+  final AuthRepo _authRepo = AuthRepo();
 
   Future<void> _getAppVersion() async {
     try {
@@ -39,6 +44,18 @@ class _SettingState extends State<Setting> {
   void initState() {
     super.initState();
     _getAppVersion();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final result = await _authRepo.getUserRole();
+    if (result.error != null) {
+      setState(() {
+        _userRole = result.error!;
+      });
+    } else {
+      CustomSnackBar.show(context, "User role loaded successfully.");
+    }
   }
 
   @override
@@ -123,6 +140,49 @@ class _SettingState extends State<Setting> {
               },
             ),
           ]),
+          if (_userRole == 'owner' || _userRole == 'admin')
+            Column(
+              children: [
+                Divider(color: theme.colorScheme.primary),
+                SettingsSection(title: "Admin Settings", children: [
+                  SettingsTile(
+                    title: "Tina CMS",
+                    icon: LineIcons.edit,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageTransition(
+                          type: PageTransitionType.rightToLeft,
+                          child: const MyCMSWebView(
+                              cmsUrl: "https://www.rafay99.com/admin"),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsTile(
+                    title: "Page CMS",
+                    icon: LineIcons.pen,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageTransition(
+                          type: PageTransitionType.rightToLeft,
+                          child: const MyCMSWebView(
+                              cmsUrl: "https://app.pagescms.org/sign-in"),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsTile(
+                    title: "Contact Messages",
+                    icon: LineIcons.users,
+                    onTap: () {
+                      // Navigate to app configuration screen
+                    },
+                  ),
+                ]),
+              ],
+            ),
         ],
       ),
     );

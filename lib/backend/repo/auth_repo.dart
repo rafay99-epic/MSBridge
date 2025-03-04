@@ -45,6 +45,7 @@ class AuthRepo {
       await user.updateDisplayName(fullName);
 
       await user.sendEmailVerification();
+      const String defaultRole = 'user'; // For new registrations
 
       final userModel = UserModel(
         id: user.uid,
@@ -52,6 +53,7 @@ class AuthRepo {
         email: email,
         phoneNumber: phoneNumber,
         password: password,
+        role: defaultRole,
       );
 
       await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
@@ -193,6 +195,30 @@ class AuthRepo {
       return AuthResult(user: null); // Indicate success
     } catch (e) {
       return AuthResult(error: "Failed to delete user and data: $e");
+    }
+  }
+
+  /// 🔹 Get User Role
+  Future<AuthResult> getUserRole() async {
+    try {
+      final user = _auth.currentUser;
+
+      if (user == null) {
+        return AuthResult(user: null, error: 'No user logged in.');
+      }
+
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data() as Map<String, dynamic>;
+        final String role = data['role'] ?? 'user';
+        return AuthResult(user: user, error: role);
+      } else {
+        return AuthResult(user: user, error: 'User document not found.');
+      }
+    } catch (e) {
+      return AuthResult(user: null, error: "Error getting user role: $e");
     }
   }
 }

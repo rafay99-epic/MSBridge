@@ -6,6 +6,7 @@ class UserModel {
   final String email;
   final String phoneNumber;
   final String password;
+  final String role;
 
   UserModel({
     required this.id,
@@ -13,6 +14,7 @@ class UserModel {
     required this.email,
     required this.phoneNumber,
     required this.password,
+    required this.role,
   });
 
   // Convert to JSON for Appwrite
@@ -23,6 +25,7 @@ class UserModel {
       'email': email,
       'phoneNumber': phoneNumber,
       'password': password,
+      'role': role,
     };
   }
 
@@ -34,6 +37,7 @@ class UserModel {
       email: map['email'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
       password: map['password'] ?? '',
+      role: map['role'] ?? '',
     );
   }
 

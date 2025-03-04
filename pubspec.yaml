@@ -29,6 +29,7 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   intl: ^0.20.2
   google_fonts: ^6.2.1
+  webview_flutter: ^4.8.0
 
 dev_dependencies:
   flutter_test:
