@@ -1,13 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/frontend/screens/changePassword/change_password.dart';
 import 'package:msbridge/frontend/screens/contact/contact.dart';
+import 'package:msbridge/frontend/screens/setting/delete/delete.dart';
 import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
 
-class Setting extends StatelessWidget {
+class Setting extends StatefulWidget {
   const Setting({super.key});
+
+  @override
+  State<Setting> createState() => _SettingState();
+}
+
+class _SettingState extends State<Setting> {
+  String appVersion = "Loading...";
+  String buildVersion = "Loading...";
+
+  Future<void> _getAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        appVersion = packageInfo.version;
+        buildVersion = packageInfo.buildNumber;
+      });
+    } catch (e) {
+      setState(() {
+        appVersion = 'Not available';
+        buildVersion = 'Not available';
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getAppVersion();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +66,33 @@ class Setting extends StatelessWidget {
             SettingsTile(
               title: "Change Password",
               icon: LineIcons.lock,
-              onTap: () => {},
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const Changepassword(),
+                  ),
+                )
+              },
             ),
           ]),
           Divider(color: theme.colorScheme.primary),
           SettingsSection(title: "App Info", children: [
-            const SettingsTile(title: "Environment", icon: LineIcons.cogs),
             const SettingsTile(
-                title: "App Version: 1.0.0", icon: LineIcons.infoCircle),
-            const SettingsTile(title: "App Build: 1001", icon: LineIcons.tools),
+                title: "Environment:",
+                versionNumber: "Production",
+                icon: LineIcons.cogs),
+            SettingsTile(
+              title: "App Version:",
+              icon: LineIcons.infoCircle,
+              versionNumber: appVersion,
+            ),
+            SettingsTile(
+              title: "App Build: ",
+              icon: LineIcons.tools,
+              versionNumber: buildVersion,
+            ),
             SettingsTile(
               title: "Contact Us",
               icon: LineIcons.envelope,
@@ -62,7 +112,15 @@ class Setting extends StatelessWidget {
             SettingsTile(
               title: "Delete Account",
               icon: LineIcons.trash,
-              onTap: () => {},
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const DeleteAccountScreen(),
+                  ),
+                )
+              },
             ),
           ]),
         ],

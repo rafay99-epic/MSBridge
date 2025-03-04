@@ -161,4 +161,38 @@ class AuthRepo {
       return AuthResult(error: "Failed to send verification email: $e");
     }
   }
+
+  /// 🔹 Get Current User Email
+  Future<AuthResult> getCurrentUserEmail() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        return AuthResult(user: user);
+      } else {
+        return AuthResult(error: "No user logged in.");
+      }
+    } catch (e) {
+      return AuthResult(error: "Failed to get current user email: $e");
+    }
+  }
+
+  Future<AuthResult> deleteUserAndData() async {
+    try {
+      final user = _auth.currentUser;
+
+      if (user == null) {
+        return AuthResult(error: "No user logged in.");
+      }
+
+      // Delete user data from Firestore
+      await _firestore.collection('users').doc(user.uid).delete();
+
+      // Delete the user account
+      await user.delete();
+
+      return AuthResult(user: null); // Indicate success
+    } catch (e) {
+      return AuthResult(error: "Failed to delete user and data: $e");
+    }
+  }
 }
