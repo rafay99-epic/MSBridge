@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:msbridge/backend/models/notes_model.dart';
 import 'package:msbridge/frontend/screens/msnotes/notes_detail.dart';
 import 'package:page_transition/page_transition.dart';
@@ -34,6 +35,9 @@ class LecturesScreen extends StatelessWidget {
               itemCount: lectures.length,
               itemBuilder: (context, index) {
                 final lecture = lectures[index];
+                DateTime pubDate = DateTime.parse(lecture.pubDate).toLocal();
+                String formattedDate =
+                    DateFormat('MMMM d, yyyy').format(pubDate);
                 return Card(
                   color: theme.colorScheme.primary,
                   shape: RoundedRectangleBorder(
@@ -63,7 +67,7 @@ class LecturesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Published on: ${lecture.pubDate}",
+                          "Published on: $formattedDate",
                           style: TextStyle(
                             color: theme.colorScheme.secondary,
                             fontSize: 12,
