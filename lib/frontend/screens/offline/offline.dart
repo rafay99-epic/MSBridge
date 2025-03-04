@@ -16,7 +16,6 @@ class OfflineScreenState extends State<OfflineScreen> {
   @override
   void initState() {
     super.initState();
-    // Schedule the SnackBar to be shown after the build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
       CustomSnackBar.show(context, "You're in Offline Mode 📴");
     });
