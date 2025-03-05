@@ -1,6 +1,6 @@
 name: msbridge
 description: "A new Flutter project."
-version: 1.0.0+1
+version: 2.0.0
 
 environment:
   sdk: ">=3.4.3 <4.0.0"
@@ -31,6 +31,7 @@ dependencies:
   google_fonts: ^6.2.1
   webview_flutter: ^4.8.0
   flutter_launcher_icons: ^0.14.3
+  flutter_highlight: ^0.7.0
 
 dev_dependencies:
   flutter_test:

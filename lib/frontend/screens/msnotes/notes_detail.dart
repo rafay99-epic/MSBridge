@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:msbridge/backend/models/notes_model.dart';
+import 'package:msbridge/frontend/widgets/html_render.dart';
 
 class LectureDetailScreen extends StatelessWidget {
   final MSNote lecture;
@@ -59,30 +59,10 @@ class LectureDetailScreen extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
             if (lecture.body != null && lecture.body!.isNotEmpty)
-              Html(
-                data: lecture.body!,
-                style: {
-                  "body": Style(
-                    fontSize: FontSize(16),
-                    color: theme.colorScheme.primary,
-                    lineHeight: LineHeight.number(1.6),
-                    textAlign: TextAlign.justify,
-                  ),
-                  "h1": Style(
-                    fontSize: FontSize(24),
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                  "h2": Style(
-                    fontSize: FontSize(20),
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                  "strong": Style(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                },
+              buildHtmlContent(
+                lecture.body,
+                theme,
+                context,
               )
             else
               const Center(
