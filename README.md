@@ -1,5 +1,3 @@
-Okay, I've updated the document to include a link to download the APK file. Here's the complete updated document:
-
 # MS Bridge BY Syntax Lab Technologies
 
 ![MS Bridge Presentation](/Mockup//MS%20Bridge/1.png)
@@ -119,7 +117,7 @@ Contributions are welcome! If you'd like to contribute, please follow these step
 
 ## License
 
-This project is licensed under the [Your License Type] - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License - see the [LICENSE](LICENSE) file for details.
 
 ## Blog Post
 
