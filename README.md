@@ -1,3 +1,5 @@
+Okay, I've updated the document to include a link to download the APK file. Here's the complete updated document:
+
 # MS Bridge BY Syntax Lab Technologies
 
 ![MS Bridge Presentation](/Mockup//MS%20Bridge/1.png)
@@ -79,6 +81,10 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
    ```bash
    flutter run
    ```
+
+## Download APK
+
+You can download the APK file for MS Bridge [here](apk/app-release.apk).
 
 ## Branching Versions
 

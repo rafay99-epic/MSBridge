@@ -4,7 +4,7 @@ class FirebaseConfig {
   static const String messagingSenderId = '689509093484';
   static const String projectId = 'msbridge-9a2c7';
   static const String storageBucket = 'msbridge-9a2c7.firebasestorage.app';
-  static const String iosBundleId = 'com.syntaxlab.msbridge';
+  static const String iosBundleId = '';
 }
 
 class APIConfig {

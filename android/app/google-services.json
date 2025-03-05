@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "689509093484",
-    "project_id": "msbridge-9a2c7",
-    "storage_bucket": "msbridge-9a2c7.firebasestorage.app"
+    "project_number": "",
+    "project_id": "",
+    "storage_bucket": ""
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:689509093484:android:56039ff98006d7766ac849",
+        "mobilesdk_app_id": "",
         "android_client_info": {
-          "package_name": "com.syntaxlab.msbridge"
+          "package_name": ""
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCs14O9rfNaFgPBlN1Z3_2coBpLdY_UI9w"
+          "current_key": ""
         }
       ],
       "services": {
