@@ -1,5 +1,4 @@
-# MS Bridge BY Syntax Lab Technologies
-
+# MS Bridge 
 ![MS Bridge Presentation](/Mockup//MS%20Bridge/1.png)
 
 MS Bridge is a cross-platform mobile application built with Flutter, designed to provide seamless note-reading capabilities in both online and offline modes. It leverages Firebase for authentication, data synchronization, and an admin panel, while Hive provides robust local storage for offline access. This ensures you can access and manage your notes anytime, anywhere.
