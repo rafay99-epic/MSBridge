@@ -1,0 +1,22 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "",
+                    "appId": "",
+                    "fileOutput": ""
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "msbridge-9a2c7",
+                    "configurations": {
+                        "android": "",
+                        "ios": ""
+                    }
+                }
+            }
+        }
+    }
+}
