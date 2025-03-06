@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/frontend/screens/msnotes/msnotes.dart';
+import 'package:msbridge/frontend/screens/notes_taking/notetaking.dart';
 import 'package:msbridge/frontend/screens/search/search.dart';
 import 'package:msbridge/frontend/screens/setting/setting.dart';
 
@@ -23,6 +24,7 @@ class HomePageState extends State<Home> {
   final List<Widget> _pages = [
     const Msnotes(),
     const Search(),
+    const Notetaking(),
     const Setting(),
   ];
 
@@ -63,6 +65,11 @@ class HomePageState extends State<Home> {
               GButton(
                 icon: LineIcons.search,
                 text: 'Search',
+                iconColor: colorScheme.primary,
+              ),
+              GButton(
+                icon: LineIcons.book,
+                text: 'Notes Taking',
                 iconColor: colorScheme.primary,
               ),
               GButton(

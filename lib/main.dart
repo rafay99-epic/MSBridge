@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:msbridge/backend/models/notes_model.dart';
+import 'package:msbridge/backend/hive/notes_model.dart';
 import 'package:msbridge/backend/services/internet_service.dart';
 import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:msbridge/frontend/utils/error.dart';

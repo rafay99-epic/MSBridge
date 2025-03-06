@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/backend/api/notes.dart';
-import '../models/notes_model.dart';
+import '../hive/notes_model.dart';
 import 'package:hive/hive.dart';
 
 class NotesProvider with ChangeNotifier {

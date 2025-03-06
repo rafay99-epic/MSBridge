@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 class SettingsTile extends StatelessWidget {
   final String title;
   final IconData icon;
-  final String? versionNumber; // Make versionNumber nullable
+  final String? versionNumber;
   final VoidCallback? onTap;
 
   const SettingsTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
-    this.versionNumber, // No longer required
+    this.versionNumber,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

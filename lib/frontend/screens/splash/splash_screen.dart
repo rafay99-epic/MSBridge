@@ -1,101 +1,190 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:introduction_screen/introduction_screen.dart';
 import 'package:msbridge/frontend/img/img.dart';
 import 'package:msbridge/frontend/screens/auth/login/login.dart';
-
 import 'package:page_transition/page_transition.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  int _currentPage = 0;
+  final PageController _pageController = PageController(initialPage: 0);
+
+  final List<Map<String, dynamic>> _pages = [
+    {
+      'title': "Welcome to MS Bridge",
+      'body':
+          "Seamlessly bridge your MS Notes from web to mobile with MS Bridge – fast, simple, and always in sync",
+      'image': IntroScreenImage.feature1,
+    },
+    {
+      'title': "Learn at Your Own Pace",
+      'body':
+          "Seamlessly access and sync your MS Notes anytime, anywhere—tailored for your learning needs.",
+      'image': IntroScreenImage.feature2,
+    },
+    {
+      'title': "Collaborate with Ease",
+      'body':
+          "Share your MS Notes with colleagues and friends for seamless teamwork.",
+      'image': IntroScreenImage.feature3,
+    },
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _navigateToLogin() {
+    Navigator.of(context).push(
+      PageTransition(
+        child: const LoginScreen(),
+        type: PageTransitionType.leftToRight,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return IntroductionScreen(
-      globalBackgroundColor: theme.colorScheme.surface,
-      pages: [
-        PageViewModel(
-          title: "Welcome to MS Bridge",
-          body:
-              "Seamlessly bridge your MS Notes from web to mobile with MS Bridge – fast, simple, and always in sync",
-          image: Padding(
-            padding: const EdgeInsets.only(top: 50.0),
-            child: SvgPicture.asset(
-              IntroScreenImage.feature1,
-              width: 300,
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                itemCount: _pages.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final page = _pages[index];
+                  return AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      double value = 1;
+                      if (_pageController.position.haveDimensions) {
+                        value = _pageController.page! - index;
+                        value = (1 - (value.abs() * 0.5)).clamp(0.0, 1.0);
+                      }
+                      return Transform.scale(
+                        scale: Curves.easeInOut.transform(value),
+                        child: Opacity(
+                          opacity: value,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 50.0),
+                                  child: SvgPicture.asset(
+                                    page['image'],
+                                    width: 300,
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+                                Text(
+                                  page['title'],
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  page['body'],
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          decoration: PageDecoration(
-            pageColor: Theme.of(context).colorScheme.surface,
-            imagePadding: EdgeInsets.zero,
-            bodyTextStyle: TextStyle(
-                fontSize: 18, color: Theme.of(context).colorScheme.primary),
-            titleTextStyle: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary),
-            bodyPadding: const EdgeInsets.all(16),
-          ),
-        ),
-        PageViewModel(
-          title: "Learn at Your Own Pace",
-          body:
-              "Seamlessly access and sync your MS Notes anytime, anywhere—tailored for your learning needs.",
-          image: Padding(
-            padding: const EdgeInsets.only(top: 50.0),
-            child: SvgPicture.asset(
-              IntroScreenImage.feature2,
-              width: 300,
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: _navigateToLogin,
+                    child: const Text('Skip'),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: _buildPageIndicator(theme),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < _pages.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.ease,
+                        );
+                      } else {
+                        _navigateToLogin();
+                      }
+                    },
+                    child: Text(
+                        _currentPage == _pages.length - 1 ? 'Done' : 'Next'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          decoration: PageDecoration(
-            pageColor: Theme.of(context).colorScheme.surface,
-            imagePadding: EdgeInsets.zero,
-            bodyTextStyle: TextStyle(
-                fontSize: 18, color: Theme.of(context).colorScheme.primary),
-            titleTextStyle: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary),
-            bodyPadding: const EdgeInsets.all(16),
-          ),
+          ],
         ),
-      ],
-      onDone: () {
-        Navigator.of(context).push(
-          PageTransition(
-            child: const LoginScreen(),
-            type: PageTransitionType.rightToLeft,
-          ),
-        );
-      },
-      onSkip: () {
-        Navigator.of(context).push(
-          PageTransition(
-            child: const LoginScreen(),
-            type: PageTransitionType.rightToLeft,
-          ),
-        );
-      },
-      showSkipButton: true,
-      skip: const Text('Skip'),
-      next: const Icon(Icons.arrow_forward),
-      done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
-      dotsDecorator: DotsDecorator(
-        size: const Size(10.0, 10.0),
-        activeSize: const Size(22.0, 10.0),
-        activeColor: theme.colorScheme.primary,
-        color: theme.colorScheme.secondary.withOpacity(0.5),
-        spacing: const EdgeInsets.symmetric(horizontal: 3.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        activeShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildPageIndicator(ThemeData theme) {
+    List<Widget> list = [];
+    for (int i = 0; i < _pages.length; i++) {
+      list.add(i == _currentPage
+          ? _indicator(true, theme)
+          : _indicator(false, theme));
+    }
+    return list;
+  }
+
+  Widget _indicator(bool isActive, ThemeData theme) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      margin: const EdgeInsets.symmetric(horizontal: 3.0),
+      height: 10.0,
+      width: isActive ? 22.0 : 10.0,
+      decoration: BoxDecoration(
+        color: isActive
+            ? theme.colorScheme.primary
+            : theme.colorScheme.secondary.withOpacity(0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        border: isActive
+            ? Border.all(color: theme.colorScheme.primary, width: 1.5)
+            : null,
       ),
     );
   }
