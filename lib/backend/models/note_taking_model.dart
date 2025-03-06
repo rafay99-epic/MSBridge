@@ -7,6 +7,7 @@ class NoteTakingModel {
   bool isSynced;
   bool isDeleted;
   DateTime updatedAt;
+  String userId; // Add this line
 
   NoteTakingModel({
     this.noteId,
@@ -15,6 +16,7 @@ class NoteTakingModel {
     this.isSynced = false,
     this.isDeleted = false,
     DateTime? updatedAt,
+    required this.userId, // Make sure this is required
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -25,6 +27,7 @@ class NoteTakingModel {
       'isSynced': isSynced,
       'isDeleted': isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
+      'userId': userId, // Add this line
     };
   }
 
@@ -34,11 +37,11 @@ class NoteTakingModel {
       noteId: doc.id,
       noteTitle: data['noteTitle'] ?? '',
       noteContent: data['noteContent'] ?? '',
-      isSynced: data['isSynced'] ??
-          true, // Assuming notes from Firebase are always synced
+      isSynced: data['isSynced'] ?? true,
       isDeleted: data['isDeleted'] ?? false,
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
+      userId: data['userId'] ?? '', // Handle case where userId is missing
     );
   }
 
@@ -51,6 +54,7 @@ class NoteTakingModel {
       isDeleted: data['isDeleted'] ?? false,
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
+      userId: data['userId'] ?? '', // Handle case where userId is missing
     );
   }
 }

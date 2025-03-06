@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'note_taking.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 1)
 class NoteTakingModel extends HiveObject {
   @HiveField(0)
   String? noteId;
@@ -22,6 +22,9 @@ class NoteTakingModel extends HiveObject {
   @HiveField(5)
   DateTime updatedAt;
 
+  @HiveField(6)
+  String userId;
+
   NoteTakingModel({
     this.noteId,
     required this.noteTitle,
@@ -29,6 +32,7 @@ class NoteTakingModel extends HiveObject {
     this.isSynced = false,
     this.isDeleted = false,
     DateTime? updatedAt,
+    required this.userId,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -39,6 +43,7 @@ class NoteTakingModel extends HiveObject {
       'isSynced': isSynced,
       'isDeleted': isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
+      'userId': userId,
     };
   }
 
@@ -49,6 +54,7 @@ class NoteTakingModel extends HiveObject {
       noteContent: data['noteContent'] ?? '',
       isSynced: data['isSynced'] ?? false,
       isDeleted: data['isDeleted'] ?? false,
+      userId: data['userId'] ?? '',
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
     );

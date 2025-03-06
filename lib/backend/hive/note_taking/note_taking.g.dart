@@ -8,7 +8,7 @@ part of 'note_taking.dart';
 
 class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
   @override
-  final int typeId = 0;
+  final int typeId = 1;
 
   @override
   NoteTakingModel read(BinaryReader reader) {
@@ -23,13 +23,14 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       isSynced: fields[3] as bool,
       isDeleted: fields[4] as bool,
       updatedAt: fields[5] as DateTime?,
+      userId: fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteTakingModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.noteId)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       ..writeByte(4)
       ..write(obj.isDeleted)
       ..writeByte(5)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(6)
+      ..write(obj.userId);
   }
 
   @override
