@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:msbridge/config/config.dart';
 import 'dart:convert';
-import '../hive/notes_model.dart';
+import '../hive/note_reading/notes_model.dart';
 import 'package:hive/hive.dart';
 
 class ApiException implements Exception {

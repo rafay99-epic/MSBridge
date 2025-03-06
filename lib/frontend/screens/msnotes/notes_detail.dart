@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:msbridge/backend/hive/notes_model.dart';
+import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/frontend/widgets/html_render.dart';
 
 class LectureDetailScreen extends StatelessWidget {

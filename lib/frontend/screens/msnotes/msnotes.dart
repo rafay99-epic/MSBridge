@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/backend/hive/notes_model.dart';
+import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/frontend/screens/msnotes/lectures_screen.dart';
 import 'package:page_transition/page_transition.dart';
 

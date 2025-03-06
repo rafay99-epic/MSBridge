@@ -1,17 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive/hive.dart';
 
-class NoteTakingModel {
+part 'note_taking.g.dart';
+
+@HiveType(typeId: 0)
+class NoteTakingModel extends HiveObject {
+  @HiveField(0)
   String? noteId;
-  String noteContent;
+
+  @HiveField(1)
   String noteTitle;
+
+  @HiveField(2)
+  String noteContent;
+
+  @HiveField(3)
   bool isSynced;
+
+  @HiveField(4)
   bool isDeleted;
+
+  @HiveField(5)
   DateTime updatedAt;
 
   NoteTakingModel({
     this.noteId,
-    required this.noteContent,
     required this.noteTitle,
+    required this.noteContent,
     this.isSynced = false,
     this.isDeleted = false,
     DateTime? updatedAt,
@@ -26,20 +40,6 @@ class NoteTakingModel {
       'isDeleted': isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
     };
-  }
-
-  factory NoteTakingModel.fromDocumentSnapshot(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return NoteTakingModel(
-      noteId: doc.id,
-      noteTitle: data['noteTitle'] ?? '',
-      noteContent: data['noteContent'] ?? '',
-      isSynced: data['isSynced'] ??
-          true, // Assuming notes from Firebase are always synced
-      isDeleted: data['isDeleted'] ?? false,
-      updatedAt:
-          DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
-    );
   }
 
   factory NoteTakingModel.fromMap(Map<String, dynamic> data) {
