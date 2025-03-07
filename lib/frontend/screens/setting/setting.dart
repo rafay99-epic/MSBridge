@@ -210,55 +210,80 @@ class _SettingState extends State<Setting> {
   Widget _buildThemeButton(AppTheme theme, ThemeProvider themeProvider) {
     final isSelected = theme == themeProvider.selectedTheme;
 
-    Color backgroundColor;
-    Color iconColor;
-    IconData iconData;
-
-    switch (theme) {
-      case AppTheme.light:
-        backgroundColor = Colors.white;
-        iconColor = Colors.black;
-        iconData = Icons.wb_sunny;
-        break;
-      case AppTheme.dark:
-        backgroundColor = Colors.black;
-        iconColor = Colors.white;
-        iconData = Icons.brightness_2;
-        break;
-      case AppTheme.purpleHaze:
-        backgroundColor = Colors.deepPurple.shade400;
-        iconColor = Colors.white;
-        iconData = Icons.brightness_3;
-        break;
-      case AppTheme.mintFresh:
-        backgroundColor = Colors.greenAccent.shade400;
-        iconColor = Colors.black;
-        iconData = Icons.eco;
-        break;
-    }
-
-    return GestureDetector(
-      onTap: () {
-        themeProvider.setTheme(theme);
+    Map<AppTheme, Map<String, dynamic>> themeStyles = {
+      AppTheme.light: {
+        "background": Colors.white,
+        "icon": Icons.wb_sunny,
+        "tooltip": "Light Theme",
+        "iconColor": Colors.black
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4.0),
-        padding: const EdgeInsets.all(4.0),
-        decoration: BoxDecoration(
-          border: isSelected
-              ? Border.all(
-                  color: Theme.of(context).colorScheme.primary, width: 2.0)
-              : null,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Container(
-          width: 30.0,
-          height: 30.0,
+      AppTheme.dark: {
+        "background": Colors.black,
+        "icon": Icons.brightness_2,
+        "tooltip": "Dark Theme",
+        "iconColor": Colors.white
+      },
+      AppTheme.purpleHaze: {
+        "background": Colors.deepPurple.shade400,
+        "icon": Icons.brightness_3,
+        "tooltip": "Purple Haze",
+        "iconColor": Colors.white
+      },
+      AppTheme.mintFresh: {
+        "background": Colors.greenAccent.shade400,
+        "icon": Icons.eco,
+        "tooltip": "Mint Fresh",
+        "iconColor": Colors.black
+      }
+    };
+
+    return Tooltip(
+      message: themeStyles[theme]!['tooltip'],
+      child: GestureDetector(
+        onTap: () {
+          themeProvider.setTheme(theme);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.all(8.0),
+          width: 50.0,
+          height: 50.0,
           decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(6.0),
+            color: themeStyles[theme]!['background'],
+            border: isSelected
+                ? Border.all(
+                    color: Theme.of(context).colorScheme.primary, width: 2.0)
+                : null,
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                )
+            ],
+            borderRadius: BorderRadius.circular(12.0),
           ),
-          child: Icon(iconData, size: 20.0, color: iconColor),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                themeStyles[theme]!['icon'],
+                color: themeStyles[theme]!['iconColor'],
+                size: 28.0,
+              ),
+              if (isSelected)
+                Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Icon(
+                    LineIcons.checkCircle,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
