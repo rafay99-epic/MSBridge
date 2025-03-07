@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 ThemeData lightTheme = ThemeData(
   colorScheme: const ColorScheme.light(
-    primary: Colors.black, // Changed to black for light mode
+    primary: Colors.black,
     secondary: Color(0xFF7AA2F7),
-    surface: Colors.white, // Changed to white for light mode
+    surface: Colors.white,
     secondaryFixed: Colors.black,
   ),
   textTheme: GoogleFonts.poppinsTextTheme(
@@ -19,16 +19,16 @@ ThemeData lightTheme = ThemeData(
 
 ThemeData darkTheme = ThemeData(
   colorScheme: const ColorScheme.dark(
-    primary: Colors.white, // White text for dark mode
+    primary: Colors.white,
     secondary: Color(0xFF7AA2F7),
-    surface: Color(0xFF1F2335), // Dark background for dark mode
+    surface: Color(0xFF1F2335),
     secondaryFixed: Colors.white,
   ),
   textTheme: GoogleFonts.poppinsTextTheme(
     const TextTheme(
-      bodyLarge: TextStyle(color: Colors.white), //White Text for dark mode
-      bodyMedium: TextStyle(color: Colors.white), //White Text for dark mode
-      bodySmall: TextStyle(color: Colors.white), //White Text for dark mode
+      bodyLarge: TextStyle(color: Colors.white),
+      bodyMedium: TextStyle(color: Colors.white),
+      bodySmall: TextStyle(color: Colors.white),
     ),
   ),
 );
