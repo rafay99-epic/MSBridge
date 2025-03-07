@@ -7,7 +7,7 @@ class NoteTakingModel {
   bool isSynced;
   bool isDeleted;
   DateTime updatedAt;
-  String userId; // Add this line
+  String? userId; // Add this line
 
   NoteTakingModel({
     this.noteId,
@@ -16,7 +16,7 @@ class NoteTakingModel {
     this.isSynced = false,
     this.isDeleted = false,
     DateTime? updatedAt,
-    required this.userId, // Make sure this is required
+    this.userId,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -27,7 +27,7 @@ class NoteTakingModel {
       'isSynced': isSynced,
       'isDeleted': isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
-      'userId': userId, // Add this line
+      'userId': userId,
     };
   }
 
@@ -41,7 +41,7 @@ class NoteTakingModel {
       isDeleted: data['isDeleted'] ?? false,
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
-      userId: data['userId'] ?? '', // Handle case where userId is missing
+      userId: data['userId'] ?? '',
     );
   }
 

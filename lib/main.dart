@@ -4,6 +4,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 import 'package:msbridge/backend/services/internet_service.dart';
+import 'package:msbridge/backend/services/note_taking_sync.dart';
 import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:msbridge/frontend/utils/error.dart';
 
@@ -29,8 +30,28 @@ void main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final SyncService _syncService = SyncService();
+  @override
+  void initState() {
+    super.initState();
+    _syncService
+        .startListening(); // Start listening when the widget is initialized
+  }
+
+  @override
+  void dispose() {
+    _syncService
+        .dispose(); // Dispose of the service when the widget is disposed
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

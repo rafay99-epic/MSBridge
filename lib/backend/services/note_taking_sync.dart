@@ -1,89 +1,211 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:hive/hive.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
+import 'dart:async';
+import 'package:msbridge/backend/repo/auth_repo.dart';
+import 'package:msbridge/backend/repo/hive_note_taking_repo.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth =
-      FirebaseAuth.instance; // Get Firebase Auth instance
+  final AuthRepo _authRepo = AuthRepo();
+
+  final StreamController<void> _noteChangeController =
+      StreamController<void>.broadcast();
+
+  Stream<void> get noteChanges => _noteChangeController.stream;
+
+  SyncService() {
+    _initHive();
+  }
+
+  Future<void> _initHive() async {
+    await Hive.initFlutter();
+    print("✅ Hive initialized");
+  }
+
+  Future<void> _onNoteChange() async {
+    print("⚡ Note change detected, triggering sync...");
+    await syncLocalNotesToFirebase();
+  }
+
+  Future<void> startListening() async {
+    try {
+      print("📦 Hive box listening starting");
+
+      print("🔄 Performing initial sync...");
+      await syncLocalNotesToFirebase();
+
+      noteChanges.listen((_) => _onNoteChange());
+      print("👂 Listening to note changes");
+    } catch (e) {
+      print("⚠️ Error starting Hive listener: $e");
+    }
+  }
+
+  void dispose() {
+    _noteChangeController.close();
+    print("🛑 SyncService disposed");
+  }
 
   Future<void> syncLocalNotesToFirebase() async {
-    var box = await Hive.openBox<NoteTakingModel>('notes');
-    List<NoteTakingModel> allNotes = box.values.toList();
+    try {
+      print("📦 Accessing Hive box (syncLocalNotesToFirebase)");
 
-    // Get the current user's ID.  This is essential!
-    User? user = _auth.currentUser;
-    if (user == null) {
-      print("⚠️ No user logged in. Cannot sync notes.");
-      return; // Or handle the case where the user is not logged in (e.g., redirect to login)
-    }
-    String userId = user.uid;
+      List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
+      print("📝 Total notes in Hive: ${allNotes.length}");
 
-    // 1. Handle Updates and Creations
-    List<NoteTakingModel> unsyncedNotes = allNotes
-        .where((note) =>
-            !note.isSynced && !note.isDeleted && note.userId == userId)
-        .toList();
+      AuthResult authResult = await _authRepo.getCurrentUser();
+      User? user = authResult.user;
 
-    if (unsyncedNotes.isNotEmpty) {
+      if (user == null) {
+        print("⚠️ No user logged in. Cannot sync notes.");
+        return;
+      }
+      String userId = user.uid;
+      print("👤 User ID: $userId");
+
+      List<NoteTakingModel> unsyncedNotes = allNotes
+          .where((note) =>
+              !note.isSynced && !note.isDeleted && note.userId == userId)
+          .toList();
+      print("⏳ Unsynced notes: ${unsyncedNotes.length}");
+
       for (var note in unsyncedNotes) {
+        print(
+            "Processing unsynced note: ${note.noteTitle}, ID: ${note.noteId}");
         try {
-          CollectionReference userNotesCollection = _firestore
-              .collection('users')
-              .doc(userId)
-              .collection('notes'); // Reference to user's notes collection
+          CollectionReference userNotesCollection =
+              _firestore.collection('users').doc(userId).collection('notes');
+          print("🔥 Firestore collection path: ${userNotesCollection.path}");
 
-          if (note.noteId == null) {
-            // Create New Note
-            DocumentReference ref = await userNotesCollection.add(note.toMap());
+          Map<String, dynamic> noteData = note.toMap();
+          print("🗺️ Note data to sync: $noteData");
+
+          if (note.noteId == null || note.noteId!.isEmpty) {
+            print("➕ Creating new note in Firestore");
+            var ref = await userNotesCollection.add(noteData);
             note.noteId = ref.id;
+            print("🔑 New Firestore note ID: ${note.noteId}");
           } else {
-            // Update existing note
-            await userNotesCollection
-                .doc(note.noteId)
-                .set(note.toMap()); // Update Firebase
+            print(
+                "✏️ Updating existing note in Firestore with ID: ${note.noteId}");
+            await userNotesCollection.doc(note.noteId).set(noteData);
           }
 
           note.isSynced = true;
-          await note.save(); // Save updated isSynced and noteId to Hive
-          print("☁️ Synced: ${note.noteTitle}");
+          await HiveNoteTakingRepo.updateNote(note);
+          print("☁️ Synced: ${note.noteTitle}, ID: ${note.noteId}");
         } catch (e) {
-          print("⚠️ Sync Failed for ${note.noteTitle}: $e");
+          print("⚠️ Sync Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
         }
       }
-    } else {
-      print("✅ All New/Updated Notes are Synced");
-    }
 
-    // 2. Handle Deletions
-    List<NoteTakingModel> deletedNotes = allNotes
-        .where(
-            (note) => note.isDeleted && note.isSynced && note.userId == userId)
-        .toList(); // Only delete notes already synced!
+      List<NoteTakingModel> deletedNotes = allNotes
+          .where((note) =>
+              note.isDeleted &&
+              note.isSynced &&
+              note.userId == userId &&
+              note.noteId != null &&
+              note.noteId!.isNotEmpty)
+          .toList();
+      print("🗑️ Deleted notes: ${deletedNotes.length}");
 
-    if (deletedNotes.isNotEmpty) {
       for (var note in deletedNotes) {
+        print(
+            "Deleting note from Firestore: ${note.noteTitle}, ID: ${note.noteId}");
         try {
-          if (note.noteId != null) {
-            await _firestore
+          CollectionReference userNotesCollection =
+              _firestore.collection('users').doc(userId).collection('notes');
+          print("🔥 Firestore collection path: ${userNotesCollection.path}");
+
+          await userNotesCollection.doc(note.noteId).delete();
+          print(
+              "🗑️ Deleted from Firebase: ${note.noteTitle}, ID: ${note.noteId}");
+
+          await HiveNoteTakingRepo.deleteNote(note);
+          print("🗑️ Deleted from Hive: ${note.noteTitle}, ID: ${note.noteId}");
+        } catch (e) {
+          print(
+              "⚠️ Delete from Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
+        }
+      }
+
+      List<NoteTakingModel> updatedNotes = [];
+      for (var note in allNotes) {
+        if (note.isSynced && !note.isDeleted && note.userId == userId) {
+          try {
+            Map<String, dynamic> hiveData = note.toMap();
+
+            DocumentSnapshot snapshot = await _firestore
                 .collection('users')
                 .doc(userId)
                 .collection('notes')
                 .doc(note.noteId)
-                .delete();
-            print("🗑️ Deleted from Firebase: ${note.noteTitle}");
-          }
+                .get();
 
-          await box.delete(note.key);
-        } catch (e) {
-          print("⚠️ Failed to delete ${note.noteTitle} from Firebase: $e");
+            if (snapshot.exists) {
+              Map<String, dynamic> firestoreData =
+                  snapshot.data() as Map<String, dynamic>;
+              bool mapsAreEqual = _mapsEqual(hiveData, firestoreData);
+              print(
+                  "Comparing note: ${note.noteTitle}, ID: ${note.noteId}, Maps are equal: $mapsAreEqual");
+              if (!mapsAreEqual) {
+                updatedNotes.add(note);
+              }
+            } else {
+              print(
+                  "Note ${note.noteTitle}, ID: ${note.noteId} not found in Firestore, treating as new.");
+              updatedNotes.add(note);
+            }
+          } catch (e) {
+            print(
+                "⚠️ Error comparing note ${note.noteTitle}, ID: ${note.noteId}: $e");
+          }
         }
       }
-    } else {
-      print("✅ No notes to delete.");
-    }
+      print("🔄 Updated notes: ${updatedNotes.length}");
 
-    await box.close();
+      for (var note in updatedNotes) {
+        print(
+            "Updating note in Firestore: ${note.noteTitle}, ID: ${note.noteId}");
+        try {
+          CollectionReference userNotesCollection =
+              _firestore.collection('users').doc(userId).collection('notes');
+          print("🔥 Firestore collection path: ${userNotesCollection.path}");
+
+          Map<String, dynamic> noteData = note.toMap();
+          print("🗺️ Note data to update: $noteData");
+
+          await userNotesCollection.doc(note.noteId).set(noteData);
+          await HiveNoteTakingRepo.updateNote(note);
+          print(
+              "🔄 Updated in Firebase: ${note.noteTitle}, ID: ${note.noteId}");
+        } catch (e) {
+          print(
+              "⚠️ Update in Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
+        }
+      }
+
+      if (unsyncedNotes.isEmpty &&
+          deletedNotes.isEmpty &&
+          updatedNotes.isEmpty) {
+        print("✅ All Notes Synced");
+      }
+    } catch (e) {
+      print("⚠️ General Sync Error: $e");
+    }
+  }
+
+  bool _mapsEqual(Map map1, Map map2) {
+    if (map1.length != map2.length) {
+      return false;
+    }
+    for (var key in map1.keys) {
+      if (!map2.containsKey(key) || map1[key] != map2[key]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

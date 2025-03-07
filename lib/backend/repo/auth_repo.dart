@@ -45,14 +45,13 @@ class AuthRepo {
       await user.updateDisplayName(fullName);
 
       await user.sendEmailVerification();
-      const String defaultRole = 'user'; // For new registrations
+      const String defaultRole = 'user';
 
       final userModel = UserModel(
         id: user.uid,
         fullName: fullName,
         email: email,
         phoneNumber: phoneNumber,
-        password: password,
         role: defaultRole,
       );
 
@@ -219,6 +218,19 @@ class AuthRepo {
       }
     } catch (e) {
       return AuthResult(user: null, error: "Error getting user role: $e");
+    }
+  }
+
+  // 🔹 Get User ID
+  Future<AuthResult> getUserId() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return AuthResult(user: null, error: 'No user logged in.');
+      }
+      return AuthResult(user: user, error: user.uid);
+    } catch (e) {
+      return AuthResult(user: null, error: "Error getting user ID: $e");
     }
   }
 }

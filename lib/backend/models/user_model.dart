@@ -5,7 +5,7 @@ class UserModel {
   final String fullName;
   final String email;
   final String phoneNumber;
-  final String password;
+
   final String role;
 
   UserModel({
@@ -13,7 +13,6 @@ class UserModel {
     required this.fullName,
     required this.email,
     required this.phoneNumber,
-    required this.password,
     required this.role,
   });
 
@@ -24,7 +23,6 @@ class UserModel {
       'fullName': fullName,
       'email': email,
       'phoneNumber': phoneNumber,
-      'password': password,
       'role': role,
     };
   }
@@ -36,7 +34,6 @@ class UserModel {
       fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
-      password: map['password'] ?? '',
       role: map['role'] ?? '',
     );
   }

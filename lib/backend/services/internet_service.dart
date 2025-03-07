@@ -48,7 +48,7 @@ class _InternetCheckerState extends State<InternetChecker> {
         // Gettinf API Data
         await NotesProvider().fetchNotes();
         //  Passign Data to firebase
-        await NoteTakingSyncProvider().syncNotes();
+        // await NoteTakingSyncProvider().syncNotes();
       } else {
         debugPrint("❌ No Internet");
         if (mounted) {

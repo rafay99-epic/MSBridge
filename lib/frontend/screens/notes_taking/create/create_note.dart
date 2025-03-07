@@ -1,5 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
+import 'package:msbridge/backend/repo/hive_note_taking_repo.dart';
+import 'package:msbridge/frontend/utils/uuid.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -38,9 +43,7 @@ class _CreateNoteState extends State<CreateNote>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      //logic for saving Notes into firebase
-                    },
+                    onPressed: () => saveNote(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
                       minimumSize: const Size(double.infinity, 48),
@@ -62,6 +65,90 @@ class _CreateNoteState extends State<CreateNote>
     );
   }
 
+  // void saveNote() async {
+  //   final FirebaseAuth auth = FirebaseAuth.instance;
+  //   User? user = auth.currentUser;
+  //   if (user == null) {
+  //     return;
+  //   }
+  //   String userId = user.uid;
+  //   String title = _titleController.text.trim();
+  //   String content = _controller.document.toPlainText().trim();
+
+  //   if (title.isNotEmpty || content.isNotEmpty) {
+  //     NoteTakingModel note = NoteTakingModel(
+  //       noteTitle: title,
+  //       noteContent: content,
+  //       isSynced: false,
+  //       isDeleted: false,
+  //       updatedAt: DateTime.now(),
+  //       userId: userId,
+  //     );
+
+  //     await HiveNoteTakingRepo.addNote(note);
+  //     Navigator.pop(context); // Close the bottom sheet
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Note Saved Successfully!')),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Please enter some content or title')),
+  //     );
+  //   }
+  // }
+
+  void saveNote() async {
+    String noteUUID = generateUuid();
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+    if (user == null) {
+      print("====================");
+      print("User is not logged in");
+      print("====================");
+      return;
+    }
+    String userId = user.uid;
+    String title = _titleController.text;
+    String content = _controller.document.toPlainText();
+
+    if (title.isNotEmpty || content.isNotEmpty) {
+      NoteTakingModel note = NoteTakingModel(
+        noteId: noteUUID,
+        noteTitle: title,
+        noteContent: content,
+        isSynced: false,
+        isDeleted: false,
+        updatedAt: DateTime.now(),
+        userId: userId,
+      );
+
+      await HiveNoteTakingRepo.addNote(note);
+      print("=======================================================");
+      print("Note Saved: ${note.toMap()}"); // Print the saved note
+      print("=======================================================");
+      // Fetch all notes from Hive to verify
+      List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
+      print("=======================================================");
+
+      print("All Notes in Hive:");
+
+      for (var n in allNotes) {
+        print(n.toMap());
+      }
+      print("=======================================================");
+
+      Navigator.pop(context); // Close the bottom sheet
+      CustomSnackBar.show(context, "Note Saved Successfully!");
+    } else {
+      print("=======================================================");
+
+      print("Empty note not saved");
+      print("=======================================================");
+      CustomSnackBar.show(
+          context, "Sorry Cotnent Not Saved! Enter Something to continue");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -69,8 +156,7 @@ class _CreateNoteState extends State<CreateNote>
     return PopScope(
       onPopInvoked: (didPop) {
         if (didPop) {
-          // Save the contents when the view is popped
-          // Also a great place to trigger the save.
+          Navigator.of(context).pop();
         }
       },
       child: Scaffold(

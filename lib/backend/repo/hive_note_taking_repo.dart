@@ -11,14 +11,12 @@ class HiveNoteTakingRepo {
     await box.add(note);
   }
 
-  static Future<void> updateNote(int key, NoteTakingModel note) async {
-    var box = await getBox();
-    await box.put(key, note);
+  static Future<void> updateNote(NoteTakingModel note) async {
+    await note.save();
   }
 
-  static Future<void> deleteNote(int key) async {
-    var box = await getBox();
-    await box.delete(key);
+  static Future<void> deleteNote(NoteTakingModel note) async {
+    await note.delete();
   }
 
   static Future<List<NoteTakingModel>> getNotes() async {
