@@ -68,7 +68,7 @@ class _MSNotesScreenState extends State<Msnotes> {
                       subjects[index],
                       style: TextStyle(
                         fontSize: 18,
-                        color: theme.colorScheme.secondaryFixed,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     trailing: Icon(
@@ -77,13 +77,12 @@ class _MSNotesScreenState extends State<Msnotes> {
                     ),
                     onTap: () {
                       debugPrint("Subject Selected: ${subjects[index]}");
-                      // Navigate to Subject Notes Screen
                       var box = Hive.box<MSNote>('notesBox');
                       List<MSNote> subjectLectures = box.values
                           .where((note) => note.subject == subjects[index])
                           .toList()
-                        ..sort((a, b) => a.lectureNumber.compareTo(
-                            b.lectureNumber)); // Sort by Lecture Number
+                        ..sort((a, b) =>
+                            a.lectureNumber.compareTo(b.lectureNumber));
                       Navigator.push(
                         context,
                         PageTransition(

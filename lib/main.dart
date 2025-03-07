@@ -6,7 +6,6 @@ import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 import 'package:msbridge/backend/provider/theme_provider.dart';
 import 'package:msbridge/backend/services/internet_service.dart';
 import 'package:msbridge/backend/services/note_taking_sync.dart';
-import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:msbridge/frontend/utils/error.dart';
 import 'package:provider/provider.dart';
 
@@ -62,9 +61,7 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      themeMode: themeProvider.themeMode,
-      theme: lightTheme,
-      darkTheme: darkTheme,
+      theme: themeProvider.getThemeData(),
       debugShowCheckedModeBanner: false,
       home: const InternetChecker(),
     );

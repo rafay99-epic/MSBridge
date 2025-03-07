@@ -1,54 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
-  static const String _themeKey = 'isDarkMode';
+  static const String _themeKey = 'appTheme';
 
-  ThemeMode _themeMode = ThemeMode.dark;
+  AppTheme _selectedTheme = AppTheme.dark;
 
-  ThemeMode get themeMode => _themeMode;
+  AppTheme get selectedTheme => _selectedTheme;
 
   ThemeProvider() {
-    _loadThemeMode();
+    _loadTheme();
   }
 
-  Future<void> _loadThemeMode() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool? isDarkMode = prefs.getBool(_themeKey);
+  Future<void> _loadTheme() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? themeName = prefs.getString(_themeKey);
 
-    if (isDarkMode != null) {
-      _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
-    } else {
-      _themeMode = ThemeMode.dark;
+      _selectedTheme = _themeFromString(themeName);
+    } catch (e) {
+      _selectedTheme = AppTheme.dark;
     }
-
-    notifyListeners();
-  }
-
-  Future<void> toggleTheme() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    if (_themeMode == ThemeMode.dark) {
-      _themeMode = ThemeMode.light;
-      await prefs.setBool(_themeKey, false);
-    } else {
-      _themeMode = ThemeMode.dark;
-      await prefs.setBool(_themeKey, true);
-    }
-
     notifyListeners();
   }
 
-  void setThemeMode(ThemeMode mode) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _themeMode = mode;
-    if (_themeMode == ThemeMode.dark) {
-      await prefs.setBool(_themeKey, true);
-    } else if (_themeMode == ThemeMode.light) {
-      await prefs.setBool(_themeKey, false);
-    } else {
-      await prefs.remove(_themeKey);
+  AppTheme _themeFromString(String? themeName) {
+    if (themeName == null) {
+      return AppTheme.dark;
     }
+
+    switch (themeName) {
+      case 'light':
+        return AppTheme.light;
+      case 'purpleHaze':
+        return AppTheme.purpleHaze;
+      case 'mintFresh':
+        return AppTheme.mintFresh;
+      case 'dark':
+        return AppTheme.dark;
+      default:
+        return AppTheme.dark;
+    }
+  }
+
+  Future<void> setTheme(AppTheme theme) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeKey, theme.name);
+    _selectedTheme = theme;
     notifyListeners();
+  }
+
+  ThemeData getThemeData() {
+    return AppThemes.themeMap[_selectedTheme]!;
   }
 }

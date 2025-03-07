@@ -9,6 +9,7 @@ import 'package:msbridge/frontend/screens/setting/delete/delete.dart';
 import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
+import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
@@ -63,7 +64,7 @@ class _SettingState extends State<Setting> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -77,6 +78,26 @@ class _SettingState extends State<Setting> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          SettingsSection(title: "Appearance", children: [
+            SettingsTile(
+              title: "Choose Theme",
+              icon: LineIcons.palette,
+              trailing: DropdownButton<AppTheme>(
+                value: themeProvider.selectedTheme,
+                items: AppTheme.values.map((theme) {
+                  return DropdownMenuItem<AppTheme>(
+                    value: theme,
+                    child: Text(theme.name),
+                  );
+                }).toList(),
+                onChanged: (AppTheme? newTheme) {
+                  if (newTheme != null) {
+                    themeProvider.setTheme(newTheme);
+                  }
+                },
+              ),
+            ),
+          ]),
           SettingsSection(title: "User Settings", children: [
             SettingsTile(
               title: "Logout",
@@ -95,18 +116,6 @@ class _SettingState extends State<Setting> {
                   ),
                 )
               },
-            ),
-          ]),
-          SettingsSection(title: "Appearance", children: [
-            SettingsTile(
-              title: "Dark Mode",
-              icon: LineIcons.moon,
-              trailing: Switch(
-                value: themeProvider.themeMode == ThemeMode.dark,
-                onChanged: (bool value) {
-                  themeProvider.toggleTheme();
-                },
-              ),
             ),
           ]),
           Divider(color: theme.colorScheme.primary),
