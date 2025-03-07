@@ -82,19 +82,14 @@ class _SettingState extends State<Setting> {
             SettingsTile(
               title: "Choose Theme",
               icon: LineIcons.palette,
-              trailing: DropdownButton<AppTheme>(
-                value: themeProvider.selectedTheme,
-                items: AppTheme.values.map((theme) {
-                  return DropdownMenuItem<AppTheme>(
-                    value: theme,
-                    child: Text(theme.name),
-                  );
-                }).toList(),
-                onChanged: (AppTheme? newTheme) {
-                  if (newTheme != null) {
-                    themeProvider.setTheme(newTheme);
-                  }
-                },
+              child: Container(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: AppTheme.values.map((theme) {
+                    return _buildThemeButton(theme, themeProvider);
+                  }).toList(),
+                ),
               ),
             ),
           ]),
@@ -201,7 +196,6 @@ class _SettingState extends State<Setting> {
                     title: "Contact Messages",
                     icon: LineIcons.users,
                     onTap: () {
-                      // Navigate to app configuration screen
                       CustomSnackBar.show(context, "Coming Soon");
                     },
                   ),
@@ -209,6 +203,63 @@ class _SettingState extends State<Setting> {
               ],
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildThemeButton(AppTheme theme, ThemeProvider themeProvider) {
+    final isSelected = theme == themeProvider.selectedTheme;
+
+    Color backgroundColor;
+    Color iconColor;
+    IconData iconData;
+
+    switch (theme) {
+      case AppTheme.light:
+        backgroundColor = Colors.white;
+        iconColor = Colors.black;
+        iconData = Icons.wb_sunny;
+        break;
+      case AppTheme.dark:
+        backgroundColor = Colors.black;
+        iconColor = Colors.white;
+        iconData = Icons.brightness_2;
+        break;
+      case AppTheme.purpleHaze:
+        backgroundColor = Colors.deepPurple.shade400;
+        iconColor = Colors.white;
+        iconData = Icons.brightness_3;
+        break;
+      case AppTheme.mintFresh:
+        backgroundColor = Colors.greenAccent.shade400;
+        iconColor = Colors.black;
+        iconData = Icons.eco;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        themeProvider.setTheme(theme);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.all(4.0),
+        decoration: BoxDecoration(
+          border: isSelected
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary, width: 2.0)
+              : null,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Container(
+          width: 30.0,
+          height: 30.0,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(6.0),
+          ),
+          child: Icon(iconData, size: 20.0, color: iconColor),
+        ),
       ),
     );
   }
