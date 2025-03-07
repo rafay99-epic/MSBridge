@@ -87,9 +87,7 @@ class _CreateNoteState extends State<CreateNote>
 
     return PopScope(
       onPopInvoked: (didPop) {
-        if (didPop) {
-          Navigator.of(context).pop();
-        }
+        if (didPop) {}
       },
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,

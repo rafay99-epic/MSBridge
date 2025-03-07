@@ -15,18 +15,18 @@ class CustomSnackBar {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
         ],
       ),
       backgroundColor: isSuccess == true
-          ? Theme.of(context).colorScheme.primary
-          : Theme.of(context).colorScheme.primary,
+          ? Theme.of(context).colorScheme.surface
+          : Theme.of(context).colorScheme.surface,
       behavior: SnackBarBehavior.floating,
       elevation: 6.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

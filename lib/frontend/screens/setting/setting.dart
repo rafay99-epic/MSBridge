@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/backend/provider/theme_provider.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/backend/repo/webview_repo.dart';
 import 'package:msbridge/frontend/screens/changePassword/change_password.dart';
@@ -11,6 +12,7 @@ import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
 
 class Setting extends StatefulWidget {
   const Setting({super.key});
@@ -61,6 +63,7 @@ class _SettingState extends State<Setting> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -92,6 +95,18 @@ class _SettingState extends State<Setting> {
                   ),
                 )
               },
+            ),
+          ]),
+          SettingsSection(title: "Appearance", children: [
+            SettingsTile(
+              title: "Dark Mode",
+              icon: LineIcons.moon,
+              trailing: Switch(
+                value: themeProvider.themeMode == ThemeMode.dark,
+                onChanged: (bool value) {
+                  themeProvider.toggleTheme();
+                },
+              ),
             ),
           ]),
           Divider(color: theme.colorScheme.primary),

@@ -13,7 +13,7 @@ class Changepassword extends StatefulWidget {
 class ChangepasswordState extends State<Changepassword> {
   final TextEditingController emailController = TextEditingController();
   final AuthRepo authRepo = AuthRepo();
-  bool _isLoading = false; // Add loading state
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -25,11 +25,9 @@ class ChangepasswordState extends State<Changepassword> {
     final result = await authRepo.getCurrentUserEmail();
     if (result.isSuccess && result.user != null) {
       setState(() {
-        emailController.text =
-            result.user!.email ?? ''; // Set email in controller
+        emailController.text = result.user!.email ?? '';
       });
     } else {
-      // Display a SnackBar to inform the user
       WidgetsBinding.instance.addPostFrameCallback((_) {
         CustomSnackBar.show(
             context, "Failed to load your email. Please enter it manually.");
@@ -63,7 +61,6 @@ class ChangepasswordState extends State<Changepassword> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
               Text(
                 "Change Password?",
                 style: TextStyle(
@@ -81,8 +78,6 @@ class ChangepasswordState extends State<Changepassword> {
                 ),
               ),
               const SizedBox(height: 32),
-
-              // Email Field
               CustomTextField(
                 hintText: "Email",
                 icon: Icons.email,
@@ -90,7 +85,6 @@ class ChangepasswordState extends State<Changepassword> {
                 controller: emailController,
               ),
               const SizedBox(height: 24),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -105,14 +99,14 @@ class ChangepasswordState extends State<Changepassword> {
                       ? null
                       : () async {
                           setState(() {
-                            _isLoading = true; // Start loading
+                            _isLoading = true;
                           });
                           final authRepo = AuthRepo();
                           final result = await authRepo.resetPassword(
                             emailController.text,
                           );
                           setState(() {
-                            _isLoading = false; // Stop loading
+                            _isLoading = false;
                           });
 
                           if (result.isSuccess) {
@@ -139,7 +133,6 @@ class ChangepasswordState extends State<Changepassword> {
                         ),
                 ),
               ),
-
               const SizedBox(height: 16),
             ],
           ),

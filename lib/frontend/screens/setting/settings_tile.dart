@@ -5,6 +5,7 @@ class SettingsTile extends StatelessWidget {
   final IconData icon;
   final String? versionNumber;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   const SettingsTile({
     super.key,
@@ -12,6 +13,7 @@ class SettingsTile extends StatelessWidget {
     required this.icon,
     this.versionNumber,
     this.onTap,
+    this.trailing,
   });
 
   @override
@@ -34,11 +36,8 @@ class SettingsTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(color: theme.colorScheme.primary),
                 ),
-                if (versionNumber != null &&
-                    versionNumber!
-                        .isNotEmpty) // Check if versionNumber is not null and not empty
+                if (versionNumber != null && versionNumber!.isNotEmpty)
                   Text(
                     versionNumber!,
                     style: TextStyle(
@@ -47,10 +46,11 @@ class SettingsTile extends StatelessWidget {
                   ),
               ],
             ),
-            trailing: onTap != null
-                ? Icon(Icons.chevron_right,
-                    size: 16, color: theme.colorScheme.primary)
-                : null,
+            trailing: trailing ??
+                (onTap != null
+                    ? Icon(Icons.chevron_right,
+                        size: 16, color: theme.colorScheme.primary)
+                    : null),
           ),
         ),
       ),

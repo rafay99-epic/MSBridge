@@ -14,8 +14,8 @@ class CustomTextField extends StatelessWidget {
     required this.icon,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
-    this.controller, // Optional
-    this.numLines = 1, // Default to 1 line
+    this.controller,
+    this.numLines = 1,
   });
 
   @override
@@ -29,7 +29,7 @@ class CustomTextField extends StatelessWidget {
       maxLines: numLines,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: Icon(icon, color: theme.surface),
+        prefixIcon: Icon(icon, color: theme.primary),
         filled: true,
         fillColor: Colors.grey[200],
         border: OutlineInputBorder(

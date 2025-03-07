@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
+import 'package:msbridge/backend/provider/theme_provider.dart';
 import 'package:msbridge/backend/services/internet_service.dart';
 import 'package:msbridge/backend/services/note_taking_sync.dart';
 import 'package:msbridge/frontend/theme/colors.dart';
 import 'package:msbridge/frontend/utils/error.dart';
+import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -21,7 +24,10 @@ void main() async {
     await Hive.openBox<NoteTakingModel>('notes_taking');
 
     runApp(
-      const MyApp(),
+      ChangeNotifierProvider(
+        create: (context) => ThemeProvider(),
+        child: const MyApp(),
+      ),
     );
   } catch (e) {
     runApp(ErrorApp(errorMessage: e.toString()));
@@ -36,10 +42,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final SyncService _syncService = SyncService();
+  late SyncService _syncService;
   @override
   void initState() {
     super.initState();
+    _syncService = SyncService();
     _syncService.startListening();
   }
 
@@ -51,9 +58,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       navigatorKey: navigatorKey,
+      themeMode: themeProvider.themeMode,
       theme: lightTheme,
+      darkTheme: darkTheme,
       debugShowCheckedModeBanner: false,
       home: const InternetChecker(),
     );

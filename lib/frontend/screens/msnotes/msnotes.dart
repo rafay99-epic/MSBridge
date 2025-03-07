@@ -49,7 +49,7 @@ class _MSNotesScreenState extends State<Msnotes> {
               itemCount: subjects.length,
               itemBuilder: (context, index) {
                 return Card(
-                  color: theme.colorScheme.primary,
+                  color: theme.colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(

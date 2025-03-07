@@ -39,7 +39,7 @@ class LecturesScreen extends StatelessWidget {
                 String formattedDate =
                     DateFormat('MMMM d, yyyy').format(pubDate);
                 return Card(
-                  color: theme.colorScheme.primary,
+                  color: theme.colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
@@ -52,10 +52,10 @@ class LecturesScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.all(16),
                     title: Text(
                       "${lecture.lectureNumber}. ${lecture.lectureTitle}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     subtitle: Column(
@@ -63,7 +63,7 @@ class LecturesScreen extends StatelessWidget {
                       children: [
                         Text(
                           lecture.lectureDescription,
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(color: Colors.grey[500]),
                         ),
                         const SizedBox(height: 8),
                         Text(

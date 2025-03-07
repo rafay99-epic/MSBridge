@@ -142,7 +142,7 @@ class SearchState extends State<Search> {
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: FilterChip(
               label: Text(subject,
-                  style: TextStyle(color: theme.colorScheme.secondaryFixed)),
+                  style: TextStyle(color: theme.colorScheme.primary)),
               selected: _selectedSubject == subject,
               onSelected: (bool selected) {
                 setState(() {
@@ -152,7 +152,7 @@ class SearchState extends State<Search> {
               },
               checkmarkColor: theme.colorScheme.surface,
               selectedColor: theme.colorScheme.secondary,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: theme.colorScheme.surface,
             ),
           );
         },
@@ -176,7 +176,7 @@ class SearchState extends State<Search> {
               DateTime pubDate = DateTime.parse(note.pubDate).toLocal();
               String formattedDate = DateFormat('MMMM d, yyyy').format(pubDate);
               return Card(
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
@@ -189,10 +189,10 @@ class SearchState extends State<Search> {
                   contentPadding: const EdgeInsets.all(16),
                   title: Text(
                     "${note.lectureNumber}. ${note.lectureTitle}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   subtitle: Column(
@@ -200,7 +200,7 @@ class SearchState extends State<Search> {
                     children: [
                       Text(
                         note.lectureDescription,
-                        style: TextStyle(color: Colors.grey[700]),
+                        style: TextStyle(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 8),
                       Text(
