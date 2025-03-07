@@ -14,11 +14,9 @@ void main() async {
 
   try {
     await Firebase.initializeApp();
-    //Hive model for  getting notes from api server
     await Hive.initFlutter();
     Hive.registerAdapter(MSNoteAdapter());
     await Hive.openBox<MSNote>('notesBox');
-    // Hive model for note taking local Notes
     Hive.registerAdapter(NoteTakingModelAdapter());
     await Hive.openBox<NoteTakingModel>('notes_taking');
 
@@ -42,14 +40,12 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _syncService
-        .startListening(); // Start listening when the widget is initialized
+    _syncService.startListening();
   }
 
   @override
   void dispose() {
-    _syncService
-        .dispose(); // Dispose of the service when the widget is disposed
+    _syncService.dispose();
     super.dispose();
   }
 

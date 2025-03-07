@@ -7,7 +7,7 @@ class NoteTakingModel {
   bool isSynced;
   bool isDeleted;
   DateTime updatedAt;
-  String? userId; // Add this line
+  String? userId;
 
   NoteTakingModel({
     this.noteId,
@@ -32,15 +32,21 @@ class NoteTakingModel {
   }
 
   factory NoteTakingModel.fromDocumentSnapshot(DocumentSnapshot doc) {
+    DateTime parsedDate;
+
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    try {
+      parsedDate = DateTime.parse(data['updatedAt'] ?? '');
+    } catch (e) {
+      parsedDate = DateTime.now();
+    }
     return NoteTakingModel(
       noteId: doc.id,
       noteTitle: data['noteTitle'] ?? '',
       noteContent: data['noteContent'] ?? '',
       isSynced: data['isSynced'] ?? true,
       isDeleted: data['isDeleted'] ?? false,
-      updatedAt:
-          DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt: parsedDate,
       userId: data['userId'] ?? '',
     );
   }
@@ -54,7 +60,7 @@ class NoteTakingModel {
       isDeleted: data['isDeleted'] ?? false,
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
-      userId: data['userId'] ?? '', // Handle case where userId is missing
+      userId: data['userId'] ?? '',
     );
   }
 }

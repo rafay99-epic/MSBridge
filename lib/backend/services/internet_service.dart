@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:msbridge/backend/provider/note_taking_sync_provider.dart';
 import 'package:msbridge/backend/provider/notes_api_provider.dart';
 import 'package:msbridge/backend/repo/auth_gate.dart';
 import 'package:msbridge/frontend/screens/offline/offline.dart';
@@ -47,8 +46,6 @@ class _InternetCheckerState extends State<InternetChecker> {
         _offlineTimer?.cancel();
         // Gettinf API Data
         await NotesProvider().fetchNotes();
-        //  Passign Data to firebase
-        // await NoteTakingSyncProvider().syncNotes();
       } else {
         debugPrint("❌ No Internet");
         if (mounted) {

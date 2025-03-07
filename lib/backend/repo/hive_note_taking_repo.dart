@@ -2,25 +2,47 @@ import 'package:hive/hive.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 
 class HiveNoteTakingRepo {
+  static const String _boxName = 'notes';
+
   static Future<Box<NoteTakingModel>> getBox() async {
-    return Hive.openBox<NoteTakingModel>('notes');
+    try {
+      return await Hive.openBox<NoteTakingModel>(_boxName);
+    } catch (e) {
+      throw Exception('⚠️ Error opening Hive box "$_boxName": $e');
+    }
   }
 
   static Future<void> addNote(NoteTakingModel note) async {
-    var box = await getBox();
-    await box.add(note);
+    try {
+      var box = await getBox();
+      await box.add(note);
+    } catch (e) {
+      throw Exception('⚠️ Error adding note to Hive box "$_boxName": $e');
+    }
   }
 
   static Future<void> updateNote(NoteTakingModel note) async {
-    await note.save();
+    try {
+      await note.save();
+    } catch (e) {
+      throw Exception('⚠️ Error updating note in Hive box "$_boxName": $e');
+    }
   }
 
   static Future<void> deleteNote(NoteTakingModel note) async {
-    await note.delete();
+    try {
+      await note.delete();
+    } catch (e) {
+      throw Exception('⚠️ Error deleting note from Hive box "$_boxName": $e');
+    }
   }
 
   static Future<List<NoteTakingModel>> getNotes() async {
-    var box = await getBox();
-    return box.values.toList();
+    try {
+      var box = await getBox();
+      return box.values.toList();
+    } catch (e) {
+      throw Exception('⚠️ Error getting notes from Hive box "$_boxName": $e');
+    }
   }
 }

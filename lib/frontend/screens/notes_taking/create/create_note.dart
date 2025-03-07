@@ -1,9 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
-import 'package:msbridge/backend/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/frontend/utils/uuid.dart';
+import 'package:msbridge/backend/repo/note_taking_repo.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class CreateNote extends StatefulWidget {
@@ -65,87 +62,22 @@ class _CreateNoteState extends State<CreateNote>
     );
   }
 
-  // void saveNote() async {
-  //   final FirebaseAuth auth = FirebaseAuth.instance;
-  //   User? user = auth.currentUser;
-  //   if (user == null) {
-  //     return;
-  //   }
-  //   String userId = user.uid;
-  //   String title = _titleController.text.trim();
-  //   String content = _controller.document.toPlainText().trim();
-
-  //   if (title.isNotEmpty || content.isNotEmpty) {
-  //     NoteTakingModel note = NoteTakingModel(
-  //       noteTitle: title,
-  //       noteContent: content,
-  //       isSynced: false,
-  //       isDeleted: false,
-  //       updatedAt: DateTime.now(),
-  //       userId: userId,
-  //     );
-
-  //     await HiveNoteTakingRepo.addNote(note);
-  //     Navigator.pop(context); // Close the bottom sheet
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Note Saved Successfully!')),
-  //     );
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Please enter some content or title')),
-  //     );
-  //   }
-  // }
-
   void saveNote() async {
-    String noteUUID = generateUuid();
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    User? user = auth.currentUser;
-    if (user == null) {
-      print("====================");
-      print("User is not logged in");
-      print("====================");
-      return;
-    }
-    String userId = user.uid;
-    String title = _titleController.text;
-    String content = _controller.document.toPlainText();
+    String title = _titleController.text.trim();
+    String content = _controller.document.toPlainText().trim();
 
-    if (title.isNotEmpty || content.isNotEmpty) {
-      NoteTakingModel note = NoteTakingModel(
-        noteId: noteUUID,
-        noteTitle: title,
-        noteContent: content,
-        isSynced: false,
-        isDeleted: false,
-        updatedAt: DateTime.now(),
-        userId: userId,
-      );
+    SaveNoteResult result = await NoteTakingActions.saveNote(
+      title: title,
+      content: content,
+    );
 
-      await HiveNoteTakingRepo.addNote(note);
-      print("=======================================================");
-      print("Note Saved: ${note.toMap()}"); // Print the saved note
-      print("=======================================================");
-      // Fetch all notes from Hive to verify
-      List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
-      print("=======================================================");
-
-      print("All Notes in Hive:");
-
-      for (var n in allNotes) {
-        print(n.toMap());
-      }
-      print("=======================================================");
-
-      Navigator.pop(context); // Close the bottom sheet
-      CustomSnackBar.show(context, "Note Saved Successfully!");
+    if (result.success) {
+      CustomSnackBar.show(context, result.message);
+      _titleController.clear();
+      _controller.clear();
+      Navigator.pop(context);
     } else {
-      print("=======================================================");
-
-      print("Empty note not saved");
-      print("=======================================================");
-      CustomSnackBar.show(
-          context, "Sorry Cotnent Not Saved! Enter Something to continue");
+      CustomSnackBar.show(context, result.message);
     }
   }
 
