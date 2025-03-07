@@ -6,7 +6,7 @@ class SettingsTile extends StatelessWidget {
   final String? versionNumber;
   final VoidCallback? onTap;
   final Widget? trailing;
-  final Widget? child; // Optional child widget
+  final Widget? child;
 
   const SettingsTile({
     super.key,
@@ -57,7 +57,7 @@ class SettingsTile extends StatelessWidget {
                             size: 16, color: theme.colorScheme.primary)
                         : null),
               ),
-              if (child != null) child!, // Display child if provided
+              if (child != null) child!,
             ],
           ),
         ),

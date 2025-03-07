@@ -39,6 +39,16 @@ class ThemeProvider with ChangeNotifier {
         return AppTheme.mintFresh;
       case 'dark':
         return AppTheme.dark;
+      case "midenightbloye":
+        return AppTheme.midnightBlue;
+      case "darkTheme":
+        return AppTheme.sunsetGlow;
+      case "sunsetGlowTheme":
+        return AppTheme.forestGreen;
+      case "forestGreenTheme":
+        return AppTheme.oceanWave;
+      case "oceanWaveTheme":
+        return AppTheme.crimsonBlush;
       default:
         return AppTheme.dark;
     }

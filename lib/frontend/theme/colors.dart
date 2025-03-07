@@ -5,7 +5,12 @@ enum AppTheme {
   light,
   dark,
   purpleHaze,
-  mintFresh;
+  mintFresh,
+  midnightBlue,
+  sunsetGlow,
+  forestGreen,
+  oceanWave,
+  crimsonBlush;
 
   String get name => toString().split('.').last;
 }
@@ -21,6 +26,16 @@ extension AppThemeExtension on AppTheme {
         return 'Purple Haze';
       case AppTheme.mintFresh:
         return 'Mint Fresh';
+      case AppTheme.midnightBlue:
+        return 'Midnight Blue';
+      case AppTheme.sunsetGlow:
+        return 'Sunset Glow';
+      case AppTheme.forestGreen:
+        return 'Forest Green';
+      case AppTheme.oceanWave:
+        return 'Ocean Wave';
+      case AppTheme.crimsonBlush:
+        return 'Crimson Blush';
     }
   }
 }
@@ -86,10 +101,90 @@ class AppThemes {
     ),
   );
 
+  static ThemeData midnightBlueTheme = ThemeData(
+    colorScheme: const ColorScheme.dark(
+      primary: Colors.white,
+      secondary: Color(0xFF3949AB),
+      surface: Color(0xFF121212),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFFBBDEFB)),
+        bodyMedium: TextStyle(color: Color(0xFFBBDEFB)),
+        bodySmall: TextStyle(color: Color(0xFF90CAF9)),
+      ),
+    ),
+  );
+
+  static ThemeData sunsetGlowTheme = ThemeData(
+    colorScheme: const ColorScheme.light(
+      primary: Color(0xFFFF7043),
+      secondary: Color(0xFFFFAB91),
+      surface: Color(0xFFFFF3E0),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFFFF7043)),
+        bodyMedium: TextStyle(color: Color(0xFFFF7043)),
+        bodySmall: TextStyle(color: Color(0xFFFFAB91)),
+      ),
+    ),
+  );
+
+  static ThemeData forestGreenTheme = ThemeData(
+    colorScheme: const ColorScheme.light(
+      primary: Color(0xFF388E3C),
+      secondary: Color(0xFF66BB6A),
+      surface: Color(0xFFE8F5E9),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFF388E3C)),
+        bodyMedium: TextStyle(color: Color(0xFF388E3C)),
+        bodySmall: TextStyle(color: Color(0xFF66BB6A)),
+      ),
+    ),
+  );
+
+  static ThemeData oceanWaveTheme = ThemeData(
+    colorScheme: const ColorScheme.light(
+      primary: Color(0xFF0288D1),
+      secondary: Color(0xFF03A9F4),
+      surface: Color(0xFFE1F5FE),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFF0288D1)),
+        bodyMedium: TextStyle(color: Color(0xFF0288D1)),
+        bodySmall: TextStyle(color: Color(0xFF03A9F4)),
+      ),
+    ),
+  );
+
+  static ThemeData crimsonBlushTheme = ThemeData(
+    colorScheme: const ColorScheme.light(
+      primary: Color(0xFFD32F2F),
+      secondary: Color(0xFFFF5252),
+      surface: Color(0xFFFFEBEE),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Color(0xFFD32F2F)),
+        bodyMedium: TextStyle(color: Color(0xFFD32F2F)),
+        bodySmall: TextStyle(color: Color(0xFFFF5252)),
+      ),
+    ),
+  );
+
   static final Map<AppTheme, ThemeData> themeMap = {
     AppTheme.light: lightTheme,
     AppTheme.dark: darkTheme,
     AppTheme.purpleHaze: purpleHazeTheme,
     AppTheme.mintFresh: mintFreshTheme,
+    AppTheme.midnightBlue: midnightBlueTheme,
+    AppTheme.sunsetGlow: sunsetGlowTheme,
+    AppTheme.forestGreen: forestGreenTheme,
+    AppTheme.oceanWave: oceanWaveTheme,
+    AppTheme.crimsonBlush: crimsonBlushTheme,
   };
 }

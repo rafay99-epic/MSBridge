@@ -78,21 +78,28 @@ class _SettingState extends State<Setting> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          SettingsSection(title: "Appearance", children: [
-            SettingsTile(
-              title: "Choose Theme",
-              icon: LineIcons.palette,
-              child: Container(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: AppTheme.values.map((theme) {
-                    return _buildThemeButton(theme, themeProvider);
-                  }).toList(),
+          SettingsSection(
+            title: "Appearance",
+            children: [
+              SettingsTile(
+                title: "Choose Theme",
+                icon: LineIcons.palette,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: AppTheme.values.map((theme) {
+                        return _buildThemeButton(theme, themeProvider);
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
           SettingsSection(title: "User Settings", children: [
             SettingsTile(
               title: "Logout",
@@ -219,22 +226,52 @@ class _SettingState extends State<Setting> {
       },
       AppTheme.dark: {
         "background": Colors.black,
-        "icon": Icons.brightness_2,
+        "icon": Icons.nightlight_round,
         "tooltip": "Dark Theme",
         "iconColor": Colors.white
       },
       AppTheme.purpleHaze: {
         "background": Colors.deepPurple.shade400,
-        "icon": Icons.brightness_3,
+        "icon": Icons.blur_on,
         "tooltip": "Purple Haze",
         "iconColor": Colors.white
       },
       AppTheme.mintFresh: {
         "background": Colors.greenAccent.shade400,
-        "icon": Icons.eco,
+        "icon": Icons.spa,
         "tooltip": "Mint Fresh",
         "iconColor": Colors.black
-      }
+      },
+      AppTheme.midnightBlue: {
+        "background": Colors.indigo.shade900,
+        "icon": Icons.nightlight,
+        "tooltip": "Midnight Blue",
+        "iconColor": Colors.white
+      },
+      AppTheme.crimsonBlush: {
+        "background": Colors.pink.shade400,
+        "icon": Icons.favorite,
+        "tooltip": "Crimson Blush",
+        "iconColor": Colors.white
+      },
+      AppTheme.forestGreen: {
+        "background": Colors.green.shade700,
+        "icon": Icons.park,
+        "tooltip": "Forest Green",
+        "iconColor": Colors.white
+      },
+      AppTheme.oceanWave: {
+        "background": Colors.blue.shade400,
+        "icon": Icons.waves,
+        "tooltip": "Ocean Wave",
+        "iconColor": Colors.white
+      },
+      AppTheme.sunsetGlow: {
+        "background": Colors.orangeAccent.shade400,
+        "icon": Icons.wb_twilight,
+        "tooltip": "Sunset Glow",
+        "iconColor": Colors.black
+      },
     };
 
     return Tooltip(
