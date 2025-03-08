@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
@@ -80,7 +81,7 @@ class ChangepasswordState extends State<Changepassword> {
               const SizedBox(height: 32),
               CustomTextField(
                 hintText: "Email",
-                icon: Icons.email,
+                icon: LineIcons.envelope,
                 isPassword: false,
                 controller: emailController,
               ),

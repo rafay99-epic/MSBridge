@@ -51,7 +51,7 @@ class AppThemes {
       const TextTheme(
         bodyLarge: TextStyle(color: Colors.black),
         bodyMedium: TextStyle(color: Colors.black),
-        bodySmall: TextStyle(color: Colors.grey),
+        bodySmall: TextStyle(color: Colors.black),
       ),
     ),
   );
@@ -64,9 +64,9 @@ class AppThemes {
     ),
     textTheme: GoogleFonts.poppinsTextTheme(
       const TextTheme(
-        bodyLarge: TextStyle(color: Colors.white),
-        bodyMedium: TextStyle(color: Colors.white),
-        bodySmall: TextStyle(color: Colors.grey),
+        bodyLarge: TextStyle(color: Colors.black),
+        bodyMedium: TextStyle(color: Colors.black),
+        bodySmall: TextStyle(color: Colors.black),
       ),
     ),
   );

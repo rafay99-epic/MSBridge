@@ -27,14 +27,14 @@ class CustomTextField extends StatelessWidget {
       obscureText: isPassword,
       keyboardType: keyboardType,
       maxLines: numLines,
+      style: TextStyle(color: theme.primary),
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: theme.primary),
         filled: true,
-        fillColor: Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(),
         ),
       ),
     );

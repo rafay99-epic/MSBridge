@@ -3,6 +3,7 @@ import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/screens/auth/login/login.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void showLogoutDialog(BuildContext context) {
   final theme = Theme.of(context);
@@ -70,11 +71,9 @@ void showLogoutDialog(BuildContext context) {
   );
 }
 
-/// Handles logout
 void handleLogout(BuildContext context) async {
   final authRepo = AuthRepo();
 
-  // Show loading indicator
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -83,10 +82,11 @@ void handleLogout(BuildContext context) async {
 
   final error = await authRepo.logout();
 
-  Navigator.pop(context); // Close loading dialog
+  Navigator.pop(context);
 
   if (error == null) {
-    // ✅ Success: Navigate to Login
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
     Navigator.pushAndRemoveUntil(
       context,
       PageTransition(
@@ -96,7 +96,6 @@ void handleLogout(BuildContext context) async {
       (route) => false,
     );
   } else {
-    // ❌ Show error
     CustomSnackBar.show(context, "Logout Failed: $error");
   }
 }

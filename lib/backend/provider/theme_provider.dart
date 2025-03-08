@@ -17,7 +17,6 @@ class ThemeProvider with ChangeNotifier {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? themeName = prefs.getString(_themeKey);
-
       _selectedTheme = _themeFromString(themeName);
     } catch (e) {
       _selectedTheme = AppTheme.dark;
@@ -30,28 +29,13 @@ class ThemeProvider with ChangeNotifier {
       return AppTheme.dark;
     }
 
-    switch (themeName) {
-      case 'light':
-        return AppTheme.light;
-      case 'purpleHaze':
-        return AppTheme.purpleHaze;
-      case 'mintFresh':
-        return AppTheme.mintFresh;
-      case 'dark':
-        return AppTheme.dark;
-      case "midenightbloye":
-        return AppTheme.midnightBlue;
-      case "darkTheme":
-        return AppTheme.sunsetGlow;
-      case "sunsetGlowTheme":
-        return AppTheme.forestGreen;
-      case "forestGreenTheme":
-        return AppTheme.oceanWave;
-      case "oceanWaveTheme":
-        return AppTheme.crimsonBlush;
-      default:
-        return AppTheme.dark;
+    for (AppTheme theme in AppTheme.values) {
+      if (theme.name == themeName) {
+        return theme;
+      }
     }
+
+    return AppTheme.dark;
   }
 
   Future<void> setTheme(AppTheme theme) async {

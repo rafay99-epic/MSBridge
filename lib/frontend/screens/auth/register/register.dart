@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
 import 'package:msbridge/frontend/widgets/error_dialog.dart';
@@ -65,7 +66,7 @@ class _RegisterState extends State<Register> {
               // Full Name
               CustomTextField(
                 hintText: "Full Name",
-                icon: Icons.person,
+                icon: LineIcons.user,
                 isPassword: false,
                 controller: _fullnameController,
               ),
@@ -74,7 +75,7 @@ class _RegisterState extends State<Register> {
               // Email
               CustomTextField(
                 hintText: "Email",
-                icon: Icons.email,
+                icon: LineIcons.envelope,
                 isPassword: false,
                 controller: _emailController,
               ),
@@ -83,7 +84,7 @@ class _RegisterState extends State<Register> {
               // Password
               CustomTextField(
                 hintText: "Password",
-                icon: Icons.lock,
+                icon: LineIcons.lock,
                 isPassword: true,
                 controller: _passwordController,
               ),
@@ -92,7 +93,7 @@ class _RegisterState extends State<Register> {
               // Re-enter Password
               CustomTextField(
                 hintText: "Re-enter Password",
-                icon: Icons.lock,
+                icon: LineIcons.lock,
                 isPassword: true,
                 controller: _confirmPasswordController,
               ),
@@ -101,7 +102,7 @@ class _RegisterState extends State<Register> {
               // Phone Number
               CustomTextField(
                 hintText: "Phone Number",
-                icon: Icons.phone,
+                icon: LineIcons.phone,
                 isPassword: false,
                 keyboardType: TextInputType.phone,
                 controller: _phoneNumberController,

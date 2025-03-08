@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/screens/auth/verify/verify_email.dart';
 import 'package:msbridge/frontend/screens/home/home.dart';
@@ -90,14 +91,14 @@ class _LoginScreenState extends State<LoginScreen> {
               CustomTextField(
                 controller: _emailController,
                 hintText: "Email",
-                icon: Icons.email,
+                icon: LineIcons.envelope,
                 isPassword: false,
               ),
               const SizedBox(height: 16),
               CustomTextField(
                 controller: _passwordController,
                 hintText: "Password",
-                icon: Icons.lock,
+                icon: LineIcons.lock,
                 isPassword: true,
               ),
               const SizedBox(height: 8),
