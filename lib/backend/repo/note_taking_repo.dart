@@ -47,6 +47,27 @@ class NoteTakingActions {
       return SaveNoteResult(success: false, message: "Error saving note: $e");
     }
   }
+
+  static Future<SaveNoteResult> updateNote({
+    required NoteTakingModel note,
+    required String title,
+    required String content,
+  }) async {
+    try {
+      // Update the note's properties
+      note.noteTitle = title;
+      note.noteContent = content;
+      note.updatedAt = DateTime.now();
+
+      // Update the note in Hive
+      await HiveNoteTakingRepo.updateNote(note);
+
+      return SaveNoteResult(
+          success: true, message: "Note updated successfully");
+    } catch (e) {
+      return SaveNoteResult(success: false, message: "Error updating note: $e");
+    }
+  }
 }
 
 class SaveNoteResult {

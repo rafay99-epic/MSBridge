@@ -1,10 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/backend/repo/note_taking_repo.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
+import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 
 class CreateNote extends StatefulWidget {
-  const CreateNote({super.key});
+  const CreateNote({super.key, this.note});
+
+  final NoteTakingModel? note;
 
   @override
   State<CreateNote> createState() => _CreateNoteState();
@@ -12,12 +17,36 @@ class CreateNote extends StatefulWidget {
 
 class _CreateNoteState extends State<CreateNote>
     with SingleTickerProviderStateMixin {
-  final QuillController _controller = QuillController.basic();
+  late QuillController _controller;
   final TextEditingController _titleController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize the controller based on whether we're creating or editing
+    if (widget.note != null) {
+      // Editing an existing note
+      _titleController.text = widget.note!.noteTitle;
+      try {
+        _controller = QuillController(
+          document: Document.fromJson(jsonDecode(
+              widget.note!.noteContent)), // Load the existing content
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } catch (e) {
+        // Handle cases where noteContent is not a valid JSON
+        print("Error decoding JSON content: $e");
+        _controller = QuillController(
+          document: Document(),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        _controller.document.insert(0, widget.note!.noteContent);
+      }
+    } else {
+      // Creating a new note
+      _controller = QuillController.basic();
+    }
   }
 
   @override
@@ -65,19 +94,44 @@ class _CreateNoteState extends State<CreateNote>
   void saveNote() async {
     String title = _titleController.text.trim();
     String content = _controller.document.toPlainText().trim();
+    SaveNoteResult result;
 
-    SaveNoteResult result = await NoteTakingActions.saveNote(
-      title: title,
-      content: content,
-    );
+    try {
+      if (widget.note != null) {
+        result = await NoteTakingActions.updateNote(
+          note: widget.note!,
+          title: title,
+          content: content,
+        );
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
+      } else {
+        String title = _titleController.text.trim();
+        String content = _controller.document.toPlainText().trim();
 
-    if (result.success) {
-      CustomSnackBar.show(context, result.message);
-      _titleController.clear();
-      _controller.clear();
-      Navigator.pop(context);
-    } else {
-      CustomSnackBar.show(context, result.message);
+        SaveNoteResult result = await NoteTakingActions.saveNote(
+          title: title,
+          content: content,
+        );
+
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
+      }
+      Navigator.pop(context, true);
+    } catch (e) {
+      CustomSnackBar.show(context, "Error saving note: $e");
     }
   }
 
@@ -92,7 +146,7 @@ class _CreateNoteState extends State<CreateNote>
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
-          title: const Text("Create Note"),
+          title: Text(widget.note == null ? "Create Note" : "Edit Note"),
           automaticallyImplyLeading: true,
           backgroundColor: theme.colorScheme.surface,
           foregroundColor: theme.colorScheme.primary,
