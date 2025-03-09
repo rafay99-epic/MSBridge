@@ -68,6 +68,37 @@ class NoteTakingActions {
       return SaveNoteResult(success: false, message: "Error updating note: $e");
     }
   }
+
+  static Future<SaveNoteResult> deleteSelectedNotes(
+      List<String> noteIds) async {
+    try {
+      final box = await HiveNoteTakingRepo.getBox();
+
+      for (final noteId in noteIds) {
+        NoteTakingModel? noteToDelete = box.values.firstWhere(
+          (note) => note.noteId == noteId,
+          orElse: () => NoteTakingModel(
+              noteId: '',
+              noteTitle: '',
+              noteContent: '',
+              isSynced: false,
+              isDeleted: false,
+              updatedAt: DateTime.now(),
+              userId: ''),
+        );
+
+        if (noteToDelete.noteId!.isNotEmpty) {
+          await HiveNoteTakingRepo.deleteNote(noteToDelete);
+        }
+      }
+
+      return SaveNoteResult(
+          success: true, message: "Notes deleted successfully");
+    } catch (e) {
+      return SaveNoteResult(
+          success: false, message: "Error deleting notes: $e");
+    }
+  }
 }
 
 class SaveNoteResult {

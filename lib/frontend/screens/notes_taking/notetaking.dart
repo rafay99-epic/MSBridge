@@ -1,13 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/provider/pin_note_provider.dart';
 import 'package:msbridge/backend/repo/hive_note_taking_repo.dart';
+import 'package:msbridge/backend/repo/note_taking_repo.dart';
 import 'package:msbridge/frontend/screens/notes_taking/create/create_note.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/frontend/utils/error.dart';
-import 'package:msbridge/frontend/utils/loading.dart';
 import 'package:msbridge/frontend/widgets/note_taking_card.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 
 class Notetaking extends StatefulWidget {
@@ -18,6 +21,52 @@ class Notetaking extends StatefulWidget {
 }
 
 class _NotetakingState extends State<Notetaking> {
+  bool _isSelectionMode = false;
+  final List<String> _selectedNoteIds = [];
+
+  void _enterSelectionMode(String noteId) {
+    setState(() {
+      _isSelectionMode = true;
+      _selectedNoteIds.add(noteId);
+    });
+  }
+
+  void _toggleNoteSelection(String noteId) {
+    setState(() {
+      if (_selectedNoteIds.contains(noteId)) {
+        _selectedNoteIds.remove(noteId);
+      } else {
+        _selectedNoteIds.add(noteId);
+      }
+
+      if (_selectedNoteIds.isEmpty) {
+        _isSelectionMode = false;
+      }
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedNoteIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelectedNotes() async {
+    if (_selectedNoteIds.isNotEmpty) {
+      final result =
+          await NoteTakingActions.deleteSelectedNotes(_selectedNoteIds);
+
+      if (result.success) {
+        CustomSnackBar.show(context, result.message);
+      } else {
+        CustomSnackBar.show(context, result.message);
+      }
+
+      _exitSelectionMode();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -25,14 +74,31 @@ class _NotetakingState extends State<Notetaking> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text("Note Taking"),
+        title: _isSelectionMode
+            ? Text('Selected ${_selectedNoteIds.length} Notes')
+            : const Text("Note Taking"),
         automaticallyImplyLeading: false,
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.primary,
         elevation: 1,
         shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
         centerTitle: true,
-        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.search))],
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(LineIcons.check),
+                onPressed: _exitSelectionMode,
+              )
+            : null,
+        actions: _isSelectionMode
+            ? [
+                IconButton(
+                  icon: const Icon(LineIcons.trash),
+                  onPressed: _deleteSelectedNotes,
+                ),
+              ]
+            : [
+                IconButton(onPressed: () {}, icon: const Icon(LineIcons.search))
+              ],
         titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: theme.colorScheme.primary,
@@ -40,28 +106,32 @@ class _NotetakingState extends State<Notetaking> {
       ),
       body: ChangeNotifierProvider(
         create: (context) {
-          final noteProvider = NoteProvider();
+          final noteProvider = NoteePinProvider();
           noteProvider.initialize();
           return noteProvider;
         },
-        child: Consumer<NoteProvider>(
+        child: Consumer<NoteePinProvider>(
           builder: (context, noteProvider, _) {
-            return StreamBuilder<BoxEvent>(
-              stream: Hive.box<NoteTakingModel>('notes').watch(),
+            return FutureBuilder<ValueListenable<Box<NoteTakingModel>>>(
+              future: HiveNoteTakingRepo.getNotesListenable(),
               builder: (context, snapshot) {
-                return FutureBuilder<List<NoteTakingModel>>(
-                  future: HiveNoteTakingRepo.getNotes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Loading(message: "Loading notes...");
-                    } else if (snapshot.hasError) {
-                      return ErrorApp(
-                        errorMessage: 'Error: ${snapshot.error}',
-                      );
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text("No notes yet!"));
-                    } else {
-                      final notes = snapshot.data!;
+                if (snapshot.hasError) {
+                  return ErrorApp(
+                    errorMessage: 'Error: ${snapshot.error}',
+                  );
+                } else if (!snapshot.hasData) {
+                  return const Center(child: Text("No notes yet!"));
+                } else {
+                  final notesListenable = snapshot.data!;
+
+                  return ValueListenableBuilder<Box<NoteTakingModel>>(
+                    valueListenable: notesListenable,
+                    builder: (context, box, _) {
+                      if (box.values.isEmpty) {
+                        return const Center(child: Text("No notes yet!"));
+                      }
+
+                      final notes = box.values.toList();
 
                       final pinnedNotes = notes
                           .where((note) =>
@@ -102,28 +172,45 @@ class _NotetakingState extends State<Notetaking> {
                                     final note = pinnedNotes[index];
                                     return GestureDetector(
                                       onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder: (context, animation,
-                                                    secondaryAnimation) =>
-                                                CreateNote(
-                                              note: note,
+                                        if (_isSelectionMode) {
+                                          _toggleNoteSelection(
+                                              note.noteId.toString());
+                                        } else {
+                                          await Navigator.push(
+                                            context,
+                                            PageRouteBuilder(
+                                              pageBuilder: (context, animation,
+                                                      secondaryAnimation) =>
+                                                  CreateNote(
+                                                note: note,
+                                              ),
+                                              transitionsBuilder: (context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child) {
+                                                return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child);
+                                              },
+                                              transitionDuration:
+                                                  const Duration(
+                                                      milliseconds: 300),
                                             ),
-                                            transitionsBuilder: (context,
-                                                animation,
-                                                secondaryAnimation,
-                                                child) {
-                                              return FadeTransition(
-                                                  opacity: animation,
-                                                  child: child);
-                                            },
-                                            transitionDuration: const Duration(
-                                                milliseconds: 300),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       },
-                                      child: NoteCard(note: note),
+                                      onLongPress: () {
+                                        if (!_isSelectionMode) {
+                                          _enterSelectionMode(
+                                              note.noteId.toString());
+                                        }
+                                      },
+                                      child: NoteCard(
+                                        note: note,
+                                        isSelected: _selectedNoteIds
+                                            .contains(note.noteId.toString()),
+                                        isSelectionMode: _isSelectionMode,
+                                      ),
                                     );
                                   },
                                 ),
@@ -154,28 +241,44 @@ class _NotetakingState extends State<Notetaking> {
                                   final note = unpinnedNotes[index];
                                   return GestureDetector(
                                     onTap: () async {
-                                      await Navigator.push(
-                                        context,
-                                        PageRouteBuilder(
-                                          pageBuilder: (context, animation,
-                                                  secondaryAnimation) =>
-                                              CreateNote(
-                                            note: note,
+                                      if (_isSelectionMode) {
+                                        _toggleNoteSelection(
+                                            note.noteId.toString());
+                                      } else {
+                                        await Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                CreateNote(
+                                              note: note,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return FadeTransition(
+                                                  opacity: animation,
+                                                  child: child);
+                                            },
+                                            transitionDuration: const Duration(
+                                                milliseconds: 300),
                                           ),
-                                          transitionsBuilder: (context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child) {
-                                            return FadeTransition(
-                                                opacity: animation,
-                                                child: child);
-                                          },
-                                          transitionDuration:
-                                              const Duration(milliseconds: 300),
-                                        ),
-                                      );
+                                        );
+                                      }
                                     },
-                                    child: NoteCard(note: note),
+                                    onLongPress: () {
+                                      if (!_isSelectionMode) {
+                                        _enterSelectionMode(
+                                            note.noteId.toString());
+                                      }
+                                    },
+                                    child: NoteCard(
+                                      note: note,
+                                      isSelected: _selectedNoteIds
+                                          .contains(note.noteId.toString()),
+                                      isSelectionMode: _isSelectionMode,
+                                    ),
                                   );
                                 },
                               ),
@@ -183,9 +286,9 @@ class _NotetakingState extends State<Notetaking> {
                           ],
                         ),
                       );
-                    }
-                  },
-                );
+                    },
+                  );
+                }
               },
             );
           },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NoteProvider with ChangeNotifier {
+class NoteePinProvider with ChangeNotifier {
   SharedPreferences? _prefs;
   final Map<String, bool> _pinnedNotes = {};
 
