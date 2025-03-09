@@ -189,48 +189,7 @@ class _NotetakingState extends State<Notetaking> {
                                   itemCount: pinnedNotes.length,
                                   itemBuilder: (context, index) {
                                     final note = pinnedNotes[index];
-                                    return GestureDetector(
-                                      onTap: () async {
-                                        if (_isSelectionMode) {
-                                          _toggleNoteSelection(
-                                              note.noteId.toString());
-                                        } else {
-                                          await Navigator.push(
-                                            context,
-                                            PageRouteBuilder(
-                                              pageBuilder: (context, animation,
-                                                      secondaryAnimation) =>
-                                                  CreateNote(
-                                                note: note,
-                                              ),
-                                              transitionsBuilder: (context,
-                                                  animation,
-                                                  secondaryAnimation,
-                                                  child) {
-                                                return FadeTransition(
-                                                    opacity: animation,
-                                                    child: child);
-                                              },
-                                              transitionDuration:
-                                                  const Duration(
-                                                      milliseconds: 300),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      onLongPress: () {
-                                        if (!_isSelectionMode) {
-                                          _enterSelectionMode(
-                                              note.noteId.toString());
-                                        }
-                                      },
-                                      child: NoteCard(
-                                        note: note,
-                                        isSelected: _selectedNoteIds
-                                            .contains(note.noteId.toString()),
-                                        isSelectionMode: _isSelectionMode,
-                                      ),
-                                    );
+                                    return _buildNoteItem(note, context);
                                   },
                                 ),
                               ),
@@ -258,47 +217,7 @@ class _NotetakingState extends State<Notetaking> {
                                 itemCount: unpinnedNotes.length,
                                 itemBuilder: (context, index) {
                                   final note = unpinnedNotes[index];
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      if (_isSelectionMode) {
-                                        _toggleNoteSelection(
-                                            note.noteId.toString());
-                                      } else {
-                                        await Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder: (context, animation,
-                                                    secondaryAnimation) =>
-                                                CreateNote(
-                                              note: note,
-                                            ),
-                                            transitionsBuilder: (context,
-                                                animation,
-                                                secondaryAnimation,
-                                                child) {
-                                              return FadeTransition(
-                                                  opacity: animation,
-                                                  child: child);
-                                            },
-                                            transitionDuration: const Duration(
-                                                milliseconds: 300),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    onLongPress: () {
-                                      if (!_isSelectionMode) {
-                                        _enterSelectionMode(
-                                            note.noteId.toString());
-                                      }
-                                    },
-                                    child: NoteCard(
-                                      note: note,
-                                      isSelected: _selectedNoteIds
-                                          .contains(note.noteId.toString()),
-                                      isSelectionMode: _isSelectionMode,
-                                    ),
-                                  );
+                                  return _buildNoteItem(note, context);
                                 },
                               ),
                             ),
@@ -413,5 +332,40 @@ class _NotetakingState extends State<Notetaking> {
   bool _matchesSearchQuery(NoteTakingModel note) {
     return note.noteTitle.toLowerCase().contains(_lowerCaseSearchQuery) ||
         note.noteContent.toLowerCase().contains(_lowerCaseSearchQuery);
+  }
+
+  Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        if (_isSelectionMode) {
+          _toggleNoteSelection(note.noteId.toString());
+        } else {
+          await Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  CreateNote(
+                note: note,
+              ),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 300),
+            ),
+          );
+        }
+      },
+      onLongPress: () {
+        if (!_isSelectionMode) {
+          _enterSelectionMode(note.noteId.toString());
+        }
+      },
+      child: NoteCard(
+        note: note,
+        isSelected: _selectedNoteIds.contains(note.noteId.toString()),
+        isSelectionMode: _isSelectionMode,
+      ),
+    );
   }
 }
