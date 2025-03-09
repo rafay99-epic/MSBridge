@@ -9,13 +9,14 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/notes_taking/widget/empty_notes_message.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/widgets/note_taking_card.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 
 class Notetaking extends StatefulWidget {
-  const Notetaking({Key? key}) : super(key: key);
+  const Notetaking({super.key});
 
   @override
   State<Notetaking> createState() => _NotetakingState();
@@ -25,13 +26,12 @@ class _NotetakingState extends State<Notetaking> {
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
   bool _isSearching = false;
-  String _searchQuery = '';
-  String _lowerCaseSearchQuery = ''; //Cache
+
+  String _lowerCaseSearchQuery = '';
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
-  List<NoteTakingModel> _cachedNotes = []; // Cache the notes
-  ValueListenable<Box<NoteTakingModel>>? _notesListenable;
+  ValueListenable<Box<NoteTakingModel>>? notesListenable;
 
   @override
   void initState() {
@@ -39,13 +39,10 @@ class _NotetakingState extends State<Notetaking> {
     _loadNotes();
   }
 
-  //Load initial
   Future<void> _loadNotes() async {
     try {
-      _notesListenable = await HiveNoteTakingRepo.getNotesListenable();
-      final box = await HiveNoteTakingRepo.getBox();
-      _cachedNotes = box.values.toList();
-      setState(() {}); //Trigger refresh
+      notesListenable = await HiveNoteTakingRepo.getNotesListenable();
+      setState(() {});
     } catch (e) {
       if (kDebugMode) {
         print("Failed to cache: $e");
@@ -139,163 +136,176 @@ class _NotetakingState extends State<Notetaking> {
                   return ErrorApp(
                     errorMessage: 'Error: ${snapshot.error}',
                   );
-                } else if (_cachedNotes.isEmpty && _notesListenable == null) {
-                  return const Center(child: CircularProgressIndicator());
+                } else if (!snapshot.hasData) {
+                  return const EmptyNotesMessage();
                 } else {
-                  List<NoteTakingModel> filteredNotes = _cachedNotes;
+                  final notesListenable = snapshot.data!;
 
-                  if (_searchQuery.isNotEmpty) {
-                    filteredNotes = _cachedNotes
-                        .where((note) => _matchesSearchQuery(note))
-                        .toList();
-                  }
+                  return ValueListenableBuilder<Box<NoteTakingModel>>(
+                    valueListenable: notesListenable,
+                    builder: (context, box, _) {
+                      if (box.values.isEmpty) {
+                        return const Center(child: Text("No notes yet!"));
+                      }
 
-                  final pinnedNotes = filteredNotes
-                      .where((note) =>
-                          noteProvider.isNotePinned(note.noteId.toString()))
-                      .toList();
-                  final unpinnedNotes = filteredNotes
-                      .where((note) =>
-                          !noteProvider.isNotePinned(note.noteId.toString()))
-                      .toList();
+                      final notes = box.values.toList();
 
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (pinnedNotes.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                                16.0, 16.0, 16.0, 8.0),
-                            child: Text(
-                              "Pinned Notes",
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: MasonryGridView.count(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 4,
-                              crossAxisSpacing: 4,
-                              itemCount: pinnedNotes.length,
-                              itemBuilder: (context, index) {
-                                final note = pinnedNotes[index];
-                                return GestureDetector(
-                                  onTap: () async {
-                                    if (_isSelectionMode) {
-                                      _toggleNoteSelection(
-                                          note.noteId.toString());
-                                    } else {
-                                      await Navigator.push(
-                                        context,
-                                        PageRouteBuilder(
-                                          pageBuilder: (context, animation,
-                                                  secondaryAnimation) =>
-                                              CreateNote(
-                                            note: note,
-                                          ),
-                                          transitionsBuilder: (context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child) {
-                                            return FadeTransition(
-                                                opacity: animation,
-                                                child: child);
-                                          },
-                                          transitionDuration:
-                                              const Duration(milliseconds: 300),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  onLongPress: () {
-                                    if (!_isSelectionMode) {
-                                      _enterSelectionMode(
-                                          note.noteId.toString());
-                                    }
-                                  },
-                                  child: NoteCard(
-                                    note: note,
-                                    isSelected: _selectedNoteIds
-                                        .contains(note.noteId.toString()),
-                                    isSelectionMode: _isSelectionMode,
+                      final pinnedNotes = notes
+                          .where((note) =>
+                              noteProvider.isNotePinned(note.noteId.toString()))
+                          .where((note) => _matchesSearchQuery(note))
+                          .toList();
+                      final unpinnedNotes = notes
+                          .where((note) => !noteProvider
+                              .isNotePinned(note.noteId.toString()))
+                          .where((note) => _matchesSearchQuery(note))
+                          .toList();
+
+                      return SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (pinnedNotes.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                    16.0, 16.0, 16.0, 8.0),
+                                child: Text(
+                                  "Pinned Notes",
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                        Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                          child: Text(
-                            " Notes",
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: MasonryGridView.count(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 4,
-                            crossAxisSpacing: 4,
-                            itemCount: unpinnedNotes.length,
-                            itemBuilder: (context, index) {
-                              final note = unpinnedNotes[index];
-                              return GestureDetector(
-                                onTap: () async {
-                                  if (_isSelectionMode) {
-                                    _toggleNoteSelection(
-                                        note.noteId.toString());
-                                  } else {
-                                    await Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (context, animation,
-                                                secondaryAnimation) =>
-                                            CreateNote(
-                                          note: note,
-                                        ),
-                                        transitionsBuilder: (context, animation,
-                                            secondaryAnimation, child) {
-                                          return FadeTransition(
-                                              opacity: animation, child: child);
-                                        },
-                                        transitionDuration:
-                                            const Duration(milliseconds: 300),
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: MasonryGridView.count(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 4,
+                                  crossAxisSpacing: 4,
+                                  itemCount: pinnedNotes.length,
+                                  itemBuilder: (context, index) {
+                                    final note = pinnedNotes[index];
+                                    return GestureDetector(
+                                      onTap: () async {
+                                        if (_isSelectionMode) {
+                                          _toggleNoteSelection(
+                                              note.noteId.toString());
+                                        } else {
+                                          await Navigator.push(
+                                            context,
+                                            PageRouteBuilder(
+                                              pageBuilder: (context, animation,
+                                                      secondaryAnimation) =>
+                                                  CreateNote(
+                                                note: note,
+                                              ),
+                                              transitionsBuilder: (context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child) {
+                                                return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child);
+                                              },
+                                              transitionDuration:
+                                                  const Duration(
+                                                      milliseconds: 300),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      onLongPress: () {
+                                        if (!_isSelectionMode) {
+                                          _enterSelectionMode(
+                                              note.noteId.toString());
+                                        }
+                                      },
+                                      child: NoteCard(
+                                        note: note,
+                                        isSelected: _selectedNoteIds
+                                            .contains(note.noteId.toString()),
+                                        isSelectionMode: _isSelectionMode,
                                       ),
                                     );
-                                  }
-                                },
-                                onLongPress: () {
-                                  if (!_isSelectionMode) {
-                                    _enterSelectionMode(note.noteId.toString());
-                                  }
-                                },
-                                child: NoteCard(
-                                  note: note,
-                                  isSelected: _selectedNoteIds
-                                      .contains(note.noteId.toString()),
-                                  isSelectionMode: _isSelectionMode,
+                                  },
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            ],
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  16.0, 16.0, 16.0, 8.0),
+                              child: Text(
+                                " Notes",
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: MasonryGridView.count(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 4,
+                                crossAxisSpacing: 4,
+                                itemCount: unpinnedNotes.length,
+                                itemBuilder: (context, index) {
+                                  final note = unpinnedNotes[index];
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      if (_isSelectionMode) {
+                                        _toggleNoteSelection(
+                                            note.noteId.toString());
+                                      } else {
+                                        await Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                CreateNote(
+                                              note: note,
+                                            ),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return FadeTransition(
+                                                  opacity: animation,
+                                                  child: child);
+                                            },
+                                            transitionDuration: const Duration(
+                                                milliseconds: 300),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    onLongPress: () {
+                                      if (!_isSelectionMode) {
+                                        _enterSelectionMode(
+                                            note.noteId.toString());
+                                      }
+                                    },
+                                    child: NoteCard(
+                                      note: note,
+                                      isSelected: _selectedNoteIds
+                                          .contains(note.noteId.toString()),
+                                      isSelectionMode: _isSelectionMode,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 }
               },
@@ -385,7 +395,6 @@ class _NotetakingState extends State<Notetaking> {
   void _exitSearch() {
     setState(() {
       _isSearching = false;
-      _searchQuery = '';
       _searchController.clear();
       _lowerCaseSearchQuery = '';
     });
@@ -394,9 +403,8 @@ class _NotetakingState extends State<Notetaking> {
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      final lowerCaseQuery = query.toLowerCase(); //Caching
+      final lowerCaseQuery = query.toLowerCase();
       setState(() {
-        _searchQuery = query;
         _lowerCaseSearchQuery = lowerCaseQuery;
       });
     });
