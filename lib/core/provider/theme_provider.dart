@@ -39,10 +39,15 @@ class ThemeProvider with ChangeNotifier {
   }
 
   Future<void> setTheme(AppTheme theme) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeKey, theme.name);
-    _selectedTheme = theme;
-    notifyListeners();
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_themeKey, theme.name);
+      _selectedTheme = theme;
+      notifyListeners();
+    } catch (e) {
+      // Handle the error appropriately, e.g., log it or show a message
+      throw Exception('Failed to set theme: $e');
+    }
   }
 
   ThemeData getThemeData() {
