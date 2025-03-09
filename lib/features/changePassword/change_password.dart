@@ -49,7 +49,10 @@ class ChangepasswordState extends State<Changepassword> {
 
     return Scaffold(
       backgroundColor: theme.surface,
-      appBar: const CustomAppBar(title: "Change Password"),
+      appBar: const CustomAppBar(
+        title: "Change Password",
+        backbutton: true,
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),

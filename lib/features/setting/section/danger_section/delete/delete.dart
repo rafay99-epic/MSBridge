@@ -20,7 +20,10 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: const CustomAppBar(title: 'Delete Account'),
+      appBar: const CustomAppBar(
+        title: 'Delete Account',
+        backbutton: true,
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

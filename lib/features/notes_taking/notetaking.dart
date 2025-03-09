@@ -4,7 +4,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/core/repo/note_taking_hive_actions.dart';
+import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';

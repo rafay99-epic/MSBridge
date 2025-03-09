@@ -7,14 +7,14 @@ import 'package:msbridge/features/offline/offline.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
 class InternetChecker extends StatefulWidget {
-  const InternetChecker({super.key});
+  const InternetChecker({Key? key}) : super(key: key);
 
   @override
   State<InternetChecker> createState() => _InternetCheckerState();
 }
 
 class _InternetCheckerState extends State<InternetChecker> {
-  bool _isConnected = false;
+  bool? _isConnected = null; // Start as null for initial check
   Timer? _offlineTimer;
   final InternetHelper _internetHelper = InternetHelper();
 
@@ -22,10 +22,11 @@ class _InternetCheckerState extends State<InternetChecker> {
   void initState() {
     super.initState();
 
-    _checkInitialConnection();
+    _checkInitialConnection(); // Do initial check *first*
 
     _internetHelper.connectivitySubject.listen((connected) {
-      if (_isConnected != connected && mounted) {
+      if (_isConnected != null && _isConnected != connected && mounted) {
+        //Only continue if isConnected !=null (initial check is done).
         setState(() {
           _isConnected = connected;
         });
@@ -77,8 +78,7 @@ class _InternetCheckerState extends State<InternetChecker> {
     );
 
     if (mounted) {
-      CustomSnackBar.show(
-          context, "Hooray! You are back online.");
+      CustomSnackBar.show(context, "Hooray! You are back online.");
     }
   }
 
@@ -115,6 +115,13 @@ class _InternetCheckerState extends State<InternetChecker> {
 
   @override
   Widget build(BuildContext context) {
+    // Show a loading indicator until the initial connection check is done
+    if (_isConnected == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: _isConnected == true ? const AuthGate() : const OfflineHome(),
     );

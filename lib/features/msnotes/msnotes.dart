@@ -38,6 +38,7 @@ class _MSNotesScreenState extends State<Msnotes> {
       backgroundColor: theme.colorScheme.surface,
       appBar: const CustomAppBar(
         title: "MS Notes",
+        backbutton: false,
       ),
       body: subjects.isEmpty
           ? const Center(child: Text("No Subjects Available"))
