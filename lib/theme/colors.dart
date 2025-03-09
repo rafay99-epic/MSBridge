@@ -38,6 +38,29 @@ extension AppThemeExtension on AppTheme {
         return 'Crimson Blush';
     }
   }
+
+  String imagePath() {
+    switch (this) {
+      case AppTheme.light:
+        return 'assets/svg/light mode.svg';
+      case AppTheme.dark:
+        return 'assets/svg/mid_dark.svg';
+      case AppTheme.purpleHaze:
+        return 'assets/svg/purple_lavender.svg';
+      case AppTheme.mintFresh:
+        return 'assets/svg/MintFresh.svg';
+      case AppTheme.midnightBlue:
+        return 'assets/svg/mid_dark.svg';
+      case AppTheme.sunsetGlow:
+        return 'assets/svg/SunsetGlow.svg';
+      case AppTheme.forestGreen:
+        return 'assets/svg/ForestGreen.svg';
+      case AppTheme.oceanWave:
+        return 'assets/svg/OceanWave.svg';
+      case AppTheme.crimsonBlush:
+        return 'assets/svg/CrimsonBlush.svg';
+    }
+  }
 }
 
 class AppThemes {

@@ -20,6 +20,7 @@ class ThemeProvider with ChangeNotifier {
       _selectedTheme = _themeFromString(themeName);
     } catch (e) {
       _selectedTheme = AppTheme.dark;
+      debugPrint("Error loading theme: $e");
     }
     notifyListeners();
   }
@@ -45,14 +46,15 @@ class ThemeProvider with ChangeNotifier {
       _selectedTheme = theme;
       notifyListeners();
     } catch (e) {
-      // Handle the error appropriately, e.g., log it or show a message
-      throw Exception('Failed to set theme: $e');
+      debugPrint('Failed to set theme: $e');
     }
   }
 
   ThemeData getThemeData() {
     return AppThemes.themeMap[_selectedTheme]!;
   }
+
+  String get currentImagePath => _selectedTheme.imagePath(); // Add
 
   Future<void> resetTheme() async {
     try {
@@ -61,7 +63,7 @@ class ThemeProvider with ChangeNotifier {
       _selectedTheme = AppTheme.dark;
       notifyListeners();
     } catch (e) {
-      throw Exception('Failed to reset theme: $e');
+      debugPrint('Failed to reset theme: $e');
     }
   }
 }

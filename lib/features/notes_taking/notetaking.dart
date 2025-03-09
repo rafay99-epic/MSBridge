@@ -145,7 +145,7 @@ class _NotetakingState extends State<Notetaking> {
                     valueListenable: notesListenable,
                     builder: (context, box, _) {
                       if (box.values.isEmpty) {
-                        return const Center(child: Text("No notes yet!"));
+                        return const EmptyNotesMessage();
                       }
 
                       final notes = box.values.toList();
