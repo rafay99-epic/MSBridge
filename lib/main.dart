@@ -5,7 +5,6 @@ import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/services/internet_service.dart';
-import 'package:msbridge/core/services/note_taking_sync.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 
@@ -41,24 +40,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late SyncService _syncService;
-  @override
-  void initState() {
-    super.initState();
-    _syncService = SyncService();
-    _syncService.startListening();
-  }
-
-  @override
-  void dispose() {
-    _syncService.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-
     return MaterialApp(
       navigatorKey: navigatorKey,
       theme: themeProvider.getThemeData(),

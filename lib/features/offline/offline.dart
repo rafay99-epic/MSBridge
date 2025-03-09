@@ -1,34 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/features/msnotes/msnotes.dart';
-import 'package:msbridge/features/search/search.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/features/msnotes/msnotes.dart';
+import 'package:msbridge/features/notes_taking/notetaking.dart';
+import 'package:msbridge/features/offline/setting/setting_offline.dart';
+import 'package:msbridge/features/search/search.dart';
 
-class OfflineScreen extends StatefulWidget {
-  const OfflineScreen({super.key});
+class OfflineHome extends StatefulWidget {
+  const OfflineHome({super.key});
 
   @override
-  OfflineScreenState createState() => OfflineScreenState();
+  OfflineHomeState createState() => OfflineHomeState();
 }
 
-class OfflineScreenState extends State<OfflineScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CustomSnackBar.show(context, "You're in Offline Mode 📴");
-    });
-  }
-
+class OfflineHomeState extends State<OfflineHome> {
   int _selectedIndex = 0;
+  PageController? _pageController;
 
   final List<Widget> _pages = [
     const Msnotes(),
     const Search(),
+    const Notetaking(),
+    const OfflineSetting(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _pageController?.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -40,7 +59,12 @@ class OfflineScreenState extends State<OfflineScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(),
+        children: _pages,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -54,21 +78,28 @@ class OfflineScreenState extends State<OfflineScreen> {
             color: colorScheme.onSurface,
             activeColor: colorScheme.primary,
             tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
-            gap: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            gap: 5,
             tabs: [
               GButton(
                 icon: LineIcons.book,
                 text: 'MS Notes',
                 iconColor: colorScheme.primary,
-                semanticLabel: 'MS Notes',
-                haptic: true,
               ),
               GButton(
                 icon: LineIcons.search,
                 text: 'Search',
                 iconColor: colorScheme.primary,
-                haptic: true,
-                semanticLabel: 'Search',
+              ),
+              GButton(
+                icon: LineIcons.book,
+                text: 'Notes Taking',
+                iconColor: colorScheme.primary,
+              ),
+              GButton(
+                icon: LineIcons.cog,
+                text: 'Settings',
+                iconColor: colorScheme.primary,
               ),
             ],
           ),

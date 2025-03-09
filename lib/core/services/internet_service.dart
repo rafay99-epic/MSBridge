@@ -52,7 +52,7 @@ class _InternetCheckerState extends State<InternetChecker> {
             if (_isConnected == false && mounted) {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => const OfflineScreen()),
+                MaterialPageRoute(builder: (_) => const OfflineHome()),
                 (route) => false,
               );
             }
@@ -75,7 +75,7 @@ class _InternetCheckerState extends State<InternetChecker> {
       body: _isConnected == true
           ? const AuthGate()
           : _isConnected == false
-              ? const OfflineScreen()
+              ? const OfflineHome()
               : const SizedBox.shrink(),
     );
   }
