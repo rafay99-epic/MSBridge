@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
-import 'package:msbridge/features/setting/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
