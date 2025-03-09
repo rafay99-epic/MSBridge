@@ -51,41 +51,6 @@ class _CreateNoteState extends State<CreateNote>
     super.dispose();
   }
 
-  void _showDetailsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => saveNote(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      minimumSize: const Size(double.infinity, 48),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                    ),
-                    child: Text(
-                      'Save',
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary),
-                    ),
-                  )
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   void saveNote() async {
     String title = _titleController.text.trim();
     String content = _controller.document.toPlainText().trim();
@@ -125,7 +90,6 @@ class _CreateNoteState extends State<CreateNote>
           CustomSnackBar.show(context, result.message);
         }
       }
-      Navigator.pop(context, true);
     } catch (e) {
       CustomSnackBar.show(context, "Error saving note: $e");
     }

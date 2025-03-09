@@ -53,7 +53,7 @@ class _NotetakingState extends State<Notetaking> {
                   future: HiveNoteTakingRepo.getNotes(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const L oading(message: "Loading notes...");
+                      return const Loading(message: "Loading notes...");
                     } else if (snapshot.hasError) {
                       return ErrorApp(
                         errorMessage: 'Error: ${snapshot.error}',
