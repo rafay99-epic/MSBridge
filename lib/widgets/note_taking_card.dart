@@ -100,7 +100,9 @@ class _NoteCardState extends State<NoteCard> {
                         key: ValueKey<bool>(isPinned),
                         hoverColor: theme.colorScheme.secondary,
                         icon: Icon(
-                          isPinned ? LineIcons.mapPin : LineIcons.mapPin,
+                          isPinned
+                              ? LineIcons.thumbtack
+                              : Icons.push_pin_outlined,
                         ),
                         color: theme.colorScheme.primary,
                         onPressed: () {
