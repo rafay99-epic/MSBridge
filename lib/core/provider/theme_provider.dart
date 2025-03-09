@@ -48,4 +48,15 @@ class ThemeProvider with ChangeNotifier {
   ThemeData getThemeData() {
     return AppThemes.themeMap[_selectedTheme]!;
   }
+
+  Future<void> resetTheme() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_themeKey);
+      _selectedTheme = AppTheme.dark;
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Failed to reset theme: $e');
+    }
+  }
 }
