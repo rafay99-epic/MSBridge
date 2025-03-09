@@ -1,12 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
-import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
-import 'package:msbridge/backend/provider/theme_provider.dart';
-import 'package:msbridge/backend/services/internet_service.dart';
-import 'package:msbridge/backend/services/note_taking_sync.dart';
-import 'package:msbridge/frontend/utils/error.dart';
+import 'package:msbridge/core/database/note_reading/notes_model.dart';
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/provider/theme_provider.dart';
+import 'package:msbridge/core/services/internet_service.dart';
+import 'package:msbridge/core/services/note_taking_sync.dart';
+import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
