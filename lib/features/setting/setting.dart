@@ -325,11 +325,7 @@ class Setting extends StatelessWidget {
           const AppInfoSettingsSection(),
           Divider(color: theme.colorScheme.primary),
           const DangerSettingsSection(),
-          const Column(
-            children: [
-              AdminSettingsSection(),
-            ],
-          ),
+          const AdminSettingsSection(),
         ],
       ),
     );

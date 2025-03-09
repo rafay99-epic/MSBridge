@@ -47,45 +47,49 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection> {
     if (!_isVisible) {
       return const SizedBox.shrink();
     }
-    Divider(color: theme.colorScheme.primary);
 
-    return SettingsSection(
-      title: "Admin Settings",
+    return Column(
       children: [
-        SettingsTile(
-          title: "Tina CMS",
-          icon: LineIcons.edit,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child:
-                    const MyCMSWebView(cmsUrl: "https://www.rafay99.com/admin"),
-              ),
-            );
-          },
-        ),
-        SettingsTile(
-          title: "Page CMS",
-          icon: LineIcons.pen,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const MyCMSWebView(
-                    cmsUrl: "https://app.pagescms.org/sign-in"),
-              ),
-            );
-          },
-        ),
-        SettingsTile(
-          title: "Contact Messages",
-          icon: LineIcons.users,
-          onTap: () {
-            CustomSnackBar.show(context, "Coming Soon");
-          },
+        Divider(color: theme.colorScheme.primary),
+        SettingsSection(
+          title: "Admin Settings",
+          children: [
+            SettingsTile(
+              title: "Tina CMS",
+              icon: LineIcons.edit,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const MyCMSWebView(
+                        cmsUrl: "https://www.rafay99.com/admin"),
+                  ),
+                );
+              },
+            ),
+            SettingsTile(
+              title: "Page CMS",
+              icon: LineIcons.pen,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const MyCMSWebView(
+                        cmsUrl: "https://app.pagescms.org/sign-in"),
+                  ),
+                );
+              },
+            ),
+            SettingsTile(
+              title: "Contact Messages",
+              icon: LineIcons.users,
+              onTap: () {
+                CustomSnackBar.show(context, "Coming Soon");
+              },
+            ),
+          ],
         ),
       ],
     );
