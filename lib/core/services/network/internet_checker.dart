@@ -78,7 +78,7 @@ class _InternetCheckerState extends State<InternetChecker> {
 
     if (mounted) {
       CustomSnackBar.show(
-          context, "You are still offline: Sorry to be offline ");
+          context, "Hooray! You are back online.");
     }
   }
 
