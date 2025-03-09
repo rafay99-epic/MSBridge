@@ -1,16 +1,22 @@
-# MS Bridge 
+# MS Bridge
+
 ![MS Bridge Presentation](/Mockup//MS%20Bridge/1.png)
 
 MS Bridge is a cross-platform mobile application built with Flutter, designed to provide seamless note-reading capabilities in both online and offline modes. It leverages Firebase for authentication, data synchronization, and an admin panel, while Hive provides robust local storage for offline access. This ensures you can access and manage your notes anytime, anywhere.
 
 ## Features
 
-- **Dynamic Note Rendering:** Fetches and displays your notes from an API endpoint, ensuring you always have the latest version.
-- **Online/Offline Mode:** Seamlessly switches between online and offline modes, allowing you to access your notes even without an internet connection.
-- **Local Database with Hive:** Utilizes Hive, a fast and lightweight NoSQL database, for efficient offline data storage and retrieval.
-- **Secure Authentication and Spam Detection:** Implements Firebase Authentication for secure user access and incorporates spam detection mechanisms to maintain data integrity.
-- **Fast Search and Tag System:** Includes a powerful search functionality and a tag system for quick and easy note organization and retrieval.
-- **Admin Panel Integration:** Allows seamless integration with CMS through the web view, so you can manage content via CMS from anywhere.
+- **Dynamic Note Rendering** – Fetches and displays your notes from an API endpoint, ensuring you always have the latest version.
+- **Online/Offline Mode** – Seamlessly switches between online and offline modes, allowing you to access your notes even without an internet connection.
+- **Local Database with Hive** – Utilizes Hive, a fast and lightweight NoSQL database, for efficient offline data storage and retrieval.
+- **Secure Authentication and Spam Detection** – Implements Firebase Authentication for secure user access and incorporates spam detection mechanisms to maintain data integrity.
+- **Fast Search and Tag System** – Includes a powerful search functionality and a tag system for quick and easy note organization and retrieval.
+- **Admin Panel Integration** – Allows seamless integration with CMS through the web view, so you can manage content via CMS from anywhere.
+- **Note-Taking** – Enables users to create, edit, and delete notes, providing a comprehensive note-taking experience with Hive as the local database.
+- **Multiple Theme Support** – Users can switch between various themes, including light mode, dark mode, sunset, midnight, forest green, and more, allowing for a personalized experience.
+- **Fast Search** – With Hive database support, searching is optimized for speed and efficiency, enabling case-insensitive searches across titles and content.
+- **Enhanced Offline Mode** – Automatically switches between online and offline modes, preventing changes when there is no internet connection.
+- **Reset to Default** – Provides an option to reset settings and themes back to the default style whenever needed.
 
 ## Technologies Used
 
@@ -81,7 +87,10 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
 
 ## Download APK
 
-You can download the APK file for MS Bridge [here](apk/app-release.apk).
+Now, you can download and experience both versions of the application. Choose the version that suits your needs:
+
+- **[Download Version 1](/apk/v1/app-release.apk)** – The initial release with core features and Firebase integration.
+- **[Download Version 2](/apk/v2/app-release.apk)** – The latest update with improved performance, new features, and enhanced offline support.
 
 ## Branching Versions
 
