@@ -80,4 +80,15 @@ class HiveNoteTakingRepo {
           '⚠️ Error getting ValueListenable for Hive box "$_boxName": $e');
     }
   }
+
+  static Future<bool> clearBox() async {
+    try {
+      final box = await getBox();
+      await box.clear();
+
+      return await isBoxEmpty();
+    } catch (e) {
+      return false;
+    }
+  }
 }

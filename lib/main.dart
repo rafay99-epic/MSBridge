@@ -4,7 +4,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/core/services/internet_service.dart';
+import 'package:msbridge/core/services/network/internet_checker.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 
@@ -32,14 +32,9 @@ void main() async {
   }
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
