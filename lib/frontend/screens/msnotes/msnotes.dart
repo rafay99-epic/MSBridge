@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/frontend/screens/msnotes/lectures_screen.dart';
+import 'package:msbridge/frontend/widgets/appbar.dart';
 import 'package:page_transition/page_transition.dart';
 
 class Msnotes extends StatefulWidget {
@@ -35,12 +36,8 @@ class _MSNotesScreenState extends State<Msnotes> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text("MS Notes"),
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 0,
+      appBar: const CustomAppBar(
+        title: "MS Notes",
       ),
       body: subjects.isEmpty
           ? const Center(child: Text("No Subjects Available"))

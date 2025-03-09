@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/backend/repo/note_taking_repo.dart';
+import 'package:msbridge/frontend/widgets/appbar.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:msbridge/backend/hive/note_taking/note_taking.dart';
 
@@ -24,19 +25,14 @@ class _CreateNoteState extends State<CreateNote>
   void initState() {
     super.initState();
 
-    // Initialize the controller based on whether we're creating or editing
     if (widget.note != null) {
-      // Editing an existing note
       _titleController.text = widget.note!.noteTitle;
       try {
         _controller = QuillController(
-          document: Document.fromJson(jsonDecode(
-              widget.note!.noteContent)), // Load the existing content
+          document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
           selection: const TextSelection.collapsed(offset: 0),
         );
       } catch (e) {
-        // Handle cases where noteContent is not a valid JSON
-        print("Error decoding JSON content: $e");
         _controller = QuillController(
           document: Document(),
           selection: const TextSelection.collapsed(offset: 0),
@@ -44,7 +40,6 @@ class _CreateNoteState extends State<CreateNote>
         _controller.document.insert(0, widget.note!.noteContent);
       }
     } else {
-      // Creating a new note
       _controller = QuillController.basic();
     }
   }
@@ -102,6 +97,7 @@ class _CreateNoteState extends State<CreateNote>
           note: widget.note!,
           title: title,
           content: content,
+          isSynced: false,
         );
         if (result.success) {
           CustomSnackBar.show(context, result.message);
@@ -145,18 +141,13 @@ class _CreateNoteState extends State<CreateNote>
       },
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        appBar: AppBar(
-          title: Text(widget.note == null ? "Create Note" : "Edit Note"),
-          automaticallyImplyLeading: true,
-          backgroundColor: theme.colorScheme.surface,
-          foregroundColor: theme.colorScheme.primary,
-          elevation: 0,
+        appBar: CustomAppBar(
+          title: widget.note == null ? "Create Note" : "Edit Note",
+          backbutton: true,
           actions: [
             IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () {
-                _showDetailsBottomSheet(context);
-              },
+              icon: const Icon(Icons.save),
+              onPressed: saveNote,
             ),
           ],
         ),

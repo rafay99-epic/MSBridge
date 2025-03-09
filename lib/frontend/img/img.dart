@@ -11,3 +11,7 @@ class VerifyScreenImage {
 class ContactFormImage {
   static const String logo = 'assets/svg/logo.svg';
 }
+
+class LoadingScreenImage {
+  static const String loading = 'assets/svg/loading.svg';
+}

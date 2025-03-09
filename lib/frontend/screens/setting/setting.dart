@@ -10,6 +10,7 @@ import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
 import 'package:msbridge/frontend/screens/setting/settings_section.dart';
 import 'package:msbridge/frontend/screens/setting/settings_tile.dart';
 import 'package:msbridge/frontend/screens/setting/theme/theme_selector.dart';
+import 'package:msbridge/frontend/widgets/appbar.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
@@ -68,13 +69,7 @@ class _SettingState extends State<Setting> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text("Settings"),
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 0,
-      ),
+      appBar: const CustomAppBar(title: "Settings"),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

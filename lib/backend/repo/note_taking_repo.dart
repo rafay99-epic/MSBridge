@@ -52,14 +52,14 @@ class NoteTakingActions {
     required NoteTakingModel note,
     required String title,
     required String content,
+    required bool isSynced,
   }) async {
     try {
-      // Update the note's properties
       note.noteTitle = title;
       note.noteContent = content;
       note.updatedAt = DateTime.now();
+      note.isSynced = isSynced;
 
-      // Update the note in Hive
       await HiveNoteTakingRepo.updateNote(note);
 
       return SaveNoteResult(

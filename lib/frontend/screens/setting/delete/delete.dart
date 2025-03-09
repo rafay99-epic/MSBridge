@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/backend/repo/auth_repo.dart'; // Import your AuthRepo
+import 'package:msbridge/backend/repo/auth_repo.dart';
 import 'package:msbridge/frontend/screens/setting/logout/logout_dialog.dart';
-import 'package:msbridge/frontend/widgets/snakbar.dart'; // Import CustomSnackBar
+import 'package:msbridge/frontend/widgets/appbar.dart';
+import 'package:msbridge/frontend/widgets/snakbar.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -12,20 +13,14 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  bool _isLoading = false; // Add loading state
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text("Delete Account"),
-        automaticallyImplyLeading: true,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 0,
-      ),
+      appBar: const CustomAppBar(title: 'Delete Account'),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -53,13 +48,12 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: theme.colorScheme.primary,
-                padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 32), // Adjust padding for larger button
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
                 shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero, // Remove rounded corners
+                  borderRadius: BorderRadius.zero,
                 ),
-                textStyle: const TextStyle(fontSize: 18), // Make font bigger
+                textStyle: const TextStyle(fontSize: 18),
               ),
               onPressed: _isLoading ? null : _showConfirmationDialog,
               child: _isLoading
@@ -76,7 +70,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Future<void> _showConfirmationDialog() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // User must tap button!
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Account Deletion'),
@@ -94,15 +88,15 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete'),
               onPressed: () async {
-                Navigator.of(context).pop(); // Dismiss the dialog
-                await _deleteAccount(); // Call the delete function
+                Navigator.of(context).pop();
+                await _deleteAccount();
               },
             ),
           ],
@@ -113,24 +107,21 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
   Future<void> _deleteAccount() async {
     setState(() {
-      _isLoading = true; // Start loading
+      _isLoading = true;
     });
 
     final AuthRepo authRepo = AuthRepo();
     final result = await authRepo.deleteUserAndData();
 
     setState(() {
-      _isLoading = false; // Stop loading
+      _isLoading = false;
     });
 
     if (result.isSuccess) {
-      // Account deleted successfully - navigate to login or home screen
       CustomSnackBar.show(context, "Account deleted successfully.");
 
-      // Navigate to the login screen
       showLogoutDialog(context);
     } else {
-      // Display an error message
       CustomSnackBar.show(context, "Failed to delete account: ${result.error}");
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/repo/auth_repo.dart';
+import 'package:msbridge/frontend/widgets/appbar.dart';
 import 'package:msbridge/frontend/widgets/custom_text_field.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
 
@@ -48,13 +49,7 @@ class ChangepasswordState extends State<Changepassword> {
 
     return Scaffold(
       backgroundColor: theme.surface,
-      appBar: AppBar(
-        title: const Text("Change Password"),
-        automaticallyImplyLeading: true,
-        backgroundColor: theme.surface,
-        foregroundColor: theme.primary,
-        elevation: 0,
-      ),
+      appBar: const CustomAppBar(title: "Change Password"),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),

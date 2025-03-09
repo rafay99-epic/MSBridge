@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/backend/hive/note_reading/notes_model.dart';
 import 'package:msbridge/frontend/screens/msnotes/notes_detail.dart';
+import 'package:msbridge/frontend/widgets/appbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:intl/intl.dart';
 import 'package:msbridge/frontend/widgets/snakbar.dart';
@@ -70,7 +71,7 @@ class SearchState extends State<Search> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: _buildAppBar(theme),
+      appBar: const CustomAppBar(title: "Search"),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
