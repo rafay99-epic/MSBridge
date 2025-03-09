@@ -14,12 +14,8 @@ class Home extends StatefulWidget {
 }
 
 class HomePageState extends State<Home> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   int _selectedIndex = 0;
+  PageController? _pageController;
 
   final List<Widget> _pages = [
     const Msnotes(),
@@ -28,7 +24,30 @@ class HomePageState extends State<Home> {
     const Setting(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _pageController?.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -40,7 +59,12 @@ class HomePageState extends State<Home> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(),
+        children: _pages,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
