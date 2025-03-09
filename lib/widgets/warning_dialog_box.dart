@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 void showConfirmationDialog(BuildContext context, ThemeData theme,
-    VoidCallback action, String title, String description) {
+    VoidCallback action, String title, String description, {String confirmButtonText = "Confirm"}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -30,7 +30,7 @@ void showConfirmationDialog(BuildContext context, ThemeData theme,
               backgroundColor: theme.colorScheme.secondary,
               foregroundColor: theme.colorScheme.onSecondary,
             ),
-            child: const Text("Reset"),
+            child: Text(confirmButtonText),
             onPressed: () {
               Navigator.of(context).pop();
               action();
