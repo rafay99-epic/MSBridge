@@ -3,17 +3,17 @@
         "platforms": {
             "android": {
                 "default": {
-                    "projectId": "msbridge-9a2c7",
-                    "appId": "1:689509093484:android:56039ff98006d7766ac849",
-                    "fileOutput": "android/app/google-services.json"
+                    "projectId": "",
+                    "appId": "",
+                    "fileOutput": ""
                 }
             },
             "dart": {
                 "lib/firebase_options.dart": {
-                    "projectId": "msbridge-9a2c7",
+                    "projectId": "",
                     "configurations": {
-                        "android": "1:689509093484:android:56039ff98006d7766ac849",
-                        "ios": "1:689509093484:ios:3bb00a5379a3184d6ac849"
+                        "android": "",
+                        "ios": ""
                     }
                 }
             }
