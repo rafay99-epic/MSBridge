@@ -3,6 +3,7 @@ import 'package:msbridge/config/config.dart';
 import 'dart:convert';
 import '../database/note_reading/notes_model.dart';
 import 'package:hive/hive.dart';
+import 'dart:io';
 
 class ApiException implements Exception {
   final String message;
@@ -17,7 +18,26 @@ class ApiService {
 
   static Future<void> fetchAndSaveNotes() async {
     try {
-      var response = await http.get(Uri.parse(apiUrl));
+      Uri uri;
+      try {
+        uri = Uri.parse(apiUrl);
+      } catch (e) {
+        throw ApiException('Invalid URL format: $apiUrl.  Error: $e');
+      }
+
+      http.Response response;
+      try {
+        response = await http.get(uri);
+      } on SocketException catch (e) {
+        throw ApiException(
+            'Failed to connect to the server. Please check your internet connection. Error: $e');
+      } on HttpException catch (e) {
+        throw ApiException(
+            'HTTP error occurred while connecting to the server. Error: $e');
+      } catch (e) {
+        throw ApiException(
+            'An unexpected error occurred while connecting to the server. Error: $e');
+      }
 
       if (response.statusCode == 200) {
         List<Map<String, dynamic>> jsonData =
@@ -25,12 +45,15 @@ class ApiService {
         var box = Hive.box<MSNote>('notesBox');
 
         if (box.isNotEmpty) {
-          await box.clear();
+          try {
+            await box.clear();
+          } catch (e) {
+            throw ApiException('Error clearing Hive box: $e');
+          }
         }
 
         for (var item in jsonData) {
-          String bodyText =
-              (item['rendered']?['html'] as String?) ?? ''; // Use null safety
+          String bodyText = (item['rendered']?['html'] as String?) ?? '';
 
           MSNote note = MSNote(
             id: item['id'] ?? 0,
@@ -42,7 +65,13 @@ class ApiService {
             subject: item['data']['subject'] ?? '',
             body: bodyText,
           );
-          await box.put(note.id, note);
+
+          try {
+            await box.put(note.id, note);
+          } catch (e) {
+            throw ApiException(
+                'Error putting note with ID ${note.id} into Hive box: $e');
+          }
         }
       } else {
         throw ApiException(

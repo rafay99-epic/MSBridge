@@ -4,6 +4,7 @@ import 'package:msbridge/features/setting/section/app_info_settings_section.dart
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_section.dart';
 import 'package:msbridge/features/setting/section/connectivity_settings_section.dart';
 import 'package:msbridge/features/setting/section/danger_section/danger_settings_section.dart';
+import 'package:msbridge/features/setting/section/notes_setting_section.dart';
 import 'package:msbridge/features/setting/section/user_section/user_settings_section.dart';
 import 'package:msbridge/widgets/appbar.dart';
 
@@ -24,12 +25,15 @@ class Setting extends StatelessWidget {
           Divider(color: theme.colorScheme.primary),
           const UserSettingsSection(),
           Divider(color: theme.colorScheme.primary),
+          const NotesSetting(),
+          Divider(color: theme.colorScheme.primary),
           const ConnectivitySettingsSection(),
           Divider(color: theme.colorScheme.primary),
-          const AppInfoSettingsSection(),
+          const AdminSettingsSection(),
           Divider(color: theme.colorScheme.primary),
           const DangerSettingsSection(),
-          const AdminSettingsSection(),
+          Divider(color: theme.colorScheme.primary),
+          const AppInfoSettingsSection(),
         ],
       ),
     );

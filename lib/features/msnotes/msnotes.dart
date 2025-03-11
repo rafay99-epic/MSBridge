@@ -4,6 +4,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/features/msnotes/lectures_screen.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/widgets/empty_UI.dart';
 import 'package:page_transition/page_transition.dart';
 
 class Msnotes extends StatefulWidget {
@@ -41,7 +42,10 @@ class _MSNotesScreenState extends State<Msnotes> {
         backbutton: false,
       ),
       body: subjects.isEmpty
-          ? const Center(child: Text("No Subjects Available"))
+          ? const EmptyNotesMessage(
+              message: 'Sorry No Leacture Notes to show',
+              description: 'Pull down to refresh',
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: subjects.length,

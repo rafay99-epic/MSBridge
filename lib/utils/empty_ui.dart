@@ -4,7 +4,10 @@ import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class EmptyNotesMessage extends StatelessWidget {
-  const EmptyNotesMessage({Key? key}) : super(key: key);
+  final String message;
+  final String description;
+  const EmptyNotesMessage(
+      {super.key, required this.message, required this.description});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +29,7 @@ class EmptyNotesMessage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              "Empty, Like a Desert Island!",
+              message,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -35,7 +38,7 @@ class EmptyNotesMessage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "Tap the + button to add your first note!",
+              description,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),

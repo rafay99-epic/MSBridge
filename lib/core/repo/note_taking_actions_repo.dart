@@ -86,14 +86,14 @@ class NoteTakingActions {
               updatedAt: DateTime.now(),
               userId: ''),
         );
-
+        noteToDelete.isDeleted = true;
         if (noteToDelete.noteId!.isNotEmpty) {
           await HiveNoteTakingRepo.deleteNote(noteToDelete);
         }
       }
 
       return SaveNoteResult(
-          success: true, message: "Notes deleted successfully");
+          success: true, message: "Notes moved to recycle bin");
     } catch (e) {
       return SaveNoteResult(
           success: false, message: "Error deleting notes: $e");

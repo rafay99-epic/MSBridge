@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/core/services/network/internet_checker.dart';
+import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 
@@ -20,10 +21,16 @@ void main() async {
     await Hive.openBox<MSNote>('notesBox');
     Hive.registerAdapter(NoteTakingModelAdapter());
     await Hive.openBox<NoteTakingModel>('notes_taking');
+    await Hive.openBox<NoteTakingModel>('deleted_notes');
 
     runApp(
-      ChangeNotifierProvider(
-        create: (context) => ThemeProvider(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => ThemeProvider()),
+          ChangeNotifierProvider(
+              create: (context) =>
+                  ConnectivityProvider(navigatorKey: navigatorKey)),
+        ],
         child: const MyApp(),
       ),
     );
@@ -42,7 +49,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       theme: themeProvider.getThemeData(),
       debugShowCheckedModeBanner: false,
-      home: const InternetChecker(),
+      home: const AuthGate(),
     );
   }
 }
