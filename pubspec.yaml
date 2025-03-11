@@ -1,6 +1,6 @@
 name: msbridge
-description: "A new Flutter project."
-version: 2.0.0
+description: "MS Bridge: A cross-platform app for seamless content reading with online/offline access, Firebase integration, and a user-friendly interface."
+version: 2.1.0
 
 environment:
   sdk: ">=3.4.3 <4.0.0"

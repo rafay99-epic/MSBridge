@@ -51,49 +51,91 @@ class _CreateNoteState extends State<CreateNote>
     super.dispose();
   }
 
-  Future<bool> _performSave({bool showSnackBar = true}) async {
+  Future<void> _saveNoteOnPop() async {
     String title = _titleController.text.trim();
     String content = _controller.document.toPlainText().trim();
+    SaveNoteResult result;
 
     try {
       if (widget.note != null) {
-        await NoteTakingActions.updateNote(
+        result = await NoteTakingActions.updateNote(
           note: widget.note!,
           title: title,
           content: content,
           isSynced: false,
         );
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
       } else {
-        await NoteTakingActions.saveNote(
+        String title = _titleController.text.trim();
+        String content = _controller.document.toPlainText().trim();
+
+        SaveNoteResult result = await NoteTakingActions.saveNote(
           title: title,
           content: content,
         );
+
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
       }
-      if (showSnackBar && context.mounted) {
-        CustomSnackBar.show(context, "Note saved.");
-      }
-      return true;
     } catch (e) {
-      if (context.mounted) {
-        CustomSnackBar.show(context, "Error saving note: $e");
-      }
-      return false;
+      CustomSnackBar.show(context, "Error saving note: $e");
     }
   }
 
-  Future<void> _saveNoteOnPop() async {
-    await _performSave(showSnackBar: false);
-  }
-
   void saveNote() async {
-    bool success = await _performSave();
+    String title = _titleController.text.trim();
+    String content = _controller.document.toPlainText().trim();
+    SaveNoteResult result;
 
-    if (success) {
-      _titleController.clear();
-      _controller.clear();
-      if (context.mounted) {
-        Navigator.pop(context);
+    try {
+      if (widget.note != null) {
+        result = await NoteTakingActions.updateNote(
+          note: widget.note!,
+          title: title,
+          content: content,
+          isSynced: false,
+        );
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
+      } else {
+        String title = _titleController.text.trim();
+        String content = _controller.document.toPlainText().trim();
+
+        SaveNoteResult result = await NoteTakingActions.saveNote(
+          title: title,
+          content: content,
+        );
+
+        if (result.success) {
+          CustomSnackBar.show(context, result.message);
+          _titleController.clear();
+          _controller.clear();
+          Navigator.pop(context);
+        } else {
+          CustomSnackBar.show(context, result.message);
+        }
       }
+    } catch (e) {
+      CustomSnackBar.show(context, "Error saving note: $e");
     }
   }
 
@@ -102,9 +144,9 @@ class _CreateNoteState extends State<CreateNote>
     final theme = Theme.of(context);
 
     return PopScope(
-      onPopInvoked: (didPop) async {
+      onPopInvoked: (didPop) {
         if (didPop) {
-          await _saveNoteOnPop();
+          _saveNoteOnPop();
         }
       },
       child: Scaffold(

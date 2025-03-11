@@ -15,16 +15,37 @@ class OfflineSetting extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: const CustomAppBar(title: "Settings"),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Column(
         children: [
-          const AppearanceSettingsSection(),
-          Divider(color: theme.colorScheme.primary),
-          const NotesSetting(),
-          Divider(color: theme.colorScheme.primary),
-          const OfflineConnectivitySettingsSection(),
-          Divider(color: theme.colorScheme.primary),
-          const AppInfoSettingsSection()
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                const AppearanceSettingsSection(),
+                Divider(color: theme.colorScheme.primary),
+                const NotesSetting(),
+                Divider(color: theme.colorScheme.primary),
+                const OfflineConnectivitySettingsSection(),
+                Divider(color: theme.colorScheme.primary),
+                const AppInfoSettingsSection(),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      '© Syntax Lab Technology ${DateTime.now().year}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
