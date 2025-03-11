@@ -15,7 +15,10 @@ class Search extends StatefulWidget {
   SearchState createState() => SearchState();
 }
 
-class SearchState extends State<Search> {
+class SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final TextEditingController _searchController = TextEditingController();
   List<MSNote> _filteredResults = [];
   List<MSNote> _allItems = [];
@@ -67,6 +70,8 @@ class SearchState extends State<Search> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
 
     return Scaffold(

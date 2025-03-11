@@ -1,14 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:uuid/uuid.dart';
+import 'package:msbridge/utils/uuid.dart';
 
 class NoteTakingActions {
-  static String generateUuid() {
-    const uuid = Uuid();
-    return uuid.v4();
-  }
-
   static Future<SaveNoteResult> saveNote({
     required String title,
     required String content,

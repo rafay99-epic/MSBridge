@@ -28,7 +28,6 @@ class Setting extends StatelessWidget {
           const NotesSetting(),
           Divider(color: theme.colorScheme.primary),
           const ConnectivitySettingsSection(),
-          Divider(color: theme.colorScheme.primary),
           const AdminSettingsSection(),
           Divider(color: theme.colorScheme.primary),
           const DangerSettingsSection(),

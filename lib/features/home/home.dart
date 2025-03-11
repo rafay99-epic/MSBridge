@@ -17,11 +17,11 @@ class HomePageState extends State<Home> {
   int _selectedIndex = 0;
   PageController? _pageController;
 
-  final List<Widget> _pages = [
-    const Msnotes(),
-    const Search(),
-    const Notetaking(),
-    const Setting(),
+  final List<Widget> _pages = const [
+    Msnotes(),
+    Search(),
+    Notetaking(),
+    Setting(),
   ];
 
   @override

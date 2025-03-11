@@ -8,6 +8,7 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/widgets/warning_dialog_box.dart';
 
 class DeletedNotes extends StatefulWidget {
   const DeletedNotes({super.key});
@@ -77,7 +78,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
             );
           } else if (!snapshot.hasData || snapshot.data == null) {
             return const EmptyNotesMessage(
-              message: 'Soory Notes to delete',
+              message: 'Sorry Notes to delete',
               description: 'Go to notes and create some notes to delete',
             );
           } else {
@@ -88,7 +89,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
               builder: (context, box, _) {
                 if (box.values.isEmpty) {
                   return const EmptyNotesMessage(
-                    message: 'Soory Notes to delete',
+                    message: 'Sorry Notes to delete',
                     description: 'Go to notes and create some notes to delete',
                   );
                 }
@@ -114,11 +115,20 @@ class _DeletedNotesState extends State<DeletedNotes> {
                             if (notes.isNotEmpty && !_isSelectionMode)
                               ElevatedButton(
                                 onPressed: () {
-                                  NoteTakingActions.permanentlyDeleteAllNotes()
-                                      .then((result) {
-                                    CustomSnackBar.show(
-                                        context, result.message);
-                                  });
+                                  showConfirmationDialog(
+                                    context,
+                                    theme,
+                                    () {
+                                      NoteTakingActions
+                                              .permanentlyDeleteAllNotes()
+                                          .then((result) {
+                                        CustomSnackBar.show(
+                                            context, result.message);
+                                      });
+                                    },
+                                    "Clear Recycle Bin",
+                                    "Are you sure you want to Clear Recycle Bin?",
+                                  );
                                 },
                                 child: const Text("Delete All"),
                               ),

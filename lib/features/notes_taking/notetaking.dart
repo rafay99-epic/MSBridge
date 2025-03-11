@@ -22,7 +22,11 @@ class Notetaking extends StatefulWidget {
   State<Notetaking> createState() => _NotetakingState();
 }
 
-class _NotetakingState extends State<Notetaking> {
+class _NotetakingState extends State<Notetaking>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
   bool _isSearching = false;
@@ -97,12 +101,14 @@ class _NotetakingState extends State<Notetaking> {
       }
 
       _exitSelectionMode();
-      setState(() {}); // <--- ADD THIS LINE
+      setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -139,7 +145,7 @@ class _NotetakingState extends State<Notetaking> {
                   );
                 } else if (!snapshot.hasData) {
                   return const EmptyNotesMessage(
-                    message: 'Soory Notes ',
+                    message: 'Sorry Notes ',
                     description: 'Tap + to create a new note',
                   );
                 } else {
@@ -150,7 +156,7 @@ class _NotetakingState extends State<Notetaking> {
                     builder: (context, box, _) {
                       if (box.values.isEmpty) {
                         return const EmptyNotesMessage(
-                          message: 'Soory Notes ',
+                          message: 'Sorry Notes ',
                           description: 'Tap + to create a new note',
                         );
                       }

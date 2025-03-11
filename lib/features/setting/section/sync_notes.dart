@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/core/services/network/internet_helper.dart';
-import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/notes_taking/reccyclebin/recycle.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
@@ -51,34 +49,6 @@ class NotesSetting extends StatelessWidget {
               },
               "Reset Offline Notes",
               "Are you sure you want to reset offline notes?",
-            );
-          },
-        ),
-        SettingsTile(
-          title: "Sync Notes to Server",
-          icon: LineIcons.server,
-          onTap: () {
-            showConfirmationDialog(
-              context,
-              theme,
-              () async {
-                final internetHelper = InternetHelper();
-                await internetHelper.checkInternet();
-                if (!internetHelper.connectivitySubject.value) {
-                  if (context.mounted) {
-                    CustomSnackBar.show(context, "No internet connection.");
-                  }
-                  return;
-                }
-                final syncService = SyncService();
-                await syncService.syncLocalNotesToFirebase();
-                if (context.mounted) {
-                  CustomSnackBar.show(
-                      context, "Syncing Notes to Server Successfully");
-                }
-              },
-              "Sync Notes to Server",
-              "Are you sure you want to Sync Notes to server?",
             );
           },
         ),

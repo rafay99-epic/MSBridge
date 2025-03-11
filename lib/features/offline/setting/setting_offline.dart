@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:msbridge/features/offline/setting/sections/connectivity_section/connectivity_section.dart';
 import 'package:msbridge/features/setting/section/app_info_settings_section.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_section.dart';
-import 'package:msbridge/features/setting/section/connectivity_settings_section.dart';
 import 'package:msbridge/features/setting/section/notes_setting_section.dart';
 import 'package:msbridge/widgets/appbar.dart';
 
@@ -22,7 +22,7 @@ class OfflineSetting extends StatelessWidget {
           Divider(color: theme.colorScheme.primary),
           const NotesSetting(),
           Divider(color: theme.colorScheme.primary),
-          const ConnectivitySettingsSection(),
+          const OfflineConnectivitySettingsSection(),
           Divider(color: theme.colorScheme.primary),
           const AppInfoSettingsSection()
         ],

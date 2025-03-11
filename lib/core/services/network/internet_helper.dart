@@ -21,7 +21,7 @@ class InternetHelper {
     timer = Timer.periodic(const Duration(seconds: 30), (timer) {
       checkInternet();
     });
-    checkInternet(); // Initial check
+    checkInternet();
   }
 
   void dispose() {

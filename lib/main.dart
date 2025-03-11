@@ -6,6 +6,7 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 
@@ -34,6 +35,11 @@ void main() async {
         child: const MyApp(),
       ),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final syncService = SyncService();
+      await syncService.startListening();
+    });
   } catch (e) {
     runApp(ErrorApp(errorMessage: e.toString()));
   }

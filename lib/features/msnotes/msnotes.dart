@@ -16,7 +16,10 @@ class Msnotes extends StatefulWidget {
   State<Msnotes> createState() => _MSNotesScreenState();
 }
 
-class _MSNotesScreenState extends State<Msnotes> {
+class _MSNotesScreenState extends State<Msnotes>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   List<String> subjects = [];
   final InternetHelper _internetHelper = InternetHelper();
 
@@ -59,6 +62,8 @@ class _MSNotesScreenState extends State<Msnotes> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
