@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -19,17 +19,6 @@ class DeletedNotes extends StatefulWidget {
 class _DeletedNotesState extends State<DeletedNotes> {
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
-  bool _isSearching = false;
-  String _lowerCaseSearchQuery = '';
-  final TextEditingController _searchController = TextEditingController();
-  Timer? _debounceTimer;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
 
   void _enterSelectionMode(String noteId) {
     setState(() {
@@ -58,50 +47,6 @@ class _DeletedNotesState extends State<DeletedNotes> {
     });
   }
 
-  Future<void> _permanentlyDeleteSelectedNotes() async {
-    if (_selectedNoteIds.isNotEmpty) {
-      try {
-        final box = await HiveNoteTakingRepo.getDeletedBox();
-        for (final noteId in _selectedNoteIds) {
-          final noteToDelete = box.values.firstWhere(
-            (note) => note.noteId == noteId,
-            orElse: () => NoteTakingModel(
-                noteId: '',
-                noteTitle: '',
-                noteContent: '',
-                isSynced: false,
-                isDeleted: false,
-                updatedAt: DateTime.now(),
-                userId: ''),
-          );
-
-          await HiveNoteTakingRepo.permantentlydeleteNote(noteToDelete);
-        }
-        CustomSnackBar.show(context, "Selected notes permanently deleted.");
-      } catch (e) {
-        CustomSnackBar.show(context, "Error deleting notes: $e");
-        print("⚠️Error deleting notes: $e");
-      }
-      _exitSelectionMode();
-      setState(() {});
-    }
-  }
-
-  Future<void> _permanentlyDeleteAllNotes() async {
-    try {
-      final box = await HiveNoteTakingRepo.getDeletedBox();
-
-      final allNotes = box.values.toList();
-      for (final note in allNotes) {
-        await HiveNoteTakingRepo.permantentlydeleteNote(note);
-      }
-      CustomSnackBar.show(context, "All notes permanently deleted.");
-    } catch (e) {
-      CustomSnackBar.show(context, "Error deleting all notes: $e");
-    }
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,7 +54,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: _buildAppBarTitle(theme),
+        title: const Text("Recycle Bin"),
         automaticallyImplyLeading: true,
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.primary,
@@ -117,7 +62,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
         shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
         centerTitle: true,
         leading: _buildAppBarLeading(),
-        actions: _buildAppBarActions(),
+        actions: _buildAppBarActions(context),
         titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: theme.colorScheme.primary,
@@ -147,9 +92,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
                     description: 'Go to notes and create some notes to delete',
                   );
                 }
-                final notes = box.values
-                    .where((note) => _matchesSearchQuery(note))
-                    .toList();
+                final notes = box.values.toList();
 
                 return SingleChildScrollView(
                   child: Column(
@@ -170,7 +113,13 @@ class _DeletedNotesState extends State<DeletedNotes> {
                             ),
                             if (notes.isNotEmpty && !_isSelectionMode)
                               ElevatedButton(
-                                onPressed: _permanentlyDeleteAllNotes,
+                                onPressed: () {
+                                  NoteTakingActions.permanentlyDeleteAllNotes()
+                                      .then((result) {
+                                    CustomSnackBar.show(
+                                        context, result.message);
+                                  });
+                                },
                                 child: const Text("Delete All"),
                               ),
                           ],
@@ -202,85 +151,42 @@ class _DeletedNotesState extends State<DeletedNotes> {
     );
   }
 
-  Widget _buildAppBarTitle(ThemeData theme) {
-    return _isSearching
-        ? TextField(
-            controller: _searchController,
-            autofocus: true,
-            style: TextStyle(color: theme.colorScheme.primary),
-            decoration: InputDecoration(
-              hintText: 'Search deleted notes...',
-              hintStyle:
-                  TextStyle(color: theme.colorScheme.primary.withOpacity(0.6)),
-              border: InputBorder.none,
-            ),
-            onChanged: (query) {
-              _onSearchChanged(query);
-            },
-          )
-        : const Text("Recycle Bin");
-  }
-
   IconButton? _buildAppBarLeading() {
     return _isSelectionMode
         ? IconButton(
             icon: const Icon(LineIcons.check),
             onPressed: _exitSelectionMode,
           )
-        : _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _exitSearch,
-              )
-            : null;
+        : null;
   }
 
-  List<Widget> _buildAppBarActions() {
+  List<Widget> _buildAppBarActions(BuildContext context) {
     if (_isSelectionMode) {
       return [
         IconButton(
           icon: const Icon(LineIcons.trash),
-          onPressed: _permanentlyDeleteSelectedNotes,
+          onPressed: () {
+            NoteTakingActions.permanentlyDeleteSelectedNotes(_selectedNoteIds)
+                .then((result) {
+              CustomSnackBar.show(context, result.message);
+              setState(() {});
+            });
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.restore),
+          onPressed: () {
+            NoteTakingActions.restoreSelectedNotes(_selectedNoteIds)
+                .then((result) {
+              CustomSnackBar.show(context, result.message);
+              setState(() {});
+            });
+          },
         ),
       ];
     }
 
-    return [
-      if (!_isSearching)
-        IconButton(
-          icon: const Icon(LineIcons.search),
-          onPressed: _enterSearch,
-        ),
-    ];
-  }
-
-  void _enterSearch() {
-    setState(() {
-      _isSearching = true;
-    });
-  }
-
-  void _exitSearch() {
-    setState(() {
-      _isSearching = false;
-      _searchController.clear();
-      _lowerCaseSearchQuery = '';
-    });
-  }
-
-  void _onSearchChanged(String query) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      final lowerCaseQuery = query.toLowerCase();
-      setState(() {
-        _lowerCaseSearchQuery = lowerCaseQuery;
-      });
-    });
-  }
-
-  bool _matchesSearchQuery(NoteTakingModel note) {
-    return note.noteTitle.toLowerCase().contains(_lowerCaseSearchQuery) ||
-        note.noteContent.toLowerCase().contains(_lowerCaseSearchQuery);
+    return const [];
   }
 
   Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {

@@ -54,6 +54,25 @@ class HiveNoteTakingRepo {
     }
   }
 
+  static Future<void> addNoteToMainBox(NoteTakingModel note) async {
+    try {
+      final box = await getBox();
+      final restoredNote = NoteTakingModel(
+        noteId: note.noteId,
+        noteTitle: note.noteTitle,
+        noteContent: note.noteContent,
+        isSynced: note.isSynced,
+        isDeleted: note.isDeleted,
+        updatedAt: note.updatedAt,
+        userId: note.userId,
+      );
+
+      await box.put(restoredNote.noteId!, restoredNote);
+    } catch (e) {
+      throw Exception('Error occured while restoring note: $e');
+    }
+  }
+
   static Future<void> addNote(NoteTakingModel note) async {
     try {
       final box = await getBox();
