@@ -201,7 +201,9 @@ class _DeletedNotesState extends State<DeletedNotes> {
               NoteTakingActions.restoreSelectedNotes(_selectedNoteIds)
                   .then((result) {
                 CustomSnackBar.show(context, result.message);
-                setState(() {});
+                setState(() {
+                  _exitSelectionMode(); // Reset selection mode after restoration
+                });
               });
             } catch (e) {
               CustomSnackBar.show(context, e.toString());
