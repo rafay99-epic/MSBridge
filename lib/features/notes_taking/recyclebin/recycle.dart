@@ -125,6 +125,12 @@ class _DeletedNotesState extends State<DeletedNotes> {
                                           .then((result) {
                                         CustomSnackBar.show(
                                             context, result.message);
+                                        setState(() {
+                                          _exitSelectionMode();
+                                        });
+                                      }).catchError((error) {
+                                        CustomSnackBar.show(context,
+                                            'Failed to delete notes: $error');
                                       });
                                     },
                                     "Clear Recycle Bin",

@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +8,6 @@ import 'package:msbridge/widgets/custom_text_field.dart';
 class ContactPage extends StatelessWidget {
   ContactPage({super.key});
 
-  //controllers
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final messageController = TextEditingController();
@@ -66,7 +63,6 @@ class ContactPage extends StatelessWidget {
     }
   }
 
-  //build Main Function
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,7 +90,7 @@ class ContactPage extends StatelessWidget {
               ),
               const SizedBox(height: 35),
               Text(
-                'Meaning Mate',
+                'MS Bridge',
                 style: TextStyle(
                   letterSpacing: .5,
                   fontSize: 25,
