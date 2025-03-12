@@ -202,7 +202,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
                   .then((result) {
                 CustomSnackBar.show(context, result.message);
                 setState(() {
-                  _exitSelectionMode(); // Reset selection mode after restoration
+                  _exitSelectionMode();
                 });
               });
             } catch (e) {
