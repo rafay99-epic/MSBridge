@@ -1,14 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:uuid/uuid.dart';
+import 'package:msbridge/utils/uuid.dart';
 
 class NoteTakingActions {
-  static String generateUuid() {
-    const uuid = Uuid();
-    return uuid.v4();
-  }
-
   static Future<SaveNoteResult> saveNote({
     required String title,
     required String content,
@@ -86,17 +81,94 @@ class NoteTakingActions {
               updatedAt: DateTime.now(),
               userId: ''),
         );
-
+        noteToDelete.isDeleted = true;
         if (noteToDelete.noteId!.isNotEmpty) {
           await HiveNoteTakingRepo.deleteNote(noteToDelete);
         }
       }
 
       return SaveNoteResult(
-          success: true, message: "Notes deleted successfully");
+          success: true, message: "Notes moved to recycle bin");
     } catch (e) {
       return SaveNoteResult(
           success: false, message: "Error deleting notes: $e");
+    }
+  }
+
+  static Future<SaveNoteResult> permanentlyDeleteSelectedNotes(
+      List<String> noteIds) async {
+    try {
+      final box = await HiveNoteTakingRepo.getDeletedBox();
+      for (final noteId in noteIds) {
+        NoteTakingModel? noteToDelete = box.values.firstWhere(
+          (note) => note.noteId == noteId,
+          orElse: () => NoteTakingModel(
+              noteId: '',
+              noteTitle: '',
+              noteContent: '',
+              isSynced: false,
+              isDeleted: false,
+              updatedAt: DateTime.now(),
+              userId: ''),
+        );
+
+        await HiveNoteTakingRepo.permantentlyDeleteNote(noteToDelete);
+      }
+
+      return SaveNoteResult(
+          success: true, message: "Selected notes permanently deleted.");
+    } catch (e) {
+      return SaveNoteResult(
+          success: false, message: "Error deleting notes: $e");
+    }
+  }
+
+  static Future<SaveNoteResult> permanentlyDeleteAllNotes() async {
+    try {
+      final box = await HiveNoteTakingRepo.getDeletedBox();
+
+      final allNotes = box.values.toList();
+      for (final note in allNotes) {
+        await HiveNoteTakingRepo.permantentlyDeleteNote(note);
+      }
+
+      return SaveNoteResult(
+          success: true, message: "All notes permanently deleted.");
+    } catch (e) {
+      return SaveNoteResult(
+          success: false, message: "Error deleting all notes: $e");
+    }
+  }
+
+  static Future<SaveNoteResult> restoreSelectedNotes(
+      List<String> noteIds) async {
+    try {
+      final deletedBox = await HiveNoteTakingRepo.getDeletedBox();
+      for (final noteId in noteIds) {
+        final noteToRestore = deletedBox.values.firstWhere(
+          (note) => note.noteId == noteId,
+          orElse: () => NoteTakingModel(
+              noteId: '',
+              noteTitle: '',
+              noteContent: '',
+              isSynced: false,
+              isDeleted: false,
+              updatedAt: DateTime.now(),
+              userId: ''),
+        );
+
+        if (noteToRestore.noteId!.isNotEmpty) {
+          noteToRestore.isDeleted = false;
+
+          await HiveNoteTakingRepo.addNoteToMainBox(noteToRestore);
+
+          await HiveNoteTakingRepo.permantentlyDeleteNote(noteToRestore);
+        }
+      }
+      return SaveNoteResult(success: true, message: "Notes Restored");
+    } catch (e) {
+      return SaveNoteResult(
+          success: false, message: "Error restoring notes: $e");
     }
   }
 }

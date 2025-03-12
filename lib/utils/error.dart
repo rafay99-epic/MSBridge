@@ -54,7 +54,7 @@ class ErrorApp extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: outlineVariantColor),
                   ),

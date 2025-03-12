@@ -15,8 +15,11 @@ class ConnectivitySettingsSection extends StatefulWidget {
 }
 
 class _ConnectivitySettingsSectionState
-    extends State<ConnectivitySettingsSection> {
+    extends State<ConnectivitySettingsSection>
+    with AutomaticKeepAliveClientMixin {
   bool _isInternetConnected = false;
+  @override
+  bool get wantKeepAlive => true;
   final InternetHelper _internetHelper = InternetHelper();
 
   @override
@@ -39,6 +42,8 @@ class _ConnectivitySettingsSectionState
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return SettingsSection(
       title: "Connectivity",
       children: [

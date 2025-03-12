@@ -13,7 +13,10 @@ class AppInfoSettingsSection extends StatefulWidget {
   State<AppInfoSettingsSection> createState() => _AppInfoSettingsSectionState();
 }
 
-class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection> {
+class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   String appVersion = "Loading...";
   String buildVersion = "Loading...";
 
@@ -40,6 +43,8 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return SettingsSection(
       title: "App Info",
       children: [

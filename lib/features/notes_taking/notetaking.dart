@@ -9,9 +9,9 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
-import 'package:msbridge/features/notes_taking/widget/empty_notes_message.dart';
+import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
-import 'package:msbridge/widgets/note_taking_card.dart';
+import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +22,11 @@ class Notetaking extends StatefulWidget {
   State<Notetaking> createState() => _NotetakingState();
 }
 
-class _NotetakingState extends State<Notetaking> {
+class _NotetakingState extends State<Notetaking>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
   bool _isSearching = false;
@@ -97,11 +101,14 @@ class _NotetakingState extends State<Notetaking> {
       }
 
       _exitSelectionMode();
+      setState(() {});
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -137,7 +144,10 @@ class _NotetakingState extends State<Notetaking> {
                     errorMessage: 'Error: ${snapshot.error}',
                   );
                 } else if (!snapshot.hasData) {
-                  return const EmptyNotesMessage();
+                  return const EmptyNotesMessage(
+                    message: 'Sorry Notes ',
+                    description: 'Tap + to create a new note',
+                  );
                 } else {
                   final notesListenable = snapshot.data!;
 
@@ -145,7 +155,10 @@ class _NotetakingState extends State<Notetaking> {
                     valueListenable: notesListenable,
                     builder: (context, box, _) {
                       if (box.values.isEmpty) {
-                        return const EmptyNotesMessage();
+                        return const EmptyNotesMessage(
+                          message: 'Sorry Notes ',
+                          description: 'Tap + to create a new note',
+                        );
                       }
 
                       final notes = box.values.toList();

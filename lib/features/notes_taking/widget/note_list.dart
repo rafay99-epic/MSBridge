@@ -3,8 +3,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
-import 'package:msbridge/features/notes_taking/widget/empty_notes_message.dart';
-import 'package:msbridge/widgets/note_taking_card.dart';
+import 'package:msbridge/utils/empty_ui.dart';
+import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 
 class NoteList extends StatelessWidget {
   const NoteList({
@@ -29,7 +29,10 @@ class NoteList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (notes.isEmpty) {
-      return const EmptyNotesMessage();
+      return const EmptyNotesMessage(
+        message: 'Sorry Notes ',
+        description: 'Tap + to create a new note',
+      );
     }
 
     final pinnedNotes = notes

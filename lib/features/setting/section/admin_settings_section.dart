@@ -14,7 +14,10 @@ class AdminSettingsSection extends StatefulWidget {
   State<AdminSettingsSection> createState() => _AdminSettingsSectionState();
 }
 
-class _AdminSettingsSectionState extends State<AdminSettingsSection> {
+class _AdminSettingsSectionState extends State<AdminSettingsSection>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   bool _isVisible = false;
   final AuthRepo _authRepo = AuthRepo();
 
@@ -43,6 +46,8 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
     if (!_isVisible) {
       return const SizedBox.shrink();

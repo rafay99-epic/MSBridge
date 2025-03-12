@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/api/notes.dart';
+import 'package:msbridge/core/api/ms_notes_api.dart';
 import '../database/note_reading/notes_model.dart';
 import 'package:hive/hive.dart';
 
-class NotesProvider with ChangeNotifier {
+class LectureNotesProvider with ChangeNotifier {
   List<MSNote> _notes = [];
   bool _isLoading = false;
   String _errorMessage = '';
