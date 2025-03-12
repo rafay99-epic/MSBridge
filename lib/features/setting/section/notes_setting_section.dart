@@ -63,22 +63,32 @@ class NotesSetting extends StatelessWidget {
               theme,
               () async {
                 final internetHelper = InternetHelper();
-                await internetHelper.checkInternet();
-                if (!internetHelper.connectivitySubject.value) {
-                  if (context.mounted) {
-                    CustomSnackBar.show(context, "No internet connection.");
+                try {
+                  await internetHelper.checkInternet();
+                  if (!internetHelper.connectivitySubject.value) {
+                    if (context.mounted) {
+                      CustomSnackBar.show(context, "No internet connection.");
+                    }
+                    return;
                   }
-                  return;
-                }
-                final syncService = SyncService();
-                await syncService.syncLocalNotesToFirebase();
-                if (context.mounted) {
-                  CustomSnackBar.show(
-                      context, "Syncing Notes to Server Successfully");
+                  
+                  final syncService = SyncService();
+                  try {
+                    await syncService.syncLocalNotesToFirebase();
+                    if (context.mounted) {
+                      CustomSnackBar.show(context, "Notes successfully synced to server");
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      CustomSnackBar.show(context, "Failed to sync notes: ${e.toString()}");
+                    }
+                  }
+                } finally {
+                  internetHelper.dispose();
                 }
               },
               "Sync Notes to Server",
-              "Are you sure you want to Sync Notes to server?",
+              "Are you sure you want to sync notes to server?",
             );
           },
         ),
