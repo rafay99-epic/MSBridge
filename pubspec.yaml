@@ -1,7 +1,6 @@
 name: msbridge
 description: "MS Bridge: A cross-platform app for seamless content reading with online/offline access, Firebase integration, and a user-friendly interface."
-version: 2.1.0
-
+version: 3.0.0+3
 environment:
   sdk: ">=3.4.3 <4.0.0"
 

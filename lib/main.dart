@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
@@ -39,6 +40,7 @@ void main() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final syncService = SyncService();
       await syncService.startListening();
+      ApiService.fetchAndSaveNotes();
     });
   } catch (e) {
     runApp(ErrorApp(errorMessage: e.toString()));
