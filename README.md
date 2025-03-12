@@ -99,7 +99,7 @@ Now, you can download and experience both versions of the application. Choose th
 
 ### Latest Version
 
-- **[Download Latest Version](/apk/v2.1/app-release.apk)** – The latest version of MS Bridge with the latest features and improvements.
+- **[Download Latest Version](/apk/v3/app-release.apk)** – The latest version of MS Bridge with the latest features and improvements.
 
 ### Previous Versions
 
