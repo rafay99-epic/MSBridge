@@ -25,7 +25,7 @@ class OfflineSetting extends StatelessWidget {
                 Divider(color: theme.colorScheme.primary),
                 const NotesSetting(),
                 Divider(color: theme.colorScheme.primary),
-                const OfflineConnectivitySettingsSection(),
+                const OfflineConnectivity(),
                 Divider(color: theme.colorScheme.primary),
                 const AppInfoSettingsSection(),
                 Align(

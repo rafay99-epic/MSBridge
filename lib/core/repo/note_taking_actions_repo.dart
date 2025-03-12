@@ -112,7 +112,7 @@ class NoteTakingActions {
               userId: ''),
         );
 
-        await HiveNoteTakingRepo.permantentlydeleteNote(noteToDelete);
+        await HiveNoteTakingRepo.permantentlyDeleteNote(noteToDelete);
       }
 
       return SaveNoteResult(
@@ -129,7 +129,7 @@ class NoteTakingActions {
 
       final allNotes = box.values.toList();
       for (final note in allNotes) {
-        await HiveNoteTakingRepo.permantentlydeleteNote(note);
+        await HiveNoteTakingRepo.permantentlyDeleteNote(note);
       }
 
       return SaveNoteResult(
@@ -162,7 +162,7 @@ class NoteTakingActions {
 
           await HiveNoteTakingRepo.addNoteToMainBox(noteToRestore);
 
-          await HiveNoteTakingRepo.permantentlydeleteNote(noteToRestore);
+          await HiveNoteTakingRepo.permantentlyDeleteNote(noteToRestore);
         }
       }
       return SaveNoteResult(success: true, message: "Notes Restored");

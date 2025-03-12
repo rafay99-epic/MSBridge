@@ -7,16 +7,14 @@ import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
-class OfflineConnectivitySettingsSection extends StatefulWidget {
-  const OfflineConnectivitySettingsSection({super.key});
+class OfflineConnectivity extends StatefulWidget {
+  const OfflineConnectivity({super.key});
 
   @override
-  State<OfflineConnectivitySettingsSection> createState() =>
-      _ConnectivitySettingsSectionState();
+  State<OfflineConnectivity> createState() => _OfflineConnectivityState();
 }
 
-class _ConnectivitySettingsSectionState
-    extends State<OfflineConnectivitySettingsSection> {
+class _OfflineConnectivityState extends State<OfflineConnectivity> {
   bool _isInternetConnected = false;
   final InternetHelper _internetHelper = InternetHelper();
 

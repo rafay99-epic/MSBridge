@@ -176,21 +176,29 @@ class _DeletedNotesState extends State<DeletedNotes> {
         IconButton(
           icon: const Icon(LineIcons.trash),
           onPressed: () {
-            NoteTakingActions.permanentlyDeleteSelectedNotes(_selectedNoteIds)
-                .then((result) {
-              CustomSnackBar.show(context, result.message);
-              setState(() {});
-            });
+            try {
+              NoteTakingActions.permanentlyDeleteSelectedNotes(_selectedNoteIds)
+                  .then((result) {
+                CustomSnackBar.show(context, result.message);
+                setState(() {});
+              });
+            } catch (e) {
+              CustomSnackBar.show(context, e.toString());
+            }
           },
         ),
         IconButton(
           icon: const Icon(Icons.restore),
           onPressed: () {
-            NoteTakingActions.restoreSelectedNotes(_selectedNoteIds)
-                .then((result) {
-              CustomSnackBar.show(context, result.message);
-              setState(() {});
-            });
+            try {
+              NoteTakingActions.restoreSelectedNotes(_selectedNoteIds)
+                  .then((result) {
+                CustomSnackBar.show(context, result.message);
+                setState(() {});
+              });
+            } catch (e) {
+              CustomSnackBar.show(context, e.toString());
+            }
           },
         ),
       ];

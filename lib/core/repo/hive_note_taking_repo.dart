@@ -90,7 +90,7 @@ class HiveNoteTakingRepo {
     }
   }
 
-  static Future<void> permantentlydeleteNote(NoteTakingModel note) async {
+  static Future<void> permantentlyDeleteNote(NoteTakingModel note) async {
     try {
       final deletedBox = await getDeletedBox();
       await deletedBox.delete(note.noteId!);
