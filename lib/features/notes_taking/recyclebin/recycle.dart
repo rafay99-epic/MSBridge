@@ -5,6 +5,7 @@ import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
+import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -208,6 +209,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
   }
 
   Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         if (_isSelectionMode) {
@@ -252,15 +254,8 @@ class _DeletedNotesState extends State<DeletedNotes> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  note.noteContent,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                ),
-                const SizedBox(height: 8),
+                buildContent(note.noteContent, theme),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

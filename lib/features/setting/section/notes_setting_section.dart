@@ -3,7 +3,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
-import 'package:msbridge/features/notes_taking/reccyclebin/recycle.dart';
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -71,16 +71,18 @@ class NotesSetting extends StatelessWidget {
                     }
                     return;
                   }
-                  
+
                   final syncService = SyncService();
                   try {
                     await syncService.syncLocalNotesToFirebase();
                     if (context.mounted) {
-                      CustomSnackBar.show(context, "Notes successfully synced to server");
+                      CustomSnackBar.show(
+                          context, "Notes successfully synced to server");
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      CustomSnackBar.show(context, "Failed to sync notes: ${e.toString()}");
+                      CustomSnackBar.show(
+                          context, "Failed to sync notes: ${e.toString()}");
                     }
                   }
                 } finally {

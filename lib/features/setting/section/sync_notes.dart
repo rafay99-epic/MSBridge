@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/features/notes_taking/reccyclebin/recycle.dart';
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';

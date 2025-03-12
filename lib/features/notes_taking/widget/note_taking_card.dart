@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
+import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 
 class NoteCard extends StatefulWidget {
   const NoteCard({
@@ -23,44 +22,6 @@ class NoteCard extends StatefulWidget {
 }
 
 class _NoteCardState extends State<NoteCard> {
-  Widget _buildContent(String content, ThemeData theme) {
-    try {
-      final jsonResult = jsonDecode(content);
-      if (jsonResult is List) {
-        final document = Document.fromJson(jsonResult);
-        return AbsorbPointer(
-          child: QuillEditor.basic(
-            configurations: QuillEditorConfigurations(
-              controller: QuillController(
-                document: document,
-                selection: const TextSelection.collapsed(offset: 0),
-              ),
-              sharedConfigurations: const QuillSharedConfigurations(),
-            ),
-          ),
-        );
-      } else {
-        return Text(
-          content,
-          maxLines: 4,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      return Text(
-        content,
-        maxLines: 4,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -103,7 +64,7 @@ class _NoteCardState extends State<NoteCard> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
-              _buildContent(widget.note.noteContent, theme),
+              buildContent(widget.note.noteContent, theme),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
