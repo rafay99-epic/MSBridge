@@ -43,6 +43,7 @@ dependencies:
   path_provider: ^2.1.5
   modal_bottom_sheet: ^3.0.0
   permission_handler: ^11.3.1
+  flutter_expandable_fab: ^2.3.0
 
 dev_dependencies:
   flutter_test:

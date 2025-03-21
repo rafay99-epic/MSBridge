@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/features/msnotes/lectures_screen.dart';
@@ -27,9 +28,16 @@ class _MSNotesScreenState extends State<Msnotes>
   ValueListenable<Box<MSNote>>? _notesBoxListenable;
   List<String> subjects = [];
 
+  void fetchNotes() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      ApiService.fetchAndSaveNotes();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    fetchNotes();
     _openHiveBox();
   }
 
@@ -37,6 +45,7 @@ class _MSNotesScreenState extends State<Msnotes>
   void dispose() {
     _internetHelper.dispose();
     _notesBox?.close();
+    fetchNotes();
     super.dispose();
   }
 

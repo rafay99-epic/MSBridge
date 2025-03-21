@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
@@ -9,9 +10,11 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 
@@ -245,26 +248,59 @@ class _NotetakingState extends State<Notetaking>
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: theme.colorScheme.secondary,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 4,
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const CreateNote(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        },
-        tooltip: 'Add New Note',
-        child: const Icon(Icons.edit_note),
+      floatingActionButtonLocation: ExpandableFab.location,
+      floatingActionButton: ExpandableFab(
+        type: ExpandableFabType.up,
+        childrenAnimation: ExpandableFabAnimation.rotate,
+        distance: 100,
+        overlayStyle: ExpandableFabOverlayStyle(
+          color: theme.colorScheme.surface.withOpacity(0.7),
+          blur: 2,
+        ),
+        children: [
+          buildExpandableButton(
+            context: context,
+            heroTag: "Add New Note",
+            icon: Icons.note,
+            text: "New Note",
+            theme: theme,
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const CreateNote(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
+                ),
+              );
+            },
+          ),
+          buildExpandableButton(
+            context: context,
+            heroTag: "To-Do List",
+            icon: Icons.check,
+            text: "New To-Do",
+            theme: theme,
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const ToDO(), // or TaskEntryScreen, whichever is correct
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
