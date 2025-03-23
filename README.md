@@ -93,18 +93,16 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
    flutter run
    ```
 
-## Download APK
+## APK Files
 
-Now, you can download and experience both versions of the application. Choose the version that suits your needs:
+### Latest Release
 
-### Latest Version
+You can download the latest version of the application from the official website:
+[**Download Latest Release**](https://www.rafay99.com/downloads/apk/MSBridge/release)
 
-- **[Download Latest Version](/apk/v3/app-release.apk)** – The latest version of MS Bridge with the latest features and improvements.
+### Previous Releases
 
-### Previous Versions
-
-- **[Download Version 1](/apk/v1/app-release.apk)** – The initial release with core features and Firebase integration.
-- **[Download Version 2](/apk/v2/app-release.apk)** – The latest update with improved performance, new features, and enhanced offline support.
+For older versions of the APK files, visit the [**GitHub repository**](https://github.com/rafay99-epic/MSBridge/tree/main/apk).
 
 ## Branching Versions
 
@@ -143,7 +141,7 @@ This project is licensed under the Apache License - see the [LICENSE](LICENSE) f
 
 ## Blog Post
 
-To know how build this project from start to end, visit my blog post on my website: [rafay99.com](rafay99.com/blog/)
+To know how build this project from start to end, visit my blog post on my website: [rafay99.com](https://www.rafay99.com/blog/idea_to_app/)
 
 ## Contact
 
