@@ -39,7 +39,7 @@ class TodoItem {
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     if (json['title'] == null || json['createdAt'] == null) {
-      throw FormatException('Missing required fields in TodoItem JSON');
+      throw const FormatException('Missing required fields in TodoItem JSON');
     }
     return TodoItem(
       title: json['title'],

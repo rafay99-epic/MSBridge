@@ -33,7 +33,8 @@ void main() async {
           ChangeNotifierProvider(
               create: (context) =>
                   ConnectivityProvider(navigatorKey: navigatorKey)),
-          ChangeNotifierProvider(create: (context) => TodoProvider())
+          ChangeNotifierProvider(
+              create: (context) => TodoProvider()..initialize())
         ],
         child: const MyApp(),
       ),

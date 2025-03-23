@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
+import 'package:msbridge/core/repo/todo_repo.dart';
 import 'package:msbridge/features/todo/create_task/create_task.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +17,8 @@ class ToDO extends StatefulWidget {
 }
 
 class _ToDOState extends State<ToDO> {
+  final TodoRepository _todoRepository = TodoRepository();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -44,9 +48,10 @@ class _ToDOState extends State<ToDO> {
                 builder: (context, todoProvider, _) {
                   return TabBarView(
                     children: [
-                      _buildTaskList(context, todoProvider.tasks, false, theme),
-                      _buildTaskList(
-                          context, todoProvider.completedTasks, true, theme),
+                      _buildTaskList(context, todoProvider.tasks, false, theme,
+                          _todoRepository),
+                      _buildTaskList(context, todoProvider.completedTasks, true,
+                          theme, _todoRepository),
                     ],
                   );
                 },
@@ -78,7 +83,12 @@ class _ToDOState extends State<ToDO> {
   }
 
   Widget _buildTaskList(
-      BuildContext context, List tasks, bool isCompleted, ThemeData theme) {
+    BuildContext context,
+    List tasks,
+    bool isCompleted,
+    ThemeData theme,
+    TodoRepository todoRepository,
+  ) {
     if (tasks.isEmpty) {
       return const Center(
         child: EmptyNotesMessage(
@@ -137,17 +147,25 @@ class _ToDOState extends State<ToDO> {
                     isCompleted ? LineIcons.undo : LineIcons.checkCircle,
                     color: theme.colorScheme.secondary,
                   ),
-                  onPressed: () {
-                    Provider.of<TodoProvider>(context, listen: false)
-                        .toggleTask(context, index, isCompleted);
+                  onPressed: () async {
+                    try {
+                      await todoRepository.toggleTask(
+                          context, index, isCompleted);
+                    } catch (e) {
+                      CustomSnackBar.show(context, e.toString());
+                    }
                   },
                 ),
                 IconButton(
                   icon: Icon(LineIcons.trash,
                       color: Theme.of(context).colorScheme.primary),
-                  onPressed: () {
-                    Provider.of<TodoProvider>(context, listen: false)
-                        .removeTask(context, index, isCompleted);
+                  onPressed: () async {
+                    try {
+                      await todoRepository.removeTask(
+                          context, index, isCompleted);
+                    } catch (e) {
+                      CustomSnackBar.show(context, e.toString());
+                    }
                   },
                 ),
               ],

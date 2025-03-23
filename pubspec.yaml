@@ -44,6 +44,7 @@ dependencies:
   modal_bottom_sheet: ^3.0.0
   permission_handler: ^11.3.1
   flutter_expandable_fab: ^2.3.0
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

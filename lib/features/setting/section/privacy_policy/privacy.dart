@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
@@ -56,7 +57,8 @@ class PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                 'We use Firebase services to store and manage your data. Firebase is a platform provided by Google that offers secure data storage solutions. For more information on Firebase\'s privacy practices, please visit their '),
             GestureDetector(
               onTap: () {
-                // Handle link tap (open browser, etc.)
+                launchUrl(
+                    Uri.parse('https://firebase.google.com/support/privacy'));
               },
               child: Text(
                 'Privacy and Security page',
@@ -90,7 +92,7 @@ class PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                 'If you have any questions about this Privacy Policy, please contact us at '),
             GestureDetector(
               onTap: () {
-                // Handle email tap
+                launchUrl(Uri.parse('mailto:99marafay@gmail.com'));
               },
               child: Text(
                 '99marafay@gmail.com',

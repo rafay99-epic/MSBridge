@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/provider/todo_provider.dart';
+import 'package:msbridge/core/repo/todo_repo.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class TaskEntryScreen extends StatefulWidget {
@@ -15,6 +14,7 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
   final taskController = TextEditingController();
   final descriptionController = TextEditingController();
   DateTime? selectedDueDate;
+  final TodoRepository _todoRepository = TodoRepository();
 
   @override
   void dispose() {
@@ -128,20 +128,25 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
                 backgroundColor: theme.colorScheme.secondary,
                 foregroundColor: theme.colorScheme.onSecondary,
               ),
-              onPressed: () {
+              onPressed: () async {
                 if (taskController.text.isEmpty) {
                   CustomSnackBar.show(context, "Please enter the task title.");
                   return;
                 }
 
-                Provider.of<TodoProvider>(context, listen: false).addTask(
-                  context,
-                  taskController.text,
-                  descriptionController.text,
-                  selectedDueDate,
-                );
-
-                Navigator.pop(context);
+                try {
+                  await _todoRepository.addTask(
+                    context,
+                    taskController.text,
+                    descriptionController.text,
+                    selectedDueDate,
+                  );
+                  CustomSnackBar.show(context, "Task added successfully!",
+                      isSuccess: true);
+                  Navigator.pop(context);
+                } catch (e) {
+                  CustomSnackBar.show(context, e.toString());
+                }
               },
               child: const Text('Add Task'),
             ),

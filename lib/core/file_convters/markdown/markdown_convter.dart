@@ -25,9 +25,7 @@ class MarkdownExporter {
     try {
       Directory? downloadsDirectory;
       if (Platform.isAndroid) {
-        // Use getExternalStorageDirectory and append Downloads folder
-        final baseDir = await getExternalStorageDirectory();
-        downloadsDirectory = Directory('${baseDir?.path}/Download');
+        downloadsDirectory = Directory('/storage/emulated/0/Download');
       } else if (Platform.isIOS) {
         downloadsDirectory = await getApplicationDocumentsDirectory();
       }
