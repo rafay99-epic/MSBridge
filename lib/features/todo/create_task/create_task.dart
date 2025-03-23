@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/repo/todo_repo.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:intl/intl.dart';
 
@@ -43,29 +44,35 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        title: Text(
-          'Add New Task',
-          style: TextStyle(color: theme.colorScheme.primary),
-        ),
-        iconTheme: IconThemeData(color: theme.colorScheme.primary),
+      appBar: const CustomAppBar(
+        title: 'Add New Task',
+        showBackButton: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text(
+              'Task Title',
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: taskController,
               style: TextStyle(color: theme.colorScheme.primary),
               decoration: InputDecoration(
-                hintText: "Task Title",
+                hintText: "Enter task title",
                 hintStyle: TextStyle(
-                    color: theme.colorScheme.primary.withOpacity(0.5)),
+                  color: theme.colorScheme.primary.withOpacity(0.4),
+                ),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
-                enabledBorder: OutlineInputBorder(
+                border: OutlineInputBorder(
                   borderSide: BorderSide(color: theme.colorScheme.secondary),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -74,7 +81,17 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
                       BorderSide(color: theme.colorScheme.secondary, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Description',
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
@@ -82,12 +99,13 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
               controller: descriptionController,
               style: TextStyle(color: theme.colorScheme.primary),
               decoration: InputDecoration(
-                hintText: "Task Description (Optional)",
+                hintText: "Optional description",
                 hintStyle: TextStyle(
-                    color: theme.colorScheme.primary.withOpacity(0.5)),
+                  color: theme.colorScheme.primary.withOpacity(0.4),
+                ),
                 filled: true,
                 fillColor: theme.colorScheme.surface,
-                enabledBorder: OutlineInputBorder(
+                border: OutlineInputBorder(
                   borderSide: BorderSide(color: theme.colorScheme.secondary),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -96,37 +114,63 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
                       BorderSide(color: theme.colorScheme.secondary, width: 2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
-              maxLines: 5,
+              maxLines: 4,
               keyboardType: TextInputType.multiline,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    selectedDueDate == null
-                        ? 'No due date selected'
-                        : 'Due Date: ${DateFormat('yyyy-MM-dd').format(selectedDueDate!)}',
-                    style: TextStyle(color: theme.colorScheme.primary),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => selectDate(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.secondary,
-                    foregroundColor: theme.colorScheme.onSecondary,
-                  ),
-                  child: const Text('Select Due Date'),
-                ),
-              ],
+            const SizedBox(height: 20),
+            Text(
+              'Due Date',
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.secondary),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedDueDate == null
+                          ? 'No due date selected'
+                          : DateFormat('yyyy-MM-dd').format(selectedDueDate!),
+                      style: TextStyle(color: theme.colorScheme.primary),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => selectDate(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Select Date'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.secondary,
                 foregroundColor: theme.colorScheme.onSecondary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
               ),
               onPressed: () async {
                 if (taskController.text.isEmpty) {
@@ -148,7 +192,14 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
                   CustomSnackBar.show(context, e.toString());
                 }
               },
-              child: const Text('Add Task'),
+              child: Text(
+                'Add Task',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
