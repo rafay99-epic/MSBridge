@@ -6,6 +6,7 @@ import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
+import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/utils/error.dart';
@@ -32,6 +33,8 @@ void main() async {
           ChangeNotifierProvider(
               create: (context) =>
                   ConnectivityProvider(navigatorKey: navigatorKey)),
+          ChangeNotifierProvider(
+              create: (context) => TodoProvider()..initialize())
         ],
         child: const MyApp(),
       ),

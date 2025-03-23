@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:msbridge/core/file_convters/markdown/markdown_convter.dart';
+import 'package:msbridge/core/file_convters/pdf/pdfconvter.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -98,21 +101,57 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
+  void showActionSheet() {
+    showCupertinoModalBottomSheet(
+      context: context,
+      builder: (context) => Material(
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf),
+                title: const Text('Export to PDF'),
+                onTap: () => {
+                  PdfExporter.exportToPdf(
+                      context, _titleController.text.trim(), _controller),
+                  Navigator.pop(context),
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.text_snippet),
+                title: const Text('Export to Markdown'),
+                onTap: () {
+                  Navigator.pop(context);
+
+                  MarkdownExporter.exportToMarkdown(
+                      context, _titleController.text.trim(), _controller);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: CustomAppBar(
-          title: widget.note == null ? "Create Note" : "Edit Note",
-          backbutton: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: saveNote,
-            ),
-          ]),
+      appBar: CustomAppBar(backbutton: true, actions: [
+        IconButton(
+          icon: const Icon(Icons.more_horiz),
+          onPressed: showActionSheet,
+        ),
+        IconButton(
+          icon: const Icon(Icons.save),
+          onPressed: saveNote,
+        ),
+      ]),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
