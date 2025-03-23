@@ -1,0 +1,70 @@
+# .github/workflows/build_apk.yml
+name: Build Flutter APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          flutter-version: "3.22.2"
+          channel: "stable"
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Analyze Code
+        run: flutter analyze
+
+      - name: Run Tests (Optional)
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --split-per-abi
+      - name: Check git diff
+        id: git_diff
+        run: |
+          git diff --quiet HEAD || echo "::set-output name=changed::true"
+        shell: bash
+
+      - name: Upload APK to Artifacts
+        if: steps.git_diff.outputs.changed != 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: build/app/outputs/apk/release/app-release.apk
+
+      - name: Add commit message and tag to artifact
+        if: steps.git_diff.outputs.changed != 'true'
+        run: |
+          # Extract last commit message and tag
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          LAST_TAG=$(git describe --tags --abbrev=0)
+
+          # Create a text file with the information
+          echo "Commit Message: $COMMIT_MESSAGE" > commit_info.txt
+          echo "Last Tag: $LAST_TAG" >> commit_info.txt
+
+          # Upload the text file alongside the APK
+          echo "Uploading commit_info.txt..."
+
+      - name: Upload Commit info file
+        if: steps.git_diff.outputs.changed != 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: commit-information
+          path: commit_info.txt
