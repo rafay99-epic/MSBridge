@@ -50,12 +50,6 @@ class _MSNotesScreenState extends State<Msnotes>
   void dispose() {
     _internetHelper.dispose();
     _notesBox?.close();
-@override
-void dispose() {
-  _internetHelper.dispose();
-  _notesBox?.close();
-  super.dispose();
-}
     super.dispose();
   }
 
