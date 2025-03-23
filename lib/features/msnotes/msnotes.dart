@@ -30,7 +30,12 @@ class _MSNotesScreenState extends State<Msnotes>
 
   void fetchNotes() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      ApiService.fetchAndSaveNotes();
+      try {
+        await ApiService.fetchAndSaveNotes();
+      } catch (e) {
+        debugPrint('Error fetching notes: $e');
+        // Consider showing a user-friendly error message
+      }
     });
   }
 
