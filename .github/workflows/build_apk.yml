@@ -43,28 +43,14 @@ jobs:
 
       - name: Upload APK to Artifacts
         if: steps.git_diff.outputs.changed != 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: build/app/outputs/apk/release/app-release.apk
 
-      - name: Add commit message and tag to artifact
-        if: steps.git_diff.outputs.changed != 'true'
-        run: |
-          # Extract last commit message and tag
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-          LAST_TAG=$(git describe --tags --abbrev=0)
-
-          # Create a text file with the information
-          echo "Commit Message: $COMMIT_MESSAGE" > commit_info.txt
-          echo "Last Tag: $LAST_TAG" >> commit_info.txt
-
-          # Upload the text file alongside the APK
-          echo "Uploading commit_info.txt..."
-
       - name: Upload Commit info file
         if: steps.git_diff.outputs.changed != 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: commit-information
           path: commit_info.txt
