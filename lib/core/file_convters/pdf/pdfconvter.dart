@@ -13,6 +13,12 @@ class PdfExporter {
       CustomSnackBar.show(context, "Title is empty.");
       return;
     }
+    
+    final content = controller.document.toPlainText().trim();
+    if (content.isEmpty) {
+      CustomSnackBar.show(context, "Content is empty.");
+      return;
+    }
 
     bool hasPermission =
         await PermissionHandler.checkAndRequestFilePermission(context);
