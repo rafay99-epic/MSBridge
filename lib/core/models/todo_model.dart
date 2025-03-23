@@ -38,11 +38,14 @@ class TodoItem {
   }
 
   factory TodoItem.fromJson(Map<String, dynamic> json) {
+    if (json['title'] == null || json['createdAt'] == null) {
+      throw FormatException('Missing required fields in TodoItem JSON');
+    }
     return TodoItem(
       title: json['title'],
       description: json['description'],
       dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
-      isCompleted: json['isCompleted'],
+      isCompleted: json['isCompleted'] ?? false,
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
