@@ -5,12 +5,14 @@ import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
+import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/config/config.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -34,7 +36,10 @@ void main() async {
               create: (context) =>
                   ConnectivityProvider(navigatorKey: navigatorKey)),
           ChangeNotifierProvider(
-              create: (context) => TodoProvider()..initialize())
+              create: (context) => TodoProvider()..initialize()),
+          ChangeNotifierProvider(
+            create: (_) => NoteSumaryProvider(apiKey: NoteSummaryAPI.apiKey),
+          ),
         ],
         child: const MyApp(),
       ),
