@@ -5,11 +5,10 @@ class NoteSummaryRepo {
 
   NoteSummaryRepo({required String apiKey})
       : _model = GenerativeModel(
-          model: 'gemini-1.5-pro',
+          model: 'gemini-1.5-pro-latest',
           apiKey: apiKey,
         );
 
-  /// Validates and sanitizes the input prompt
   String _sanitizePrompt(String prompt) {
     final sanitized = prompt.trim();
     if (sanitized.isEmpty) {
@@ -18,11 +17,18 @@ class NoteSummaryRepo {
     return sanitized;
   }
 
-  /// Generates a summary for the given note content.
   Future<String> summarizeNote(String noteContent) async {
-    //  Define the prompt for summarization.  Make it specific!
-    final prompt =
-        "Summarize the following note.  Focus on the key points and provide a concise overview. Keep the summary under 100 words:\n\n$noteContent"; //Improved Prompt
+    final prompt = """
+    I have the following note, and I need a concise and informative summary. Please focus on capturing the key concepts, important facts, and any action items mentioned.  
+    If there are heading points, please highlight them using Markdown headings (e.g., ## Heading).
+    If the note discusses any problems, please briefly describe the problem and, if a solution is provided in the note, mention the solution as well.
+    The summary should be well-structured and easy to understand, as if explaining the main points to someone who hasn't read the original note.  Limit the summary to approximately 150 words.
+
+    Note:
+    $noteContent
+
+    Summary:
+  """;
 
     try {
       final content = [Content.text(prompt)];
@@ -30,7 +36,6 @@ class NoteSummaryRepo {
 
       return response.text ?? "I couldn't generate a summary.";
     } catch (e) {
-      print("Error during summarization: $e"); // Added error logging
       return "An error occurred while generating the summary.";
     }
   }

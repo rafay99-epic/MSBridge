@@ -1,19 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/file_convters/markdown/markdown_convter.dart';
 import 'package:msbridge/core/file_convters/pdf/pdfconvter.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
+import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/widgets/appbar.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -28,8 +28,6 @@ class _CreateNoteState extends State<CreateNote>
     with SingleTickerProviderStateMixin {
   late QuillController _controller;
   final TextEditingController _titleController = TextEditingController();
-  String? _aiSummary;
-  bool isGeneratingSummary = false;
   final InternetHelper _internetHelper = InternetHelper();
 
   @override
@@ -112,154 +110,19 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
-  void _showAiSummaryBottomSheet(BuildContext context, String? aiSummary) {
-    showCupertinoModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Material(
-          child: SafeArea(
-            child: FractionallySizedBox(
-              heightFactor: 0.85,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTitle(context),
-                    const SizedBox(height: 16),
-                    Expanded(child: _buildSummaryText(context, aiSummary)),
-                    const SizedBox(height: 16),
-                    _buildButtonRow(context, aiSummary),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTitle(BuildContext context) {
-    return Text(
-      'AI Note Summary',
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-    );
-  }
-
-  Widget _buildSummaryText(BuildContext context, String? aiSummary) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: SingleChildScrollView(
-        child: MarkdownBody(
-          data: aiSummary ?? 'No summary generated yet.',
-          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-            p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildButtonRow(BuildContext context, String? aiSummary) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton.icon(
-          onPressed: aiSummary == null
-              ? null
-              : () {
-                  Clipboard.setData(ClipboardData(text: aiSummary));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Summary copied!'),
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-          icon: const Icon(Icons.copy, size: 20),
-          label: const Text(
-            'Copy Summary',
-            style: TextStyle(fontSize: 16),
-          ),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close, size: 20),
-          label: const Text(
-            'Close',
-            style: TextStyle(fontSize: 16),
-          ),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _generateAiSummary(BuildContext context) async {
     if (_internetHelper.connectivitySubject.value == false) {
       CustomSnackBar.show(context, "Sorry No Internet Connection!");
-
       return;
     }
-    setState(() {
-      isGeneratingSummary = true;
-      _aiSummary = null;
-    });
 
     final noteContent = _controller.document.toPlainText().trim();
     final noteSummaryProvider =
         Provider.of<NoteSumaryProvider>(context, listen: false);
 
-    try {
-      await noteSummaryProvider.summarizeNote(noteContent);
+    showAiSummaryBottomSheet(context);
 
-      final aiResponse = noteSummaryProvider.messages.lastWhere(
-        (message) => message["role"] == "ai",
-        orElse: () => {"role": "", "content": "No summary available."},
-      )["content"];
-
-      setState(() {
-        _aiSummary = aiResponse;
-      });
-    } catch (e) {
-      setState(() {
-        _aiSummary = "Error generating summary: $e";
-      });
-    } finally {
-      setState(() {
-        isGeneratingSummary = false;
-      });
-
-      _showAiSummaryBottomSheet(context, _aiSummary);
-    }
+    noteSummaryProvider.summarizeNote(noteContent);
   }
 
   @override
@@ -278,19 +141,25 @@ class _CreateNoteState extends State<CreateNote>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.more_horiz),
+            icon: const Icon(LineIcons.fileExport),
             onPressed: () {
               showCupertinoModalBottomSheet(
+                backgroundColor: theme.colorScheme.surface,
                 context: context,
                 builder: (context) => Material(
+                  color: theme.colorScheme.surface,
                   child: SafeArea(
                     top: false,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         ListTile(
-                          leading: const Icon(Icons.picture_as_pdf),
-                          title: const Text('Export to PDF'),
+                          iconColor: theme.colorScheme.primary,
+                          leading: const Icon(LineIcons.pdfFileAlt),
+                          title: Text(
+                            'Export to PDF',
+                            style: TextStyle(color: theme.colorScheme.primary),
+                          ),
                           onTap: () => {
                             PdfExporter.exportToPdf(context,
                                 _titleController.text.trim(), _controller),
@@ -298,8 +167,12 @@ class _CreateNoteState extends State<CreateNote>
                           },
                         ),
                         ListTile(
-                          leading: const Icon(Icons.text_snippet),
-                          title: const Text('Export to Markdown'),
+                          iconColor: theme.colorScheme.primary,
+                          leading: const Icon(LineIcons.markdown),
+                          title: Text(
+                            'Export to Markdown',
+                            style: TextStyle(color: theme.colorScheme.primary),
+                          ),
                           onTap: () {
                             Navigator.pop(context);
 
@@ -315,7 +188,7 @@ class _CreateNoteState extends State<CreateNote>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: const Icon(LineIcons.save),
             onPressed: saveNote,
           ),
         ],
@@ -365,20 +238,41 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             QuillToolbar.simple(
               configurations: QuillSimpleToolbarConfigurations(
                 controller: _controller,
                 sharedConfigurations: const QuillSharedConfigurations(
                   locale: Locale('en'),
                 ),
-                multiRowsDisplay: false,
-                toolbarSize: 50,
+                multiRowsDisplay: MediaQuery.of(context).size.width < 400,
+                toolbarSize: 40,
                 showCodeBlock: true,
                 showQuote: true,
                 showLink: true,
                 showFontSize: true,
                 showFontFamily: true,
                 showIndent: true,
+                showDividers: true,
+                showUnderLineButton: true,
+                showLeftAlignment: true,
+                showCenterAlignment: true,
+                showRightAlignment: true,
+                showJustifyAlignment: true,
+                showHeaderStyle: true,
+                showListNumbers: true,
+                showListBullets: true,
+                showListCheck: true,
+                showStrikeThrough: true,
+                showInlineCode: true,
+                showColorButton: true,
+                showBackgroundColorButton: true,
+                showClearFormat: true,
+                showAlignmentButtons: true,
+                showUndo: true,
+                showRedo: true,
+                showDirection: false,
+                showSearchButton: true,
                 headerStyleType: HeaderStyleType.buttons,
               ),
             ),
