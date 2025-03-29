@@ -3,9 +3,9 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 class NoteSummaryRepo {
   final GenerativeModel _model;
 
-  NoteSummaryRepo({required String apiKey})
+  NoteSummaryRepo({required String apiKey, required String modelName})
       : _model = GenerativeModel(
-          model: 'gemini-1.5-pro-latest',
+          model: modelName,
           apiKey: apiKey,
         );
 

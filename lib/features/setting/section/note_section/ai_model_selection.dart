@@ -24,14 +24,21 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage> {
   Future<void> _loadSelectedModel() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final savedModelName = prefs.getString(AIModelsConfig.selectedModelKey) ??
+          'gemini-1.5-pro-latest';
+
+      final selectedModel = AIModelsConfig.models.firstWhere(
+        (model) => model.modelName == savedModelName,
+        orElse: () => AIModelsConfig.models.first,
+      );
+
       setState(() {
-        selectedModelName = prefs.getString(AIModelsConfig.selectedModelKey) ??
-            'gemini-1.5-pro-latest';
+        selectedModelName = selectedModel.name;
       });
     } catch (e) {
       CustomSnackBar.show(context, "Error loading selected model: $e");
       setState(() {
-        selectedModelName = 'gemini-1.5-pro-latest';
+        selectedModelName = AIModelsConfig.models.first.name;
       });
     }
   }
