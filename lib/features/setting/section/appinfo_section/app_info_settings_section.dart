@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/contact/contact.dart';
-import 'package:msbridge/features/setting/section/privacy_policy/privacy.dart';
-import 'package:msbridge/features/setting/section/termsAndCondition/terms_and_condition.dart';
+import 'package:msbridge/features/setting/section/appinfo_section/privacy_policy/privacy.dart';
+import 'package:msbridge/features/setting/section/appinfo_section/termsAndCondition/terms_and_condition.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';

@@ -38,7 +38,7 @@ void main() async {
           ChangeNotifierProvider(
               create: (context) => TodoProvider()..initialize()),
           ChangeNotifierProvider(
-            create: (_) => NoteSumaryProvider(apiKey: NoteSummaryAPI.apiKey),
+            create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
         ],
         child: const MyApp(),
