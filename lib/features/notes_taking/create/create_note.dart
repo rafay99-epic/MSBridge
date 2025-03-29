@@ -249,7 +249,7 @@ class _CreateNoteState extends State<CreateNote>
                 sharedConfigurations: const QuillSharedConfigurations(
                   locale: Locale('en'),
                 ),
-                multiRowsDisplay: MediaQuery.of(context).size.width < 400,
+                multiRowsDisplay: false,
                 toolbarSize: 40,
                 showCodeBlock: true,
                 showQuote: true,
