@@ -1,4 +1,8 @@
+import 'dart:isolate';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/core/api/ms_notes_api.dart';
@@ -50,6 +54,28 @@ void main() async {
       await syncService.startListening();
       ApiService.fetchAndSaveNotes();
     });
+
+    // recording any error and send to firebase
+    bool weWantFatalErrorRecording = true;
+    FlutterError.onError = (errorDetails) {
+      if (weWantFatalErrorRecording) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      }
+    };
+
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    // error handelling outside the flutter scopr
+    Isolate.current.addErrorListener(RawReceivePort((pair) async {
+      final List<dynamic> errorAndStacktrace = pair;
+      await FirebaseCrashlytics.instance.recordError(
+        errorAndStacktrace.first,
+        errorAndStacktrace.last,
+        fatal: true,
+      );
+    }).sendPort);
   } catch (e) {
     runApp(ErrorApp(errorMessage: e.toString()));
   }
