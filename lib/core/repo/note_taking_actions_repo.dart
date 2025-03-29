@@ -50,6 +50,10 @@ class NoteTakingActions {
     required bool isSynced,
   }) async {
     try {
+      if (note.noteTitle == title && note.noteContent == content) {
+        return SaveNoteResult(success: true, message: "No changes detected.");
+      }
+
       note.noteTitle = title;
       note.noteContent = content;
       note.updatedAt = DateTime.now();
@@ -57,8 +61,7 @@ class NoteTakingActions {
 
       await HiveNoteTakingRepo.updateNote(note);
 
-      return SaveNoteResult(
-          success: true, message: "Note updated successfully");
+      return SaveNoteResult(success: true, message: "Note auto-saved.");
     } catch (e) {
       return SaveNoteResult(success: false, message: "Error updating note: $e");
     }
