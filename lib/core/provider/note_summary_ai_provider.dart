@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/repo/note_summary_repo.dart';
 
-class NoteSumaryProvider with ChangeNotifier {
+class NoteSummaryProvider with ChangeNotifier {
   final NoteSummaryRepo _repository;
   String? _aiSummary;
   bool _isGeneratingSummary = false;
 
-  NoteSumaryProvider({required String apiKey})
+  NoteSummaryProvider({required String apiKey})
       : _repository = NoteSummaryRepo(apiKey: apiKey);
 
   String? get aiSummary => _aiSummary;

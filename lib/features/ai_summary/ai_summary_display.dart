@@ -68,7 +68,7 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView(
-          physics: const NeverScrollableScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           shrinkWrap: true,
           children: [
             MarkdownBody(

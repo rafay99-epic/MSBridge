@@ -10,7 +10,7 @@ void showAiSummaryBottomSheet(BuildContext context) {
   showCupertinoModalBottomSheet(
     context: context,
     builder: (context) {
-      return Consumer<NoteSumaryProvider>(
+      return Consumer<NoteSummaryProvider>(
         builder: (context, noteSummaryProvider, _) {
           String? aiSummary = noteSummaryProvider.aiSummary;
           bool isGeneratingSummary = noteSummaryProvider.isGeneratingSummary;

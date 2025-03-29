@@ -117,8 +117,12 @@ class _CreateNoteState extends State<CreateNote>
     }
 
     final noteContent = _controller.document.toPlainText().trim();
+    if (noteContent.isEmpty || noteContent.length < 50) {
+      CustomSnackBar.show(context, "Add more content for AI summarization");
+      return;
+    }
     final noteSummaryProvider =
-        Provider.of<NoteSumaryProvider>(context, listen: false);
+        Provider.of<NoteSummaryProvider>(context, listen: false);
 
     showAiSummaryBottomSheet(context);
 
