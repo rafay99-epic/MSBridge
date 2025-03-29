@@ -4,7 +4,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/msnotes/msnotes.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/search/search.dart';
-import 'package:msbridge/features/setting/setting.dart';
+import 'package:msbridge/features/setting/pages/setting.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

@@ -1,13 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/file_convters/markdown/markdown_convter.dart';
 import 'package:msbridge/core/file_convters/pdf/pdfconvter.dart';
+import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/services/network/internet_helper.dart';
+import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/widgets/appbar.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:msbridge/widgets/snakbar.dart';
+import 'package:provider/provider.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -22,6 +28,7 @@ class _CreateNoteState extends State<CreateNote>
     with SingleTickerProviderStateMixin {
   late QuillController _controller;
   final TextEditingController _titleController = TextEditingController();
+  final InternetHelper _internetHelper = InternetHelper();
 
   @override
   void initState() {
@@ -59,6 +66,8 @@ class _CreateNoteState extends State<CreateNote>
   void dispose() {
     _controller.dispose();
     _titleController.dispose();
+    _internetHelper.dispose();
+
     super.dispose();
   }
 
@@ -101,39 +110,23 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
-  void showActionSheet() {
-    showCupertinoModalBottomSheet(
-      context: context,
-      builder: (context) => Material(
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.picture_as_pdf),
-                title: const Text('Export to PDF'),
-                onTap: () => {
-                  PdfExporter.exportToPdf(
-                      context, _titleController.text.trim(), _controller),
-                  Navigator.pop(context),
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.text_snippet),
-                title: const Text('Export to Markdown'),
-                onTap: () {
-                  Navigator.pop(context);
+  Future<void> _generateAiSummary(BuildContext context) async {
+    if (_internetHelper.connectivitySubject.value == false) {
+      CustomSnackBar.show(context, "Sorry No Internet Connection!");
+      return;
+    }
 
-                  MarkdownExporter.exportToMarkdown(
-                      context, _titleController.text.trim(), _controller);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    final noteContent = _controller.document.toPlainText().trim();
+    if (noteContent.isEmpty || noteContent.length < 50) {
+      CustomSnackBar.show(context, "Add more content for AI summarization");
+      return;
+    }
+    final noteSummaryProvider =
+        Provider.of<NoteSummaryProvider>(context, listen: false);
+
+    showAiSummaryBottomSheet(context);
+
+    noteSummaryProvider.summarizeNote(noteContent);
   }
 
   @override
@@ -142,16 +135,68 @@ class _CreateNoteState extends State<CreateNote>
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: CustomAppBar(backbutton: true, actions: [
-        IconButton(
-          icon: const Icon(Icons.more_horiz),
-          onPressed: showActionSheet,
-        ),
-        IconButton(
-          icon: const Icon(Icons.save),
-          onPressed: saveNote,
-        ),
-      ]),
+      appBar: CustomAppBar(
+        backbutton: true,
+        actions: [
+          IconButton(
+            icon: const Icon(LineIcons.robot),
+            onPressed: () {
+              _generateAiSummary(context);
+            },
+          ),
+          IconButton(
+            icon: const Icon(LineIcons.fileExport),
+            onPressed: () {
+              showCupertinoModalBottomSheet(
+                backgroundColor: theme.colorScheme.surface,
+                context: context,
+                builder: (context) => Material(
+                  color: theme.colorScheme.surface,
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        ListTile(
+                          iconColor: theme.colorScheme.primary,
+                          leading: const Icon(LineIcons.pdfFileAlt),
+                          title: Text(
+                            'Export to PDF',
+                            style: TextStyle(color: theme.colorScheme.primary),
+                          ),
+                          onTap: () => {
+                            PdfExporter.exportToPdf(context,
+                                _titleController.text.trim(), _controller),
+                            Navigator.pop(context),
+                          },
+                        ),
+                        ListTile(
+                          iconColor: theme.colorScheme.primary,
+                          leading: const Icon(LineIcons.markdown),
+                          title: Text(
+                            'Export to Markdown',
+                            style: TextStyle(color: theme.colorScheme.primary),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+
+                            MarkdownExporter.exportToMarkdown(context,
+                                _titleController.text.trim(), _controller);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(LineIcons.save),
+            onPressed: saveNote,
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -197,6 +242,7 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
+            const SizedBox(height: 8),
             QuillToolbar.simple(
               configurations: QuillSimpleToolbarConfigurations(
                 controller: _controller,
@@ -204,13 +250,33 @@ class _CreateNoteState extends State<CreateNote>
                   locale: Locale('en'),
                 ),
                 multiRowsDisplay: false,
-                toolbarSize: 50,
+                toolbarSize: 40,
                 showCodeBlock: true,
                 showQuote: true,
                 showLink: true,
                 showFontSize: true,
                 showFontFamily: true,
                 showIndent: true,
+                showDividers: true,
+                showUnderLineButton: true,
+                showLeftAlignment: true,
+                showCenterAlignment: true,
+                showRightAlignment: true,
+                showJustifyAlignment: true,
+                showHeaderStyle: true,
+                showListNumbers: true,
+                showListBullets: true,
+                showListCheck: true,
+                showStrikeThrough: true,
+                showInlineCode: true,
+                showColorButton: true,
+                showBackgroundColorButton: true,
+                showClearFormat: true,
+                showAlignmentButtons: true,
+                showUndo: true,
+                showRedo: true,
+                showDirection: false,
+                showSearchButton: true,
                 headerStyleType: HeaderStyleType.buttons,
               ),
             ),
