@@ -30,6 +30,10 @@ class _CreateNoteState extends State<CreateNote>
   Timer? _autoSaveTimer;
   late SaveNoteResult result;
   bool isSaved = false;
+  bool isSaving = false;
+  String lastSavedContent = "";
+
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -37,10 +41,21 @@ class _CreateNoteState extends State<CreateNote>
 
     if (widget.note != null) {
       _titleController.text = widget.note!.noteTitle;
-      _loadQuillContent(widget.note!.noteContent);
+      _controller = QuillController(
+        document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
     } else {
       _controller = QuillController.basic();
     }
+
+    _controller.document.changes.listen((event) {
+      if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+      _debounceTimer = Timer(const Duration(seconds: 3), () {
+        saveNote();
+      });
+    });
+
     startAutoSave();
   }
 
@@ -56,12 +71,19 @@ class _CreateNoteState extends State<CreateNote>
 
   void startAutoSave() {
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) saveNote();
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (!mounted) return;
+
+      String currentContent =
+          jsonEncode(_controller.document.toDelta().toJson());
+      if (currentContent != lastSavedContent) {
+        lastSavedContent = currentContent;
+        saveNote();
+      }
     });
   }
 
-  Future<void> _loadQuillContent(String noteContent) async {
+  Future<void> loadQuillContent(String noteContent) async {
     try {
       final jsonResult = jsonDecode(noteContent);
       if (jsonResult is List) {
@@ -80,8 +102,6 @@ class _CreateNoteState extends State<CreateNote>
           selection: const TextSelection.collapsed(offset: 0));
     }
   }
-
-  bool isSaving = false;
 
   void saveNote() async {
     if (!mounted) return;
@@ -208,21 +228,20 @@ class _CreateNoteState extends State<CreateNote>
         backbutton: true,
         actions: [
           if (isSaving)
-            Padding(
-              padding: const EdgeInsets.only(right: 10.0),
+            const Padding(
+              padding: EdgeInsets.only(right: 10.0),
               child: Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 15,
                     height: 15,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 5),
                   Text(
                     "Auto Saving...",
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.surface,
                     ),
                   ),
                 ],
@@ -278,23 +297,24 @@ class _CreateNoteState extends State<CreateNote>
               ),
             ),
             Expanded(
-              child: QuillEditor.basic(
-                configurations: QuillEditorConfigurations(
-                  controller: _controller,
-                  sharedConfigurations: const QuillSharedConfigurations(
-                    locale: Locale('en'),
-                  ),
-                  placeholder: 'Note...',
-                  expands: true,
-                  customStyles: DefaultStyles(
-                    paragraph: DefaultTextBlockStyle(
-                        TextStyle(
-                          fontSize: 16,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const VerticalSpacing(5, 0),
-                        const VerticalSpacing(0, 0),
-                        null),
+              child: Builder(
+                builder: (context) => QuillEditor.basic(
+                  configurations: QuillEditorConfigurations(
+                    controller: _controller,
+                    sharedConfigurations:
+                        const QuillSharedConfigurations(locale: Locale('en')),
+                    placeholder: 'Note...',
+                    expands: true,
+                    customStyles: DefaultStyles(
+                      paragraph: DefaultTextBlockStyle(
+                          TextStyle(
+                            fontSize: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const VerticalSpacing(5, 0),
+                          const VerticalSpacing(0, 0),
+                          null),
+                    ),
                   ),
                 ),
               ),
