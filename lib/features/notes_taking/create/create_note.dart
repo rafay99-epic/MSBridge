@@ -30,13 +30,13 @@ class _CreateNoteState extends State<CreateNote>
   final InternetHelper _internetHelper = InternetHelper();
   Timer? _autoSaveTimer;
   late SaveNoteResult result;
-  bool isSaving = false;
-  String lastSavedContent = "";
 
   Timer? _debounceTimer;
   final FocusNode _quillFocusNode = FocusNode();
 
-  bool _showCheckmark = false;
+  final ValueNotifier<bool> _isSavingNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _showCheckmarkNotifier = ValueNotifier<bool>(false);
+  String _lastSavedContent = "";
 
   @override
   void initState() {
@@ -55,11 +55,10 @@ class _CreateNoteState extends State<CreateNote>
     _controller.document.changes.listen((event) {
       if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
       _debounceTimer = Timer(const Duration(seconds: 3), () {
-        saveNote();
+        _saveNote();
       });
     });
 
-    // Use the provider to determine whether to start auto-save
     final autoSaveProvider =
         Provider.of<AutoSaveProvider>(context, listen: false);
     if (autoSaveProvider.autoSaveEnabled) {
@@ -75,6 +74,8 @@ class _CreateNoteState extends State<CreateNote>
     _autoSaveTimer?.cancel();
     _debounceTimer?.cancel();
     _quillFocusNode.dispose();
+    _isSavingNotifier.dispose();
+    _showCheckmarkNotifier.dispose();
 
     super.dispose();
   }
@@ -92,9 +93,9 @@ class _CreateNoteState extends State<CreateNote>
 
       String currentContent =
           jsonEncode(_controller.document.toDelta().toJson());
-      if (currentContent != lastSavedContent) {
-        lastSavedContent = currentContent;
-        saveNote();
+      if (currentContent != _lastSavedContent) {
+        _lastSavedContent = currentContent;
+        _saveNote();
       }
     });
   }
@@ -119,14 +120,14 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
-  void saveNote() async {
+  Future<void> _saveNote() async {
     final autoSaveProvider =
         Provider.of<AutoSaveProvider>(context, listen: false);
     if (!mounted || !autoSaveProvider.autoSaveEnabled) {
-      return; // Check if enabled
+      return;
     }
 
-    String title = _titleController.text.trim();
+    final title = _titleController.text.trim();
     String content;
 
     try {
@@ -137,12 +138,8 @@ class _CreateNoteState extends State<CreateNote>
 
     if (title.isEmpty && content.isEmpty) return;
 
-    if (mounted) {
-      setState(() {
-        isSaving = true;
-        _showCheckmark = false;
-      });
-    }
+    _isSavingNotifier.value = true;
+    _showCheckmarkNotifier.value = false;
 
     try {
       if (widget.note != null) {
@@ -159,27 +156,23 @@ class _CreateNoteState extends State<CreateNote>
         );
       }
 
-      if (!mounted) return;
-
-      setState(() {
-        isSaving = false;
-        _showCheckmark = true;
+      if (mounted) {
+        _isSavingNotifier.value = false;
+        _showCheckmarkNotifier.value = true;
         FocusScope.of(context).requestFocus(_quillFocusNode);
-      });
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (!mounted) return;
-        setState(() {
-          _showCheckmark = false;
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            _showCheckmarkNotifier.value = false;
+          }
         });
-      });
+      }
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        isSaving = false;
-        _showCheckmark = false;
-      });
-      CustomSnackBar.show(context, "Error saving note: $e");
+      if (mounted) {
+        _isSavingNotifier.value = false;
+        _showCheckmarkNotifier.value = false;
+        CustomSnackBar.show(context, "Error saving note: $e");
+      }
     }
   }
 
@@ -250,22 +243,59 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          if (_showCheckmark)
-            const Padding(
-              padding: EdgeInsets.only(right: 10.0),
-              child: Row(
-                children: [
-                  Icon(LineIcons.checkCircleAlt, color: Colors.green, size: 20),
-                  SizedBox(width: 5),
-                  Text(
-                    "Content Saved",
-                    style: TextStyle(
-                      fontSize: 12,
-                    ),
+          ValueListenableBuilder<bool>(
+            valueListenable: _isSavingNotifier,
+            builder: (context, isSaving, child) {
+              if (isSaving) {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 10.0),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        "Auto Saving...",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: _showCheckmarkNotifier,
+            builder: (context, showCheckmark, child) {
+              if (showCheckmark) {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 10.0),
+                  child: Row(
+                    children: [
+                      Icon(LineIcons.checkCircleAlt,
+                          color: Colors.green, size: 20),
+                      SizedBox(width: 5),
+                      Text(
+                        "Content Saved",
+                        style: TextStyle(
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(LineIcons.robot),
             onPressed: () => _generateAiSummary(context),
