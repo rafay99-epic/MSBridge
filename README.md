@@ -148,7 +148,7 @@ I would like to express my sincere gratitude to the creators and maintainers of 
 - **Hive:** [Hive](https://pub.dev/packages/hive) - _For providing fast and lightweight local data storage._
 - **http:** [http](https://pub.dev/packages/http) - _For enabling seamless communication with APIs._
 - **Appwrite:** [Appwrite](https://appwrite.io/) - _For offering an open-source backend-as-a-service solution._
-- **OpenAI API:** [OpenAI](https://openai.com/) - _For enabling AI-powered note summarization._
+- **Google Studio API:** [Google Studio](https://aistudio.google.com/) - _For enabling AI-powered note summarization._
 
 **Special Thanks:**
 
