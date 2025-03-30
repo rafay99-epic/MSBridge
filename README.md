@@ -40,7 +40,7 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
   - Web Hosting or App hosting: For hosting CMS.
 - **Hive:** A lightweight NoSQL database for local data storage.
 - **API Calls:** Flutter's `http` package (or similar) for fetching notes from the backend API.
-- **AI Integration:** OpenAI API (or similar) for AI-powered note summarization.
+- **AI Integration:** Google AI Studio API  for AI-powered note summarization.
 
 ## Getting Started
 
