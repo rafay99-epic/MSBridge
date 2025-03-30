@@ -1,6 +1,6 @@
 name: msbridge
 description: "MS Bridge: A cross-platform app for seamless content reading with online/offline access, Firebase integration, and a user-friendly interface."
-version: 3.0.0+3
+version: 5.0.0+5
 environment:
   sdk: ">=3.4.3 <4.0.0"
 
@@ -45,6 +45,13 @@ dependencies:
   permission_handler: ^11.3.1
   flutter_expandable_fab: ^2.3.0
   url_launcher: ^6.3.1
+  flutter_markdown: ^0.7.6+2
+  flutter_spinkit: ^5.2.1
+  image_picker: ^1.1.2
+  google_generative_ai: ^0.4.6
+  firebase_crashlytics: ^4.3.4
+  firebase_analytics: ^11.4.4
+  flutter_cache_manager: ^3.4.1
 
 dev_dependencies:
   flutter_test:

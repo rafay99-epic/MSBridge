@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class MyCMSWebView extends StatefulWidget {
   final String cmsUrl;
+  final String? pageTitle;
 
-  const MyCMSWebView({super.key, required this.cmsUrl});
+  const MyCMSWebView({super.key, required this.cmsUrl, this.pageTitle});
 
   @override
   MyCMSWebViewState createState() => MyCMSWebViewState();
@@ -12,10 +15,13 @@ class MyCMSWebView extends StatefulWidget {
 
 class MyCMSWebViewState extends State<MyCMSWebView> {
   late final WebViewController _controller;
+  String? pageTitle;
 
   @override
   void initState() {
     super.initState();
+    pageTitle = widget.pageTitle;
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
@@ -42,17 +48,27 @@ class MyCMSWebViewState extends State<MyCMSWebView> {
         ),
       )
       ..loadRequest(Uri.parse(widget.cmsUrl));
+
+    _preCacheWebView();
+  }
+
+  Future<void> _preCacheWebView() async {
+    try {
+      final file = await DefaultCacheManager().getSingleFile(widget.cmsUrl);
+      debugPrint('Pre-cached WebView content to: ${file.path}');
+    } catch (e) {
+      debugPrint('Failed to pre-cache WebView content: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface, // Background color
-        foregroundColor: theme.colorScheme.primary, // Text color
-        title: const Text('My CMS'),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: CustomAppBar(
+        showTitle: true,
+        title: pageTitle ?? "CMS System",
+        showBackButton: true,
       ),
       body: WebViewWidget(
         controller: _controller,
