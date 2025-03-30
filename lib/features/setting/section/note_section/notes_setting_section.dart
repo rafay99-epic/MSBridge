@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
+import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
@@ -11,6 +12,7 @@ import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/warning_dialog_box.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotesSetting extends StatefulWidget {
@@ -40,6 +42,7 @@ class _NotesSettingState extends State<NotesSetting> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
 
     return SettingsSection(
       title: "Notes Setting",
@@ -55,6 +58,16 @@ class _NotesSettingState extends State<NotesSetting> {
               ),
             );
           },
+        ),
+        SettingsTile(
+          title: "Auto Save Notes",
+          icon: LineIcons.save,
+          trailing: Switch(
+            value: autoSaveProvider.autoSaveEnabled,
+            onChanged: (bool value) {
+              autoSaveProvider.autoSaveEnabled = value;
+            },
+          ),
         ),
         SettingsTile(
           title: "Recycle Bin",

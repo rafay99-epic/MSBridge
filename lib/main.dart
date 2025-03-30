@@ -8,6 +8,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
@@ -43,6 +44,9 @@ void main() async {
               create: (context) => TodoProvider()..initialize()),
           ChangeNotifierProvider(
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AutoSaveProvider(),
           ),
         ],
         child: const MyApp(),

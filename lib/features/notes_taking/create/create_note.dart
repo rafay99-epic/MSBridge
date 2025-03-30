@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
@@ -58,7 +59,12 @@ class _CreateNoteState extends State<CreateNote>
       });
     });
 
-    startAutoSave();
+    // Use the provider to determine whether to start auto-save
+    final autoSaveProvider =
+        Provider.of<AutoSaveProvider>(context, listen: false);
+    if (autoSaveProvider.autoSaveEnabled) {
+      startAutoSave();
+    }
   }
 
   @override
@@ -76,7 +82,13 @@ class _CreateNoteState extends State<CreateNote>
   void startAutoSave() {
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (!mounted) return;
+      final autoSaveProvider =
+          Provider.of<AutoSaveProvider>(context, listen: false);
+
+      if (!mounted || !autoSaveProvider.autoSaveEnabled) {
+        timer.cancel();
+        return;
+      }
 
       String currentContent =
           jsonEncode(_controller.document.toDelta().toJson());
@@ -108,7 +120,11 @@ class _CreateNoteState extends State<CreateNote>
   }
 
   void saveNote() async {
-    if (!mounted) return;
+    final autoSaveProvider =
+        Provider.of<AutoSaveProvider>(context, listen: false);
+    if (!mounted || !autoSaveProvider.autoSaveEnabled) {
+      return; // Check if enabled
+    }
 
     String title = _titleController.text.trim();
     String content;
