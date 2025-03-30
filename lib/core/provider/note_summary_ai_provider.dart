@@ -13,7 +13,7 @@ class NoteSummaryProvider with ChangeNotifier {
   NoteSummaryProvider({required String apiKey, String? modelName})
       : _apiKey = apiKey,
         _modelName = modelName ?? 'gemini-1.5-pro-latest' {
-    _repository = NoteSummaryRepo(apiKey: apiKey, modelName: _modelName);
+    _repository = NoteSummaryRepo();
     _loadSelectedModel();
   }
 
@@ -23,7 +23,6 @@ class NoteSummaryProvider with ChangeNotifier {
   Future<void> _loadSelectedModel() async {
     String modelName = await _getSelectedModelName();
     _modelName = modelName;
-    _updateRepository();
     notifyListeners();
   }
 
@@ -41,7 +40,8 @@ class NoteSummaryProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final summary = await _repository.summarizeNote(noteContent);
+      final summary =
+          await _repository.summarizeNote(_apiKey, _modelName, noteContent);
       _aiSummary = summary;
       notifyListeners();
     } catch (e) {
@@ -56,12 +56,6 @@ class NoteSummaryProvider with ChangeNotifier {
   Future<void> updateModel() async {
     String modelName = await _getSelectedModelName();
     _modelName = modelName;
-    _updateRepository();
-    notifyListeners();
-  }
-
-  void _updateRepository() {
-    _repository = NoteSummaryRepo(apiKey: _apiKey, modelName: _modelName);
     notifyListeners();
   }
 }

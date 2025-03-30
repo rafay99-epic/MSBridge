@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/background_process/create_note_background.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
@@ -130,18 +131,17 @@ class _CreateNoteState extends State<CreateNote>
     final title = _titleController.text.trim();
     String content;
 
-    try {
-      content = jsonEncode(_controller.document.toDelta().toJson());
-    } catch (e) {
-      content = _controller.document.toPlainText().trim();
-    }
-
-    if (title.isEmpty && content.isEmpty) return;
-
     _isSavingNotifier.value = true;
     _showCheckmarkNotifier.value = false;
 
     try {
+      try {
+        content = await encodeContent(_controller.document.toDelta());
+      } catch (e) {
+        content = _controller.document.toPlainText().trim();
+      }
+      if (title.isEmpty && content.isEmpty) return;
+
       if (widget.note != null) {
         result = await NoteTakingActions.updateNote(
           note: widget.note!,
@@ -181,7 +181,7 @@ class _CreateNoteState extends State<CreateNote>
     String content;
 
     try {
-      content = jsonEncode(_controller.document.toDelta().toJson());
+      content = await encodeContent(_controller.document.toDelta());
     } catch (e) {
       content = _controller.document.toPlainText().trim();
     }
