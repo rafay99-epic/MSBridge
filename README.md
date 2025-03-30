@@ -14,6 +14,7 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
 
 ## Features
 
+- **AI-Powered Note Summarization** – Generate concise and engaging summaries of your notes using advanced AI models.
 - **Dynamic Note Rendering** – Fetches and displays your notes from an API endpoint, ensuring you always have the latest version.
 - **Online/Offline Mode** – Seamlessly switches between online and offline modes, allowing you to access your notes even without an internet connection.
 - **Local Database with Hive** – Utilizes Hive, a fast and lightweight NoSQL database, for efficient offline data storage and retrieval.
@@ -25,16 +26,21 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
 - **Fast Search** – With Hive database support, searching is optimized for speed and efficiency, enabling case-insensitive searches across titles and content.
 - **Enhanced Offline Mode** – Automatically switches between online and offline modes, preventing changes when there is no internet connection.
 - **Reset to Default** – Provides an option to reset settings and themes back to the default style whenever needed.
+- **Interactive AI Summary Bottom Sheet** – A sleek bottom sheet interface with a dynamic typing effect for viewing summaries, with intuitive copy and close options.
+- **User-Selectable AI Model for Summarization** – Users can now choose their preferred AI model for generating summaries via a dedicated settings page.
+- **Auto-Save Feature** – Automatically saves notes to enhance efficiency.
+- **New Settings Interface & App Info Page** – Improved settings navigation with an added App Info page displaying application details.
 
 ## Technologies Used
 
 - **Flutter (Version 3.22.2):** The primary framework for building the user interface and application logic.
 - **Firebase:**
   - Authentication: For user account management and secure access.
-  - Realtime Database / Firestore (Specify which one you are using): For data storage and synchronization.
+  - Realtime Database / Firestore: For data storage and synchronization.
   - Web Hosting or App hosting: For hosting CMS.
 - **Hive:** A lightweight NoSQL database for local data storage.
 - **API Calls:** Flutter's `http` package (or similar) for fetching notes from the backend API.
+- **AI Integration:** OpenAI API (or similar) for AI-powered note summarization.
 
 ## Getting Started
 
@@ -47,6 +53,7 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
 - Android Studio or VS Code with Flutter extension
 - Firebase Project:
   - You need a Firebase project to store your data and handle authentication.
+- API Key for AI Summarization (OpenAI or other AI service)
 
 ### Installation
 
@@ -87,7 +94,12 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
      - You may also need to configure your API keys and project settings in your AndroidManifest.xml and Info.plist files if prompted by firebase setup.
      - **Security Note:** Never commit your API keys directly to your public repository. Use environment variables or secure configuration management techniques.
 
-5. **Run the application:**
+5. "**Set up AI Summarization API Key:**
+
+   - **Important:** This project requires an API key for AI Summarization. You can set the API key in the `lib/config.dart` file.
+   - **Important:** You can get the API key from [Google Studio AI](https://aistudio.google.com/)
+
+6. **Run the application:**
 
    ```bash
    flutter run
@@ -104,28 +116,6 @@ You can download the latest version of the application from the official website
 
 For older versions of the APK files, visit the [**GitHub repository**](https://github.com/rafay99-epic/MSBridge/tree/main/apk).
 
-## Branching Versions
-
-This repository utilizes a branching strategy to explore different backend service options. Here's a breakdown of each branch:
-
-- **`main`:** This branch represents the current stable version of MS Bridge and utilizes **Firebase** as its backend service. It offers the core functionality of the application, including offline/online note-taking, authentication, and more.
-
-- **`V1`:** This branch explores **Appwrite** as an alternative backend service. The codebase is largely the same as `main`, but it's configured to interact with Appwrite instead of Firebase.
-
-- **`Firebase-V1`:** This branch contains the old and deprecated Version of the App, the backend is not currently working as intended.
-
-  **Important Note:** The `V1` branch is currently in development. The primary goal is to successfully migrate the application's backend from Firebase to Appwrite.
-
-  **Current Status and Future Plans:** During the initial development of the `V1` branch, challenges were encountered when writing user data to the Appwrite backend. Due to time constraints and the need for a functioning application, the `main` branch was reverted to Firebase. I intend to revisit and resolve these Appwrite-related issues in the future to provide the option of using Appwrite as a backend service.
-
-**Why Multiple Branches?**
-
-The use of separate branches allows for experimentation with different backend solutions without disrupting the stability of the main application. This enables me to:
-
-- Evaluate the performance and scalability of different backend services.
-- Explore the features and capabilities offered by each platform.
-- Provide users with a choice of backend service in the future (if the Appwrite migration is successful).
-
 ## Contribution
 
 Contributions are welcome! If you'd like to contribute, please follow these steps:
@@ -141,7 +131,7 @@ This project is licensed under the Apache License - see the [LICENSE](LICENSE) f
 
 ## Blog Post
 
-To know how build this project from start to end, visit my blog post on my website: [rafay99.com](https://www.rafay99.com/blog/idea_to_app/)
+To know how to build this project from start to end, visit my blog post on my website: [rafay99.com](https://www.rafay99.com/blog/idea_to_app/)
 
 ## Contact
 
@@ -153,16 +143,13 @@ If you have any questions, suggestions, or feedback regarding MS Bridge, I encou
 
 I would like to express my sincere gratitude to the creators and maintainers of the following technologies and libraries that made the development of MS Bridge possible:
 
-- **Flutter:** [Flutter](https://flutter.dev/) - _For providing a beautiful and efficient framework for building cross-platform applications. Thank you for empowering developers to create amazing user experiences!_
-
-- **Firebase:** [Firebase](https://firebase.google.com/) - _For offering a comprehensive suite of tools and services for building, managing, and growing mobile and web applications. Firebase made backend development significantly easier!_
-
-- **Hive:** [Hive](https://pub.dev/packages/hive) - _For providing a fast, lightweight, and easy-to-use NoSQL database for local data storage. Hive was instrumental in enabling the offline functionality of MS Bridge._
-
-- **http:** [http](https://pub.dev/packages/http) - _For enabling seamless communication with APIs and facilitating the retrieval of data for the application._
-
-- **Appwrite:** [Appwrite](https://appwrite.io/) - _For offering an open-source backend-as-a-service solution that was explored as an alternative to Firebase. While not currently in use in the `main` branch, Appwrite provided valuable insights and experience during the development process._
+- **Flutter:** [Flutter](https://flutter.dev/) - _For providing a beautiful and efficient framework for building cross-platform applications._
+- **Firebase:** [Firebase](https://firebase.google.com/) - _For offering a comprehensive suite of tools for building and managing applications._
+- **Hive:** [Hive](https://pub.dev/packages/hive) - _For providing fast and lightweight local data storage._
+- **http:** [http](https://pub.dev/packages/http) - _For enabling seamless communication with APIs._
+- **Appwrite:** [Appwrite](https://appwrite.io/) - _For offering an open-source backend-as-a-service solution._
+- **OpenAI API:** [OpenAI](https://openai.com/) - _For enabling AI-powered note summarization._
 
 **Special Thanks:**
 
-I also want to extend a special thank you to the Flutter community, Stack Overflow contributors, and everyone else who provided support and guidance throughout the development of this project. Your contributions were invaluable!
+A big thank you to the Flutter community, Stack Overflow contributors, and everyone who provided support and guidance throughout the development of this project!
