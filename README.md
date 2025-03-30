@@ -53,7 +53,7 @@ These instructions will guide you on how to set up and run MS Bridge on your loc
 - Android Studio or VS Code with Flutter extension
 - Firebase Project:
   - You need a Firebase project to store your data and handle authentication.
-- API Key for AI Summarization (OpenAI or other AI service)
+- API Key for AI Summarization (Google Studio API)
 
 ### Installation
 
