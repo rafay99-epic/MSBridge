@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/repo/webview_repo.dart';
 import 'package:msbridge/features/contact/contact.dart';
-import 'package:msbridge/features/setting/section/appinfo_section/privacy_policy/privacy.dart';
-import 'package:msbridge/features/setting/section/appinfo_section/termsAndCondition/terms_and_condition.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -85,7 +84,10 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               context,
               PageTransition(
                 type: PageTransitionType.rightToLeft,
-                child: const PrivacyPolicyPage(),
+                child: const MyCMSWebView(
+                    pageTitle: "Privacy Policy",
+                    cmsUrl:
+                        "https://www.rafay99.com/app/MSBridge/privacy/privacy_policy"),
               ),
             );
           },
@@ -98,7 +100,10 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               context,
               PageTransition(
                 type: PageTransitionType.rightToLeft,
-                child: const TermsAndConditionsPage(),
+                child: const MyCMSWebView(
+                    pageTitle: "Terms and Conditions",
+                    cmsUrl:
+                        "https://www.rafay99.com/app/MSBridge/terms/terms_and_condition"),
               ),
             );
           },

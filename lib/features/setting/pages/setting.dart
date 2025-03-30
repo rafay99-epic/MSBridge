@@ -34,7 +34,6 @@ class Setting extends StatelessWidget {
                 const NotesSetting(),
                 Divider(color: theme.colorScheme.primary),
                 const ConnectivitySettingsSection(),
-                const AdminSettingsSection(),
                 Divider(color: theme.colorScheme.primary),
                 const DangerSettingsSection(),
                 Divider(color: theme.colorScheme.primary),
@@ -51,6 +50,7 @@ class Setting extends StatelessWidget {
                     );
                   },
                 ),
+                const AdminSettingsSection(),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(

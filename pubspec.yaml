@@ -51,6 +51,7 @@ dependencies:
   google_generative_ai: ^0.4.6
   firebase_crashlytics: ^4.3.4
   firebase_analytics: ^11.4.4
+  flutter_cache_manager: ^3.4.1
 
 dev_dependencies:
   flutter_test:
