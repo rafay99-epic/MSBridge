@@ -29,11 +29,13 @@ class _CreateNoteState extends State<CreateNote>
   final InternetHelper _internetHelper = InternetHelper();
   Timer? _autoSaveTimer;
   late SaveNoteResult result;
-  bool isSaved = false;
   bool isSaving = false;
   String lastSavedContent = "";
 
   Timer? _debounceTimer;
+  final FocusNode _quillFocusNode = FocusNode();
+
+  bool _showCheckmark = false;
 
   @override
   void initState() {
@@ -65,6 +67,8 @@ class _CreateNoteState extends State<CreateNote>
     _titleController.dispose();
     _internetHelper.dispose();
     _autoSaveTimer?.cancel();
+    _debounceTimer?.cancel();
+    _quillFocusNode.dispose();
 
     super.dispose();
   }
@@ -120,6 +124,7 @@ class _CreateNoteState extends State<CreateNote>
     if (mounted) {
       setState(() {
         isSaving = true;
+        _showCheckmark = false;
       });
     }
 
@@ -141,20 +146,22 @@ class _CreateNoteState extends State<CreateNote>
       if (!mounted) return;
 
       setState(() {
-        isSaved = true;
         isSaving = false;
+        _showCheckmark = true;
+        FocusScope.of(context).requestFocus(_quillFocusNode);
       });
 
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(const Duration(seconds: 1), () {
         if (!mounted) return;
         setState(() {
-          isSaved = false;
+          _showCheckmark = false;
         });
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         isSaving = false;
+        _showCheckmark = false;
       });
       CustomSnackBar.show(context, "Error saving note: $e");
     }
@@ -227,19 +234,15 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          if (isSaving)
+          if (_showCheckmark)
             const Padding(
               padding: EdgeInsets.only(right: 10.0),
               child: Row(
                 children: [
-                  SizedBox(
-                    width: 15,
-                    height: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                  Icon(LineIcons.checkCircleAlt, color: Colors.green, size: 20),
                   SizedBox(width: 5),
                   Text(
-                    "Auto Saving...",
+                    "Content Saved",
                     style: TextStyle(
                       fontSize: 12,
                     ),
@@ -260,16 +263,9 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(LineIcons.save),
-                onPressed: manualSaveNote,
-              ),
-              if (isSaved)
-                const Icon(Icons.check_circle, color: Colors.green, size: 20),
-            ],
+          IconButton(
+            icon: const Icon(LineIcons.save),
+            onPressed: manualSaveNote,
           ),
         ],
       ),
@@ -316,6 +312,7 @@ class _CreateNoteState extends State<CreateNote>
                           null),
                     ),
                   ),
+                  focusNode: _quillFocusNode,
                 ),
               ),
             ),

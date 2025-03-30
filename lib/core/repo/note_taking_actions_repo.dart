@@ -61,7 +61,8 @@ class NoteTakingActions {
 
       await HiveNoteTakingRepo.updateNote(note);
 
-      return SaveNoteResult(success: true, message: "Note auto-saved.");
+      return SaveNoteResult(
+          success: true, message: "Note Updated Successfully!");
     } catch (e) {
       return SaveNoteResult(success: false, message: "Error updating note: $e");
     }
