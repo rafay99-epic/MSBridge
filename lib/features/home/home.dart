@@ -92,7 +92,7 @@ class HomePageState extends State<Home> {
                 iconColor: colorScheme.primary,
               ),
               GButton(
-                icon: LineIcons.book,
+                icon: LineIcons.pen,
                 text: 'Notes Taking',
                 iconColor: colorScheme.primary,
               ),
