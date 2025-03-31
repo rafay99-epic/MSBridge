@@ -79,11 +79,11 @@ class HomePageState extends State<Home> {
             activeColor: colorScheme.primary,
             tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            gap: 5,
+            gap: 4,
             tabs: [
               GButton(
                 icon: LineIcons.book,
-                text: 'MS Notes',
+                text: 'Reading',
                 iconColor: colorScheme.primary,
               ),
               GButton(
@@ -93,7 +93,7 @@ class HomePageState extends State<Home> {
               ),
               GButton(
                 icon: LineIcons.pen,
-                text: 'Notes Taking',
+                text: 'Notes',
                 iconColor: colorScheme.primary,
               ),
               GButton(

@@ -9,6 +9,7 @@ import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
+import 'package:msbridge/core/provider/fingerprinter_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
@@ -46,6 +47,9 @@ void main() async {
           ),
           ChangeNotifierProvider(
             create: (_) => AutoSaveProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => FingerprintProvider(),
           ),
         ],
         child: const MyApp(),

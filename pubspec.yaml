@@ -52,6 +52,7 @@ dependencies:
   firebase_crashlytics: ^4.3.4
   firebase_analytics: ^11.4.4
   flutter_cache_manager: ^3.4.1
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:
