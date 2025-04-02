@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>NSFaceIDUsageDescription</key>
-    <string>Why is my app authenticating using face id?</string>
+    <string>MSBridge uses Face ID to securely protect your notes and personal data.</string>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
