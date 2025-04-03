@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
-import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -20,17 +19,13 @@ class AuthGate extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.active) {
             User? user = snapshot.data;
 
-            Widget child;
-
             if (user == null) {
-              child = const SplashScreen();
+              return const SplashScreen();
             } else if (!user.emailVerified) {
-              child = const EmailVerificationScreen();
+              return const EmailVerificationScreen();
             } else {
-              child = const Home();
+              return const Home();
             }
-
-            return FingerprintAuthWrapper(child: child);
           }
 
           return const Center(child: CircularProgressIndicator());

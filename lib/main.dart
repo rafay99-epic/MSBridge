@@ -13,8 +13,8 @@ import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
-import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
@@ -94,7 +94,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       theme: themeProvider.getThemeData(),
       debugShowCheckedModeBanner: false,
-      home: const AuthGate(),
+      home: const FingerprintAuthWrapper(),
     );
   }
 }

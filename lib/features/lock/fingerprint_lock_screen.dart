@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
-import 'package:msbridge/widgets/appbar.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/core/repo/auth_gate.dart';
 
 class FingerprintAuthWrapper extends StatefulWidget {
-  final Widget child;
-
-  const FingerprintAuthWrapper({super.key, required this.child});
+  const FingerprintAuthWrapper({super.key});
 
   @override
   State<FingerprintAuthWrapper> createState() => _FingerprintAuthWrapperState();
@@ -38,17 +36,19 @@ class _FingerprintAuthWrapperState extends State<FingerprintAuthWrapper> {
         setState(() {
           _isAuthenticated = authenticated;
           _isAuthenticating = false;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
         });
       }
     } else {
       setState(() {
         _isAuthenticated = true;
+        _isLoading = false;
       });
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
@@ -57,72 +57,12 @@ class _FingerprintAuthWrapperState extends State<FingerprintAuthWrapper> {
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          alignment: Alignment.center,
-          child: FractionallySizedBox(
-            widthFactor: 0.8,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ShaderMask(
-                  shaderCallback: (Rect bounds) {
-                    return LinearGradient(
-                      colors: [
-                        theme.colorScheme.secondary,
-                        theme.colorScheme.primary
-                      ],
-                      stops: const [0.4, 1.0],
-                    ).createShader(bounds);
-                  },
-                  child: const Icon(
-                    Icons.fingerprint_rounded,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.3, end: 1.0),
-                  duration: const Duration(seconds: 1),
-                  curve: Curves.easeInOut,
-                  builder: (context, opacity, child) {
-                    return Opacity(
-                      opacity: opacity,
-                      child: Text(
-                        "Authenticating...",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                          letterSpacing: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                  onEnd: () => setState(() {}),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return const LoadingScreen();
     }
 
     if (fingerprintProvider.isFingerprintEnabled && !_isAuthenticated) {
-      final theme = Theme.of(context);
-
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        appBar: const CustomAppBar(
-          title: "Fingerprint Authentication",
-          showTitle: true,
-        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -193,7 +133,71 @@ class _FingerprintAuthWrapperState extends State<FingerprintAuthWrapper> {
         ),
       );
     } else {
-      return widget.child;
+      return const AuthGate();
     }
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        alignment: Alignment.center,
+        child: FractionallySizedBox(
+          widthFactor: 0.8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return LinearGradient(
+                    colors: [
+                      theme.colorScheme.secondary,
+                      theme.colorScheme.primary
+                    ],
+                    stops: const [0.4, 1.0],
+                  ).createShader(bounds);
+                },
+                child: const Icon(
+                  Icons.fingerprint_rounded,
+                  size: 80,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.3, end: 1.0),
+                duration: const Duration(seconds: 1),
+                curve: Curves.easeInOut,
+                builder: (context, opacity, child) {
+                  return Opacity(
+                    opacity: opacity,
+                    child: Text(
+                      "Authenticating...",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                        letterSpacing: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
