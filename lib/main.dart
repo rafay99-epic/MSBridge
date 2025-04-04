@@ -47,10 +47,22 @@ void main() async {
           ),
           ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
         ],
-        child: FeatureFlag.enableAutoSave
+        child: FeatureFlag.enableFingerprintLock
             ? ChangeNotifierProvider(
-                create: (_) => AutoSaveProvider(), child: const MyApp())
-            : const MyApp(),
+                create: (_) => FingerprintAuthProvider(),
+                child: FeatureFlag.enableAutoSave
+                    ? ChangeNotifierProvider(
+                        create: (_) => AutoSaveProvider(),
+                        child: const MyApp(),
+                      )
+                    : const MyApp(),
+              )
+            : FeatureFlag.enableAutoSave
+                ? ChangeNotifierProvider(
+                    create: (_) => AutoSaveProvider(),
+                    child: const MyApp(),
+                  )
+                : const MyApp(),
       ),
     );
 

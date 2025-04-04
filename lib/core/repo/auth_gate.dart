@@ -6,6 +6,7 @@ import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -28,8 +29,15 @@ class AuthGate extends StatelessWidget {
             } else {
               if (FeatureFlag.enableSyncLayer) {
                 WidgetsBinding.instance.addPostFrameCallback((_) async {
-                  final syncService = SyncService();
-                  await syncService.startListening();
+                  try {
+                    final syncService = SyncService();
+                    await syncService.startListening();
+                  } catch (e) {
+                    CustomSnackBar.show(
+                      context,
+                      "Error starting sync service: $e",
+                    );
+                  }
                 });
               }
 
