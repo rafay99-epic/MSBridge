@@ -33,8 +33,12 @@ class _MSNotesScreenState extends State<Msnotes>
       try {
         await ApiService.fetchAndSaveNotes();
       } catch (e) {
-        debugPrint('Error fetching notes: $e');
-        // Consider showing a user-friendly error message
+        if (context.mounted) {
+          CustomSnackBar.show(
+            context,
+            "Error fetching notes: $e",
+          );
+        }
       }
     });
   }

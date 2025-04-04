@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
-import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
@@ -15,7 +14,6 @@ import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
-import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
@@ -55,14 +53,6 @@ void main() async {
             : const MyApp(),
       ),
     );
-
-    if (FeatureFlag.enableSyncLayer) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final syncService = SyncService();
-        await syncService.startListening();
-        ApiService.fetchAndSaveNotes();
-      });
-    }
 
     bool weWantFatalErrorRecording = true;
     FlutterError.onError = (errorDetails) {

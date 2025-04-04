@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
@@ -17,13 +19,20 @@ class AuthGate extends StatelessWidget {
         stream: authRepo.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
-            User? user = snapshot.data;
+            final user = snapshot.data;
 
             if (user == null) {
               return const SplashScreen();
             } else if (!user.emailVerified) {
               return const EmailVerificationScreen();
             } else {
+              if (FeatureFlag.enableSyncLayer) {
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  final syncService = SyncService();
+                  await syncService.startListening();
+                });
+              }
+
               return const Home();
             }
           }
