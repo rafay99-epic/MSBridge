@@ -54,8 +54,9 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const AIModelSelectionPage(),
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const AIModelSelectionPage(),
               ),
             );
           },
