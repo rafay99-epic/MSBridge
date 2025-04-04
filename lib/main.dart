@@ -4,6 +4,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
@@ -13,6 +14,7 @@ import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
+import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:msbridge/utils/error.dart';
@@ -45,20 +47,22 @@ void main() async {
           ChangeNotifierProvider(
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
-          ChangeNotifierProvider(
-            create: (_) => AutoSaveProvider(),
-          ),
           ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
         ],
-        child: const MyApp(),
+        child: FeatureFlag.enableAutoSave
+            ? ChangeNotifierProvider(
+                create: (_) => AutoSaveProvider(), child: const MyApp())
+            : const MyApp(),
       ),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final syncService = SyncService();
-      await syncService.startListening();
-      ApiService.fetchAndSaveNotes();
-    });
+    if (FeatureFlag.enableSyncLayer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final syncService = SyncService();
+        await syncService.startListening();
+        ApiService.fetchAndSaveNotes();
+      });
+    }
 
     bool weWantFatalErrorRecording = true;
     FlutterError.onError = (errorDetails) {
@@ -94,7 +98,9 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       theme: themeProvider.getThemeData(),
       debugShowCheckedModeBanner: false,
-      home: const FingerprintAuthWrapper(),
+      home: FeatureFlag.enableFingerprintLock
+          ? const FingerprintAuthWrapper()
+          : const AuthGate(),
     );
   }
 }

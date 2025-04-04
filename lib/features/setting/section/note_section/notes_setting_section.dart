@@ -14,6 +14,7 @@ import 'package:msbridge/widgets/warning_dialog_box.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/config/feature_flag.dart'; // Import FeatureFlag
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -59,16 +60,17 @@ class _NotesSettingState extends State<NotesSetting> {
             );
           },
         ),
-        SettingsTile(
-          title: "Auto Save Notes",
-          icon: LineIcons.save,
-          trailing: Switch(
-            value: autoSaveProvider.autoSaveEnabled,
-            onChanged: (bool value) {
-              autoSaveProvider.autoSaveEnabled = value;
-            },
+        if (FeatureFlag.enableAutoSave) // Conditionally render Auto Save
+          SettingsTile(
+            title: "Auto Save Notes",
+            icon: LineIcons.save,
+            trailing: Switch(
+              value: autoSaveProvider.autoSaveEnabled,
+              onChanged: (bool value) {
+                autoSaveProvider.autoSaveEnabled = value;
+              },
+            ),
           ),
-        ),
         SettingsTile(
           title: "Recycle Bin",
           icon: LineIcons.trash,

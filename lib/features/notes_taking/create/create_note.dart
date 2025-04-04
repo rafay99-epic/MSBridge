@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
@@ -53,16 +54,18 @@ class _CreateNoteState extends State<CreateNote>
       _controller = QuillController.basic();
     }
 
-    _controller.document.changes.listen((event) {
-      if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-      _debounceTimer = Timer(const Duration(seconds: 3), () {
-        _saveNote();
+    if (FeatureFlag.enableAutoSave) {
+      _controller.document.changes.listen((event) {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 3), () {
+          _saveNote();
+        });
       });
-    });
+    }
 
     final autoSaveProvider =
         Provider.of<AutoSaveProvider>(context, listen: false);
-    if (autoSaveProvider.autoSaveEnabled) {
+    if (FeatureFlag.enableAutoSave && autoSaveProvider.autoSaveEnabled) {
       startAutoSave();
     }
   }
@@ -246,7 +249,7 @@ class _CreateNoteState extends State<CreateNote>
           ValueListenableBuilder<bool>(
             valueListenable: _isSavingNotifier,
             builder: (context, isSaving, child) {
-              if (isSaving) {
+              if (FeatureFlag.enableAutoSave && isSaving) {
                 return const Padding(
                   padding: EdgeInsets.only(right: 10.0),
                   child: Row(
@@ -274,7 +277,7 @@ class _CreateNoteState extends State<CreateNote>
           ValueListenableBuilder<bool>(
             valueListenable: _showCheckmarkNotifier,
             builder: (context, showCheckmark, child) {
-              if (showCheckmark) {
+              if (FeatureFlag.enableAutoSave && showCheckmark) {
                 return const Padding(
                   padding: EdgeInsets.only(right: 10.0),
                   child: Row(
