@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
@@ -29,8 +30,7 @@ class _NoteCardState extends State<NoteCard> {
     final isPinned = noteProvider.isNotePinned(widget.note.noteId.toString());
 
     final lastUpdated = DateTime.parse(widget.note.updatedAt.toString());
-    final formattedDate =
-        "${lastUpdated.day}/${lastUpdated.month}/${lastUpdated.year}";
+    final formattedDate = DateFormat('dd/MM/yyyy').format(lastUpdated);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
