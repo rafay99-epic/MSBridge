@@ -45,23 +45,12 @@ void main() async {
           ChangeNotifierProvider(
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
+          if (FeatureFlag.enableFingerprintLock)
+            ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
+          if (FeatureFlag.enableAutoSave)
+            ChangeNotifierProvider(create: (_) => AutoSaveProvider()),
         ],
-        child: FeatureFlag.enableFingerprintLock
-            ? ChangeNotifierProvider(
-                create: (_) => FingerprintAuthProvider(),
-                child: FeatureFlag.enableAutoSave
-                    ? ChangeNotifierProvider(
-                        create: (_) => AutoSaveProvider(),
-                        child: const MyApp(),
-                      )
-                    : const MyApp(),
-              )
-            : FeatureFlag.enableAutoSave
-                ? ChangeNotifierProvider(
-                    create: (_) => AutoSaveProvider(),
-                    child: const MyApp(),
-                  )
-                : const MyApp(),
+        child: const MyApp(),
       ),
     );
 
