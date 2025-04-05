@@ -64,8 +64,8 @@ class UpdateAppRepo {
         },
       );
 
-      await SystemNavigator.pop();
-
+      // Only call SystemNavigator.pop() if needed after completion
+      // await SystemNavigator.pop();
       onDownloadComplete();
 
 try {
