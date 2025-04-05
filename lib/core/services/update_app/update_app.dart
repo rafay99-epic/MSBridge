@@ -234,7 +234,7 @@ class UpdateApp extends StatefulWidget {
 
 class _UpdateAppState extends State<UpdateApp> {
   final String apkUrl =
-      'http://rafay99.com/downloads/app/msbridge/MSBridge-release.apk';
+      'https://rafay99.com/downloads/app/msbridge/MSBridge-release.apk';
 
   String? _downloadedFilePath;
   bool _isDownloading = false;
