@@ -45,7 +45,6 @@ void main() async {
           ChangeNotifierProvider(
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
-          ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
         ],
         child: FeatureFlag.enableFingerprintLock
             ? ChangeNotifierProvider(
