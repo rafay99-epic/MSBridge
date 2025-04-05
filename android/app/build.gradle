@@ -25,12 +25,8 @@ def flutterVersionName = localProperties.getProperty("flutter.versionName")
 if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
-def keystorePropertiesFile = file("../")
-def keystoreProperties = new Properties()
 
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
+
 
 android {
     namespace = "com.syntaxlab.msbridge"
@@ -49,15 +45,20 @@ android {
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
+    // Load keystore properties
+    def keystoreProperties = new Properties()
+    def keystorePropertiesFile = file("key.properties") 
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
      signingConfigs {
-       release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-           storePassword keystoreProperties['storePassword']
-       }
-   }
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            String storeFilePath = keystoreProperties['storeFile']
+            storeFile file(storeFilePath)  
+            storePassword keystoreProperties['storePassword']
+        }
+    }
 
     buildTypes {
         release {
