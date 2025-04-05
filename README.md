@@ -11,25 +11,27 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
 ## Badges
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white) ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) ![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=ios&logoColor=white) ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/rafay99-epic/MSBridge?labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit%20Reviews)
+Absolutely! Here's a clean and professional **Markdown table** that's perfect for a `README.md` file. It's easy to read on GitHub, looks organized, and conveys all your app's features clearly:
 
-## Features
+## 🚀 Features
 
-- **AI-Powered Note Summarization** – Generate concise and engaging summaries of your notes using advanced AI models.
-- **Dynamic Note Rendering** – Fetches and displays your notes from an API endpoint, ensuring you always have the latest version.
-- **Online/Offline Mode** – Seamlessly switches between online and offline modes, allowing you to access your notes even without an internet connection.
-- **Local Database with Hive** – Utilizes Hive, a fast and lightweight NoSQL database, for efficient offline data storage and retrieval.
-- **Secure Authentication and Spam Detection** – Implements Firebase Authentication for secure user access and incorporates spam detection mechanisms to maintain data integrity.
-- **Fast Search and Tag System** – Includes a powerful search functionality and a tag system for quick and easy note organization and retrieval.
-- **Admin Panel Integration** – Allows seamless integration with CMS through the web view, so you can manage content via CMS from anywhere.
-- **Note-Taking** – Enables users to create, edit, and delete notes, providing a comprehensive note-taking experience with Hive as the local database.
-- **Multiple Theme Support** – Users can switch between various themes, including light mode, dark mode, sunset, midnight, forest green, and more, allowing for a personalized experience.
-- **Fast Search** – With Hive database support, searching is optimized for speed and efficiency, enabling case-insensitive searches across titles and content.
-- **Enhanced Offline Mode** – Automatically switches between online and offline modes, preventing changes when there is no internet connection.
-- **Reset to Default** – Provides an option to reset settings and themes back to the default style whenever needed.
-- **Interactive AI Summary Bottom Sheet** – A sleek bottom sheet interface with a dynamic typing effect for viewing summaries, with intuitive copy and close options.
-- **User-Selectable AI Model for Summarization** – Users can now choose their preferred AI model for generating summaries via a dedicated settings page.
-- **Auto-Save Feature** – Automatically saves notes to enhance efficiency.
-- **New Settings Interface & App Info Page** – Improved settings navigation with an added App Info page displaying application details.
+| Feature                             | Description                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **🧠 AI-Powered Summarization**     | Generate concise, context-aware summaries of your notes using advanced AI models.                |
+| **🔄 Real-Time Note Sync**          | Always stay up-to-date with dynamic note fetching from your API endpoint.                        |
+| **📶 Online & Offline Mode**        | Seamlessly switch between online and offline access, ensuring uninterrupted note usage.          |
+| **💾 Local Storage with Hive**      | Fast, lightweight NoSQL database to store and retrieve notes efficiently when offline.           |
+| **🔐 Secure Authentication**        | Firebase Authentication integration with built-in spam detection for secure and reliable access. |
+| **🔍 Fast Search & Tag System**     | Perform fast, case-insensitive searches across notes and organize them using tags.               |
+| **🧑‍💻 CMS Admin Panel Support**      | Integrated WebView for managing content directly from your CMS dashboard.                        |
+| **📝 Full Note-Taking Support**     | Create, edit, delete, and auto-save notes locally and online with smooth UX.                     |
+| **🎨 Multiple Themes**              | Choose from Light, Dark, Sunset, Midnight, Forest Green, and more for a personalized experience. |
+| **⚡ Optimized Offline Search**     | Quick local searching powered by Hive for efficient offline queries.                             |
+| **🔄 Reset to Default**             | Revert settings and themes to default with a single tap.                                         |
+| **📄 AI Summary Bottom Sheet**      | Interactive bottom sheet with dynamic typing animation and copy/close actions.                   |
+| **⚙️ Customizable AI Model**        | Select your preferred AI model for summarization from the settings menu.                         |
+| **💡 Auto-Save Feature**            | Automatically saves notes as you type to prevent data loss.                                      |
+| **📱 Enhanced Settings & App Info** | New settings interface and dedicated app info page for a refined user experience.                |
 
 ## Technologies Used
 
@@ -40,94 +42,139 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
   - Web Hosting or App hosting: For hosting CMS.
 - **Hive:** A lightweight NoSQL database for local data storage.
 - **API Calls:** Flutter's `http` package (or similar) for fetching notes from the backend API.
-- **AI Integration:** Google AI Studio API  for AI-powered note summarization.
+- **AI Integration:** Google AI Studio API for AI-powered note summarization.
 
-## Getting Started
+## 🚀 Getting Started
 
-These instructions will guide you on how to set up and run MS Bridge on your local machine.
+Follow the steps below to set up and run **MS Bridge** on your local development environment.
 
-### Prerequisites
+### 📋 Prerequisites
 
-- Flutter SDK (Version 3.22.2 or higher)
-  - [Flutter Installation Guide](https://docs.flutter.dev/get-started/install)
-- Android Studio or VS Code with Flutter extension
-- Firebase Project:
-  - You need a Firebase project to store your data and handle authentication.
-- API Key for AI Summarization (Google Studio API)
+Ensure the following tools and services are available on your system:
 
-### Installation
+- **Flutter SDK** (version `3.22.2` or higher)  
+  📖 [Install Flutter](https://docs.flutter.dev/get-started/install)
+- **Android Studio** or **VS Code** with Flutter extension
+- **Firebase Project** for authentication and data storage
+- **API Key** for AI Summarization _(Google Studio API)_
+- **Keystore** (for signed APK generation)
+  > _Note: The password for the keystore is not provided._
 
-1. **Clone the repository:**
+---
 
+### 🔧 Installation Steps
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/rafay99-epic/MSBridge
+cd MSBridge
+```
+
+#### 2. Install Dependencies
+
+```bash
+flutter pub get
+```
+
+#### 3. Configure Firebase
+
+1. **Create a Firebase Project:**  
+   Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
+
+2. **Integrate Firebase with Flutter App:**  
+   Follow Firebase’s guide to register your app and download the configuration files:
+
+   - `google-services.json` → Place in `android/app/`
+   - `GoogleService-Info.plist` → Place in `ios/Runner/`
+
+3. **Enable Firebase Services:**
+   - Enable **Authentication** (e.g., Email/Password, Google Sign-In)
+   - Enable **Firestore Database** and configure security rules as needed
+
+---
+
+### 🔐 Firebase & API Key Configuration
+
+Edit the config file (e.g., `lib/config.dart`) and replace placeholder values with your actual Firebase and API credentials:
+
+```dart
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId: 'YOUR_APP_ID',
+  measurementId: 'YOUR_MEASUREMENT_ID',
+};
+
+const aiApiKey = 'YOUR_GOOGLE_AI_STUDIO_API_KEY';
+```
+
+> 💡 **Tip:** Never commit API keys to version control. Use `.env` or secure key management.
+
+You may also need to update:
+
+- `android/app/src/main/AndroidManifest.xml`
+- `ios/Runner/Info.plist`
+
+---
+
+### 🤖 AI Summarization Setup
+
+- Sign up and get your API key from [Google AI Studio](https://aistudio.google.com/)
+- Paste the key in `lib/config.dart` under `aiApiKey`
+
+---
+
+### 📦 Keystore for Signed APKs
+
+To build signed APKs:
+
+1. Generate a keystore:
    ```bash
-   git clone https://github.com/rafay99-epic/MSBridge
-   cd MSBridge
+   keytool -genkey -v -keystore msbridge_keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias msbridge
    ```
+2. Place the keystore in the project root.
+3. Update your `android/key.properties` and `build.gradle` files accordingly.
 
-2. **Install Flutter dependencies:**
+> ⚠️ _The password for the signing key is not provided and must be managed securely._
 
-   ```bash
-   flutter pub get
-   ```
+### ▶️ Run the Application
 
-3. **Configure Firebase:**
+Use the following command to start the app:
 
-   - **Create a Firebase Project:** Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
-   - **Add Firebase to Your Flutter App:** Follow the instructions on the Firebase console to add your Flutter app to the project (for both Android and iOS if you intend to support both). This will involve:
-     - Registering your app with Firebase.
-     - Downloading the `google-services.json` (for Android) and `GoogleService-Info.plist` (for iOS) configuration files.
-     - Placing these files in the appropriate directories within your Flutter project (as specified by Firebase).
-   - **Enable Authentication:** In the Firebase console, enable the authentication methods you want to use (e.g., Email/Password, Google Sign-In).
-   - **Set up Firestore:** Create a Firestore Database instance and configure the security rules as needed.
-
-4. **API Keys and Firebase Configuration:**
-
-   - **Important:** This project requires Firebase configuration and API keys to function correctly. You need to:
-     - Replace the placeholder values in `lib/config.dart` (or similar configuration file) with your actual Firebase API keys and project settings. These values will include (but may not be limited to):
-       - `apiKey`
-       - `authDomain`
-       - `projectId`
-       - `storageBucket`
-       - `messagingSenderId`
-       - `appId`
-       - `measurementId`
-     - You may also need to configure your API keys and project settings in your AndroidManifest.xml and Info.plist files if prompted by firebase setup.
-     - **Security Note:** Never commit your API keys directly to your public repository. Use environment variables or secure configuration management techniques.
-
-5. "**Set up AI Summarization API Key:**
-
-   - **Important:** This project requires an API key for AI Summarization. You can set the API key in the `lib/config.dart` file.
-   - **Important:** You can get the API key from [Google Studio AI](https://aistudio.google.com/)
-
-6. **Run the application:**
-
-   ```bash
-   flutter run
-   ```
+```bash
+flutter run
+```
 
 ## APK Files
 
-### Latest Release
+You can easily test the application by downloading the APK files from the official links below:
 
-You can download the latest version of the application from the official website:
-[**Download Latest Release**](https://www.rafay99.com/downloads/apk/MSBridge/release)
+- 🔹 **Stable Release (v6)** – [Download from rafay99.com](https://rafay99.com/MSBridge-APK)
+- 🔸 **Beta Version** – [Try the beta build](https://rafay99.com/MSBridge-beta)
 
 ### Previous Releases
 
-For older versions of the APK files, visit the [**GitHub repository**](https://github.com/rafay99-epic/MSBridge/tree/main/apk).
+Looking for older versions? You can find all previous APK files in the [**GitHub repository**](https://github.com/rafay99-epic/MSBridge/tree/main/apk).
 
-## Contribution
+## Contributing
 
-Contributions are welcome! If you'd like to contribute, please follow these steps:
+We welcome contributions from the community! If you're interested in contributing, please follow these steps:
 
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes and commit them with clear, descriptive messages.
-4. Submit a pull request.
+1. **Fork the repository** to create your own copy.
+2. **Create a new branch** for your feature or bug fix (e.g., `feature/add-new-feature` or `bugfix/fix-issue`).
+3. **Make your changes** in the branch. Be sure to write clean, well-documented code and follow the project's coding style.
+4. **Commit your changes** with clear, concise commit messages that explain the purpose of the change.
+5. **Submit a pull request (PR)** to the main repository. In your PR, provide a brief description of what you’ve changed and why.
+
+We review all pull requests and will provide feedback as necessary. Thank you for helping improve the project!
 
 ## License
 
-This project is licensed under the Apache License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [Apache License 2.0](LICENSE). See the LICENSE file for full details.
 
 ## Blog Post
 
@@ -153,3 +200,7 @@ I would like to express my sincere gratitude to the creators and maintainers of 
 **Special Thanks:**
 
 A big thank you to the Flutter community, Stack Overflow contributors, and everyone who provided support and guidance throughout the development of this project!
+
+<p align="center">
+  Made with ❤️ by <a href="https://rafay99.com">Abdul Rafay</a> • <a href="mailto:99marafay@gmail.com">Contact</a> • <a href="https://github.com/rafay99-epic/MSBridge/stargazers">⭐ Star</a>
+</p>
