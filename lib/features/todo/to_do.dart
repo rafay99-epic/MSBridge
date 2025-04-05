@@ -33,15 +33,28 @@ class _ToDOState extends State<ToDO> {
         ),
         body: Column(
           children: [
-            TabBar(
-              dividerColor: Colors.transparent,
-              labelColor: theme.colorScheme.primary,
-              unselectedLabelColor: theme.colorScheme.primary.withOpacity(0.6),
-              indicatorColor: theme.colorScheme.secondary,
-              tabs: const [
-                Tab(text: "Tasks"),
-                Tab(text: "Completed"),
-              ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TabBar(
+                dividerColor: Colors.transparent,
+                labelColor: theme.colorScheme.primary,
+                unselectedLabelColor:
+                    theme.colorScheme.primary.withOpacity(0.6),
+                indicatorColor: theme.colorScheme.secondary,
+                indicatorWeight: 3.0,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+                tabs: const [
+                  Tab(text: "Tasks"),
+                  Tab(text: "Completed"),
+                ],
+              ),
             ),
             Expanded(
               child: Consumer<TodoProvider>(
@@ -99,20 +112,23 @@ class _ToDOState extends State<ToDO> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
         return Card(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 5,
+          margin: const EdgeInsets.only(bottom: 15),
           child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
             title: Text(
               task.title,
               style: TextStyle(
                 color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
                 decoration: isCompleted
                     ? TextDecoration.lineThrough
                     : TextDecoration.none,
@@ -122,20 +138,31 @@ class _ToDOState extends State<ToDO> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (task.description != null && task.description!.isNotEmpty)
-                  Text(
-                    task.description!,
-                    style: TextStyle(
-                        color: theme.colorScheme.primary.withOpacity(0.8)),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      task.description!,
+                      style: TextStyle(
+                          color: theme.colorScheme.primary.withOpacity(0.8),
+                          fontSize: 14),
+                    ),
                   ),
                 if (task.dueDate != null)
-                  Text(
-                    'Due: ${DateFormat('yyyy-MM-dd').format(task.dueDate!)}',
-                    style: TextStyle(color: theme.colorScheme.secondary),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Due: ${DateFormat('yyyy-MM-dd').format(task.dueDate!)}',
+                      style: TextStyle(color: theme.colorScheme.secondary),
+                    ),
                   ),
-                Text(
-                  'Created: ${DateFormat('yyyy-MM-dd').format(task.createdAt)}',
-                  style: TextStyle(
-                      color: theme.colorScheme.primary.withOpacity(0.5)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Created: ${DateFormat('yyyy-MM-dd').format(task.createdAt)}',
+                    style: TextStyle(
+                        color: theme.colorScheme.primary.withOpacity(0.6),
+                        fontSize: 12),
+                  ),
                 ),
               ],
             ),

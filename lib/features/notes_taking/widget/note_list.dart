@@ -30,7 +30,7 @@ class NoteList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (notes.isEmpty) {
       return const EmptyNotesMessage(
-        message: 'Sorry Notes ',
+        message: 'No Notes Yet',
         description: 'Tap + to create a new note',
       );
     }
@@ -43,132 +43,83 @@ class NoteList extends StatelessWidget {
         .toList();
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pinnedNotes.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-              child: Text(
-                "Pinned Notes",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: MasonryGridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 4,
-                itemCount: pinnedNotes.length,
-                itemBuilder: (context, index) {
-                  final note = pinnedNotes[index];
-                  return GestureDetector(
-                    onTap: () async {
-                      if (isSelectionMode) {
-                        toggleNoteSelection(note.noteId.toString());
-                      } else {
-                        await Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    CreateNote(
-                              note: note,
-                            ),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                  opacity: animation, child: child);
-                            },
-                            transitionDuration:
-                                const Duration(milliseconds: 300),
-                          ),
-                        );
-                      }
-                    },
-                    onLongPress: () {
-                      if (!isSelectionMode) {
-                        enterSelectionMode(note.noteId.toString());
-                      }
-                    },
-                    child: NoteCard(
-                      note: note,
-                      isSelected:
-                          selectedNoteIds.contains(note.noteId.toString()),
-                      isSelectionMode: isSelectionMode,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: Text(
-              " Notes",
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: MasonryGridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-              itemCount: unpinnedNotes.length,
-              itemBuilder: (context, index) {
-                final note = unpinnedNotes[index];
-                return GestureDetector(
-                  onTap: () async {
-                    if (isSelectionMode) {
-                      toggleNoteSelection(note.noteId.toString());
-                    } else {
-                      await Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  CreateNote(
-                            note: note,
-                          ),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                            return FadeTransition(
-                                opacity: animation, child: child);
-                          },
-                          transitionDuration: const Duration(milliseconds: 300),
-                        ),
-                      );
-                    }
-                  },
-                  onLongPress: () {
-                    if (!isSelectionMode) {
-                      enterSelectionMode(note.noteId.toString());
-                    }
-                  },
-                  child: NoteCard(
-                    note: note,
-                    isSelected:
-                        selectedNoteIds.contains(note.noteId.toString()),
-                    isSelectionMode: isSelectionMode,
-                  ),
-                );
-              },
-            ),
-          ),
+          if (pinnedNotes.isNotEmpty) _buildSectionTitle("Pinned Notes"),
+          if (pinnedNotes.isNotEmpty) _buildNoteGrid(pinnedNotes),
+          _buildSectionTitle("All Notes"),
+          _buildNoteGrid(unpinnedNotes),
         ],
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
+      child: Text(
+        title,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteGrid(List<NoteTakingModel> notesList) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: MasonryGridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        itemCount: notesList.length,
+        itemBuilder: (context, index) {
+          final note = notesList[index];
+          return GestureDetector(
+            onTap: () => handleNoteTap(context, note),
+            onLongPress: () => handleNoteLongPress(note),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: NoteCard(
+                note: note,
+                isSelected: selectedNoteIds.contains(note.noteId.toString()),
+                isSelectionMode: isSelectionMode,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void handleNoteTap(BuildContext context, NoteTakingModel note) async {
+    if (isSelectionMode) {
+      toggleNoteSelection(note.noteId.toString());
+    } else {
+      await Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              CreateNote(note: note),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    }
+  }
+
+  void handleNoteLongPress(NoteTakingModel note) {
+    if (!isSelectionMode) {
+      enterSelectionMode(note.noteId.toString());
+    }
   }
 }

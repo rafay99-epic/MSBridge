@@ -13,7 +13,7 @@ class AutoSaveProvider with ChangeNotifier {
   set autoSaveEnabled(bool value) {
     _autoSaveEnabled = value;
     _saveAutoSaveSetting(value);
-    notifyListeners(); // Notify listeners about the change
+    notifyListeners();
   }
 
   Future<void> _loadAutoSaveSetting() async {

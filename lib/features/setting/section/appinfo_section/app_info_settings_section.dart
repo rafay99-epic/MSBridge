@@ -107,7 +107,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               ),
             );
           },
-        )
+        ),
       ],
     );
   }
