@@ -11,7 +11,7 @@ With MS Bridge, you get a reliable, user-friendly platform for organizing and ac
 ## Badges
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white) ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) ![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=ios&logoColor=white) ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/rafay99-epic/MSBridge?labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit%20Reviews)
-Absolutely! Here's a clean and professional **Markdown table** that's perfect for a `README.md` file. It's easy to read on GitHub, looks organized, and conveys all your app's features clearly:
+
 
 ## 🚀 Features
 
