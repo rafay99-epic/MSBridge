@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
@@ -32,6 +33,9 @@ class AuthGate extends StatelessWidget {
                   try {
                     final syncService = SyncService();
                     await syncService.startListening();
+                    final ReverseSyncService reverseSyncService =
+                        ReverseSyncService();
+                    await reverseSyncService.syncDataFromFirebaseToHive();
                   } catch (e) {
                     CustomSnackBar.show(
                       context,

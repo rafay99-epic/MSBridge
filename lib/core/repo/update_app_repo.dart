@@ -5,7 +5,6 @@ import 'package:msbridge/core/permissions/permission.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class UpdateAppRepo {
   final String apkUrl;
@@ -64,17 +63,15 @@ class UpdateAppRepo {
         },
       );
 
-      // Only call SystemNavigator.pop() if needed after completion
-      // await SystemNavigator.pop();
       onDownloadComplete();
 
-try {
-  final result = await InstallPlugin.installApk(downloadedFilePath!);
-  return result == "success"; // Adjust based on actual return values from the plugin
-} catch (error) {
-  onError("Error installing APK: $error");
-  return false;
-}
+      try {
+        final result = await InstallPlugin.installApk(downloadedFilePath!);
+        return result == "success";
+      } catch (error) {
+        onError("Error installing APK: $error");
+        return false;
+      }
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
         onError("Download canceled");
