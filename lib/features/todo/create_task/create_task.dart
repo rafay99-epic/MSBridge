@@ -12,28 +12,29 @@ class TaskEntryScreen extends StatefulWidget {
 }
 
 class _TaskEntryScreenState extends State<TaskEntryScreen> {
-  final taskController = TextEditingController();
-  final descriptionController = TextEditingController();
-  DateTime? selectedDueDate;
+  final _taskController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  DateTime? _selectedDueDate;
   final TodoRepository _todoRepository = TodoRepository();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    taskController.dispose();
-    descriptionController.dispose();
+    _taskController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> selectDate(BuildContext context) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDueDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: _selectedDueDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != selectedDueDate) {
+    if (picked != null && picked != _selectedDueDate) {
       setState(() {
-        selectedDueDate = picked;
+        _selectedDueDate = picked;
       });
     }
   }
@@ -41,169 +42,171 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: const CustomAppBar(
-        title: 'Add New Task',
-        showBackButton: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Task Title',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        appBar: const CustomAppBar(
+          title: 'Add New Task',
+          showBackButton: true,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                buildTextField(
+                  controller: _taskController,
+                  label: 'Task Title',
+                  hint: 'Enter task title',
+                  validator: (value) =>
+                      value!.isEmpty ? 'Title is required' : null,
+                ),
+                const SizedBox(height: 16),
+                buildTextField(
+                  controller: _descriptionController,
+                  label: 'Description',
+                  hint: 'Optional description',
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 16),
+                _buildDatePicker(context, theme),
+                const SizedBox(height: 30),
+                _buildSubmitButton(context),
+              ],
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: taskController,
-              style: TextStyle(color: theme.colorScheme.primary),
-              decoration: InputDecoration(
-                hintText: "Enter task title",
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.primary.withOpacity(0.4),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.colorScheme.secondary),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.secondary, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Description',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: descriptionController,
-              style: TextStyle(color: theme.colorScheme.primary),
-              decoration: InputDecoration(
-                hintText: "Optional description",
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.primary.withOpacity(0.4),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.colorScheme.secondary),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.secondary, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-              maxLines: 4,
-              keyboardType: TextInputType.multiline,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Due Date',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.secondary),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      selectedDueDate == null
-                          ? 'No due date selected'
-                          : DateFormat('yyyy-MM-dd').format(selectedDueDate!),
-                      style: TextStyle(color: theme.colorScheme.primary),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => selectDate(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.secondary,
-                      foregroundColor: theme.colorScheme.onSecondary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Select Date'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: theme.colorScheme.onSecondary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-              ),
-              onPressed: () async {
-                if (taskController.text.isEmpty) {
-                  CustomSnackBar.show(context, "Please enter the task title.");
-                  return;
-                }
-
-                try {
-                  await _todoRepository.addTask(
-                    context,
-                    taskController.text,
-                    descriptionController.text,
-                    selectedDueDate,
-                  );
-                  CustomSnackBar.show(context, "Task added successfully!",
-                      isSuccess: true);
-                  Navigator.pop(context);
-                } catch (e) {
-                  CustomSnackBar.show(context, e.toString());
-                }
-              },
-              child: Text(
-                'Add Task',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: TextStyle(color: theme.colorScheme.primary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle:
+                TextStyle(color: theme.colorScheme.primary.withOpacity(0.4)),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: theme.colorScheme.secondary),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker(BuildContext context, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Due Date',
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => _selectDate(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: theme.colorScheme.secondary),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedDueDate == null
+                        ? 'No due date selected'
+                        : DateFormat('yyyy-MM-dd').format(_selectedDueDate!),
+                    style: TextStyle(color: theme.colorScheme.primary),
+                  ),
+                ),
+                const Icon(Icons.calendar_today, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(BuildContext context) {
+    final theme = Theme.of(context);
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.colorScheme.secondary,
+        foregroundColor: theme.colorScheme.onSecondary,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      onPressed: () async {
+        if (!_formKey.currentState!.validate()) return;
+
+        try {
+          await _todoRepository.addTask(
+            context,
+            _taskController.text,
+            _descriptionController.text,
+            _selectedDueDate,
+          );
+          CustomSnackBar.show(context, 'Task added successfully!',
+              isSuccess: true);
+          Navigator.pop(context);
+        } catch (e) {
+          CustomSnackBar.show(context, e.toString());
+        }
+      },
+      child: Text('Add Task',
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          )),
     );
   }
 }
