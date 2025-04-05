@@ -13,7 +13,6 @@ class ReverseSyncService {
       final userResult = await _authRepo.getCurrentUser();
 
       if (!userResult.isSuccess || userResult.user == null) {
-        print('No user logged in. Skipping sync.');
         return;
       }
 
@@ -23,49 +22,48 @@ class ReverseSyncService {
       final isHiveEmpty = await HiveNoteTakingRepo.isBoxEmpty();
 
       if (isHiveEmpty) {
-        print("================================================");
-        print('Hive is empty. Fetching data from Firebase.');
-        print("================================================");
-        final userNotesCollection =
-            _firestore.collection('users').doc(userId).collection('notes');
+        try {
+          final userNotesCollection =
+              _firestore.collection('users').doc(userId).collection('notes');
 
-        final QuerySnapshot notesSnapshot = await userNotesCollection.get();
+          final QuerySnapshot notesSnapshot = await userNotesCollection.get();
 
-        for (final doc in notesSnapshot.docs) {
-          final data = doc.data() as Map<String, dynamic>;
+          const batchSize = 50;
+          for (var i = 0; i < notesSnapshot.docs.length; i += batchSize) {
+            final batch = notesSnapshot.docs.sublist(
+                i,
+                (i + batchSize < notesSnapshot.docs.length)
+                    ? i + batchSize
+                    : notesSnapshot.docs.length);
 
-          final noteMap = {
-            'noteId': doc.id,
-            'noteTitle': data['noteTitle'] ?? '',
-            'noteContent': data['noteContent'] ?? '',
-            'isSynced': data['isSynced'] ?? false,
-            'isDeleted': data['isDeleted'] ?? false,
-            'updatedAt': data['updatedAt'] ?? DateTime.now().toIso8601String(),
-            'userId': userId,
-          };
+            final Map<String, NoteTakingModel> notesToAdd = {};
+            for (final doc in batch) {
+              final data = doc.data() as Map<String, dynamic>;
 
-          final note = NoteTakingModel.fromMap(noteMap);
-          await HiveNoteTakingRepo.addNote(note);
-          print("================================================");
+              final noteMap = {
+                'noteId': doc.id,
+                'noteTitle': data['noteTitle'] ?? '',
+                'noteContent': data['noteContent'] ?? '',
+                'isSynced': data['isSynced'] ?? false,
+                'isDeleted': data['isDeleted'] ?? false,
+                'updatedAt':
+                    data['updatedAt'] ?? DateTime.now().toIso8601String(),
+                'userId': userId,
+              };
 
-          print('Added note to Hive: ${note.noteTitle}');
-          print("================================================");
+              final note = NoteTakingModel.fromMap(noteMap);
+              notesToAdd[note.noteId!] = note;
+            }
+
+            final box = await HiveNoteTakingRepo.getBox();
+            await box.putAll(notesToAdd);
+          }
+        } catch (firebaseError) {
+          rethrow;
         }
-        print("================================================");
-
-        print('Successfully synced data from Firebase to Hive.');
-        print("================================================");
-      } else {
-        print("================================================");
-
-        print('Hive is not empty. Skipping Firebase sync.');
-        print("================================================");
       }
-    } catch (e) {
-      print("================================================");
-
-      print('Error during Firebase to Hive sync: $e');
-      print("================================================");
+    } catch (authError) {
+      rethrow;
     }
   }
 }

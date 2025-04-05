@@ -83,7 +83,7 @@ class UpdateAppRepo {
       dio?.close();
       dio = null;
     }
-    return true;
+    return false;
   }
 
   void cancelDownload() {
