@@ -6,7 +6,6 @@ import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/core/services/update_app/update_app.dart';
 
 class AppInfoSettingsSection extends StatefulWidget {
   const AppInfoSettingsSection({super.key});
@@ -105,20 +104,6 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                     pageTitle: "Terms and Conditions",
                     cmsUrl:
                         "https://www.rafay99.com/app/MSBridge/terms/terms_and_condition"),
-              ),
-            );
-          },
-        ),
-        SettingsTile(
-          // Add the "Update App" tile
-          title: "Update App",
-          icon: LineIcons.arrowCircleDown,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    const UpdateApp(), // Navigate to UpdateApp widget
               ),
             );
           },

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
 import 'package:msbridge/features/setting/section/admin_section/admin_settings_section.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_section.dart';
 import 'package:msbridge/features/setting/section/connection_setting/connectivity_settings_section.dart';
 import 'package:msbridge/features/setting/section/danger_section/danger_settings_section.dart';
 import 'package:msbridge/features/setting/section/note_section/notes_setting_section.dart';
+import 'package:msbridge/features/setting/section/updateApp_section/update_section.dart';
 import 'package:msbridge/features/setting/section/user_section/user_settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/appbar.dart';
@@ -36,6 +38,8 @@ class Setting extends StatelessWidget {
                 const ConnectivitySettingsSection(),
                 Divider(color: theme.colorScheme.primary),
                 const DangerSettingsSection(),
+                if (FeatureFlag.enableInAppUpdate)
+                  const AppUpdateSettingsSection(),
                 Divider(color: theme.colorScheme.primary),
                 SettingsTile(
                   title: "App Info",
