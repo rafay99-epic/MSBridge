@@ -1,13 +1,10 @@
-# PowerShell script to move and push APK to GitHub
 
-# --- Configuration ---
 $apkDestination = "E:\Astro-Portfolio-Blog\public\downloads\app\msbridge\beta"
 $logFile = "build_push.log"
-$gitRepoPath = "E:\Astro-Portfolio-Blog"  # Path to the root of the git repo.
-$flutterProjectPath = "E:\MSBridge"        # Path to the root of your Flutter Project. MUST be different from the git path.
-$commitMessage = "MS Bridge Beta Launch" # Customize this commit message
+$gitRepoPath = "E:\Astro-Portfolio-Blog"
+$flutterProjectPath = "E:\MSBridge"
+$commitMessage = "MS Bridge Beta Launch"
 
-#--- Functions ---
 
 function Log-Message {
     param (
@@ -29,7 +26,6 @@ function Check-For-Changes {
     try {
         Push-Location $RepoPath
 
-        # Check for uncommitted changes
         $status = git status --porcelain 2>&1
 
         if ($status) {
@@ -38,7 +34,7 @@ function Check-For-Changes {
             $answer = Read-Host
             if ($answer -eq "y") {
                 Log-Message "Stashing changes..." -Type "Info"
-                git stash push -u -m "Stashed changes by build script" 2>&1 | Out-Null # Push changes with message
+                git stash push -u -m "Stashed changes by build script" 2>&1 | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Log-Message "Failed to stash changes." -Type "Error"
                     throw "Failed to stash changes."
@@ -57,7 +53,7 @@ function Check-For-Changes {
     }
     catch {
         Log-Message "Error checking for changes: $($_.Exception.Message)" -Type "Error"
-        throw $_  # Re-throw exception for handling in the main script
+        throw $_
     }
     finally {
         Pop-Location
@@ -71,7 +67,6 @@ function Determine-APK-Location {
 
     Log-Message "Determining APK location..." -Type "Info"
     try {
-        # Construct the expected path to the APK
         $apkPath = Join-Path -Path $FlutterProjectPath -ChildPath "build\app\outputs\flutter-apk\app-release.apk"
 
         if (-not (Test-Path $apkPath)) {
@@ -79,30 +74,27 @@ function Determine-APK-Location {
             throw "Could not find APK at expected path."
         }
         Log-Message "APK found at: $apkPath" -Type "Info"
-        return $apkPath #Return the path
+        return $apkPath
     }
     catch {
         Log-Message "Error determining APK location: $($_.Exception.Message)" -Type "Error"
-        throw #Re-throw the exception
+        throw
     }
 }
 
-# --- Main Script ---
 
 try {
     Log-Message "Starting script execution..." -Type "Info"
 
-    # 1. Ask User if Project Built
     Write-Host "Did you already build the release APK for the Flutter project? (y/n)" -ForegroundColor Cyan
     $buildAnswer = Read-Host
 
     if ($buildAnswer -ne "y") {
         Log-Message "User chose not to push without building. Exiting." -Type "Warning"
         Write-Host "Exiting script." -ForegroundColor Yellow
-        exit 0 # Exit cleanly
+        exit 0
     }
 
-    #2. Get Path of the APK
     try {
         $apkPath = Determine-APK-Location -FlutterProjectPath $flutterProjectPath
     }
@@ -111,30 +103,25 @@ try {
         throw "Failed to determine APK location."
     }
 
-    # 3. Check for Uncommitted Changes (BEFORE Moving the APK)
     try {
         Push-Location $gitRepoPath
-        Check-For-Changes -RepoPath $gitRepoPath #Call function, which either stashes or exits on error.
-        Pop-Location #Return to the folder before the git push, for moving the files
+        Check-For-Changes -RepoPath $gitRepoPath
+        Pop-Location
     }
     catch {
         Log-Message "Aborted due to changes check failure: $($_.Exception.Message)" -Type "Error"
         throw
     }
 
-    # 4. Move the APK file
 
     Log-Message "Moving APK file to $apkDestination..." -Type "Info"
     try {
-        # Create the destination directory if it doesn't exist
         if (!(Test-Path -Path $apkDestination)) {
             New-Item -ItemType Directory -Force -Path $apkDestination | Out-Null
         }
 
-        # Remove all files in the destination directory
         Get-ChildItem -Path $apkDestination | Remove-Item -Force
 
-        # Copy the new APK file to the destination
         Copy-Item -Path $apkPath -Destination $apkDestination -Force
 
         Log-Message "APK file moved successfully." -Type "Info"
@@ -144,7 +131,6 @@ try {
         throw
     }
 
-    # 5. Navigate to the Git Repository
     try {
         Push-Location $gitRepoPath
     }
@@ -153,7 +139,6 @@ try {
         throw
     }
 
-    # 6. Check the Branch
 
     Log-Message "Checking the current branch..." -Type "Info"
     try {
@@ -177,13 +162,12 @@ try {
         throw
     }
 
-    # 7. Push the APK file and the build log to GitHub
 
     Log-Message "Pushing the APK file to GitHub..." -Type "Info"
     try {
-        git add "$apkDestination\*" # Add the new files in $apkDestination
+        git add "$apkDestination\*"
 
-        git commit -m "$commitMessage" 2>&1 | Out-Null  # Use the configured commit message
+        git commit -m "$commitMessage" 2>&1 | Out-Null
         git push origin main 2>&1 | Out-Null
 
         if ($LASTEXITCODE -ne 0) {
@@ -203,7 +187,7 @@ catch {
     exit 1
 }
 finally {
-    Pop-Location # Ensure we return to where we started
+    Pop-Location
     Log-Message "Script execution completed." -Type "Info"
     exit 0
 }
