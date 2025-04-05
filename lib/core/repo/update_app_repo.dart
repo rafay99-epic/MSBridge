@@ -68,11 +68,13 @@ class UpdateAppRepo {
 
       onDownloadComplete();
 
-      InstallPlugin.installApk(downloadedFilePath!)
-          .then((result) {})
-          .catchError((error) {
-        onError("Error installing APK: $error");
-      });
+try {
+  final result = await InstallPlugin.installApk(downloadedFilePath!);
+  return result == "success"; // Adjust based on actual return values from the plugin
+} catch (error) {
+  onError("Error installing APK: $error");
+  return false;
+}
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
         onError("Download canceled");
