@@ -33,6 +33,17 @@ class AuthGate extends StatelessWidget {
                   try {
                     final syncService = SyncService();
                     await syncService.startListening();
+                  } catch (e) {
+                    CustomSnackBar.show(
+                      context,
+                      "Error starting sync service: $e",
+                    );
+                  }
+                });
+              }
+              if (FeatureFlag.enableReverseSyncLayer) {
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  try {
                     final ReverseSyncService reverseSyncService =
                         ReverseSyncService();
                     await reverseSyncService.syncDataFromFirebaseToHive();
