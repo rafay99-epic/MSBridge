@@ -26,28 +26,14 @@ class _MSNotesScreenState extends State<Msnotes>
   final InternetHelper _internetHelper = InternetHelper();
   Box<MSNote>? _notesBox;
   ValueListenable<Box<MSNote>>? _notesBoxListenable;
-  List<String> subjects = [];
-
-  void fetchNotes() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await ApiService.fetchAndSaveNotes();
-      } catch (e) {
-        if (context.mounted) {
-          CustomSnackBar.show(
-            context,
-            "Error fetching notes: $e",
-          );
-        }
-      }
-    });
-  }
+  bool _isFetching = false;
 
   @override
   void initState() {
     super.initState();
-    fetchNotes();
-    _openHiveBox();
+    _openHiveBox().then((_) {
+      _fetchNotesFromServer(showSuccessSnackbar: false);
+    });
   }
 
   @override
@@ -58,40 +44,80 @@ class _MSNotesScreenState extends State<Msnotes>
   }
 
   Future<void> _openHiveBox() async {
-    _notesBox = await Hive.openBox<MSNote>('notesBox');
-    _notesBoxListenable = _notesBox!.listenable();
-    setState(() {});
-  }
-
-  List<String> _getSubjects(Box<MSNote> box) {
-    List<MSNote> notes = box.values.toList();
-    Set<String> uniqueSubjects = notes.map((note) => note.subject).toSet();
-    return uniqueSubjects.toList();
-  }
-
-  Future<void> _refreshData() async {
-    if (_internetHelper.connectivitySubject.value) {
-      await Future.delayed(const Duration(seconds: 2));
-      if (_notesBox != null) {
-        setState(() {
-          subjects = _getSubjects(_notesBox!);
-        });
+    try {
+      _notesBox = await Hive.openBox<MSNote>('notesBox');
+      _notesBoxListenable = _notesBox!.listenable();
+      if (mounted) {
+        setState(() {});
       }
+    } catch (e) {
+      debugPrint("Error opening Hive box: $e");
+      if (mounted) {
+        CustomSnackBar.show(context, "Error accessing local notes storage.");
+      }
+    }
+  }
 
-      if (context.mounted) {
+  Future<void> _fetchNotesFromServer({bool showSuccessSnackbar = true}) async {
+    if (_isFetching) return;
+
+    final isConnected = _internetHelper.connectivitySubject.valueOrNull;
+
+    if (isConnected != true) {
+      if (showSuccessSnackbar && mounted) {
+        final message = isConnected == false
+            ? "No Internet Connection. Displaying cached notes."
+            : "Checking connection... Displaying cached notes.";
+        CustomSnackBar.show(context, message);
+      } else if (isConnected == false) {
+        debugPrint("No internet connection. Skipping server fetch.");
+      } else {
+        debugPrint("Internet status unknown yet. Skipping server fetch.");
+      }
+      return;
+    }
+
+    setState(() {
+      _isFetching = true;
+    });
+
+    try {
+      await ApiService.fetchAndSaveNotes();
+      if (showSuccessSnackbar && mounted) {
         CustomSnackBar.show(
           context,
           "Notes updated from the server!",
         );
       }
-    } else {
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context,
-          "No Internet Connection, Please connect and try again",
-        );
+    } catch (e) {
+      debugPrint("Error fetching/saving notes: $e");
+      if (mounted) {
+        if (!_internetHelper.connectivitySubject.valueOrNull!) {
+          CustomSnackBar.show(context, "Fetch failed: Lost connection.");
+        } else {
+          CustomSnackBar.show(
+            context,
+            "Error updating notes: $e",
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFetching = false;
+        });
       }
     }
+  }
+
+  List<String> _getSubjects(Box<MSNote> box) {
+    final uniqueSubjects = box.values.map((note) => note.subject).toSet();
+    final sortedSubjects = uniqueSubjects.toList()..sort();
+    return sortedSubjects;
+  }
+
+  Future<void> _refreshData() async {
+    await _fetchNotesFromServer(showSuccessSnackbar: true);
   }
 
   @override
@@ -99,6 +125,7 @@ class _MSNotesScreenState extends State<Msnotes>
     super.build(context);
 
     final theme = Theme.of(context);
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: const CustomAppBar(
@@ -115,6 +142,7 @@ class _MSNotesScreenState extends State<Msnotes>
                 valueListenable: _notesBoxListenable!,
                 builder: (context, box, _) {
                   final subjects = _getSubjects(box);
+
                   return LayoutBuilder(
                     builder: (BuildContext context,
                         BoxConstraints viewportConstraints) {
@@ -126,8 +154,9 @@ class _MSNotesScreenState extends State<Msnotes>
                                   minHeight: viewportConstraints.maxHeight,
                                 ),
                                 child: const EmptyNotesMessage(
-                                  message: 'Sorry Subject not found',
-                                  description: 'Pull down to refresh',
+                                  message: 'No subjects found',
+                                  description:
+                                      'Pull down to refresh from server',
                                 ),
                               ),
                             )
@@ -136,6 +165,7 @@ class _MSNotesScreenState extends State<Msnotes>
                               padding: const EdgeInsets.all(16),
                               itemCount: subjects.length,
                               itemBuilder: (context, index) {
+                                final subject = subjects[index];
                                 return Card(
                                   color: theme.colorScheme.surface,
                                   shape: RoundedRectangleBorder(
@@ -154,7 +184,7 @@ class _MSNotesScreenState extends State<Msnotes>
                                       horizontal: 16,
                                     ),
                                     title: Text(
-                                      subjects[index],
+                                      subject,
                                       style: TextStyle(
                                         fontSize: 18,
                                         color: theme.colorScheme.primary,
@@ -165,20 +195,19 @@ class _MSNotesScreenState extends State<Msnotes>
                                       color: theme.colorScheme.secondary,
                                     ),
                                     onTap: () {
-                                      debugPrint(
-                                          "Subject Selected: ${subjects[index]}");
-                                      var box = Hive.box<MSNote>('notesBox');
+                                      debugPrint("Subject Selected: $subject");
                                       List<MSNote> subjectLectures = box.values
-                                          .where((note) =>
-                                              note.subject == subjects[index])
+                                          .where(
+                                              (note) => note.subject == subject)
                                           .toList()
                                         ..sort((a, b) => a.lectureNumber
                                             .compareTo(b.lectureNumber));
+
                                       Navigator.push(
                                         context,
                                         PageTransition(
                                           child: LecturesScreen(
-                                            subject: subjects[index],
+                                            subject: subject,
                                             lectures: subjectLectures,
                                           ),
                                           type: PageTransitionType.rightToLeft,
