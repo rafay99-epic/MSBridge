@@ -17,6 +17,9 @@ import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+enum NoteLayoutMode { grid, list }
 
 class Notetaking extends StatefulWidget {
   const Notetaking({super.key});
@@ -39,11 +42,14 @@ class _NotetakingState extends State<Notetaking>
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
   ValueListenable<Box<NoteTakingModel>>? notesListenable;
+  static const String _layoutPrefKey = 'note_layout_mode';
+  NoteLayoutMode _layoutMode = NoteLayoutMode.grid;
 
   @override
   void initState() {
     super.initState();
     _loadNotes();
+    _loadLayoutPreference();
   }
 
   Future<void> _loadNotes() async {
@@ -55,6 +61,39 @@ class _NotetakingState extends State<Notetaking>
         print("Failed to cache: $e");
       }
     }
+  }
+
+  Future<void> _loadLayoutPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_layoutPrefKey);
+      if (saved == 'list') {
+        setState(() {
+          _layoutMode = NoteLayoutMode.list;
+        });
+      } else if (saved == 'grid') {
+        setState(() {
+          _layoutMode = NoteLayoutMode.grid;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveLayoutPreference(NoteLayoutMode mode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _layoutPrefKey, mode == NoteLayoutMode.grid ? 'grid' : 'list');
+    } catch (_) {}
+  }
+
+  void _toggleLayoutMode() {
+    setState(() {
+      _layoutMode = _layoutMode == NoteLayoutMode.grid
+          ? NoteLayoutMode.list
+          : NoteLayoutMode.grid;
+    });
+    _saveLayoutPreference(_layoutMode);
   }
 
   @override
@@ -199,7 +238,7 @@ class _NotetakingState extends State<Notetaking>
                                 child: MasonryGridView.count(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount: 2,
+                                  crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
                                   mainAxisSpacing: 4,
                                   crossAxisSpacing: 4,
                                   itemCount: pinnedNotes.length,
@@ -227,7 +266,7 @@ class _NotetakingState extends State<Notetaking>
                               child: MasonryGridView.count(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount: 2,
+                                crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
                                 mainAxisSpacing: 4,
                                 crossAxisSpacing: 4,
                                 itemCount: unpinnedNotes.length,
@@ -350,7 +389,16 @@ class _NotetakingState extends State<Notetaking>
             IconButton(
               icon: const Icon(LineIcons.search),
               onPressed: _enterSearch,
-            )
+            ),
+            IconButton(
+              tooltip: 'Switch layout',
+              icon: Icon(
+                _layoutMode == NoteLayoutMode.grid
+                    ? Icons.view_agenda_outlined
+                    : Icons.grid_view,
+              ),
+              onPressed: _toggleLayoutMode,
+            ),
           ];
   }
 
