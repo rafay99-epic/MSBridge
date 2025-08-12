@@ -29,6 +29,9 @@ class _CreateNoteState extends State<CreateNote>
     with SingleTickerProviderStateMixin {
   late QuillController _controller;
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _tagInputController = TextEditingController();
+  final ValueNotifier<List<String>> _tagsNotifier =
+      ValueNotifier<List<String>>(<String>[]);
   final InternetHelper _internetHelper = InternetHelper();
   Timer? _autoSaveTimer;
   late SaveNoteResult result;
@@ -53,6 +56,7 @@ class _CreateNoteState extends State<CreateNote>
         selection: const TextSelection.collapsed(offset: 0),
       );
       _currentNote = widget.note;
+      _tagsNotifier.value = List<String>.from(widget.note!.tags);
     } else {
       _controller = QuillController.basic();
     }
@@ -77,6 +81,8 @@ class _CreateNoteState extends State<CreateNote>
   void dispose() {
     _controller.dispose();
     _titleController.dispose();
+    _tagInputController.dispose();
+    _tagsNotifier.dispose();
     _internetHelper.dispose();
     _autoSaveTimer?.cancel();
     _debounceTimer?.cancel();
@@ -160,11 +166,13 @@ class _CreateNoteState extends State<CreateNote>
           title: title,
           content: content,
           isSynced: false,
+          tags: _tagsNotifier.value,
         );
       } else {
         result = await NoteTakingActions.saveNote(
           title: title,
           content: content,
+          tags: _tagsNotifier.value,
         );
         if (result.success && result.note != null) {
           _currentNote = result.note;
@@ -210,6 +218,7 @@ class _CreateNoteState extends State<CreateNote>
           title: title,
           content: content,
           isSynced: false,
+          tags: _tagsNotifier.value,
         );
         if (result.success) {
           CustomSnackBar.show(context, result.message);
@@ -219,6 +228,7 @@ class _CreateNoteState extends State<CreateNote>
         result = await NoteTakingActions.saveNote(
           title: title,
           content: content,
+          tags: _tagsNotifier.value,
         );
 
         if (result.success) {
@@ -353,6 +363,78 @@ class _CreateNoteState extends State<CreateNote>
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
                 ),
+              ),
+            ),
+            // Tags editor
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ValueListenableBuilder<List<String>>(
+                    valueListenable: _tagsNotifier,
+                    builder: (context, tags, _) {
+                      if (tags.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final t in tags)
+                            InputChip(
+                              label: Text(t),
+                              onDeleted: () {
+                                final next = List<String>.from(tags)
+                                  ..remove(t);
+                                _tagsNotifier.value = next;
+                              },
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _tagInputController,
+                          decoration: const InputDecoration(
+                            hintText: 'Add tag (e.g., blog, todo, diary)',
+                            border: OutlineInputBorder(),
+                          ),
+                          onSubmitted: (value) {
+                            final tag = value.trim();
+                            if (tag.isEmpty) return;
+                            final current =
+                                List<String>.from(_tagsNotifier.value);
+                            if (!current.contains(tag)) {
+                              current.add(tag);
+                              _tagsNotifier.value = current;
+                            }
+                            _tagInputController.clear();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          final tag = _tagInputController.text.trim();
+                          if (tag.isEmpty) return;
+                          final current =
+                              List<String>.from(_tagsNotifier.value);
+                          if (!current.contains(tag)) {
+                            current.add(tag);
+                            _tagsNotifier.value = current;
+                          }
+                          _tagInputController.clear();
+                        },
+                        child: const Text('Add'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             Expanded(

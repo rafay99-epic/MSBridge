@@ -8,6 +8,7 @@ class NoteTakingActions {
   static Future<SaveNoteResult> saveNote({
     required String title,
     required String content,
+    List<String> tags = const [],
   }) async {
     try {
       final FirebaseAuth auth = FirebaseAuth.instance;
@@ -28,6 +29,7 @@ class NoteTakingActions {
           isDeleted: false,
           updatedAt: DateTime.now(),
           userId: userId,
+          tags: tags,
         );
 
         await HiveNoteTakingRepo.addNote(note);
@@ -52,9 +54,11 @@ class NoteTakingActions {
     required String title,
     required String content,
     required bool isSynced,
+    List<String>? tags,
   }) async {
     try {
-      if (note.noteTitle == title && note.noteContent == content) {
+      final List<String> newTags = tags ?? note.tags;
+      if (note.noteTitle == title && note.noteContent == content && _listEquals(note.tags, newTags)) {
         return SaveNoteResult(success: true, message: "No changes detected.");
       }
 
@@ -62,6 +66,7 @@ class NoteTakingActions {
       note.noteContent = content;
       note.updatedAt = DateTime.now();
       note.isSynced = isSynced;
+      note.tags = newTags;
 
       await HiveNoteTakingRepo.updateNote(note);
 
@@ -226,6 +231,15 @@ class NoteTakingActions {
           success: false, message: "Error restoring notes: $e");
     }
   }
+}
+
+bool _listEquals(List<String> a, List<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }
 
 class SaveNoteResult {
