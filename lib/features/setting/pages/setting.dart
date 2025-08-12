@@ -4,7 +4,6 @@ import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
 import 'package:msbridge/features/setting/section/admin_section/admin_settings_section.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_section.dart';
-import 'package:msbridge/features/setting/section/connection_setting/connectivity_settings_section.dart';
 import 'package:msbridge/features/setting/section/danger_section/danger_settings_section.dart';
 import 'package:msbridge/features/setting/section/note_section/notes_setting_section.dart';
 import 'package:msbridge/features/setting/section/updateApp_section/update_section.dart';
@@ -34,8 +33,6 @@ class Setting extends StatelessWidget {
                 const UserSettingsSection(),
                 Divider(color: theme.colorScheme.primary),
                 const NotesSetting(),
-                Divider(color: theme.colorScheme.primary),
-                const ConnectivitySettingsSection(),
                 Divider(color: theme.colorScheme.primary),
                 const DangerSettingsSection(),
                 if (FeatureFlag.enableInAppUpdate)

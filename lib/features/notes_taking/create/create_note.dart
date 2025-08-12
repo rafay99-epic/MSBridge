@@ -39,6 +39,8 @@ class _CreateNoteState extends State<CreateNote>
   final ValueNotifier<bool> _isSavingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _showCheckmarkNotifier = ValueNotifier<bool>(false);
   String _lastSavedContent = "";
+  NoteTakingModel? _currentNote;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -50,6 +52,7 @@ class _CreateNoteState extends State<CreateNote>
         document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
         selection: const TextSelection.collapsed(offset: 0),
       );
+      _currentNote = widget.note;
     } else {
       _controller = QuillController.basic();
     }
@@ -125,9 +128,12 @@ class _CreateNoteState extends State<CreateNote>
   }
 
   Future<void> _saveNote() async {
+    if (_isSaving) return; // prevent overlapping saves
+    _isSaving = true;
     final autoSaveProvider =
         Provider.of<AutoSaveProvider>(context, listen: false);
     if (!mounted || !autoSaveProvider.autoSaveEnabled) {
+      _isSaving = false;
       return;
     }
 
@@ -143,11 +149,14 @@ class _CreateNoteState extends State<CreateNote>
       } catch (e) {
         content = _controller.document.toPlainText().trim();
       }
-      if (title.isEmpty && content.isEmpty) return;
+      if (title.isEmpty && content.isEmpty) {
+        _isSaving = false;
+        return;
+      }
 
-      if (widget.note != null) {
+      if (_currentNote != null) {
         result = await NoteTakingActions.updateNote(
-          note: widget.note!,
+          note: _currentNote!,
           title: title,
           content: content,
           isSynced: false,
@@ -157,6 +166,9 @@ class _CreateNoteState extends State<CreateNote>
           title: title,
           content: content,
         );
+        if (result.success && result.note != null) {
+          _currentNote = result.note;
+        }
       }
 
       if (mounted) {
@@ -177,6 +189,7 @@ class _CreateNoteState extends State<CreateNote>
         CustomSnackBar.show(context, "Error saving note: $e");
       }
     }
+    _isSaving = false;
   }
 
   void manualSaveNote() async {
@@ -191,9 +204,9 @@ class _CreateNoteState extends State<CreateNote>
     SaveNoteResult result;
 
     try {
-      if (widget.note != null) {
+      if (_currentNote != null) {
         result = await NoteTakingActions.updateNote(
-          note: widget.note!,
+          note: _currentNote!,
           title: title,
           content: content,
           isSynced: false,
@@ -209,6 +222,7 @@ class _CreateNoteState extends State<CreateNote>
         );
 
         if (result.success) {
+          _currentNote = result.note ?? _currentNote;
           CustomSnackBar.show(context, result.message);
           Navigator.pop(context);
         }

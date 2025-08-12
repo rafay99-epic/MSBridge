@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/utils/uuid.dart';
@@ -32,7 +33,10 @@ class NoteTakingActions {
         await HiveNoteTakingRepo.addNote(note);
 
         return SaveNoteResult(
-            success: true, message: "Note Saved Successfully!");
+          success: true,
+          message: "Note Saved Successfully!",
+          note: note,
+        );
       } else {
         return SaveNoteResult(
             success: false,
@@ -62,7 +66,10 @@ class NoteTakingActions {
       await HiveNoteTakingRepo.updateNote(note);
 
       return SaveNoteResult(
-          success: true, message: "Note Updated Successfully!");
+        success: true,
+        message: "Note Updated Successfully!",
+        note: note,
+      );
     } catch (e) {
       return SaveNoteResult(success: false, message: "Error updating note: $e");
     }
@@ -103,8 +110,12 @@ class NoteTakingActions {
       List<String> noteIds) async {
     try {
       final box = await HiveNoteTakingRepo.getDeletedBox();
+      final User? user = FirebaseAuth.instance.currentUser;
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      bool hadError = false;
+
       for (final noteId in noteIds) {
-        NoteTakingModel? noteToDelete = box.values.firstWhere(
+        final NoteTakingModel noteToDelete = box.values.firstWhere(
           (note) => note.noteId == noteId,
           orElse: () => NoteTakingModel(
               noteId: '',
@@ -116,11 +127,32 @@ class NoteTakingActions {
               userId: ''),
         );
 
+        // Try to remove from Firebase first when possible
+        if (user != null &&
+            noteToDelete.noteId != null &&
+            noteToDelete.noteId!.isNotEmpty) {
+          try {
+            await firestore
+                .collection('users')
+                .doc(user.uid)
+                .collection('notes')
+                .doc(noteToDelete.noteId)
+                .delete();
+          } catch (_) {
+            hadError = true;
+            // continue to remove locally regardless
+          }
+        }
+
         await HiveNoteTakingRepo.permantentlyDeleteNote(noteToDelete);
       }
 
       return SaveNoteResult(
-          success: true, message: "Selected notes permanently deleted.");
+        success: !hadError,
+        message: hadError
+            ? "Notes deleted locally; some may not be removed from server."
+            : "Selected notes permanently deleted.",
+      );
     } catch (e) {
       return SaveNoteResult(
           success: false, message: "Error deleting notes: $e");
@@ -130,14 +162,33 @@ class NoteTakingActions {
   static Future<SaveNoteResult> permanentlyDeleteAllNotes() async {
     try {
       final box = await HiveNoteTakingRepo.getDeletedBox();
+      final List<NoteTakingModel> allNotes = box.values.toList();
+      final User? user = FirebaseAuth.instance.currentUser;
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      bool hadError = false;
 
-      final allNotes = box.values.toList();
       for (final note in allNotes) {
+        if (user != null && note.noteId != null && note.noteId!.isNotEmpty) {
+          try {
+            await firestore
+                .collection('users')
+                .doc(user.uid)
+                .collection('notes')
+                .doc(note.noteId)
+                .delete();
+          } catch (_) {
+            hadError = true;
+          }
+        }
         await HiveNoteTakingRepo.permantentlyDeleteNote(note);
       }
 
       return SaveNoteResult(
-          success: true, message: "All notes permanently deleted.");
+        success: !hadError,
+        message: hadError
+            ? "Deleted locally; some notes may not be removed from server."
+            : "All notes permanently deleted.",
+      );
     } catch (e) {
       return SaveNoteResult(
           success: false, message: "Error deleting all notes: $e");
@@ -180,6 +231,7 @@ class NoteTakingActions {
 class SaveNoteResult {
   final bool success;
   final String message;
+  final NoteTakingModel? note;
 
-  SaveNoteResult({required this.success, required this.message});
+  SaveNoteResult({required this.success, required this.message, this.note});
 }

@@ -87,7 +87,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 child: const MyCMSWebView(
                     pageTitle: "Privacy Policy",
                     cmsUrl:
-                        "https://www.rafay99.com/app/MSBridge/privacy/privacy_policy"),
+                        "https://ms-bridge-app.vercel.app/privacy"),
               ),
             );
           },
@@ -103,7 +103,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 child: const MyCMSWebView(
                     pageTitle: "Terms and Conditions",
                     cmsUrl:
-                        "https://www.rafay99.com/app/MSBridge/terms/terms_and_condition"),
+                        "https://ms-bridge-app.vercel.app/terms"),
               ),
             );
           },
