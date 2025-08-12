@@ -72,32 +72,47 @@ class _RegisterState extends State<Register> {
               ),
               const SizedBox(height: 16),
 
-              // Email
-              CustomTextField(
-                hintText: "Email",
-                icon: LineIcons.envelope,
-                isPassword: false,
-                controller: _emailController,
+              // Email + Passwords (Autofill)
+              AutofillGroup(
+                child: Column(
+                  children: [
+                    CustomTextField(
+                      hintText: "Email",
+                      icon: LineIcons.envelope,
+                      isPassword: false,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enableSuggestions: true,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.username, AutofillHints.email],
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      hintText: "Password",
+                      icon: LineIcons.lock,
+                      isPassword: true,
+                      controller: _passwordController,
+                      textInputAction: TextInputAction.next,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.newPassword],
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      hintText: "Re-enter Password",
+                      icon: LineIcons.lock,
+                      isPassword: true,
+                      controller: _confirmPasswordController,
+                      textInputAction: TextInputAction.done,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.newPassword],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-
-              // Password
-              CustomTextField(
-                hintText: "Password",
-                icon: LineIcons.lock,
-                isPassword: true,
-                controller: _passwordController,
-              ),
-              const SizedBox(height: 16),
-
-              // Re-enter Password
-              CustomTextField(
-                hintText: "Re-enter Password",
-                icon: LineIcons.lock,
-                isPassword: true,
-                controller: _confirmPasswordController,
-              ),
-              const SizedBox(height: 16),
 
               // Phone Number
               CustomTextField(

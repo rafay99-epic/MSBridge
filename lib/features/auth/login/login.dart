@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/forget/forget_password.dart';
@@ -87,18 +88,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                       fontSize: 16, color: theme.primary.withOpacity(0.7))),
               const SizedBox(height: 32),
-              CustomTextField(
-                controller: _emailController,
-                hintText: "Email",
-                icon: LineIcons.envelope,
-                isPassword: false,
-              ),
+              AutofillGroup(
+                child: Column(
+                  children: [
+                    CustomTextField(
+                      controller: _emailController,
+                      hintText: "Email",
+                      icon: LineIcons.envelope,
+                      isPassword: false,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enableSuggestions: true,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.username, AutofillHints.email],
+                    ),
               const SizedBox(height: 16),
-              CustomTextField(
-                controller: _passwordController,
-                hintText: "Password",
-                icon: LineIcons.lock,
-                isPassword: true,
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _passwordController,
+                      hintText: "Password",
+                      icon: LineIcons.lock,
+                      isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      autofillHints: const [AutofillHints.password],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               Align(
@@ -128,7 +145,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: _isLoading ? null : _login,
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          TextInput.finishAutofillContext();
+                          _login();
+                        },
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text("Login",
