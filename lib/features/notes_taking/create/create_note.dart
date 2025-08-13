@@ -214,7 +214,7 @@ class _CreateNoteState extends State<CreateNote>
     _isSaving = false;
   }
 
-  void manualSaveNote() async {
+  Future<void> manualSaveNote() async {
     String title = _titleController.text.trim();
     String content;
 
@@ -357,7 +357,9 @@ class _CreateNoteState extends State<CreateNote>
           ),
           IconButton(
             icon: const Icon(LineIcons.save),
-            onPressed: manualSaveNote,
+            onPressed: () async {
+              await manualSaveNote();
+            },
           ),
         ],
       ),
@@ -603,7 +605,7 @@ class _CreateNoteState extends State<CreateNote>
                     children: [
                       ElevatedButton.icon(
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: currentUrl));
+                          await Clipboard.setData(ClipboardData(text: currentUrl!));
                           if (mounted) CustomSnackBar.show(context, 'Link copied');
                         },
                         icon: const Icon(LineIcons.copy),
