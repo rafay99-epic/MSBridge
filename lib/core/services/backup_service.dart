@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:downloads_path_provider_28/downloads_path_provider_28.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_selector/file_selector.dart' as fsel;
 import 'package:hive_flutter/hive_flutter.dart';
@@ -38,7 +39,19 @@ class BackupService {
     final bytes = Uint8List.fromList(utf8.encode(const JsonEncoder.withIndent('  ').convert(payload)));
     final String baseName = 'msbridge-notes-${DateTime.now().millisecondsSinceEpoch}';
 
-    // Try native save dialog first
+    // On Android API 28+, write directly to Downloads. Else attempt FileSaver dialog.
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        final downloadsDir = await DownloadsPathProvider.downloadsDirectory;
+        if (downloadsDir != null) {
+          final filePath = '${downloadsDir.path}/$baseName.json';
+          final file = File(filePath);
+          await file.writeAsBytes(bytes, flush: true);
+          return;
+        }
+      } catch (_) {}
+    }
+
     try {
       await FileSaver.instance.saveFile(
         name: baseName,
@@ -46,20 +59,13 @@ class BackupService {
         mimeType: MimeType.json,
         bytes: bytes,
       );
-      return;
     } catch (_) {
       // Fallback: write to app directory and present share sheet
-      try {
-        final dir = await getApplicationDocumentsDirectory();
-        final filePath = '${dir.path}/$baseName.json';
-        final file = File(filePath);
-        await file.writeAsBytes(bytes, flush: true);
-        // Offer share to let user place it where they want
-        await Share.shareXFiles([XFile(filePath)], subject: 'MSBridge Notes Backup');
-      } catch (e) {
-        // Last resort: throw to show an error upstream if needed
-        rethrow;
-      }
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/$baseName.json';
+      final file = File(filePath);
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles([XFile(filePath)], subject: 'MSBridge Notes Backup');
     }
   }
 
