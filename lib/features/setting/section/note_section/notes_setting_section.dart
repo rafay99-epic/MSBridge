@@ -126,7 +126,9 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             await BackupService.exportAllNotes();
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup exported')));
+              // Use custom toast
+              // ignore: use_build_context_synchronously
+              CustomSnackBar.show(context, 'Backup exported', isSuccess: true);
             }
           },
         ),
@@ -136,8 +138,12 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             final report = await BackupService.importFromFile();
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Import complete: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped')),
+              // Use custom toast
+              // ignore: use_build_context_synchronously
+              CustomSnackBar.show(
+                context,
+                'Import: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped',
+                isSuccess: true,
               );
             }
           },
