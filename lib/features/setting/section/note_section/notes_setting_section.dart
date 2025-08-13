@@ -13,6 +13,7 @@ import 'package:msbridge/config/feature_flag.dart'; // Import FeatureFlag
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
+import 'package:msbridge/core/services/backup_service.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -108,7 +109,7 @@ class _NotesSettingState extends State<NotesSetting> {
         if (shareProvider.shareLinksEnabled)
           SettingsTile(
             title: "Shared Notes",
-            icon: Icons.share,
+            icon: LineIcons.share,
             onTap: () {
               Navigator.push(
                 context,
@@ -119,6 +120,28 @@ class _NotesSettingState extends State<NotesSetting> {
               );
             },
           ),
+        SettingsTile(
+          title: "Export Backup",
+          icon: LineIcons.download,
+          onTap: () async {
+            await BackupService.exportAllNotes();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup exported')));
+            }
+          },
+        ),
+        SettingsTile(
+          title: "Import Backup",
+          icon: LineIcons.upload,
+          onTap: () async {
+            final report = await BackupService.importFromFile();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Import complete: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped')),
+              );
+            }
+          },
+        ),
         SettingsTile(
           title: "Recycle Bin",
           icon: LineIcons.trash,
