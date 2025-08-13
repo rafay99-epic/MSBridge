@@ -2,25 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/msnotes/msnotes.dart';
-import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/search/search.dart';
+import 'package:msbridge/features/notes_taking/notetaking.dart';
+import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/pages/setting.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
-  HomePageState createState() => HomePageState();
+  State<Home> createState() => _HomeState();
 }
 
-class HomePageState extends State<Home> {
+class _HomeState extends State<Home> {
   int _selectedIndex = 0;
   PageController? _pageController;
 
-  final List<Widget> _pages = const [
+  final List<Widget> _pages = [
     Msnotes(),
     Search(),
     Notetaking(),
+    ChatAssistantPage(),
     Setting(),
   ];
 
@@ -103,6 +105,11 @@ class HomePageState extends State<Home> {
               GButton(
                 icon: LineIcons.pen,
                 text: 'Notes',
+                iconColor: colorScheme.primary,
+              ),
+              GButton(
+                icon: LineIcons.robot,
+                text: 'AI Chat',
                 iconColor: colorScheme.primary,
               ),
               GButton(
