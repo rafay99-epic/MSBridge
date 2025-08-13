@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_selector/file_selector.dart' as fsel;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
@@ -63,18 +64,28 @@ class BackupService {
   }
 
   static Future<BackupReport> importFromFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-    if (result == null || result.files.isEmpty) {
-      return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
-    }
-    final file = result.files.first;
     Uint8List raw;
-    if (file.bytes != null) {
-      raw = file.bytes!;
-    } else if (!kIsWeb && file.path != null) {
-      raw = await File(file.path!).readAsBytes();
-    } else {
-      throw Exception('Unable to read selected file');
+    // Try file_picker first; if plugin missing, fall back to file_selector
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      if (result == null || result.files.isEmpty) {
+        return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
+      }
+      final file = result.files.first;
+      if (file.bytes != null) {
+        raw = file.bytes!;
+      } else if (!kIsWeb && file.path != null) {
+        raw = await File(file.path!).readAsBytes();
+      } else {
+        throw Exception('Unable to read selected file');
+      }
+    } catch (_) {
+      final typeGroup = const fsel.XTypeGroup(label: 'json', extensions: ['json']);
+      final fsel.XFile? xfile = await fsel.openFile(acceptedTypeGroups: [typeGroup]);
+      if (xfile == null) {
+        return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
+      }
+      raw = await xfile.readAsBytes();
     }
     final content = utf8.decode(raw);
     final data = jsonDecode(content) as Map<String, dynamic>;
