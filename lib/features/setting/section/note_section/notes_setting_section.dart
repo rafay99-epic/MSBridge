@@ -97,7 +97,7 @@ class _NotesSettingState extends State<NotesSetting> {
           ),
         SettingsTile(
           title: "Cloud Sync (Firebase)",
-          icon: LineIcons.cloudUploadAlt,
+          icon: LineIcons.cloudUpload,
           trailing: Switch(
             value: syncSettings.cloudSyncEnabled,
             onChanged: (bool value) async {
