@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
@@ -33,12 +35,31 @@ class BackupService {
     };
 
     final bytes = Uint8List.fromList(utf8.encode(const JsonEncoder.withIndent('  ').convert(payload)));
-    await FileSaver.instance.saveFile(
-      name: 'msbridge-notes-${DateTime.now().millisecondsSinceEpoch}',
-      ext: 'json',
-      mimeType: MimeType.json,
-      bytes: bytes,
-    );
+    final String baseName = 'msbridge-notes-${DateTime.now().millisecondsSinceEpoch}';
+
+    // Try native save dialog first
+    try {
+      await FileSaver.instance.saveFile(
+        name: baseName,
+        ext: 'json',
+        mimeType: MimeType.json,
+        bytes: bytes,
+      );
+      return;
+    } catch (_) {
+      // Fallback: write to app directory and present share sheet
+      try {
+        final dir = await getApplicationDocumentsDirectory();
+        final filePath = '${dir.path}/$baseName.json';
+        final file = File(filePath);
+        await file.writeAsBytes(bytes, flush: true);
+        // Offer share to let user place it where they want
+        await Share.shareXFiles([XFile(filePath)], subject: 'MSBridge Notes Backup');
+      } catch (e) {
+        // Last resort: throw to show an error upstream if needed
+        rethrow;
+      }
+    }
   }
 
   static Future<BackupReport> importFromFile() async {
