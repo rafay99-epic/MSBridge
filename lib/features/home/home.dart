@@ -21,8 +21,8 @@ class _HomeState extends State<Home> {
   final List<Widget> _pages = [
     const Msnotes(),
     const Search(),
-    const Notetaking(),
     const ChatAssistantPage(),
+    const Notetaking(),
     const Setting(),
   ];
 

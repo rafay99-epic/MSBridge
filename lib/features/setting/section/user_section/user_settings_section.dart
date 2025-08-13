@@ -53,39 +53,38 @@ class UserSettingsSection extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
-
+        _buildSubsectionHeader(
+            context, "Security & Privacy", LineIcons.userShield),
+        const SizedBox(height: 12),
         if (FeatureFlag.enableFingerprintLock)
           // Security & Privacy
-          _buildSubsectionHeader(
-              context, "Security & Privacy", LineIcons.userShield),
-        const SizedBox(height: 12),
-        Consumer<FingerprintAuthProvider>(
-          builder: (context, fingerprintProvider, child) {
-            return _buildModernSettingsTile(
-              context,
-              title: "Fingerprint Lock",
-              subtitle: "Use biometric authentication to secure the app",
-              icon: LineIcons.fingerprint,
-              trailing: Switch(
-                value: fingerprintProvider.isFingerprintEnabled,
-                onChanged: (value) async {
-                  if (value) {
-                    bool authenticated =
-                        await fingerprintProvider.authenticate(context);
-                    if (authenticated) {
-                      fingerprintProvider.setFingerprintEnabled(true);
+          Consumer<FingerprintAuthProvider>(
+            builder: (context, fingerprintProvider, child) {
+              return _buildModernSettingsTile(
+                context,
+                title: "Fingerprint Lock",
+                subtitle: "Use biometric authentication to secure the app",
+                icon: LineIcons.fingerprint,
+                trailing: Switch(
+                  value: fingerprintProvider.isFingerprintEnabled,
+                  onChanged: (value) async {
+                    if (value) {
+                      bool authenticated =
+                          await fingerprintProvider.authenticate(context);
+                      if (authenticated) {
+                        fingerprintProvider.setFingerprintEnabled(true);
+                      } else {
+                        CustomSnackBar.show(
+                            context, "Fingerprint authentication failed.");
+                      }
                     } else {
-                      CustomSnackBar.show(
-                          context, "Fingerprint authentication failed.");
+                      fingerprintProvider.setFingerprintEnabled(false);
                     }
-                  } else {
-                    fingerprintProvider.setFingerprintEnabled(false);
-                  }
-                },
-              ),
-            );
-          },
-        ),
+                  },
+                ),
+              );
+            },
+          ),
 
         const SizedBox(height: 24),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
+import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
 import 'package:msbridge/features/setting/section/admin_section/admin_settings_section.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_section.dart';
@@ -12,6 +13,7 @@ import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/buildSectionHeader.dart';
 import 'package:msbridge/widgets/buildSettingsTile.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
 
 class Setting extends StatelessWidget {
   const Setting({super.key});
@@ -77,6 +79,51 @@ class Setting extends StatelessWidget {
                       color: colorScheme.primary.withOpacity(0.7),
                     ),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: themeProvider.dynamicColorsEnabled
+                              ? colorScheme.primary.withOpacity(0.2)
+                              : colorScheme.secondary.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: themeProvider.dynamicColorsEnabled
+                                ? colorScheme.primary.withOpacity(0.3)
+                                : colorScheme.secondary.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              themeProvider.dynamicColorsEnabled
+                                  ? Icons.auto_awesome
+                                  : Icons.palette,
+                              size: 16,
+                              color: themeProvider.dynamicColorsEnabled
+                                  ? colorScheme.primary
+                                  : colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              themeProvider.effectiveThemeName,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: themeProvider.dynamicColorsEnabled
+                                    ? colorScheme.primary
+                                    : colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

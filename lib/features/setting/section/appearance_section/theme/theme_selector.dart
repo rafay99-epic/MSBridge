@@ -71,6 +71,104 @@ class _ThemeSelectorState extends State<ThemeSelector> {
           ),
         ),
 
+        // Dynamic Colors Toggle
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.auto_awesome,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Dynamic Colors",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Automatically adapt colors to your wallpaper (Material You)",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.primary.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: widget.themeProvider.dynamicColorsEnabled,
+                    onChanged: (value) {
+                      widget.themeProvider.setDynamicColors(value);
+                    },
+                    activeColor: colorScheme.primary,
+                  ),
+                ],
+              ),
+
+              // Dynamic Colors Status
+              if (widget.themeProvider.dynamicColorsEnabled) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Dynamic colors are active! Your app colors now automatically adapt to your wallpaper colors.",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
         // Theme Display (Compact or Expanded)
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 300),
@@ -81,13 +179,49 @@ class _ThemeSelectorState extends State<ThemeSelector> {
           secondChild: _buildExpandedThemeView(),
         ),
 
+        // Dynamic Colors Active Message
+        if (widget.themeProvider.dynamicColorsEnabled)
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colorScheme.primary.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Dynamic colors are active. Your app colors now automatically adapt to your wallpaper. Disable dynamic colors to use custom themes.",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // Quick Theme Info
         Padding(
           padding: const EdgeInsets.only(top: 12),
           child: Text(
-            _isExpanded
-                ? "Browse all themes in detail. Tap any theme to apply instantly."
-                : "Tap any theme to apply instantly. Tap the expand button to see more details.",
+            widget.themeProvider.dynamicColorsEnabled
+                ? "Dynamic colors are active. Your app automatically adapts to your wallpaper colors."
+                : _isExpanded
+                    ? "Browse all themes in detail. Tap any theme to apply instantly."
+                    : "Tap any theme to apply instantly. Tap the expand button to see more details.",
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.primary.withOpacity(0.6),
               fontStyle: FontStyle.italic,
@@ -99,6 +233,53 @@ class _ThemeSelectorState extends State<ThemeSelector> {
   }
 
   Widget _buildCompactThemeView() {
+    // If dynamic colors are enabled, show disabled state
+    if (widget.themeProvider.dynamicColorsEnabled) {
+      return Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.palette_outlined,
+                size: 32,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Themes Disabled",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.5),
+                    ),
+              ),
+              Text(
+                "Enable custom themes by turning off Dynamic Colors",
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.4),
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 120, // Much more compact height
       child: ListView.builder(
@@ -126,6 +307,54 @@ class _ThemeSelectorState extends State<ThemeSelector> {
   }
 
   Widget _buildExpandedThemeView() {
+    // If dynamic colors are enabled, show disabled state
+    if (widget.themeProvider.dynamicColorsEnabled) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.grid_off,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Theme Grid Disabled",
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.5),
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Custom themes are not available while Dynamic Colors are active",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.4),
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         const crossAxisCount = 2;

@@ -25,6 +25,7 @@ import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/theme/colors.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -99,15 +100,24 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       navigatorKey: navigatorKey,
-      theme: themeProvider.getThemeData(),
-      debugShowCheckedModeBanner: false,
+      theme: _buildTheme(themeProvider, false),
+      darkTheme: _buildTheme(themeProvider, true),
+      themeMode: themeProvider.selectedTheme == AppTheme.light
+          ? ThemeMode.light
+          : ThemeMode.dark,
       home: FeatureFlag.enableFingerprintLock
           ? const FingerprintAuthWrapper()
           : const AuthGate(),
+      debugShowCheckedModeBanner: false,
       navigatorObservers: [
         _DynamicLinkObserver(),
       ],
     );
+  }
+
+  ThemeData _buildTheme(ThemeProvider themeProvider, bool isDark) {
+    // Use the theme provider's getThemeData method which handles dynamic colors
+    return themeProvider.getThemeData();
   }
 }
 
@@ -135,11 +145,15 @@ class _DynamicLinkObserver extends NavigatorObserver {
       // Expect link like https://msbridge.page.link/... resolving to https://<host>/s/{shareId}
       final Uri deep = link;
       final Uri target = deep;
-      final List<String> parts = target.path.split('/').where((p) => p.isNotEmpty).toList();
+      final List<String> parts =
+          target.path.split('/').where((p) => p.isNotEmpty).toList();
       if (parts.length >= 2 && parts[0] == 's') {
         final String shareId = parts[1];
         // Fetch and show a simple in-app viewer dialog
-        final doc = await FirebaseFirestore.instance.collection('shared_notes').doc(shareId).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('shared_notes')
+            .doc(shareId)
+            .get();
         if (!navigatorKey.currentState!.mounted) return;
         if (!doc.exists) {
           _showSnack('This shared note does not exist or was disabled.');
@@ -161,7 +175,8 @@ class _DynamicLinkObserver extends NavigatorObserver {
   void _showSnack(String message) {
     final context = navigatorKey.currentState?.overlay?.context;
     if (context == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showSharedViewer({required String title, required String content}) {
@@ -180,9 +195,11 @@ class _DynamicLinkObserver extends NavigatorObserver {
         }
         return AlertDialog(
           backgroundColor: theme.colorScheme.surface,
-          title: Text(title, style: TextStyle(color: theme.colorScheme.primary)),
+          title:
+              Text(title, style: TextStyle(color: theme.colorScheme.primary)),
           content: SingleChildScrollView(
-            child: Text(plain, style: TextStyle(color: theme.colorScheme.primary)),
+            child:
+                Text(plain, style: TextStyle(color: theme.colorScheme.primary)),
           ),
           actions: [
             TextButton(
@@ -200,11 +217,17 @@ String _tryParseQuill(String content) {
   try {
     final dynamic json = _jsonDecode(content);
     if (json is List) {
-      return json.map((op) => op is Map && op['insert'] is String ? op['insert'] as String : '').join('');
+      return json
+          .map((op) =>
+              op is Map && op['insert'] is String ? op['insert'] as String : '')
+          .join('');
     }
     if (json is Map && json['ops'] is List) {
       final List ops = json['ops'];
-      return ops.map((op) => op is Map && op['insert'] is String ? op['insert'] as String : '').join('');
+      return ops
+          .map((op) =>
+              op is Map && op['insert'] is String ? op['insert'] as String : '')
+          .join('');
     }
   } catch (_) {}
   return content;
