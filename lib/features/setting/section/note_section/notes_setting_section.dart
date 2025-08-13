@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/config/feature_flag.dart'; // Import FeatureFlag
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
+import 'package:msbridge/core/repo/share_repo.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -74,7 +75,32 @@ class _NotesSettingState extends State<NotesSetting> {
           icon: LineIcons.shareSquare,
           trailing: Switch(
             value: shareProvider.shareLinksEnabled,
-            onChanged: (bool value) {
+            onChanged: (bool value) async {
+              if (!value) {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) {
+                    final theme = Theme.of(ctx);
+                    return AlertDialog(
+                      backgroundColor: theme.colorScheme.surface,
+                      title: const Text('Disable shareable links?'),
+                      content: const Text('This will disable all existing shared notes. You can re-enable sharing later.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Disable'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                if (confirm != true) return;
+                await ShareRepository.disableAllShares();
+              }
               shareProvider.shareLinksEnabled = value;
             },
           ),
@@ -82,7 +108,7 @@ class _NotesSettingState extends State<NotesSetting> {
         if (shareProvider.shareLinksEnabled)
           SettingsTile(
             title: "Shared Notes",
-            icon: LineIcons.externalLinkSquare,
+            icon: Icons.share,
             onTap: () {
               Navigator.push(
                 context,

@@ -140,6 +140,33 @@ class ShareRepository {
       shareId: (data['shareId'] as String?) ?? '',
     );
   }
+
+  static Future<void> disableAllShares() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final Box meta = await _getShareMetaBox();
+    final List<dynamic> keys = meta.keys.toList(growable: false);
+    for (final key in keys) {
+      final Map? data = meta.get(key) as Map?;
+      if (data == null) continue;
+      final bool enabled = (data['enabled'] as bool?) ?? false;
+      final String? shareId = data['shareId'] as String?;
+      if (!enabled) continue;
+      if (shareId != null && shareId.isNotEmpty) {
+        try {
+          await firestore.collection(_shareCollection).doc(shareId).delete();
+        } catch (_) {
+          // ignore and continue to update local state
+        }
+      }
+      await meta.put(key, {
+        'shareId': shareId ?? '',
+        'enabled': false,
+        'shareUrl': '',
+        'title': (data['title'] as String?) ?? '',
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    }
+  }
 }
 
 class SharedNoteMeta {
