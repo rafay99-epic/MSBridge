@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MS Bridge — Shared Note</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: #0b0b0b;
+      color: #eaeaea;
+    }
+    .container {
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 8px;
+      color: #fff;
+    }
+    .meta {
+      font-size: 13px;
+      color: #9b9b9b;
+      margin-bottom: 20px;
+    }
+    .content { line-height: 1.6; white-space: pre-wrap; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #2a2a2a; border-top-color: #6ec1ff; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    .row { display: flex; align-items: center; }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .error { color: #ff6b6b; }
+    .muted { color: #9b9b9b; font-size: 14px; }
+    a { color: #6ec1ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div id="loading" class="row">
+        <div class="spinner"></div>
+        <div class="muted">Loading note…</div>
+      </div>
+      <div id="error" class="error" style="display:none"></div>
+      <div id="note" style="display:none">
+        <h1 id="title">Untitled</h1>
+        <div class="meta" id="meta"></div>
+        <div class="content" id="content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Web SDK (compat builds) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script>
+    // TODO: Replace with your Firebase Web app config from the Firebase Console (Project settings → Your apps → Web)
+    const firebaseConfig = {
+      apiKey: "REPLACE_API_KEY",
+      authDomain: "REPLACE_AUTH_DOMAIN", // e.g. msbridge-9a2c7.firebaseapp.com
+      projectId: "msbridge-9a2c7",
+      appId: "REPLACE_WEB_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function getShareIdFromPath() {
+      const parts = location.pathname.split('/').filter(Boolean);
+      // expected /s/{shareId}
+      if (parts.length >= 2 && parts[0] === 's') return parts[1];
+      return null;
+    }
+
+    function tryParseDeltaToText(content) {
+      try {
+        const json = JSON.parse(content);
+        if (Array.isArray(json)) {
+          // Basic Quill Delta array
+          return json.map(op => typeof op.insert === 'string' ? op.insert : '').join('');
+        }
+        // Quill delta object with ops
+        if (json && Array.isArray(json.ops)) {
+          return json.ops.map(op => typeof op.insert === 'string' ? op.insert : '').join('');
+        }
+      } catch (_) {}
+      return content; // fallback
+    }
+
+    async function loadNote() {
+      const shareId = getShareIdFromPath();
+      if (!shareId) {
+        showError('Invalid link.');
+        return;
+      }
+      try {
+        const doc = await db.collection('shared_notes').doc(shareId).get();
+        if (!doc.exists) {
+          showError('This shared note does not exist or was disabled.');
+          return;
+        }
+        const data = doc.data();
+        if (!data.viewOnly) {
+          showError('This link is not viewable.');
+          return;
+        }
+        document.getElementById('title').textContent = data.title || 'Untitled';
+        document.getElementById('meta').textContent = `Shared • ${new Date(data.updatedAt || Date.now()).toLocaleString()}`;
+        const text = tryParseDeltaToText(data.content || '');
+        document.getElementById('content').textContent = text;
+        showNote();
+      } catch (e) {
+        showError('Failed to load note: ' + (e && e.message ? e.message : e));
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function showNote() {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('note').style.display = 'block';
+    }
+
+    loadNote();
+  </script>
+</body>
+</html>
