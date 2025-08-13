@@ -37,14 +37,22 @@ class HomePageState extends State<Home> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _pageController?.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    });
+    final controller = _pageController;
+    if (controller == null) return;
+
+    // For non-adjacent tabs, jump instantly to avoid animating
+    // through heavy intermediate pages which can cause jank.
+    final pageDelta = (index - _selectedIndex).abs();
+    if (pageDelta > 1) {
+      controller.jumpToPage(index);
+      return;
+    }
+
+    controller.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _onPageChanged(int index) {
@@ -63,6 +71,7 @@ class HomePageState extends State<Home> {
         controller: _pageController,
         onPageChanged: _onPageChanged,
         physics: const BouncingScrollPhysics(),
+        allowImplicitScrolling: true,
         children: _pages,
       ),
       bottomNavigationBar: Container(
