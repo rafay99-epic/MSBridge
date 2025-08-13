@@ -82,7 +82,7 @@ class _NotesSettingState extends State<NotesSetting> {
         if (shareProvider.shareLinksEnabled)
           SettingsTile(
             title: "Shared Notes",
-            icon: LineIcons.externalLinkAlt,
+            icon: LineIcons.externalLinkSquare,
             onTap: () {
               Navigator.push(
                 context,

@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:msbridge/core/provider/share_link_provider.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
