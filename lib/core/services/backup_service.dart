@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
@@ -45,7 +47,15 @@ class BackupService {
       return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
     }
     final file = result.files.first;
-    final content = utf8.decode(file.bytes ?? (await FilePicker.platform.readFile(file: file))!);
+    Uint8List raw;
+    if (file.bytes != null) {
+      raw = file.bytes!;
+    } else if (!kIsWeb && file.path != null) {
+      raw = await File(file.path!).readAsBytes();
+    } else {
+      throw Exception('Unable to read selected file');
+    }
+    final content = utf8.decode(raw);
     final data = jsonDecode(content) as Map<String, dynamic>;
     final List notes = (data['notes'] as List?) ?? [];
 
