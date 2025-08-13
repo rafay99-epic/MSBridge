@@ -45,6 +45,17 @@ class _CreateNoteState extends State<CreateNote>
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
 
+  void _addTag(String rawTag) {
+    final tag = rawTag.trim();
+    if (tag.isEmpty) return;
+    final current = List<String>.from(_tagsNotifier.value);
+    if (!current.contains(tag)) {
+      current.add(tag);
+      _tagsNotifier.value = current;
+    }
+    _tagInputController.clear();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -365,12 +376,22 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
-            // Tags editor
+            // Tags editor (redesigned)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Text(
+                      'Tags',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                   ValueListenableBuilder<List<String>>(
                     valueListenable: _tagsNotifier,
                     builder: (context, tags, _) {
@@ -378,15 +399,19 @@ class _CreateNoteState extends State<CreateNote>
                         return const SizedBox.shrink();
                       }
                       return Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           for (final t in tags)
                             InputChip(
                               label: Text(t),
+                              labelStyle: TextStyle(
+                                color: theme.colorScheme.primary,
+                              ),
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
                               onDeleted: () {
-                                final next = List<String>.from(tags)
-                                  ..remove(t);
+                                final next = List<String>.from(tags)..remove(t);
                                 _tagsNotifier.value = next;
                               },
                             ),
@@ -394,49 +419,43 @@ class _CreateNoteState extends State<CreateNote>
                       );
                     },
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _tagInputController,
-                          decoration: const InputDecoration(
-                            hintText: 'Add tag (e.g., blog, todo, diary)',
-                            border: OutlineInputBorder(),
-                          ),
-                          onSubmitted: (value) {
-                            final tag = value.trim();
-                            if (tag.isEmpty) return;
-                            final current =
-                                List<String>.from(_tagsNotifier.value);
-                            if (!current.contains(tag)) {
-                              current.add(tag);
-                              _tagsNotifier.value = current;
-                            }
-                            _tagInputController.clear();
-                          },
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _tagInputController,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: _addTag,
+                    decoration: InputDecoration(
+                      hintText: 'Add a tag and press Enter',
+                      prefixIcon: const Icon(Icons.tag),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.add),
+                        tooltip: 'Add tag',
+                        onPressed: () => _addTag(_tagInputController.text),
+                      ),
+                      border: const OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
                         ),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          final tag = _tagInputController.text.trim();
-                          if (tag.isEmpty) return;
-                          final current =
-                              List<String>.from(_tagsNotifier.value);
-                          if (!current.contains(tag)) {
-                            current.add(tag);
-                            _tagsNotifier.value = current;
-                          }
-                          _tagInputController.clear();
-                        },
-                        child: const Text('Add'),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 12),
             Expanded(
               child: Builder(
                 builder: (context) => QuillEditor.basic(

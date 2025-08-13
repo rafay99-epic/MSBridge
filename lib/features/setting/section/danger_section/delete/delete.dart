@@ -4,6 +4,8 @@ import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -114,13 +116,34 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
     });
 
     final AuthRepo authRepo = AuthRepo();
+    // Step 1: Wipe local storage (Hive boxes + SharedPreferences handled in logout)
+    try {
+      // Clear note boxes
+      try {
+        final box = await HiveNoteTakingRepo.getBox();
+        await box.clear();
+      } catch (_) {}
+      try {
+        final deletedBox = await HiveNoteTakingRepo.getDeletedBox();
+        await deletedBox.clear();
+      } catch (_) {}
+
+      // Additionally clear any other Hive boxes registered in main.dart
+      try {
+        if (Hive.isBoxOpen('notesBox')) {
+          await Hive.box('notesBox').clear();
+        }
+      } catch (_) {}
+    } catch (_) {}
+
+    // Step 2: Delete all user docs and auth user
     final result = await authRepo.deleteUserAndData();
 
     setState(() {
       _isLoading = false;
     });
 
-    if (result.isSuccess) {
+    if (result.error == null) {
       CustomSnackBar.show(context, "Account deleted successfully.");
 
       showLogoutDialog(context);

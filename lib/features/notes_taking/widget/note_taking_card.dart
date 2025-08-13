@@ -38,11 +38,13 @@ class _NoteCardState extends State<NoteCard> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: widget.isSelected
-            ? theme.colorScheme.primary.withOpacity(0.1)
+            ? theme.colorScheme.primary.withOpacity(0.08)
             : theme.cardColor,
         border: widget.isSelected
             ? Border.all(color: theme.colorScheme.primary, width: 2)
-            : null,
+            : Border.all(
+                color: theme.colorScheme.outlineVariant.withOpacity(0.25),
+              ),
         boxShadow: widget.isSelected
             ? [
                 BoxShadow(
@@ -53,13 +55,29 @@ class _NoteCardState extends State<NoteCard> {
       ),
       child: Stack(
         children: [
+          // Left accent bar
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.35),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                ),
+              ),
+            ),
+          ),
           Card(
-            elevation: 3,
+            elevation: widget.isSelected ? 6 : 2,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             color: theme.cardColor,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -77,11 +95,51 @@ class _NoteCardState extends State<NoteCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 40),
+                      const SizedBox(width: 32),
                     ],
                   ),
                   const SizedBox(height: 8),
                   buildContent(widget.note.noteContent, theme),
+                  const SizedBox(height: 12),
+                  if (widget.note.tags.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final tag in widget.note.tags.take(3))
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              tag,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  // Gradient divider to indicate end/start boundary
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.outlineVariant.withOpacity(0.0),
+                          theme.colorScheme.outlineVariant.withOpacity(0.6),
+                          theme.colorScheme.outlineVariant.withOpacity(0.0),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -217,6 +217,7 @@ class _NotetakingState extends State<Notetaking>
                           .toList();
 
                       return SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 28),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -239,8 +240,8 @@ class _NotetakingState extends State<Notetaking>
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
-                                  mainAxisSpacing: 4,
-                                  crossAxisSpacing: 4,
+                                  mainAxisSpacing: 10,
+                                  crossAxisSpacing: 10,
                                   itemCount: pinnedNotes.length,
                                   itemBuilder: (context, index) {
                                     final note = pinnedNotes[index];
@@ -267,8 +268,8 @@ class _NotetakingState extends State<Notetaking>
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
-                                mainAxisSpacing: 4,
-                                crossAxisSpacing: 4,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
                                 itemCount: unpinnedNotes.length,
                                 itemBuilder: (context, index) {
                                   final note = unpinnedNotes[index];
