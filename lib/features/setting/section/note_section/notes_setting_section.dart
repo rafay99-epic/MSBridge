@@ -4,13 +4,13 @@ import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/features/setting/section/note_section/ai_model_selection.dart';
-import 'package:msbridge/features/setting/widgets/settings_section.dart';
-import 'package:msbridge/features/setting/widgets/settings_tile.dart';
+import 'package:msbridge/widgets/buildModernSettingsTile.dart';
+import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/config/feature_flag.dart'; // Import FeatureFlag
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
@@ -69,12 +69,19 @@ class _NotesSettingState extends State<NotesSetting> {
     final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
     final shareProvider = Provider.of<ShareLinkProvider>(context);
     final syncSettings = Provider.of<SyncSettingsProvider>(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return SettingsSection(
-      title: "Notes Setting",
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SettingsTile(
+        // AI & Smart Features
+        buildSubsectionHeader(context, "AI & Smart Features", LineIcons.robot),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "AI Summary Model",
+          subtitle: "Choose your preferred AI model for note summaries",
           icon: LineIcons.robot,
           onTap: () {
             Navigator.push(
@@ -86,9 +93,12 @@ class _NotesSettingState extends State<NotesSetting> {
             );
           },
         ),
-        if (FeatureFlag.enableAutoSave) // Conditionally render Auto Save
-          SettingsTile(
+        if (FeatureFlag.enableAutoSave) ...[
+          const SizedBox(height: 12),
+          buildModernSettingsTile(
+            context,
             title: "Auto Save Notes",
+            subtitle: "Automatically save notes as you type",
             icon: LineIcons.save,
             trailing: Switch(
               value: autoSaveProvider.autoSaveEnabled,
@@ -97,8 +107,17 @@ class _NotesSettingState extends State<NotesSetting> {
               },
             ),
           ),
-        SettingsTile(
+        ],
+
+        const SizedBox(height: 24),
+
+        // Sync & Cloud
+        buildSubsectionHeader(context, "Sync & Cloud", LineIcons.cloud),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Cloud Sync (Firebase)",
+          subtitle: "Sync your notes across devices",
           icon: LineIcons.cloud,
           trailing: Switch(
             value: syncSettings.cloudSyncEnabled,
@@ -133,7 +152,6 @@ class _NotesSettingState extends State<NotesSetting> {
                       isSuccess: true);
               } else {
                 await syncSettings.setCloudSyncEnabled(true);
-                // Trigger a full sync up on enable
                 try {
                   await SyncService().syncLocalNotesToFirebase();
                   if (mounted)
@@ -147,8 +165,17 @@ class _NotesSettingState extends State<NotesSetting> {
             },
           ),
         ),
-        SettingsTile(
+
+        const SizedBox(height: 24),
+
+        // Sharing & Collaboration
+        buildSubsectionHeader(
+            context, "Sharing & Collaboration", LineIcons.share),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Shareable Links",
+          subtitle: "Create shareable links for your notes",
           icon: LineIcons.shareSquare,
           trailing: Switch(
             value: shareProvider.shareLinksEnabled,
@@ -183,9 +210,12 @@ class _NotesSettingState extends State<NotesSetting> {
             },
           ),
         ),
-        if (shareProvider.shareLinksEnabled)
-          SettingsTile(
+        if (shareProvider.shareLinksEnabled) ...[
+          const SizedBox(height: 12),
+          buildModernSettingsTile(
+            context,
             title: "Shared Notes",
+            subtitle: "Manage your shared notes and links",
             icon: LineIcons.share,
             onTap: () {
               Navigator.push(
@@ -197,26 +227,34 @@ class _NotesSettingState extends State<NotesSetting> {
               );
             },
           ),
-        SettingsTile(
+        ],
+
+        const SizedBox(height: 24),
+
+        // Data Management
+        buildSubsectionHeader(context, "Data Management", LineIcons.database),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Export Backup",
+          subtitle: "Create a backup of all your notes",
           icon: LineIcons.download,
           onTap: () async {
             await BackupService.exportAllNotes();
             if (mounted) {
-              // Use custom toast
-              // ignore: use_build_context_synchronously
               CustomSnackBar.show(context, 'Backup exported', isSuccess: true);
             }
           },
         ),
-        SettingsTile(
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Import Backup",
+          subtitle: "Restore notes from a backup file",
           icon: LineIcons.upload,
           onTap: () async {
             final report = await BackupService.importFromFile();
             if (mounted) {
-              // Use custom toast
-              // ignore: use_build_context_synchronously
               CustomSnackBar.show(
                 context,
                 'Import: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped',
@@ -225,8 +263,11 @@ class _NotesSettingState extends State<NotesSetting> {
             }
           },
         ),
-        SettingsTile(
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Recycle Bin",
+          subtitle: "View and restore deleted notes",
           icon: LineIcons.trash,
           onTap: () {
             Navigator.push(
@@ -238,7 +279,6 @@ class _NotesSettingState extends State<NotesSetting> {
             );
           },
         ),
-        // Removed syncing/local offline features as requested
       ],
     );
   }
