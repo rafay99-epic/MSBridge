@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:msbridge/core/provider/sync_settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -19,6 +21,12 @@ class SyncService {
 
   Future<void> startListening() async {
     try {
+      // Check global sync toggle before syncing
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        final enabled = context.read<SyncSettingsProvider>().cloudSyncEnabled;
+        if (!enabled) return;
+      }
       await syncLocalNotesToFirebase();
     } catch (e) {
       throw Exception("⚠️ Error starting Hive listener: $e");
@@ -27,6 +35,11 @@ class SyncService {
 
   Future<void> syncLocalNotesToFirebase() async {
     try {
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        final enabled = context.read<SyncSettingsProvider>().cloudSyncEnabled;
+        if (!enabled) return;
+      }
       List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
       Box<NoteTakingModel> deletedNotesBox =
           await HiveNoteTakingRepo.getDeletedBox();

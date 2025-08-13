@@ -15,6 +15,10 @@ import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/core/services/backup_service.dart';
+import 'package:msbridge/core/provider/sync_settings_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -32,6 +36,24 @@ class _NotesSettingState extends State<NotesSetting> {
     _loadSelectedModel();
   }
 
+  Future<void> _deleteAllCloudNotes(BuildContext context) async {
+    try {
+      final auth = FirebaseAuth.instance;
+      final user = auth.currentUser;
+      if (user == null) return;
+      final firestore = FirebaseFirestore.instance;
+      final col = firestore.collection('users').doc(user.uid).collection('notes');
+      final snap = await col.get();
+      final batch = firestore.batch();
+      for (final d in snap.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
+    } catch (e) {
+      if (mounted) CustomSnackBar.show(context, 'Failed to delete cloud notes: $e');
+    }
+  }
+
   Future<void> _loadSelectedModel() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -44,6 +66,7 @@ class _NotesSettingState extends State<NotesSetting> {
   Widget build(BuildContext context) {
     final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
     final shareProvider = Provider.of<ShareLinkProvider>(context);
+    final syncSettings = Provider.of<SyncSettingsProvider>(context);
 
     return SettingsSection(
       title: "Notes Setting",
@@ -72,6 +95,45 @@ class _NotesSettingState extends State<NotesSetting> {
               },
             ),
           ),
+        SettingsTile(
+          title: "Cloud Sync (Firebase)",
+          icon: LineIcons.cloudUploadAlt,
+          trailing: Switch(
+            value: syncSettings.cloudSyncEnabled,
+            onChanged: (bool value) async {
+              if (!value) {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) {
+                    final theme = Theme.of(ctx);
+                    return AlertDialog(
+                      backgroundColor: theme.colorScheme.surface,
+                      title: const Text('Disable cloud sync?'),
+                      content: const Text('All notes currently in the cloud will be deleted. Local notes remain on this device.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Disable')),
+                      ],
+                    );
+                  },
+                );
+                if (confirm != true) return;
+                await _deleteAllCloudNotes(context);
+                await syncSettings.setCloudSyncEnabled(false);
+                if (mounted) CustomSnackBar.show(context, 'Cloud sync disabled. Cloud notes removed.', isSuccess: true);
+              } else {
+                await syncSettings.setCloudSyncEnabled(true);
+                // Trigger a full sync up on enable
+                try {
+                  await SyncService().syncLocalNotesToFirebase();
+                  if (mounted) CustomSnackBar.show(context, 'Cloud sync enabled. Notes synced to cloud.', isSuccess: true);
+                } catch (e) {
+                  if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
+                }
+              }
+            },
+          ),
+        ),
         SettingsTile(
           title: "Shareable Links",
           icon: LineIcons.shareSquare,

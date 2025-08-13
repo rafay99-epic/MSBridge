@@ -13,6 +13,7 @@ import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
@@ -54,6 +55,7 @@ void main() async {
           if (FeatureFlag.enableAutoSave)
             ChangeNotifierProvider(create: (_) => AutoSaveProvider()),
           ChangeNotifierProvider(create: (_) => ShareLinkProvider()),
+          ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),
         ],
         child: const MyApp(),
       ),
