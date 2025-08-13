@@ -19,6 +19,8 @@ import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/provider/ai_consent_provider.dart';
+import 'package:msbridge/features/ai_chat/chat_page.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -69,8 +71,6 @@ class _NotesSettingState extends State<NotesSetting> {
     final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
     final shareProvider = Provider.of<ShareLinkProvider>(context);
     final syncSettings = Provider.of<SyncSettingsProvider>(context);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,6 +164,27 @@ class _NotesSettingState extends State<NotesSetting> {
               }
             },
           ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Ask AI
+        buildSubsectionHeader(context, "Ask AI", LineIcons.comments),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
+          title: "Ask AI",
+          subtitle: "Chat over your notes and MS Notes",
+          icon: LineIcons.comments,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const ChatAssistantPage(),
+              ),
+            );
+          },
         ),
 
         const SizedBox(height: 24),
