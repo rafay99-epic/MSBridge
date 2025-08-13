@@ -15,6 +15,9 @@ import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/core/repo/share_repo.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -348,6 +351,11 @@ class _CreateNoteState extends State<CreateNote>
             ),
           ),
           IconButton(
+            tooltip: 'Share link',
+            icon: const Icon(LineIcons.shareSquare),
+            onPressed: _openShareSheet,
+          ),
+          IconButton(
             icon: const Icon(LineIcons.save),
             onPressed: manualSaveNote,
           ),
@@ -521,6 +529,105 @@ class _CreateNoteState extends State<CreateNote>
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openShareSheet() async {
+    final theme = Theme.of(context);
+    if (_currentNote == null) {
+      await manualSaveNote();
+      if (_currentNote == null) {
+        if (mounted) CustomSnackBar.show(context, 'Save the note before sharing');
+        return;
+      }
+    }
+
+    final note = _currentNote!;
+    final status = await ShareRepository.getShareStatus(note.noteId!);
+    String? currentUrl = status.shareUrl.isNotEmpty ? status.shareUrl : null;
+    bool enabled = status.enabled;
+
+    // ignore: use_build_context_synchronously
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setStateSheet) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Share via link', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Switch(
+                      value: enabled,
+                      onChanged: (value) async {
+                        try {
+                          if (value) {
+                            final url = await ShareRepository.enableShare(note);
+                            setStateSheet(() {
+                              enabled = true;
+                              currentUrl = url;
+                            });
+                            if (mounted) CustomSnackBar.show(context, 'Share link enabled');
+                          } else {
+                            await ShareRepository.disableShare(note);
+                            setStateSheet(() {
+                              enabled = false;
+                              currentUrl = null;
+                            });
+                            if (mounted) CustomSnackBar.show(context, 'Share link disabled');
+                          }
+                        } catch (e) {
+                          if (mounted) CustomSnackBar.show(context, e.toString());
+                        }
+                      },
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (currentUrl != null) ...[
+                  SelectableText(
+                    currentUrl!,
+                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.9)),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: currentUrl));
+                          if (mounted) CustomSnackBar.show(context, 'Link copied');
+                        },
+                        icon: const Icon(LineIcons.copy),
+                        label: const Text('Copy'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => Share.share(currentUrl!),
+                        icon: const Icon(LineIcons.share),
+                        label: const Text('Share'),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Text(
+                    'Enable to generate a view-only link anyone can open.',
+                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.7)),
+                  ),
+                ]
+              ],
+            ),
+          );
+        });
+      },
     );
   }
 }

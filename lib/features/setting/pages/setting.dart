@@ -11,6 +11,7 @@ import 'package:msbridge/features/setting/section/user_section/user_settings_sec
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 
 class Setting extends StatelessWidget {
   const Setting({super.key});
@@ -47,6 +48,19 @@ class Setting extends StatelessWidget {
                       PageTransition(
                         type: PageTransitionType.rightToLeft,
                         child: const AppInfoPage(),
+                      ),
+                    );
+                  },
+                ),
+                SettingsTile(
+                  title: "Shared Notes",
+                  icon: LineIcons.shareSquare,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageTransition(
+                        type: PageTransitionType.rightToLeft,
+                        child: const SharedNotesPage(),
                       ),
                     );
                   },

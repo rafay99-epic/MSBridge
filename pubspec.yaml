@@ -41,6 +41,7 @@ dependencies:
   dio: ^5.5.0+1
   percent_indicator: ^4.2.3
   flutter_cache_manager: ^3.3.2
+  share_plus: ^10.0.2
 
   firebase_core: ^3.1.1
   firebase_auth: ^5.1.1
