@@ -19,8 +19,8 @@ import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
-import 'package:msbridge/core/provider/ai_consent_provider.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -36,6 +36,29 @@ class _NotesSettingState extends State<NotesSetting> {
   void initState() {
     super.initState();
     _loadSelectedModel();
+  }
+
+  Future<int?> _pickInterval(BuildContext context) async {
+    final items = <int>[0, 15, 30, 60];
+    int current = await AutoSyncScheduler.getIntervalMinutes();
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final m in items)
+                ListTile(
+                  title: Text(m == 0 ? 'Off' : 'Every $m minutes'),
+                  trailing: current == m ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.of(ctx).pop(m),
+                )
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _deleteAllCloudNotes(BuildContext context) async {
@@ -146,24 +169,54 @@ class _NotesSettingState extends State<NotesSetting> {
                 if (confirm != true) return;
                 await _deleteAllCloudNotes(context);
                 await syncSettings.setCloudSyncEnabled(false);
-                if (mounted)
+                if (mounted) {
                   CustomSnackBar.show(
                       context, 'Cloud sync disabled. Cloud notes removed.',
                       isSuccess: true);
+                }
               } else {
                 await syncSettings.setCloudSyncEnabled(true);
                 try {
                   await SyncService().syncLocalNotesToFirebase();
-                  if (mounted)
+                  if (mounted) {
                     CustomSnackBar.show(
                         context, 'Cloud sync enabled. Notes synced to cloud.',
                         isSuccess: true);
+                  }
                 } catch (e) {
                   if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
                 }
               }
             },
           ),
+        ),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
+          title: "Sync now",
+          subtitle: "Manually push notes to the cloud",
+          icon: LineIcons.syncIcon,
+          onTap: () async {
+            try {
+              await SyncService().syncLocalNotesToFirebase();
+              if (mounted) CustomSnackBar.show(context, 'Synced successfully', isSuccess: true);
+            } catch (e) {
+              if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
+          title: "Auto sync interval",
+          subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
+          icon: LineIcons.history,
+          onTap: () async {
+            final minutes = await _pickInterval(context);
+            if (minutes == null) return;
+            await AutoSyncScheduler.setIntervalMinutes(minutes);
+            if (mounted) CustomSnackBar.show(context, minutes == 0 ? 'Auto sync disabled' : 'Auto sync set to every $minutes min', isSuccess: true);
+          },
         ),
 
         const SizedBox(height: 24),

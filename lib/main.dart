@@ -21,6 +21,7 @@ import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
@@ -62,6 +63,9 @@ void main() async {
         child: const MyApp(),
       ),
     );
+
+    // Initialize auto sync scheduler after app providers are ready
+    await AutoSyncScheduler.initialize();
 
     bool weWantFatalErrorRecording = true;
     FlutterError.onError = (errorDetails) {
