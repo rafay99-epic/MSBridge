@@ -52,19 +52,6 @@ class Setting extends StatelessWidget {
                     );
                   },
                 ),
-                SettingsTile(
-                  title: "Shared Notes",
-                  icon: LineIcons.shareSquare,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      PageTransition(
-                        type: PageTransitionType.rightToLeft,
-                        child: const SharedNotesPage(),
-                      ),
-                    );
-                  },
-                ),
                 const AdminSettingsSection(),
                 Align(
                   alignment: Alignment.bottomCenter,

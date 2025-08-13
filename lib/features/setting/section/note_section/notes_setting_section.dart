@@ -10,6 +10,8 @@ import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/config/feature_flag.dart'; // Import FeatureFlag
+import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -38,6 +40,7 @@ class _NotesSettingState extends State<NotesSetting> {
   @override
   Widget build(BuildContext context) {
     final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
+    final shareProvider = Provider.of<ShareLinkProvider>(context);
 
     return SettingsSection(
       title: "Notes Setting",
@@ -65,6 +68,30 @@ class _NotesSettingState extends State<NotesSetting> {
                 autoSaveProvider.autoSaveEnabled = value;
               },
             ),
+          ),
+        SettingsTile(
+          title: "Shareable Links",
+          icon: LineIcons.shareSquare,
+          trailing: Switch(
+            value: shareProvider.shareLinksEnabled,
+            onChanged: (bool value) {
+              shareProvider.shareLinksEnabled = value;
+            },
+          ),
+        ),
+        if (shareProvider.shareLinksEnabled)
+          SettingsTile(
+            title: "Shared Notes",
+            icon: LineIcons.externalLinkAlt,
+            onTap: () {
+              Navigator.push(
+                context,
+                PageTransition(
+                  type: PageTransitionType.rightToLeft,
+                  child: const SharedNotesPage(),
+                ),
+              );
+            },
           ),
         SettingsTile(
           title: "Recycle Bin",

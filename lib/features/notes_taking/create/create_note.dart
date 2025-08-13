@@ -350,10 +350,15 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
-          IconButton(
-            tooltip: 'Share link',
-            icon: const Icon(LineIcons.shareSquare),
-            onPressed: _openShareSheet,
+          Consumer<ShareLinkProvider>(
+            builder: (context, shareProvider, _) {
+              if (!shareProvider.shareLinksEnabled) return const SizedBox.shrink();
+              return IconButton(
+                tooltip: 'Share link',
+                icon: const Icon(LineIcons.shareSquare),
+                onPressed: _openShareSheet,
+              );
+            },
           ),
           IconButton(
             icon: const Icon(LineIcons.save),
