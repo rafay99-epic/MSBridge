@@ -1,9 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:install_plugin/install_plugin.dart';
 import 'package:msbridge/core/permissions/permission.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 
 class UpdateAppRepo {
@@ -33,21 +31,9 @@ class UpdateAppRepo {
       return false;
     }
 
-    var installStatus = await Permission.requestInstallPackages.status;
-    if (!installStatus.isGranted) {
-      installStatus = await Permission.requestInstallPackages.request();
-      if (!installStatus.isGranted) {
-        setIsDownloading(false);
-        dio?.close();
-        dio = null;
-        onError("Install Packages permission denied.");
-        return false;
-      }
-    }
-
     try {
       Directory? externalDir = await getExternalStorageDirectory();
-      String apkPath = '${externalDir?.path}/app-update.apk';
+      String apkPath = '${externalDir?.path}/MSBridge-Update.apk';
       downloadedFilePath = apkPath;
       dio = Dio();
 
@@ -65,13 +51,8 @@ class UpdateAppRepo {
 
       onDownloadComplete();
 
-      try {
-        final result = await InstallPlugin.installApk(downloadedFilePath!);
-        return result == "success";
-      } catch (error) {
-        onError("Error installing APK: $error");
-        return false;
-      }
+      // Show success message and guide user to install manually
+      return true;
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
         onError("Download canceled");
