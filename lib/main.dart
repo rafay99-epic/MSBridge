@@ -16,6 +16,8 @@ import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
@@ -93,6 +95,113 @@ class MyApp extends StatelessWidget {
       home: FeatureFlag.enableFingerprintLock
           ? const FingerprintAuthWrapper()
           : const AuthGate(),
+      navigatorObservers: [
+        _DynamicLinkObserver(),
+      ],
     );
   }
+}
+
+class _DynamicLinkObserver extends NavigatorObserver {
+  _DynamicLinkObserver() {
+    _initDynamicLinks();
+  }
+
+  void _initDynamicLinks() async {
+    // Handle dynamic links when app is opened from background/terminated
+    final PendingDynamicLinkData? initialLink =
+        await FirebaseDynamicLinks.instance.getInitialLink();
+    if (initialLink?.link != null) {
+      _handleLink(initialLink!.link);
+    }
+
+    // Handle dynamic links while app is in foreground
+    FirebaseDynamicLinks.instance.onLink.listen((data) {
+      _handleLink(data.link);
+    });
+  }
+
+  void _handleLink(Uri link) async {
+    try {
+      // Expect link like https://msbridge.page.link/... resolving to https://<host>/s/{shareId}
+      final Uri deep = link;
+      final Uri target = deep;
+      final List<String> parts = target.path.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 2 && parts[0] == 's') {
+        final String shareId = parts[1];
+        // Fetch and show a simple in-app viewer dialog
+        final doc = await FirebaseFirestore.instance.collection('shared_notes').doc(shareId).get();
+        if (!navigatorKey.currentState!.mounted) return;
+        if (!doc.exists) {
+          _showSnack('This shared note does not exist or was disabled.');
+          return;
+        }
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['viewOnly'] != true) {
+          _showSnack('This link is not viewable.');
+          return;
+        }
+        _showSharedViewer(
+          title: (data['title'] as String?) ?? 'Untitled',
+          content: (data['content'] as String?) ?? '',
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _showSnack(String message) {
+    final context = navigatorKey.currentState?.overlay?.context;
+    if (context == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showSharedViewer({required String title, required String content}) {
+    final context = navigatorKey.currentState?.overlay?.context;
+    if (context == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        String plain;
+        try {
+          final parsed = _tryParseQuill(content);
+          plain = parsed;
+        } catch (_) {
+          plain = content;
+        }
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(title, style: TextStyle(color: theme.colorScheme.primary)),
+          content: SingleChildScrollView(
+            child: Text(plain, style: TextStyle(color: theme.colorScheme.primary)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            )
+          ],
+        );
+      },
+    );
+  }
+}
+
+String _tryParseQuill(String content) {
+  try {
+    final dynamic json = _jsonDecode(content);
+    if (json is List) {
+      return json.map((op) => op is Map && op['insert'] is String ? op['insert'] as String : '').join('');
+    }
+    if (json is Map && json['ops'] is List) {
+      final List ops = json['ops'];
+      return ops.map((op) => op is Map && op['insert'] is String ? op['insert'] as String : '').join('');
+    }
+  } catch (_) {}
+  return content;
+}
+
+dynamic _jsonDecode(String s) {
+  // Lightweight local json decode to avoid importing dart:convert at top; fine to use here too.
+  return (const JsonDecoder()).convert(s);
 }

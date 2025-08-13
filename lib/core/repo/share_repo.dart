@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/utils/uuid.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 class ShareRepository {
   static const String _shareCollection = 'shared_notes';
@@ -16,6 +17,28 @@ class ShareRepository {
   static String _buildDefaultShareUrl(String shareId) {
     // Default to Firebase Hosting-like URL path; replace with your custom domain if available
     return 'https://msbridge-9a2c7.web.app/s/$shareId';
+  }
+
+  static Future<String> _buildDynamicLink(String shareId) async {
+    try {
+      final DynamicLinkParameters params = DynamicLinkParameters(
+        link: Uri.parse(_buildDefaultShareUrl(shareId)),
+        uriPrefix: 'https://msbridge.page.link', // TODO: set your dynamic link domain
+        androidParameters: const AndroidParameters(
+          packageName: 'com.syntaxlab.msbridge',
+          minimumVersion: 1,
+        ),
+        iosParameters: const IOSParameters(
+          bundleId: 'com.syntaxlab.msbridge',
+          minimumVersion: '1.0.0',
+        ),
+      );
+      final ShortDynamicLink short = await FirebaseDynamicLinks.instance.buildShortLink(params);
+      return short.shortUrl.toString();
+    } catch (_) {
+      // Fallback to default hosting URL
+      return _buildDefaultShareUrl(shareId);
+    }
   }
 
   static Future<String> enableShare(NoteTakingModel note) async {
@@ -37,7 +60,7 @@ class ShareRepository {
         ? existing['shareId'] as String
         : generateUuid();
 
-    final String shareUrl = _buildDefaultShareUrl(shareId);
+    final String shareUrl = await _buildDynamicLink(shareId);
 
     final Map<String, dynamic> payload = {
       'shareId': shareId,
