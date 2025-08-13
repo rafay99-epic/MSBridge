@@ -6,6 +6,7 @@ import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/features/setting/section/note_section/ai_model_selection.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -85,7 +86,8 @@ class _NotesSettingState extends State<NotesSetting> {
                     return AlertDialog(
                       backgroundColor: theme.colorScheme.surface,
                       title: const Text('Disable shareable links?'),
-                      content: const Text('This will disable all existing shared notes. You can re-enable sharing later.'),
+                      content: const Text(
+                          'This will disable all existing shared notes. You can re-enable sharing later.'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(ctx).pop(false),
