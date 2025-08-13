@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:isolate';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -202,6 +203,5 @@ String _tryParseQuill(String content) {
 }
 
 dynamic _jsonDecode(String s) {
-  // Lightweight local json decode to avoid importing dart:convert at top; fine to use here too.
-  return (const JsonDecoder()).convert(s);
+  return jsonDecode(s);
 }
