@@ -9,6 +9,7 @@ import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/features/profile/profile_edit_page.dart';
 
 class UserSettingsSection extends StatelessWidget {
   const UserSettingsSection({super.key});
@@ -18,6 +19,19 @@ class UserSettingsSection extends StatelessWidget {
     return SettingsSection(
       title: "User Settings",
       children: [
+        SettingsTile(
+          title: "Edit Profile",
+          icon: LineIcons.user,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const ProfileEditPage(),
+              ),
+            );
+          },
+        ),
         SettingsTile(
           title: "Logout",
           icon: LineIcons.alternateSignOut,
