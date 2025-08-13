@@ -19,11 +19,11 @@ class _HomeState extends State<Home> {
   PageController? _pageController;
 
   final List<Widget> _pages = [
-    Msnotes(),
-    Search(),
-    Notetaking(),
-    ChatAssistantPage(),
-    Setting(),
+    const Msnotes(),
+    const Search(),
+    const Notetaking(),
+    const ChatAssistantPage(),
+    const Setting(),
   ];
 
   @override

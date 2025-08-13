@@ -17,6 +17,7 @@ import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -165,19 +166,7 @@ class _NotetakingState extends State<Notetaking>
         shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
         centerTitle: true,
         leading: _buildAppBarLeading(),
-        actions: [
-          ..._buildAppBarActions(),
-          IconButton(
-            tooltip: 'Folders',
-            icon: const Icon(LineIcons.folder),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FoldersPage()),
-              );
-            },
-          ),
-        ],
+        actions: _buildAppBarActions(),
         titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: theme.colorScheme.primary,
@@ -252,7 +241,10 @@ class _NotetakingState extends State<Notetaking>
                                 child: MasonryGridView.count(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
+                                  crossAxisCount:
+                                      _layoutMode == NoteLayoutMode.grid
+                                          ? 2
+                                          : 1,
                                   mainAxisSpacing: 10,
                                   crossAxisSpacing: 10,
                                   itemCount: pinnedNotes.length,
@@ -280,7 +272,8 @@ class _NotetakingState extends State<Notetaking>
                               child: MasonryGridView.count(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
+                                crossAxisCount:
+                                    _layoutMode == NoteLayoutMode.grid ? 2 : 1,
                                 mainAxisSpacing: 10,
                                 crossAxisSpacing: 10,
                                 itemCount: unpinnedNotes.length,
@@ -378,17 +371,35 @@ class _NotetakingState extends State<Notetaking>
   }
 
   IconButton? _buildAppBarLeading() {
-    return _isSelectionMode
-        ? IconButton(
-            icon: const Icon(LineIcons.check),
-            onPressed: _exitSelectionMode,
-          )
-        : _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _exitSearch,
-              )
-            : null;
+    if (_isSelectionMode) {
+      return IconButton(
+        icon: const Icon(LineIcons.check),
+        onPressed: _exitSelectionMode,
+        tooltip: 'Exit selection mode',
+      );
+    } else if (_isSearching) {
+      return IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: _exitSearch,
+        tooltip: 'Exit search',
+      );
+    } else {
+      // Show folders icon on the left when not in special modes
+      return IconButton(
+        icon: const Icon(LineIcons.folder),
+        onPressed: () {
+          Navigator.push(
+            context,
+            PageTransition(
+              child: const FoldersPage(),
+              type: PageTransitionType.rightToLeft,
+              duration: const Duration(milliseconds: 300),
+            ),
+          );
+        },
+        tooltip: 'Folders',
+      );
+    }
   }
 
   List<Widget> _buildAppBarActions() {
@@ -397,12 +408,14 @@ class _NotetakingState extends State<Notetaking>
             IconButton(
               icon: const Icon(LineIcons.trash),
               onPressed: _deleteSelectedNotes,
+              tooltip: 'Delete selected notes',
             ),
           ]
         : [
             IconButton(
               icon: const Icon(LineIcons.search),
               onPressed: _enterSearch,
+              tooltip: 'Search notes',
             ),
             IconButton(
               tooltip: 'Switch layout',
