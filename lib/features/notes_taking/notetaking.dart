@@ -10,6 +10,7 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/notes_taking/folders/folders_page.dart';
 import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/error.dart';
@@ -164,7 +165,19 @@ class _NotetakingState extends State<Notetaking>
         shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
         centerTitle: true,
         leading: _buildAppBarLeading(),
-        actions: _buildAppBarActions(),
+        actions: [
+          ..._buildAppBarActions(),
+          IconButton(
+            tooltip: 'Folders',
+            icon: const Icon(LineIcons.folder),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FoldersPage()),
+              );
+            },
+          ),
+        ],
         titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: theme.colorScheme.primary,
