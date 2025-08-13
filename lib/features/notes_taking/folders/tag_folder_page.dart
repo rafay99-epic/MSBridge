@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
@@ -86,7 +88,7 @@ class TagFolderPage extends StatelessWidget {
 
   dynamic _tryJson(String s) {
     try {
-      return (const JsonDecoder()).convert(s);
+      return jsonDecode(s);
     } catch (_) {
       return null;
     }
