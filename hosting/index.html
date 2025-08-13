@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1F2335" />
     <title>MS Bridge — Shared Note</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,11 +15,11 @@
             theme: {
                 extend: {
                     colors: {
-                        background: '#0b0b0b',
-                        card: '#141414',
-                        border: '#2a2a2a',
-                        primary: '#e5e7eb',
-                        accent: '#22d3ee',
+                        background: '#1F2335',
+                        card: '#252A41',
+                        border: '#2E3553',
+                        primary: '#FFFFFF',
+                        accent: '#7AA2F7',
                     }
                 }
             }
@@ -88,9 +89,7 @@
             }
         }
 
-        .error {
-            color: #ff6b6b;
-        }
+        .error { color: #ff6b6b; }
 
         .muted {
             color: #9b9b9b;
@@ -120,7 +119,7 @@
 
         <main class="flex-1 w-full">
             <div class="max-w-3xl mx-auto px-4 py-6">
-                <div class="rounded-xl border border-border bg-card/80 p-5 shadow-2xl shadow-black/30">
+                <div class="rounded-xl border border-border bg-card p-5 shadow-2xl shadow-black/30">
                     <div id="loading" class="flex items-center gap-3">
                         <div class="h-6 w-6 border-2 border-border border-t-accent rounded-full animate-spin"></div>
                         <div class="text-sm text-primary/70">Loading note…</div>
@@ -129,11 +128,11 @@
                     <article id="note" class="hidden">
                         <h1 id="title" class="text-xl sm:text-2xl font-bold text-white mb-1">Untitled</h1>
                         <div id="meta" class="text-xs sm:text-sm text-primary/60 mb-4">&nbsp;</div>
-                        <div id="content" class="prose prose-invert prose-p:my-2 max-w-none text-primary/90 whitespace-pre-wrap"></div>
+                        <div id="content" class="prose prose-invert max-w-none text-primary/90"></div>
                         <div class="mt-6 flex flex-col sm:flex-row gap-2">
                             <button id="copyBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-accent/20 text-accent hover:bg-accent/25 transition">Copy link</button>
                             <button id="shareBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 border border-accent/40 text-accent hover:bg-accent/10 transition">Share…</button>
-                            <button id="openAppBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-accent text-black font-semibold hover:brightness-110 transition">Open in app</button>
+                            <button id="copyNoteBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-accent text-black font-semibold hover:brightness-110 transition">Copy note</button>
                         </div>
                     </article>
                 </div>
@@ -148,6 +147,7 @@
     <!-- Firebase Web SDK (compat builds) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDS_Fi7cd3nDGT31DLHN2DzhEGfjEs8XV4",
@@ -168,19 +168,28 @@
             return null;
         }
 
-        function tryParseDeltaToText(content) {
+        function deltaToHtml(content) {
             try {
                 const json = JSON.parse(content);
-                if (Array.isArray(json)) {
-                    // Basic Quill Delta array
-                    return json.map(op => typeof op.insert === 'string' ? op.insert : '').join('');
-                }
-                // Quill delta object with ops
-                if (json && Array.isArray(json.ops)) {
-                    return json.ops.map(op => typeof op.insert === 'string' ? op.insert : '').join('');
+                let ops = null;
+                if (Array.isArray(json)) { ops = json; }
+                else if (json && Array.isArray(json.ops)) { ops = json.ops; }
+                if (ops) {
+                    const converter = new QuillDeltaToHtmlConverter(ops, {
+                        paragraphTag: 'p',
+                        encodeHtml: true,
+                        multiLineBlockquote: true,
+                        multiLineCodeblock: true,
+                        listItemTag: 'li',
+                        linkTarget: '_blank',
+                    });
+                    return converter.convert();
                 }
             } catch (_) {}
-            return content; // fallback
+            // Fallback: treat as plain text with basic escaping
+            const div = document.createElement('div');
+            div.textContent = content;
+            return `<p>${div.innerHTML.replace(/\n/g, '<br/>')}</p>`;
         }
 
         async function loadNote() {
@@ -202,8 +211,9 @@
                 }
                 document.getElementById('title').textContent = data.title || 'Untitled';
                 document.getElementById('meta').textContent = `Shared • ${new Date(data.updatedAt || Date.now()).toLocaleString()}`;
-                const text = tryParseDeltaToText(data.content || '');
-                document.getElementById('content').textContent = text;
+                const html = deltaToHtml(data.content || '');
+                const contentEl = document.getElementById('content');
+                contentEl.innerHTML = html;
                 showNote();
             } catch (e) {
                 showError('Failed to load note: ' + (e && e.message ? e.message : e));
@@ -242,8 +252,16 @@
                     await navigator.clipboard.writeText(location.href);
                 }
             };
-            document.getElementById('openAppBtn').onclick = () => {
-                location.href = longDynamicLinkFor(shareId);
+            document.getElementById('copyNoteBtn').onclick = async () => {
+                try {
+                    const html = document.getElementById('content').innerHTML;
+                    const blob = new Blob([html], { type: 'text/html' });
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'text/html': blob, 'text/plain': new Blob([document.getElementById('content').innerText], { type: 'text/plain' }) })
+                    ]);
+                } catch(_) {
+                    await navigator.clipboard.writeText(document.getElementById('content').innerText);
+                }
             };
         }
 
