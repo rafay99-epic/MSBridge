@@ -19,6 +19,7 @@ import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -42,7 +43,8 @@ class _NotesSettingState extends State<NotesSetting> {
       final user = auth.currentUser;
       if (user == null) return;
       final firestore = FirebaseFirestore.instance;
-      final col = firestore.collection('users').doc(user.uid).collection('notes');
+      final col =
+          firestore.collection('users').doc(user.uid).collection('notes');
       final snap = await col.get();
       final batch = firestore.batch();
       for (final d in snap.docs) {
@@ -50,7 +52,8 @@ class _NotesSettingState extends State<NotesSetting> {
       }
       await batch.commit();
     } catch (e) {
-      if (mounted) CustomSnackBar.show(context, 'Failed to delete cloud notes: $e');
+      if (mounted)
+        CustomSnackBar.show(context, 'Failed to delete cloud notes: $e');
     }
   }
 
@@ -97,7 +100,7 @@ class _NotesSettingState extends State<NotesSetting> {
           ),
         SettingsTile(
           title: "Cloud Sync (Firebase)",
-          icon: LineIcons.cloudUpload,
+          icon: LineIcons.cloud,
           trailing: Switch(
             value: syncSettings.cloudSyncEnabled,
             onChanged: (bool value) async {
@@ -109,10 +112,15 @@ class _NotesSettingState extends State<NotesSetting> {
                     return AlertDialog(
                       backgroundColor: theme.colorScheme.surface,
                       title: const Text('Disable cloud sync?'),
-                      content: const Text('All notes currently in the cloud will be deleted. Local notes remain on this device.'),
+                      content: const Text(
+                          'All notes currently in the cloud will be deleted. Local notes remain on this device.'),
                       actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Disable')),
+                        TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Cancel')),
+                        TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text('Disable')),
                       ],
                     );
                   },
@@ -120,13 +128,19 @@ class _NotesSettingState extends State<NotesSetting> {
                 if (confirm != true) return;
                 await _deleteAllCloudNotes(context);
                 await syncSettings.setCloudSyncEnabled(false);
-                if (mounted) CustomSnackBar.show(context, 'Cloud sync disabled. Cloud notes removed.', isSuccess: true);
+                if (mounted)
+                  CustomSnackBar.show(
+                      context, 'Cloud sync disabled. Cloud notes removed.',
+                      isSuccess: true);
               } else {
                 await syncSettings.setCloudSyncEnabled(true);
                 // Trigger a full sync up on enable
                 try {
                   await SyncService().syncLocalNotesToFirebase();
-                  if (mounted) CustomSnackBar.show(context, 'Cloud sync enabled. Notes synced to cloud.', isSuccess: true);
+                  if (mounted)
+                    CustomSnackBar.show(
+                        context, 'Cloud sync enabled. Notes synced to cloud.',
+                        isSuccess: true);
                 } catch (e) {
                   if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
                 }
