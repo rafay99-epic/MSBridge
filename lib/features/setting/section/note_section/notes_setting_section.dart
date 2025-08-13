@@ -18,7 +18,6 @@ import 'package:msbridge/core/services/backup_service.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 
 class NotesSetting extends StatefulWidget {
