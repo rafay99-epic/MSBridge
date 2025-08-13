@@ -80,14 +80,44 @@ class BackupService {
         throw Exception('Unable to read selected file');
       }
     } catch (_) {
-      final typeGroup = const fsel.XTypeGroup(label: 'json', extensions: ['json']);
-      final fsel.XFile? xfile = await fsel.openFile(acceptedTypeGroups: [typeGroup]);
-      if (xfile == null) {
-        return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
+      try {
+        final typeGroup = const fsel.XTypeGroup(label: 'json', extensions: ['json']);
+        final fsel.XFile? xfile = await fsel.openFile(acceptedTypeGroups: [typeGroup]);
+        if (xfile == null) {
+          return BackupReport(total: 0, inserted: 0, updated: 0, skipped: 0);
+        }
+        raw = await xfile.readAsBytes();
+      } catch (_) {
+        // Fallback 2: try the app documents directory for last backup we created
+        final content = await _readLatestLocalBackup();
+        if (content == null) {
+          rethrow;
+        }
+        return await importFromString(content);
       }
-      raw = await xfile.readAsBytes();
     }
     final content = utf8.decode(raw);
+    return await importFromString(content);
+  }
+
+  static Future<String?> _readLatestLocalBackup() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final d = Directory(dir.path);
+      final files = await d
+          .list()
+          .where((e) => e is File && e.path.endsWith('.json') && e.path.contains('msbridge-notes-'))
+          .toList();
+      if (files.isEmpty) return null;
+      files.sort((a, b) => FileStat.statSync(b.path).modified.compareTo(FileStat.statSync(a.path).modified));
+      final latest = files.first as FileSystemEntity;
+      return await File(latest.path).readAsString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<BackupReport> importFromString(String content) async {
     final data = jsonDecode(content) as Map<String, dynamic>;
     final List notes = (data['notes'] as List?) ?? [];
 
