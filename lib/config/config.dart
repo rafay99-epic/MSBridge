@@ -15,3 +15,9 @@ class APIConfig {
 class NoteSummaryAPI {
   static const String apiKey = "";
 }
+
+class URL {
+  static const String prravicyPolicy =
+      'https://ms-bridge-app.vercel.app/privacy';
+  static const String termsOfService = 'https://ms-bridge-app.vercel.app/terms';
+}
