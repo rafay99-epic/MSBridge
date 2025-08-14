@@ -157,7 +157,8 @@ class _DynamicLinkObserver extends NavigatorObserver {
             .collection('shared_notes')
             .doc(shareId)
             .get();
-        if (!navigatorKey.currentState!.mounted) return;
+        final state = navigatorKey.currentState;
+        if (state == null || !state.mounted) return;
         if (!doc.exists) {
           _showSnack('This shared note does not exist or was disabled.');
           return;
@@ -172,7 +173,10 @@ class _DynamicLinkObserver extends NavigatorObserver {
           content: (data['content'] as String?) ?? '',
         );
       }
-    } catch (_) {}
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'DynamicLink handling failed');
+    }
   }
 
   void _showSnack(String message) {

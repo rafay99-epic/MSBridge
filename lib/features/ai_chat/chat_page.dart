@@ -245,6 +245,96 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
               ),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          // Status and Actions Section
+          Consumer<NotesChatProvider>(
+            builder: (context, chat, _) {
+              return Row(
+                children: [
+                  // Status indicator
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: chat.hasError
+                          ? colorScheme.error.withOpacity(0.1)
+                          : chat.isLoading
+                              ? colorScheme.primary.withOpacity(0.1)
+                              : colorScheme.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: chat.hasError
+                            ? colorScheme.error
+                            : chat.isLoading
+                                ? colorScheme.primary
+                                : colorScheme.secondary,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          chat.hasError
+                              ? LineIcons.exclamationTriangle
+                              : chat.isLoading
+                                  ? LineIcons.clock
+                                  : LineIcons.checkCircle,
+                          size: 14,
+                          color: chat.hasError
+                              ? colorScheme.error
+                              : chat.isLoading
+                                  ? colorScheme.primary
+                                  : colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          chat.sessionStatus,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: chat.hasError
+                                ? colorScheme.error
+                                : chat.isLoading
+                                    ? colorScheme.primary
+                                    : colorScheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  // Clear chat button
+                  if (chat.messages.isNotEmpty)
+                    OutlinedButton.icon(
+                      onPressed: () => _clearChat(context),
+                      icon: Icon(
+                        LineIcons.trash,
+                        size: 16,
+                        color: colorScheme.error,
+                      ),
+                      label: Text(
+                        'Clear Chat',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: colorScheme.error),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -328,12 +418,18 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: message.isError
+                        ? colorScheme.error.withOpacity(0.1)
+                        : colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Icon(
-                    LineIcons.robot,
-                    color: colorScheme.primary,
+                    message.isError
+                        ? LineIcons.exclamationTriangle
+                        : LineIcons.robot,
+                    color: message.isError
+                        ? colorScheme.error
+                        : colorScheme.primary,
                     size: 16,
                   ),
                 ),
@@ -346,7 +442,11 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                   ),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isUser ? colorScheme.primary : colorScheme.surface,
+                    color: isUser
+                        ? colorScheme.primary
+                        : message.isError
+                            ? colorScheme.errorContainer
+                            : colorScheme.surface,
                     borderRadius: BorderRadius.circular(16).copyWith(
                       bottomLeft: isUser
                           ? const Radius.circular(16)
@@ -358,8 +458,10 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                     border: Border.all(
                       color: isUser
                           ? colorScheme.primary
-                          : colorScheme.outline.withOpacity(0.2),
-                      width: 1,
+                          : message.isError
+                              ? colorScheme.error
+                              : colorScheme.outline.withOpacity(0.2),
+                      width: message.isError ? 2 : 1,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -371,15 +473,86 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                       ),
                     ],
                   ),
-                  child: isUser
-                      ? SelectableText(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isUser)
+                        SelectableText(
                           message.text,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                         )
-                      : MarkdownBody(
+                      else if (message.isError)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              message.text,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: () => _retryLastQuestion(context),
+                                  icon: Icon(
+                                    LineIcons.redo,
+                                    size: 16,
+                                    color: colorScheme.error,
+                                  ),
+                                  label: Text(
+                                    'Retry',
+                                    style: TextStyle(
+                                      color: colorScheme.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: colorScheme.error),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                if (message.errorDetails != null)
+                                  IconButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Error Details'),
+                                          content: SelectableText(
+                                              message.errorDetails!),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text('Close'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      LineIcons.infoCircle,
+                                      size: 16,
+                                      color: colorScheme.error,
+                                    ),
+                                    tooltip: 'View Error Details',
+                                  ),
+                              ],
+                            ),
+                          ],
+                        )
+                      else
+                        MarkdownBody(
                           data: message.text,
                           styleSheet: MarkdownStyleSheet(
                             p: theme.textTheme.bodyMedium?.copyWith(
@@ -398,30 +571,20 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                               color: colorScheme.primary,
                               fontWeight: FontWeight.w600,
                             ),
-                            code: TextStyle(
+                            code: theme.textTheme.bodyMedium?.copyWith(
                               backgroundColor:
                                   colorScheme.primary.withOpacity(0.1),
-                              color: colorScheme.primary,
                               fontFamily: 'monospace',
-                              fontSize: 13,
                             ),
                             codeblockDecoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.05),
+                              color: colorScheme.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: colorScheme.primary.withOpacity(0.1),
-                              ),
-                            ),
-                            blockquote: TextStyle(
-                              color: colorScheme.primary.withOpacity(0.8),
-                              fontStyle: FontStyle.italic,
-                            ),
-                            listBullet: TextStyle(
-                              color: colorScheme.primary,
                             ),
                           ),
                           selectable: true,
                         ),
+                    ],
+                  ),
                 ),
               ),
               if (isUser) ...[
@@ -619,18 +782,57 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
     try {
       final chat = Provider.of<NotesChatProvider>(context, listen: false);
-      await chat.startSession(
-        includePersonal: consent.enabled && _includePersonal,
-        includeMsNotes: _includeMsNotes,
-      );
-      await chat.ask(question);
-      _controller.clear();
+
+      // Start session if needed
+      if (!chat.isReady) {
+        await chat.startSession(
+          includePersonal: consent.enabled && _includePersonal,
+          includeMsNotes: _includeMsNotes,
+        );
+
+        // Check if session failed
+        if (chat.hasError) {
+          CustomSnackBar.show(
+              context, chat.lastErrorMessage ?? 'Failed to start chat session');
+          return;
+        }
+      }
+
+      // Send the question
+      final response = await chat.ask(question);
+
+      if (response != null) {
+        _controller.clear();
+      } else if (chat.hasError) {
+        // Error is already handled by the provider and shown in chat
+        CustomSnackBar.show(context,
+            'Failed to get AI response. You can retry using the retry button.');
+      }
     } catch (e) {
-      CustomSnackBar.show(context, 'Error: $e');
+      CustomSnackBar.show(context, 'Unexpected error: $e');
     } finally {
       setState(() {
         _isTyping = false;
       });
     }
+  }
+
+  // Add retry functionality
+  void _retryLastQuestion(BuildContext context) async {
+    final chat = Provider.of<NotesChatProvider>(context, listen: false);
+    final response = await chat.retryLastQuestion();
+
+    if (response != null) {
+      CustomSnackBar.show(context, 'Retry successful!', isSuccess: true);
+    } else if (chat.hasError) {
+      CustomSnackBar.show(context, 'Retry failed: ${chat.lastErrorMessage}');
+    }
+  }
+
+  // Add clear chat functionality
+  void _clearChat(BuildContext context) {
+    final chat = Provider.of<NotesChatProvider>(context, listen: false);
+    chat.clearMessages();
+    CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
   }
 }

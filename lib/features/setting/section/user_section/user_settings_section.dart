@@ -259,6 +259,7 @@ class UserSettingsSection extends StatelessWidget {
 
                     if (confirm == true) {
                       await pinProvider.clearPin();
+                      await pinProvider.setEnabled(false);
                       CustomSnackBar.show(
                         context,
                         'PIN lock has been reset!',

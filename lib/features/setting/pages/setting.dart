@@ -15,224 +15,239 @@ import 'package:msbridge/widgets/buildSettingsTile.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
-class Setting extends StatelessWidget {
+class Setting extends StatefulWidget {
   const Setting({super.key});
 
   @override
+  State<Setting> createState() => _SettingState();
+}
+
+class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: const CustomAppBar(title: "Settings"),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colorScheme.primary.withOpacity(0.1),
-                    colorScheme.secondary.withOpacity(0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
+    return RepaintBoundary(
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: const CustomAppBar(title: "Settings"),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Section
+              RepaintBoundary(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colorScheme.primary.withOpacity(0.1),
+                        colorScheme.secondary.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
                       color: colorScheme.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      LineIcons.cog,
-                      size: 32,
-                      color: colorScheme.primary,
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "App Configuration",
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Customize your MS Bridge experience",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.primary.withOpacity(0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Consumer<ThemeProvider>(
-                    builder: (context, themeProvider, _) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: themeProvider.dynamicColorsEnabled
-                              ? colorScheme.primary.withOpacity(0.2)
-                              : colorScheme.secondary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: themeProvider.dynamicColorsEnabled
-                                ? colorScheme.primary.withOpacity(0.3)
-                                : colorScheme.secondary.withOpacity(0.3),
-                            width: 1,
-                          ),
+                          color: colorScheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              themeProvider.dynamicColorsEnabled
-                                  ? Icons.auto_awesome
-                                  : Icons.palette,
-                              size: 16,
+                        child: Icon(
+                          LineIcons.cog,
+                          size: 32,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "App Configuration",
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Customize your MS Bridge experience",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.primary.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer<ThemeProvider>(
+                        builder: (context, themeProvider, _) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
                               color: themeProvider.dynamicColorsEnabled
-                                  ? colorScheme.primary
-                                  : colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              themeProvider.effectiveThemeName,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
+                                  ? colorScheme.primary.withOpacity(0.2)
+                                  : colorScheme.secondary.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
                                 color: themeProvider.dynamicColorsEnabled
-                                    ? colorScheme.primary
-                                    : colorScheme.secondary,
+                                    ? colorScheme.primary.withOpacity(0.3)
+                                    : colorScheme.secondary.withOpacity(0.3),
+                                width: 1,
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  themeProvider.dynamicColorsEnabled
+                                      ? Icons.auto_awesome
+                                      : Icons.palette,
+                                  size: 16,
+                                  color: themeProvider.dynamicColorsEnabled
+                                      ? colorScheme.primary
+                                      : colorScheme.secondary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  themeProvider.effectiveThemeName,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: themeProvider.dynamicColorsEnabled
+                                        ? colorScheme.primary
+                                        : colorScheme.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            // Personalization Section
-            buildSectionHeader(context, "Personalization", LineIcons.user),
-            const SizedBox(height: 16),
-            const AppearanceSettingsSection(),
-            const SizedBox(height: 16),
-            const UserSettingsSection(),
+              // Personalization Section
+              RepaintBoundary(
+                child: Column(
+                  children: [
+                    buildSectionHeader(
+                        context, "Personalization", LineIcons.user),
+                    const SizedBox(height: 16),
+                    const AppearanceSettingsSection(),
+                    const SizedBox(height: 16),
+                    const UserSettingsSection(),
+                  ],
+                ),
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            // Notes & Sync Section
-            buildSectionHeader(context, "Notes & Sync", LineIcons.book),
-            const SizedBox(height: 16),
-            const NotesSetting(),
+              // Notes & Sync Section
+              RepaintBoundary(
+                child: Column(
+                  children: [
+                    buildSectionHeader(context, "Notes & Sync", LineIcons.book),
+                    const SizedBox(height: 16),
+                    const NotesSetting(),
+                  ],
+                ),
+              ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 32),
 
-            // System Section
-            buildSectionHeader(context, "System", LineIcons.cog),
-            const SizedBox(height: 16),
-            if (FeatureFlag.enableInAppUpdate)
-              buildSettingsTile(
-                context,
-                title: "App Updates",
-                icon: LineIcons.download,
-                subtitle: "Download latest versions",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageTransition(
-                      type: PageTransitionType.rightToLeft,
-                      child: const UpdateApp(),
+              // System Section
+              RepaintBoundary(
+                child: Column(
+                  children: [
+                    buildSectionHeader(context, "System", LineIcons.cog),
+                    const SizedBox(height: 16),
+                    if (FeatureFlag.enableInAppUpdate)
+                      buildSettingsTile(
+                        context,
+                        title: "App Updates",
+                        icon: LineIcons.download,
+                        subtitle: "Download latest versions",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageTransition(
+                              type: PageTransitionType.rightToLeft,
+                              child: const UpdateApp(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (FeatureFlag.enableInAppUpdate)
+                      const SizedBox(height: 16),
+                    buildSettingsTile(
+                      context,
+                      title: "App Information",
+                      icon: LineIcons.info,
+                      subtitle: "Version details and support",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: const AppInfoPage(),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            if (FeatureFlag.enableInAppUpdate) const SizedBox(height: 16),
-            buildSettingsTile(
-              context,
-              title: "App Information",
-              icon: LineIcons.info,
-              subtitle: "Version details and support",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  PageTransition(
-                    type: PageTransitionType.rightToLeft,
-                    child: const AppInfoPage(),
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Danger Zone Section
-            buildSectionHeader(
-                context, "Danger Zone", LineIcons.exclamationTriangle,
-                isDanger: true),
-            const SizedBox(height: 16),
-            const DangerSettingsSection(),
-
-            const SizedBox(height: 32),
-
-            // Admin Section (if needed)
-            if (true) // You can add a condition here
-              Column(
-                children: [
-                  buildSectionHeader(
-                      context, "Administration", LineIcons.userShield),
-                  const SizedBox(height: 16),
-                  const AdminSettingsSection(),
-                  const SizedBox(height: 24),
-                ],
-              ),
-
-            // Footer
-            Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  '© Syntax Lab Technology ${DateTime.now().year}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.primary.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 32),
+
+              // Danger Zone Section
+              RepaintBoundary(
+                child: Column(
+                  children: [
+                    buildSectionHeader(
+                        context, "Danger Zone", LineIcons.exclamationTriangle,
+                        isDanger: true),
+                    const SizedBox(height: 16),
+                    const DangerSettingsSection(),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Admin Section (if needed)
+              if (true) // You can add a condition here
+                RepaintBoundary(
+                  child: Column(
+                    children: [
+                      buildSectionHeader(
+                          context, "Administration", LineIcons.userShield),
+                      const SizedBox(height: 16),
+                      const AdminSettingsSection(),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

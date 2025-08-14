@@ -5,7 +5,11 @@ class InfoTile extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const InfoTile({required this.label, required this.value, required this.icon});
+  const InfoTile(
+      {super.key,
+      required this.label,
+      required this.value,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +29,13 @@ class InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.primary.withOpacity(0.7))),
+                Text(label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary.withOpacity(0.7))),
                 const SizedBox(height: 2),
-                Text(value, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary)),
+                Text(value,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: theme.colorScheme.primary)),
               ],
             ),
           ),
