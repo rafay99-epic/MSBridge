@@ -23,18 +23,20 @@ class LectureCardWidget extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: colorScheme.surfaceContainerHighest, // Match search screen color
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color:
+                colorScheme.shadow.withOpacity(0.2), // Increased shadow opacity
+            blurRadius: 12, // Increased blur for better depth
+            offset: const Offset(0, 6), // Increased offset for better elevation
           ),
         ],
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
+          color: colorScheme.primary
+              .withOpacity(0.3), // Match search screen border color
+          width: 2, // Match search screen border width
         ),
       ),
       child: Material(
@@ -52,8 +54,14 @@ class LectureCardWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.1),
+                        color: colorScheme.primary
+                            .withOpacity(0.15), // Slightly more prominent
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          // Add border to lecture number container
+                          color: colorScheme.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
                       ),
                       child: Text(
                         lecture.lectureNumber.toString(),
@@ -70,39 +78,76 @@ class LectureCardWidget extends StatelessWidget {
                         lecture.lectureTitle,
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight
+                              .w700, // Increased weight for better visibility
                           color: colorScheme.onSurface,
                           height: 1.3,
                         ),
                       ),
                     ),
-                    Icon(
-                      LineIcons.angleRight,
-                      color: colorScheme.primary,
-                      size: 20,
+                    Container(
+                      // Wrap arrow icon in styled container
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(
+                        LineIcons.angleRight,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
                 if (lecture.lectureDescription.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text(
-                    lecture.lectureDescription,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      height: 1.4,
+                  Container(
+                    // Wrap description in styled container
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.outline.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                    child: Text(
+                      lecture.lectureDescription,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.onSurface.withOpacity(0.9),
+                        height: 1.4,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Icon(
-                      LineIcons.calendar,
-                      size: 16,
-                      color: colorScheme.secondary,
+                    Container(
+                      // Wrap calendar icon in styled container
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: colorScheme.secondary.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        LineIcons.calendar,
+                        size: 16,
+                        color: colorScheme.secondary,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -110,7 +155,7 @@ class LectureCardWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.secondary,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600, // Increased weight
                       ),
                     ),
                     const Spacer(),
@@ -118,15 +163,21 @@ class LectureCardWidget extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.1),
+                        color: colorScheme.primary
+                            .withOpacity(0.15), // Slightly more prominent
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          // Add border to "Tap to read" container
+                          color: colorScheme.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
                       ),
                       child: Text(
                         "Tap to read",
                         style: TextStyle(
                           fontSize: 11,
                           color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700, // Increased weight
                         ),
                       ),
                     ),

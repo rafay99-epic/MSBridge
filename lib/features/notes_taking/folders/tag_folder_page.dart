@@ -241,17 +241,18 @@ class TagFolderPage extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color:
+              colorScheme.surfaceContainerHighest, // Match search screen color
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.1),
-            width: 1,
+            color: colorScheme.primary.withOpacity(0.3), // Prominent border
+            width: 2, // Thicker border
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
+              color: colorScheme.shadow.withOpacity(0.2), // Enhanced shadow
               blurRadius: 12,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -266,8 +267,14 @@ class TagFolderPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary
+                          .withOpacity(0.15), // More prominent
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        // Add border to icon container
+                        color: colorScheme.primary.withOpacity(0.4),
+                        width: 1.5,
+                      ),
                     ),
                     child: Icon(
                       LineIcons.stickyNote,
@@ -280,7 +287,7 @@ class TagFolderPage extends StatelessWidget {
                     child: Text(
                       note.noteTitle.isEmpty ? '(Untitled)' : note.noteTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700, // Increased weight
                         color: colorScheme.primary,
                       ),
                       maxLines: 2,
@@ -297,7 +304,8 @@ class TagFolderPage extends StatelessWidget {
                 child: Text(
                   _preview(note.noteContent),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.7),
+                    color: colorScheme.primary
+                        .withOpacity(0.8), // Increased opacity
                     height: 1.4,
                   ),
                   maxLines: 4,
@@ -318,29 +326,24 @@ class TagFolderPage extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondary.withOpacity(0.1),
+                              color: colorScheme.secondary.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                // Add border to tag containers
+                                color: colorScheme.secondary.withOpacity(0.4),
+                                width: 1.5,
+                              ),
                             ),
                             child: Text(
                               tag,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.secondary,
-                                fontSize: 10,
+                                fontWeight: FontWeight.w600, // Increased weight
                               ),
                             ),
                           ))
                       .toList(),
                 ),
-                if (note.tags.length > 2) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '+${note.tags.length - 2} more',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary.withOpacity(0.5),
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
               ],
             ],
           ),

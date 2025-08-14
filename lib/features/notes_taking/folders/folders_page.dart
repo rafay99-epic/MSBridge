@@ -153,9 +153,16 @@ class FoldersPage extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
-          width: 1,
+          color: colorScheme.primary.withOpacity(0.3), // Prominent border
+          width: 2, // Thicker border
         ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.2), // Enhanced shadow
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -163,8 +170,13 @@ class FoldersPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withOpacity(0.15), // More prominent
               shape: BoxShape.circle,
+              border: Border.all(
+                // Add border to icon container
+                color: colorScheme.primary.withOpacity(0.4),
+                width: 1.5,
+              ),
             ),
             child: Icon(
               LineIcons.folder,
@@ -223,17 +235,18 @@ class FoldersPage extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color:
+              colorScheme.surfaceContainerHighest, // Match search screen color
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.1),
-            width: 1,
+            color: colorScheme.primary.withOpacity(0.3), // Prominent border
+            width: 2, // Thicker border
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
+              color: colorScheme.shadow.withOpacity(0.2), // Enhanced shadow
               blurRadius: 12,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -246,8 +259,14 @@ class FoldersPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color:
+                      colorScheme.primary.withOpacity(0.15), // More prominent
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    // Add border to icon container
+                    color: colorScheme.primary.withOpacity(0.4),
+                    width: 1.5,
+                  ),
                 ),
                 child: Icon(
                   icon,
@@ -262,7 +281,7 @@ class FoldersPage extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700, // Increased weight
                   color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
@@ -277,14 +296,20 @@ class FoldersPage extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color:
+                      colorScheme.primary.withOpacity(0.15), // More prominent
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    // Add border to count container
+                    color: colorScheme.primary.withOpacity(0.4),
+                    width: 1.5,
+                  ),
                 ),
                 child: Text(
                   '$count ${count == 1 ? 'note' : 'notes'}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600, // Increased weight
                   ),
                 ),
               ),

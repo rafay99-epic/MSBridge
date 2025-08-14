@@ -6,6 +6,7 @@ import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/config/config.dart';
 
 class AppInfoSettingsSection extends StatefulWidget {
   const AppInfoSettingsSection({super.key});
@@ -85,9 +86,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               PageTransition(
                 type: PageTransitionType.rightToLeft,
                 child: const MyCMSWebView(
-                    pageTitle: "Privacy Policy",
-                    cmsUrl:
-                        "https://ms-bridge-app.vercel.app/privacy"),
+                    pageTitle: "Privacy Policy", cmsUrl: URL.prravicyPolicy),
               ),
             );
           },
@@ -102,8 +101,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 type: PageTransitionType.rightToLeft,
                 child: const MyCMSWebView(
                     pageTitle: "Terms and Conditions",
-                    cmsUrl:
-                        "https://ms-bridge-app.vercel.app/terms"),
+                    cmsUrl: URL.termsOfService),
               ),
             );
           },
