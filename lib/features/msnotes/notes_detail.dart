@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
-import 'package:msbridge/widgets/html_render.dart';
+import 'package:msbridge/features/msnotes/widgets/lecture_header_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/content_section_widget.dart';
+import 'package:msbridge/widgets/appbar.dart';
 
 class LectureDetailScreen extends StatelessWidget {
   final MSNote lecture;
@@ -11,68 +12,37 @@ class LectureDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Format the date
-    DateTime pubDate = DateTime.parse(lecture.pubDate).toLocal();
-    String formattedDate = DateFormat('MMMM d, yyyy').format(pubDate);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Lecture Number: ${lecture.lectureNumber}"),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 0,
+      appBar: CustomAppBar(
+        title: "Lecture ${lecture.lectureNumber}",
+        backbutton: true,
       ),
-      backgroundColor: theme.colorScheme.surface,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
+      backgroundColor: colorScheme.surface,
+      body: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    lecture.lectureTitle,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                      height: 1.6,
-                    ),
+                  LectureHeaderWidget(
+                    lecture: lecture,
+                    colorScheme: colorScheme,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Published on: $formattedDate",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: theme.colorScheme.secondary,
-                    ),
+                  const SizedBox(height: 24),
+                  ContentSectionWidget(
+                    content: lecture.body,
+                    colorScheme: colorScheme,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            Divider(
-              thickness: 2,
-              height: 32,
-              color: theme.colorScheme.primary,
-            ),
-            if (lecture.body != null && lecture.body!.isNotEmpty)
-              buildHtmlContent(
-                lecture.body,
-                theme,
-                context,
-              )
-            else
-              const Center(
-                child: Text(
-                  "No content available",
-                  style: TextStyle(fontSize: 18, color: Colors.red),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -103,13 +103,13 @@ class _HomeState extends State<Home> {
                 iconColor: colorScheme.primary,
               ),
               GButton(
-                icon: LineIcons.pen,
-                text: 'Notes',
+                icon: LineIcons.robot,
+                text: 'AI Chat',
                 iconColor: colorScheme.primary,
               ),
               GButton(
-                icon: LineIcons.robot,
-                text: 'AI Chat',
+                icon: LineIcons.pen,
+                text: 'Notes',
                 iconColor: colorScheme.primary,
               ),
               GButton(

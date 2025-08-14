@@ -21,6 +21,12 @@ Widget buildHtmlContent(
             return null;
           case 'h2':
             return null;
+          case 'p':
+          case 'div':
+          case 'span':
+            return {
+              'text-align': 'justify',
+            };
           case 'code':
             return {
               'font-family': 'monospace',
