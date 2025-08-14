@@ -49,6 +49,7 @@ class ReverseSyncService {
                 'updatedAt':
                     data['updatedAt'] ?? DateTime.now().toIso8601String(),
                 'userId': userId,
+                'tags': (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
               };
 
               final note = NoteTakingModel.fromMap(noteMap);

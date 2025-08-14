@@ -6,7 +6,10 @@ import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/features/msnotes/lectures_screen.dart';
-import 'package:msbridge/utils/empty_ui.dart';
+import 'package:msbridge/features/msnotes/widgets/loading_state_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/empty_state_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/section_header_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/subject_card_widget.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
@@ -33,7 +36,7 @@ class _MSNotesScreenState extends State<Msnotes>
       try {
         await ApiService.fetchAndSaveNotes();
       } catch (e) {
-        if (context.mounted) {
+        if (mounted) {
           CustomSnackBar.show(
             context,
             "Error fetching notes: $e",
@@ -78,14 +81,14 @@ class _MSNotesScreenState extends State<Msnotes>
         });
       }
 
-      if (context.mounted) {
+      if (mounted) {
         CustomSnackBar.show(
           context,
           "Notes updated from the server!",
         );
       }
     } else {
-      if (context.mounted) {
+      if (mounted) {
         CustomSnackBar.show(
           context,
           "No Internet Connection, Please connect and try again",
@@ -99,17 +102,22 @@ class _MSNotesScreenState extends State<Msnotes>
     super.build(context);
 
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: colorScheme.surface,
       appBar: const CustomAppBar(
         title: "MS Notes",
         backbutton: false,
       ),
       body: _notesBoxListenable == null
-          ? const Center(child: CircularProgressIndicator())
+          ? LoadingStateWidget(
+              message: "Loading MS Notes...",
+              colorScheme: colorScheme,
+            )
           : RefreshIndicator(
-              backgroundColor: theme.colorScheme.secondary,
-              color: theme.colorScheme.surface,
+              backgroundColor: colorScheme.primary,
+              color: colorScheme.surface,
               onRefresh: _refreshData,
               child: ValueListenableBuilder<Box<MSNote>>(
                 valueListenable: _notesBoxListenable!,
@@ -119,83 +127,76 @@ class _MSNotesScreenState extends State<Msnotes>
                     builder: (BuildContext context,
                         BoxConstraints viewportConstraints) {
                       return subjects.isEmpty
-                          ? SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minHeight: viewportConstraints.maxHeight,
-                                ),
-                                child: const EmptyNotesMessage(
-                                  message: 'Sorry Subject not found',
-                                  description: 'Pull down to refresh',
-                                ),
-                              ),
+                          ? EmptyStateWidget(
+                              title: 'No Subjects Found',
+                              description:
+                                  'Pull down to refresh and load notes from the server',
+                              actionText: 'Swipe down to refresh',
+                              icon: LineIcons.bookOpen,
+                              colorScheme: colorScheme,
                             )
-                          : ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.all(16),
-                              itemCount: subjects.length,
-                              itemBuilder: (context, index) {
-                                return Card(
-                                  color: theme.colorScheme.surface,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                      color: theme.colorScheme.secondary,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  child: ListTile(
-                                    hoverColor: theme.colorScheme.secondary
-                                        .withOpacity(0.1),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                      horizontal: 16,
-                                    ),
-                                    title: Text(
-                                      subjects[index],
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                    trailing: Icon(
-                                      LineIcons.angleRight,
-                                      color: theme.colorScheme.secondary,
-                                    ),
-                                    onTap: () {
-                                      debugPrint(
-                                          "Subject Selected: ${subjects[index]}");
-                                      var box = Hive.box<MSNote>('notesBox');
-                                      List<MSNote> subjectLectures = box.values
-                                          .where((note) =>
-                                              note.subject == subjects[index])
-                                          .toList()
-                                        ..sort((a, b) => a.lectureNumber
-                                            .compareTo(b.lectureNumber));
-                                      Navigator.push(
-                                        context,
-                                        PageTransition(
-                                          child: LecturesScreen(
-                                            subject: subjects[index],
-                                            lectures: subjectLectures,
-                                          ),
-                                          type: PageTransitionType.rightToLeft,
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                            );
+                          : _buildSubjectsList(subjects, colorScheme);
                     },
                   );
                 },
               ),
             ),
+    );
+  }
+
+  Widget _buildSubjectsList(List<String> subjects, ColorScheme colorScheme) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: SectionHeaderWidget(
+            title: "Available Subjects",
+            subtitle:
+                "${subjects.length} subject${subjects.length == 1 ? '' : 's'} available",
+            icon: LineIcons.bookOpen,
+            colorScheme: colorScheme,
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return SubjectCardWidget(
+                  subject: subjects[index],
+                  onTap: () => _navigateToLectures(subjects[index]),
+                  colorScheme: colorScheme,
+                );
+              },
+              childCount: subjects.length,
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 20),
+        ),
+      ],
+    );
+  }
+
+  void _navigateToLectures(String subject) {
+    debugPrint("Subject Selected: $subject");
+    var box = Hive.box<MSNote>('notesBox');
+    List<MSNote> subjectLectures = box.values
+        .where((note) => note.subject == subject)
+        .toList()
+      ..sort((a, b) => a.lectureNumber.compareTo(b.lectureNumber));
+
+    Navigator.push(
+      context,
+      PageTransition(
+        child: LecturesScreen(
+          subject: subject,
+          lectures: subjectLectures,
+        ),
+        type: PageTransitionType.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      ),
     );
   }
 }

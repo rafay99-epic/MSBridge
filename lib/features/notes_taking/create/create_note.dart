@@ -15,6 +15,10 @@ import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/core/repo/share_repo.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
+import 'package:msbridge/core/provider/share_link_provider.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -29,6 +33,9 @@ class _CreateNoteState extends State<CreateNote>
     with SingleTickerProviderStateMixin {
   late QuillController _controller;
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _tagInputController = TextEditingController();
+  final ValueNotifier<List<String>> _tagsNotifier =
+      ValueNotifier<List<String>>(<String>[]);
   final InternetHelper _internetHelper = InternetHelper();
   Timer? _autoSaveTimer;
   late SaveNoteResult result;
@@ -39,6 +46,19 @@ class _CreateNoteState extends State<CreateNote>
   final ValueNotifier<bool> _isSavingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _showCheckmarkNotifier = ValueNotifier<bool>(false);
   String _lastSavedContent = "";
+  NoteTakingModel? _currentNote;
+  bool _isSaving = false;
+
+  void _addTag(String rawTag) {
+    final tag = rawTag.trim();
+    if (tag.isEmpty) return;
+    final current = List<String>.from(_tagsNotifier.value);
+    if (!current.contains(tag)) {
+      current.add(tag);
+      _tagsNotifier.value = current;
+    }
+    _tagInputController.clear();
+  }
 
   @override
   void initState() {
@@ -50,6 +70,8 @@ class _CreateNoteState extends State<CreateNote>
         document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
         selection: const TextSelection.collapsed(offset: 0),
       );
+      _currentNote = widget.note;
+      _tagsNotifier.value = List<String>.from(widget.note!.tags);
     } else {
       _controller = QuillController.basic();
     }
@@ -74,6 +96,8 @@ class _CreateNoteState extends State<CreateNote>
   void dispose() {
     _controller.dispose();
     _titleController.dispose();
+    _tagInputController.dispose();
+    _tagsNotifier.dispose();
     _internetHelper.dispose();
     _autoSaveTimer?.cancel();
     _debounceTimer?.cancel();
@@ -125,9 +149,12 @@ class _CreateNoteState extends State<CreateNote>
   }
 
   Future<void> _saveNote() async {
+    if (_isSaving) return; // prevent overlapping saves
+    _isSaving = true;
     final autoSaveProvider =
         Provider.of<AutoSaveProvider>(context, listen: false);
     if (!mounted || !autoSaveProvider.autoSaveEnabled) {
+      _isSaving = false;
       return;
     }
 
@@ -143,20 +170,28 @@ class _CreateNoteState extends State<CreateNote>
       } catch (e) {
         content = _controller.document.toPlainText().trim();
       }
-      if (title.isEmpty && content.isEmpty) return;
+      if (title.isEmpty && content.isEmpty) {
+        _isSaving = false;
+        return;
+      }
 
-      if (widget.note != null) {
+      if (_currentNote != null) {
         result = await NoteTakingActions.updateNote(
-          note: widget.note!,
+          note: _currentNote!,
           title: title,
           content: content,
           isSynced: false,
+          tags: _tagsNotifier.value,
         );
       } else {
         result = await NoteTakingActions.saveNote(
           title: title,
           content: content,
+          tags: _tagsNotifier.value,
         );
+        if (result.success && result.note != null) {
+          _currentNote = result.note;
+        }
       }
 
       if (mounted) {
@@ -177,9 +212,10 @@ class _CreateNoteState extends State<CreateNote>
         CustomSnackBar.show(context, "Error saving note: $e");
       }
     }
+    _isSaving = false;
   }
 
-  void manualSaveNote() async {
+  Future<void> manualSaveNote() async {
     String title = _titleController.text.trim();
     String content;
 
@@ -191,12 +227,13 @@ class _CreateNoteState extends State<CreateNote>
     SaveNoteResult result;
 
     try {
-      if (widget.note != null) {
+      if (_currentNote != null) {
         result = await NoteTakingActions.updateNote(
-          note: widget.note!,
+          note: _currentNote!,
           title: title,
           content: content,
           isSynced: false,
+          tags: _tagsNotifier.value,
         );
         if (result.success) {
           CustomSnackBar.show(context, result.message);
@@ -206,9 +243,11 @@ class _CreateNoteState extends State<CreateNote>
         result = await NoteTakingActions.saveNote(
           title: title,
           content: content,
+          tags: _tagsNotifier.value,
         );
 
         if (result.success) {
+          _currentNote = result.note ?? _currentNote;
           CustomSnackBar.show(context, result.message);
           Navigator.pop(context);
         }
@@ -312,9 +351,21 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
+          Consumer<ShareLinkProvider>(
+            builder: (context, shareProvider, _) {
+              if (!shareProvider.shareLinksEnabled) return const SizedBox.shrink();
+              return IconButton(
+                tooltip: 'Share link',
+                icon: const Icon(LineIcons.shareSquare),
+                onPressed: _openShareSheet,
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(LineIcons.save),
-            onPressed: manualSaveNote,
+            onPressed: () async {
+              await manualSaveNote();
+            },
           ),
         ],
       ),
@@ -341,6 +392,86 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
+            // Tags editor (redesigned)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Text(
+                      'Tags',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder<List<String>>(
+                    valueListenable: _tagsNotifier,
+                    builder: (context, tags, _) {
+                      if (tags.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final t in tags)
+                            InputChip(
+                              label: Text(t),
+                              labelStyle: TextStyle(
+                                color: theme.colorScheme.primary,
+                              ),
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              onDeleted: () {
+                                final next = List<String>.from(tags)..remove(t);
+                                _tagsNotifier.value = next;
+                              },
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _tagInputController,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: _addTag,
+                    decoration: InputDecoration(
+                      hintText: 'Add a tag and press Enter',
+                      prefixIcon: const Icon(Icons.tag),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.add),
+                        tooltip: 'Add tag',
+                        onPressed: () => _addTag(_tagInputController.text),
+                      ),
+                      border: const OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: Builder(
                 builder: (context) => QuillEditor.basic(
@@ -406,6 +537,105 @@ class _CreateNoteState extends State<CreateNote>
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openShareSheet() async {
+    final theme = Theme.of(context);
+    if (_currentNote == null) {
+      await manualSaveNote();
+      if (_currentNote == null) {
+        if (mounted) CustomSnackBar.show(context, 'Save the note before sharing');
+        return;
+      }
+    }
+
+    final note = _currentNote!;
+    final status = await ShareRepository.getShareStatus(note.noteId!);
+    String? currentUrl = status.shareUrl.isNotEmpty ? status.shareUrl : null;
+    bool enabled = status.enabled;
+
+    // ignore: use_build_context_synchronously
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setStateSheet) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Share via link', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Switch(
+                      value: enabled,
+                      onChanged: (value) async {
+                        try {
+                          if (value) {
+                            final url = await ShareRepository.enableShare(note);
+                            setStateSheet(() {
+                              enabled = true;
+                              currentUrl = url;
+                            });
+                            if (mounted) CustomSnackBar.show(context, 'Share link enabled');
+                          } else {
+                            await ShareRepository.disableShare(note);
+                            setStateSheet(() {
+                              enabled = false;
+                              currentUrl = null;
+                            });
+                            if (mounted) CustomSnackBar.show(context, 'Share link disabled');
+                          }
+                        } catch (e) {
+                          if (mounted) CustomSnackBar.show(context, e.toString());
+                        }
+                      },
+                    )
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (currentUrl != null) ...[
+                  SelectableText(
+                    currentUrl!,
+                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.9)),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: currentUrl!));
+                          if (mounted) CustomSnackBar.show(context, 'Link copied');
+                        },
+                        icon: const Icon(LineIcons.copy),
+                        label: const Text('Copy'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => Share.share(currentUrl!),
+                        icon: const Icon(LineIcons.share),
+                        label: const Text('Share'),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Text(
+                    'Enable to generate a view-only link anyone can open.',
+                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.7)),
+                  ),
+                ]
+              ],
+            ),
+          );
+        });
+      },
     );
   }
 }

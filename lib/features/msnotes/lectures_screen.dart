@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/features/msnotes/notes_detail.dart';
+import 'package:msbridge/features/msnotes/widgets/empty_state_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/section_header_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/lecture_card_widget.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:page_transition/page_transition.dart';
 
 class LecturesScreen extends StatelessWidget {
@@ -17,79 +21,68 @@ class LecturesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(subject),
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 0,
+      appBar: CustomAppBar(
+        title: subject,
+        backbutton: true,
       ),
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: colorScheme.surface,
       body: lectures.isEmpty
-          ? const Center(
-              child: Text("No Lectures Available"),
+          ? EmptyStateWidget(
+              title: "No Lectures Available",
+              description: "This subject doesn't have any lectures yet",
+              actionText: "Go back",
+              icon: LineIcons.fileAlt,
+              colorScheme: colorScheme,
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: lectures.length,
-              itemBuilder: (context, index) {
-                final lecture = lectures[index];
-                DateTime pubDate = DateTime.parse(lecture.pubDate).toLocal();
-                String formattedDate =
-                    DateFormat('MMMM d, yyyy').format(pubDate);
-                return Card(
-                  color: theme.colorScheme.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(
-                      color: theme.colorScheme.secondary,
-                      width: 2,
-                    ),
-                  ),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      "${lecture.lectureNumber}. ${lecture.lectureTitle}",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          lecture.lectureDescription,
-                          style: TextStyle(color: Colors.grey[500]),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Published on: $formattedDate",
-                          style: TextStyle(
-                            color: theme.colorScheme.secondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    onTap: () => {
-                      debugPrint("Lecture Selected: ${lecture.lectureTitle}"),
-                      Navigator.push(
-                        context,
-                        PageTransition(
-                          child: LectureDetailScreen(lecture: lecture),
-                          type: PageTransitionType.rightToLeft,
-                          duration: const Duration(milliseconds: 300),
-                        ),
-                      )
-                    },
-                  ),
-                );
-              },
-            ),
+          : _buildLecturesList(colorScheme),
+    );
+  }
+
+  Widget _buildLecturesList(ColorScheme colorScheme) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: SectionHeaderWidget(
+            title: "Lectures",
+            subtitle:
+                "${lectures.length} lecture${lectures.length == 1 ? '' : 's'} available",
+            icon: LineIcons.fileAlt,
+            colorScheme: colorScheme,
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList.builder(
+            itemCount: lectures.length,
+            itemBuilder: (context, index) {
+              return LectureCardWidget(
+                lecture: lectures[index],
+                onTap: () => _navigateToLectureDetail(context, lectures[index]),
+                colorScheme: colorScheme,
+              );
+            },
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 20),
+        ),
+      ],
+    );
+  }
+
+  void _navigateToLectureDetail(BuildContext context, MSNote lecture) {
+    debugPrint("Lecture Selected: ${lecture.lectureTitle}");
+    Navigator.push(
+      context,
+      PageTransition(
+        child: LectureDetailScreen(lecture: lecture),
+        type: PageTransitionType.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      ),
     );
   }
 }

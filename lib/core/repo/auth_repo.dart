@@ -168,6 +168,50 @@ class AuthRepo {
     }
   }
 
+  Future<Map<String, String>?> getUserProfile() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (!doc.exists) {
+        return {
+          'id': user.uid,
+          'email': user.email ?? '',
+          'fullName': user.displayName ?? '',
+          'phoneNumber': user.phoneNumber ?? '',
+        };
+      }
+      final data = doc.data() as Map<String, dynamic>;
+      return {
+        'id': user.uid,
+        'email': user.email ?? '',
+        'fullName': (data['fullName'] as String?) ?? (user.displayName ?? ''),
+        'phoneNumber': (data['phoneNumber'] as String?) ?? (user.phoneNumber ?? ''),
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<String?> updateUserProfile({required String fullName, required String phoneNumber}) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return 'No user logged in';
+      // Update auth profile display name
+      await user.updateDisplayName(fullName);
+      // Update Firestore profile document
+      await _firestore.collection('users').doc(user.uid).set({
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        'email': user.email,
+        'id': user.uid,
+      }, SetOptions(merge: true));
+      return null;
+    } catch (e) {
+      return 'Failed to update profile: $e';
+    }
+  }
+
   Future<AuthResult> deleteUserAndData() async {
     try {
       final user = _auth.currentUser;
@@ -176,11 +220,25 @@ class AuthRepo {
         return AuthResult(error: "No user logged in.");
       }
 
+      // Delete all user documents under users/{uid}/notes
+      final notesCollection =
+          _firestore.collection('users').doc(user.uid).collection('notes');
+      final notesSnapshot = await notesCollection.get();
+      if (notesSnapshot.docs.isNotEmpty) {
+        WriteBatch batch = _firestore.batch();
+        for (final doc in notesSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+
+      // Delete the user profile document
       await _firestore.collection('users').doc(user.uid).delete();
 
+      // Finally delete the auth user (may require recent login)
       await user.delete();
 
-      return AuthResult(user: null);
+      return AuthResult(user: null); // success indicated by error == null
     } catch (e) {
       return AuthResult(error: "Failed to delete user and data: $e");
     }

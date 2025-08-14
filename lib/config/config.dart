@@ -8,6 +8,7 @@ class FirebaseConfig {
 }
 
 class APIConfig {
+  // API Endpoint for fetching notes (replace with your actual API endpoint)
   static const String notesApiEndpoint = 'https://www.rafay99.com/api/ms_notes';
 }
 

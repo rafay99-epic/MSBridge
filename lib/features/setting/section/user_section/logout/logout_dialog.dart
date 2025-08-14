@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/login/login.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -86,6 +88,23 @@ void handleLogout(BuildContext context) async {
   Navigator.pop(context);
 
   if (error == null) {
+    // Clear local Hive data for multi-account safety
+    try {
+      try {
+        final noteBox = await HiveNoteTakingRepo.getBox();
+        await noteBox.clear();
+      } catch (_) {}
+      try {
+        final deletedBox = await HiveNoteTakingRepo.getDeletedBox();
+        await deletedBox.clear();
+      } catch (_) {}
+      try {
+        if (Hive.isBoxOpen('notesBox')) {
+          await Hive.box('notesBox').clear();
+        }
+      } catch (_) {}
+    } catch (_) {}
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushAndRemoveUntil(

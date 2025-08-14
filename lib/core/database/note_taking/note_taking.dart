@@ -25,6 +25,9 @@ class NoteTakingModel extends HiveObject {
   @HiveField(6)
   String userId;
 
+  @HiveField(7)
+  List<String> tags;
+
   NoteTakingModel({
     this.noteId,
     required this.noteTitle,
@@ -33,7 +36,9 @@ class NoteTakingModel extends HiveObject {
     this.isDeleted = false,
     DateTime? updatedAt,
     required this.userId,
-  }) : updatedAt = updatedAt ?? DateTime.now();
+    List<String>? tags,
+  })  : updatedAt = updatedAt ?? DateTime.now(),
+        tags = tags ?? const [];
 
   Map<String, dynamic> toMap() {
     return {
@@ -44,6 +49,7 @@ class NoteTakingModel extends HiveObject {
       'isDeleted': isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
       'userId': userId,
+      'tags': tags,
     };
   }
 
@@ -57,6 +63,7 @@ class NoteTakingModel extends HiveObject {
       userId: data['userId'] ?? '',
       updatedAt:
           DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
+      tags: (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
     );
   }
 }

@@ -43,7 +43,7 @@ class NoteList extends StatelessWidget {
         .toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -76,8 +76,8 @@ class NoteList extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
         itemCount: notesList.length,
         itemBuilder: (context, index) {
           final note = notesList[index];

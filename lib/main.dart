@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:isolate';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -11,13 +12,22 @@ import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
+import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/core/provider/sync_settings_provider.dart';
+import 'package:msbridge/core/provider/ai_consent_provider.dart';
+import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
+import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/theme/colors.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -49,10 +59,17 @@ void main() async {
             ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
           if (FeatureFlag.enableAutoSave)
             ChangeNotifierProvider(create: (_) => AutoSaveProvider()),
+          ChangeNotifierProvider(create: (_) => ShareLinkProvider()),
+          ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),
+          ChangeNotifierProvider(create: (_) => AiConsentProvider()),
+          ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
         ],
         child: const MyApp(),
       ),
     );
+
+    // Initialize auto sync scheduler after app providers are ready
+    await AutoSyncScheduler.initialize();
 
     bool weWantFatalErrorRecording = true;
     FlutterError.onError = (errorDetails) {
@@ -86,11 +103,143 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       navigatorKey: navigatorKey,
-      theme: themeProvider.getThemeData(),
-      debugShowCheckedModeBanner: false,
+      theme: _buildTheme(themeProvider, false),
+      darkTheme: _buildTheme(themeProvider, true),
+      themeMode: themeProvider.selectedTheme == AppTheme.light
+          ? ThemeMode.light
+          : ThemeMode.dark,
       home: FeatureFlag.enableFingerprintLock
-          ? const FingerprintAuthWrapper()
-          : const AuthGate(),
+          ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
+          : const AppPinLockWrapper(child: AuthGate()),
+      debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        _DynamicLinkObserver(),
+      ],
     );
   }
+
+  ThemeData _buildTheme(ThemeProvider themeProvider, bool isDark) {
+    // Use the theme provider's getThemeData method which handles dynamic colors
+    return themeProvider.getThemeData();
+  }
+}
+
+class _DynamicLinkObserver extends NavigatorObserver {
+  _DynamicLinkObserver() {
+    _initDynamicLinks();
+  }
+
+  void _initDynamicLinks() async {
+    // Handle dynamic links when app is opened from background/terminated
+    final PendingDynamicLinkData? initialLink =
+        await FirebaseDynamicLinks.instance.getInitialLink();
+    if (initialLink?.link != null) {
+      _handleLink(initialLink!.link);
+    }
+
+    // Handle dynamic links while app is in foreground
+    FirebaseDynamicLinks.instance.onLink.listen((data) {
+      _handleLink(data.link);
+    });
+  }
+
+  void _handleLink(Uri link) async {
+    try {
+      // Expect link like https://msbridge.page.link/... resolving to https://<host>/s/{shareId}
+      final Uri deep = link;
+      final Uri target = deep;
+      final List<String> parts =
+          target.path.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 2 && parts[0] == 's') {
+        final String shareId = parts[1];
+        // Fetch and show a simple in-app viewer dialog
+        final doc = await FirebaseFirestore.instance
+            .collection('shared_notes')
+            .doc(shareId)
+            .get();
+        final state = navigatorKey.currentState;
+        if (state == null || !state.mounted) return;
+        if (!doc.exists) {
+          _showSnack('This shared note does not exist or was disabled.');
+          return;
+        }
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['viewOnly'] != true) {
+          _showSnack('This link is not viewable.');
+          return;
+        }
+        _showSharedViewer(
+          title: (data['title'] as String?) ?? 'Untitled',
+          content: (data['content'] as String?) ?? '',
+        );
+      }
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'DynamicLink handling failed');
+    }
+  }
+
+  void _showSnack(String message) {
+    final context = navigatorKey.currentState?.overlay?.context;
+    if (context == null) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showSharedViewer({required String title, required String content}) {
+    final context = navigatorKey.currentState?.overlay?.context;
+    if (context == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        String plain;
+        try {
+          final parsed = _tryParseQuill(content);
+          plain = parsed;
+        } catch (_) {
+          plain = content;
+        }
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          title:
+              Text(title, style: TextStyle(color: theme.colorScheme.primary)),
+          content: SingleChildScrollView(
+            child:
+                Text(plain, style: TextStyle(color: theme.colorScheme.primary)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            )
+          ],
+        );
+      },
+    );
+  }
+}
+
+String _tryParseQuill(String content) {
+  try {
+    final dynamic json = _jsonDecode(content);
+    if (json is List) {
+      return json
+          .map((op) =>
+              op is Map && op['insert'] is String ? op['insert'] as String : '')
+          .join('');
+    }
+    if (json is Map && json['ops'] is List) {
+      final List ops = json['ops'];
+      return ops
+          .map((op) =>
+              op is Map && op['insert'] is String ? op['insert'] as String : '')
+          .join('');
+    }
+  } catch (_) {}
+  return content;
+}
+
+dynamic _jsonDecode(String s) {
+  return jsonDecode(s);
 }

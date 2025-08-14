@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1F2335" />
+    <title>MS Bridge — Shared Note</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#1F2335',
+                        card: '#252A41',
+                        border: '#2E3553',
+                        primary: '#FFFFFF',
+                        accent: '#7AA2F7',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background: #0b0b0b;
+            color: #eaeaea;
+        }
+
+        .container {
+            max-width: 840px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .card {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 8px;
+            color: #fff;
+        }
+
+        .meta {
+            font-size: 13px;
+            color: #9b9b9b;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #2a2a2a;
+            border-top-color: #6ec1ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .error { color: #ff6b6b; }
+
+        .muted {
+            color: #9b9b9b;
+            font-size: 14px;
+        }
+
+        a {
+            color: #6ec1ff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-primary">
+    <div class="min-h-screen flex flex-col">
+        <header class="w-full border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-10">
+            <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="h-8 w-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2a1 1 0 0 0-1 1v5.5A3.5 3.5 0 0 0 8.5 12H11v2H8.5A3.5 3.5 0 0 0 5 17.5V23a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5.5A3.5 3.5 0 0 0 15.5 14H13v-2h2.5A3.5 3.5 0 0 0 19 8.5V3a1 1 0 0 0-1-1H6zm1 2h10v4.5A1.5 1.5 0 0 1 15.5 10H8.5A1.5 1.5 0 0 1 7 8.5V4zm0 13.5A1.5 1.5 0 0 1 8.5 16h7a1.5 1.5 0 0 1 1.5 1.5V22H7v-4.5z"/></svg>
+                    </div>
+                    <div class="font-semibold tracking-tight">MS Bridge</div>
+                </div>
+                <div class="text-xs sm:text-sm text-primary/70">Shared Note (view-only)</div>
+            </div>
+        </header>
+
+        <main class="flex-1 w-full">
+            <div class="max-w-3xl mx-auto px-4 py-6">
+                <div class="rounded-xl border border-border bg-card p-5 shadow-2xl shadow-black/30">
+                    <div id="loading" class="flex items-center gap-3">
+                        <div class="h-6 w-6 border-2 border-border border-t-accent rounded-full animate-spin"></div>
+                        <div class="text-sm text-primary/70">Loading note…</div>
+                    </div>
+                    <div id="error" class="hidden text-rose-400 text-sm"></div>
+                    <article id="note" class="hidden">
+                        <h1 id="title" class="text-xl sm:text-2xl font-bold text-white mb-1">Untitled</h1>
+                        <div id="meta" class="text-xs sm:text-sm text-primary/60 mb-4">&nbsp;</div>
+                        <div id="content" class="prose prose-invert max-w-none text-primary/90 prose-headings:text-primary prose-a:text-accent hover:prose-a:underline prose-strong:text-primary prose-code:text-primary prose-pre:bg-[#1F2335] prose-pre:text-primary prose-pre:border prose-pre:border-border prose-li:marker:text-accent"></div>
+                        <div class="mt-6 flex flex-col sm:flex-row gap-2">
+                            <button id="copyBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-accent/20 text-accent hover:bg-accent/25 transition">Copy link</button>
+                            <button id="shareBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 border border-accent/40 text-accent hover:bg-accent/10 transition">Share…</button>
+                            <button id="copyNoteBtn" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 bg-accent text-black font-semibold hover:brightness-110 transition">Copy note</button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </main>
+
+        <footer class="w-full py-6 text-center text-xs text-primary/60">
+            <div class="max-w-5xl mx-auto px-4">© Syntax Lab Technology <span id="year"></span></div>
+        </footer>
+    </div>
+
+    <!-- Firebase Web SDK (compat builds) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS_Fi7cd3nDGT31DLHN2DzhEGfjEs8XV4",
+            authDomain: "msbridge-9a2c7.firebaseapp.com",
+            projectId: "msbridge-9a2c7",
+            storageBucket: "msbridge-9a2c7.firebasestorage.app",
+            messagingSenderId: "689509093484",
+            appId: "1:689509093484:web:289eb592ccf63d9b6ac849",
+            measurementId: "G-ZR3CG2QB3W"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function getShareIdFromPath() {
+            const parts = location.pathname.split('/').filter(Boolean);
+            // expected /s/{shareId}
+            if (parts.length >= 2 && parts[0] === 's') return parts[1];
+            return null;
+        }
+
+        function deltaToHtml(content) {
+            try {
+                const json = JSON.parse(content);
+                let ops = null;
+                if (Array.isArray(json)) { ops = json; }
+                else if (json && Array.isArray(json.ops)) { ops = json.ops; }
+                if (ops) {
+                    const converter = new QuillDeltaToHtmlConverter(ops, {
+                        paragraphTag: 'p',
+                        encodeHtml: true,
+                        multiLineBlockquote: true,
+                        multiLineCodeblock: true,
+                        listItemTag: 'li',
+                        linkTarget: '_blank',
+                        // Map quill header attributes to semantic tags
+                        // QuillDeltaToHtmlConverter already handles header attribute -> h1..h6
+                        // Ensure code blocks are wrapped with <pre><code>
+                        customTag: (op) => {
+                            if (op.attributes && op.attributes['code-block']) {
+                                return 'pre';
+                            }
+                            return undefined;
+                        },
+                        customAttr: (op) => {
+                            if (op.attributes && op.attributes['code-block']) {
+                                return { class: 'language-plaintext' };
+                            }
+                            return undefined;
+                        },
+                    });
+                    let html = converter.convert();
+                    // Wrap inline code blocks <pre> content with <code> for better styling
+                    html = html.replace(/<pre>([\s\S]*?)<\/pre>/g, '<pre><code>$1</code></pre>');
+                    return html;
+                }
+            } catch (_) {}
+            // Fallback: treat as plain text with basic escaping
+            const div = document.createElement('div');
+            div.textContent = content;
+            return `<p>${div.innerHTML.replace(/\n/g, '<br/>')}</p>`;
+        }
+
+        async function loadNote() {
+            const shareId = getShareIdFromPath();
+            if (!shareId) {
+                showError('Invalid link.');
+                return;
+            }
+            try {
+                const doc = await db.collection('shared_notes').doc(shareId).get();
+                if (!doc.exists) {
+                    showError('This shared note does not exist or was disabled.');
+                    return;
+                }
+                const data = doc.data();
+                if (!data.viewOnly) {
+                    showError('This link is not viewable.');
+                    return;
+                }
+                document.getElementById('title').textContent = data.title || 'Untitled';
+                document.getElementById('meta').textContent = `Shared • ${new Date(data.updatedAt || Date.now()).toLocaleString()}`;
+                const html = deltaToHtml(data.content || '');
+                const contentEl = document.getElementById('content');
+                contentEl.innerHTML = html;
+                showNote();
+            } catch (e) {
+                showError('Failed to load note: ' + (e && e.message ? e.message : e));
+            }
+        }
+
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        function longDynamicLinkFor(shareId) {
+            const DYNAMIC_LINKS_DOMAIN = 'https://msbridge.page.link';
+            const link = encodeURIComponent(`${location.origin}/s/${shareId}`);
+            const apn = 'com.syntaxlab.msbridge';
+            const ibi = 'com.syntaxlab.msbridge';
+            return `${DYNAMIC_LINKS_DOMAIN}/?link=${link}&apn=${apn}&ibi=${ibi}`;
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').classList.add('hidden');
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function showNote() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('note').classList.remove('hidden');
+            const shareId = getShareIdFromPath();
+            if (!shareId) return;
+            document.getElementById('copyBtn').onclick = async () => {
+                await navigator.clipboard.writeText(location.href);
+            };
+            document.getElementById('shareBtn').onclick = async () => {
+                if (navigator.share) {
+                    try { await navigator.share({ title: document.getElementById('title').textContent, url: location.href }); } catch(_) {}
+                } else {
+                    await navigator.clipboard.writeText(location.href);
+                }
+            };
+            document.getElementById('copyNoteBtn').onclick = async () => {
+                try {
+                    const html = document.getElementById('content').innerHTML;
+                    const blob = new Blob([html], { type: 'text/html' });
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'text/html': blob, 'text/plain': new Blob([document.getElementById('content').innerText], { type: 'text/plain' }) })
+                    ]);
+                } catch(_) {
+                    await navigator.clipboard.writeText(document.getElementById('content').innerText);
+                }
+            };
+        }
+
+        loadNote();
+    </script>
+</body>
+
+</html>

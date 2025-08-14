@@ -4,19 +4,38 @@
             "android": {
                 "default": {
                     "projectId": "",
-                    "appId": "",
-                    "fileOutput": ""
+                    "appId": "1:",
+                    "fileOutput": "android/app/google-services.json"
                 }
             },
             "dart": {
                 "lib/firebase_options.dart": {
                     "projectId": "",
                     "configurations": {
-                        "android": "",
-                        "ios": ""
+                        "android": "1:",
+                        "ios": "1:"
                     }
                 }
             }
         }
+    },
+    "hosting": {
+        "public": "hosting",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "headers": [{
+            "source": "/index.html",
+            "headers": [{
+                "key": "Cache-Control",
+                "value": "no-store, no-cache, must-revalidate, max-age=0"
+            }]
+        }],
+        "rewrites": [{
+            "source": "/s/**",
+            "destination": "/index.html"
+        }]
     }
 }

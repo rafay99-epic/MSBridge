@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:restart_app/restart_app.dart';
+// import 'package:restart_app/restart_app.dart';
 
 class ErrorApp extends StatelessWidget {
   final String errorMessage;
@@ -71,7 +71,7 @@ class ErrorApp extends StatelessWidget {
                   icon: const Icon(Icons.refresh),
                   label: const Text("Try Again"),
                   onPressed: () {
-                    Restart.restartApp();
+                    // Restart.restartApp();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.secondary,

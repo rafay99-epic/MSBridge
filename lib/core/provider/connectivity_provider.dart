@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/provider/notes_api_provider.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
-import 'package:msbridge/features/offline/offline.dart';
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
@@ -50,10 +49,7 @@ class ConnectivityProvider extends ChangeNotifier {
       notifyListeners();
 
       if (!_isConnected) {
-        CustomSnackBar.show(_context!, "You are now in offline mode.");
-        navigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(builder: (context) => const OfflineHome()),
-        );
+        CustomSnackBar.show(_context!, "No internet connection.");
       } else {
         await _fetchNotes();
       }

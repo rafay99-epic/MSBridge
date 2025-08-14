@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -19,6 +20,9 @@ class SyncService {
 
   Future<void> startListening() async {
     try {
+      // Check global sync toggle before syncing
+      final enabled = await _isCloudSyncEnabled();
+      if (!enabled) return;
       await syncLocalNotesToFirebase();
     } catch (e) {
       throw Exception("⚠️ Error starting Hive listener: $e");
@@ -27,6 +31,8 @@ class SyncService {
 
   Future<void> syncLocalNotesToFirebase() async {
     try {
+      final enabled = await _isCloudSyncEnabled();
+      if (!enabled) return;
       List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
       Box<NoteTakingModel> deletedNotesBox =
           await HiveNoteTakingRepo.getDeletedBox();
@@ -43,6 +49,11 @@ class SyncService {
     } catch (e) {
       throw Exception("⚠️ General Sync Error: $e");
     }
+  }
+
+  Future<bool> _isCloudSyncEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('cloud_sync_enabled') ?? true;
   }
 
   Future<User?> _getCurrentUser() async {
