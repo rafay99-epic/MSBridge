@@ -3,17 +3,17 @@
         "platforms": {
             "android": {
                 "default": {
-                    "projectId": "msbridge-9a2c7",
-                    "appId": "1:689509093484:android:56039ff98006d7766ac849",
+                    "projectId": "",
+                    "appId": "1:",
                     "fileOutput": "android/app/google-services.json"
                 }
             },
             "dart": {
                 "lib/firebase_options.dart": {
-                    "projectId": "msbridge-9a2c7",
+                    "projectId": "",
                     "configurations": {
-                        "android": "1:689509093484:android:56039ff98006d7766ac849",
-                        "ios": "1:689509093484:ios:3bb00a5379a3184d6ac849"
+                        "android": "1:",
+                        "ios": "1:"
                     }
                 }
             }
@@ -26,16 +26,16 @@
             "**/.*",
             "**/node_modules/**"
         ],
-        "headers": [
-            {
-                "source": "/index.html",
-                "headers": [
-                    { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" }
-                ]
-            }
-        ],
-        "rewrites": [
-            { "source": "/s/**", "destination": "/index.html" }
-        ]
+        "headers": [{
+            "source": "/index.html",
+            "headers": [{
+                "key": "Cache-Control",
+                "value": "no-store, no-cache, must-revalidate, max-age=0"
+            }]
+        }],
+        "rewrites": [{
+            "source": "/s/**",
+            "destination": "/index.html"
+        }]
     }
 }
