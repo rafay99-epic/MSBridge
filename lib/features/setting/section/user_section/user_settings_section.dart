@@ -4,10 +4,12 @@ import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/features/changePassword/change_password.dart';
 import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/user_section/pin_lock_screen.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/features/profile/profile_edit_page.dart';
+import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 
 class UserSettingsSection extends StatelessWidget {
   const UserSettingsSection({super.key});
@@ -56,6 +58,220 @@ class UserSettingsSection extends StatelessWidget {
         _buildSubsectionHeader(
             context, "Security & Privacy", LineIcons.userShield),
         const SizedBox(height: 12),
+        _buildModernSettingsTile(
+          context,
+          title: "PIN Lock",
+          subtitle: "Secure your app with a PIN code",
+          icon: LineIcons.lock,
+          trailing: Consumer<AppPinLockProvider>(
+            builder: (context, pinProvider, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Switch(
+                    value: pinProvider.enabled,
+                    onChanged: (v) async {
+                      if (v) {
+                        if (!await pinProvider.hasPin()) {
+                          // Show warning dialog before creating PIN
+                          bool? proceed = await showDialog<bool>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              final theme = Theme.of(context);
+                              final colorScheme = theme.colorScheme;
+                              return AlertDialog(
+                                backgroundColor: colorScheme.surface,
+                                title: Text(
+                                  'Important: PIN Security',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                content: Text(
+                                  '⚠️ Warning: There is no "forgot PIN" option.\n\n'
+                                  'If you forget your PIN, you can only change it in Settings.\n\n'
+                                  'Make sure to remember your PIN or keep it in a secure place.',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurface,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: Text(
+                                      'Cancel',
+                                      style:
+                                          TextStyle(color: colorScheme.primary),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colorScheme.primary,
+                                      foregroundColor: colorScheme.onPrimary,
+                                    ),
+                                    child: const Text('I Understand'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (proceed == true) {
+                            Navigator.push(
+                              context,
+                              PageTransition(
+                                type: PageTransitionType.rightToLeft,
+                                child: PinLockScreen(
+                                  isCreating: true,
+                                  onConfirmed: (pin) async {
+                                    await pinProvider.savePin(
+                                        pin); // ✅ Use savePin for new PINs
+                                    await pinProvider.setEnabled(true);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+                        } else {
+                          await pinProvider.setEnabled(true);
+                        }
+                      } else {
+                        await pinProvider.setEnabled(false);
+                      }
+                    },
+                  ),
+                  if (pinProvider.enabled) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Enabled',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.6),
+                            fontSize: 10,
+                          ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+
+        // Change PIN option - only show if PIN lock is enabled
+        Consumer<AppPinLockProvider>(
+          builder: (context, pinProvider, _) {
+            if (!pinProvider.enabled) return const SizedBox.shrink();
+
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                _buildModernSettingsTile(
+                  context,
+                  title: "Change PIN",
+                  subtitle: "Update your PIN code",
+                  icon: LineIcons.key,
+                  onTap: () async {
+                    // First verify current PIN
+                    final currentPin = await pinProvider.readPin();
+                    if (currentPin != null) {
+                      Navigator.push(
+                        context,
+                        PageTransition(
+                          type: PageTransitionType.rightToLeft,
+                          child: PinLockScreen(
+                            isChanging: true,
+                            existingPin: currentPin,
+                            onConfirmed: (newPin) async {
+                              await pinProvider
+                                  .updatePin(newPin); // ✅ Use updatePin method
+                              CustomSnackBar.show(
+                                context,
+                                'PIN changed successfully!',
+                                isSuccess: true,
+                              );
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildModernSettingsTile(
+                  context,
+                  title: "Reset PIN",
+                  subtitle: "Remove PIN lock completely",
+                  icon: LineIcons.trash,
+                  onTap: () async {
+                    // Show confirmation dialog
+                    bool? confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        final theme = Theme.of(context);
+                        final colorScheme = theme.colorScheme;
+                        return AlertDialog(
+                          backgroundColor: colorScheme.surface,
+                          title: Text(
+                            'Reset PIN Lock',
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: Text(
+                            'This will completely remove your PIN lock.\n\n'
+                            'You will need to create a new PIN if you want to re-enable PIN lock.',
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              height: 1.4,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(color: colorScheme.primary),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.error,
+                                foregroundColor: colorScheme.onError,
+                              ),
+                              child: const Text('Reset PIN'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirm == true) {
+                      await pinProvider.clearPin();
+                      CustomSnackBar.show(
+                        context,
+                        'PIN lock has been reset!',
+                        isSuccess: true,
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+
         if (FeatureFlag.enableFingerprintLock)
           // Security & Privacy
           Consumer<FingerprintAuthProvider>(

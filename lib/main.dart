@@ -15,9 +15,11 @@ import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
+import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
+import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -60,6 +62,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ShareLinkProvider()),
           ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
+          ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
         ],
         child: const MyApp(),
       ),
@@ -106,8 +109,8 @@ class MyApp extends StatelessWidget {
           ? ThemeMode.light
           : ThemeMode.dark,
       home: FeatureFlag.enableFingerprintLock
-          ? const FingerprintAuthWrapper()
-          : const AuthGate(),
+          ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
+          : const AppPinLockWrapper(child: AuthGate()),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [
         _DynamicLinkObserver(),
