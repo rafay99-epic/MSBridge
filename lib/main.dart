@@ -18,7 +18,6 @@ import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
-import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';

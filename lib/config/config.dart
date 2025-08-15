@@ -10,9 +10,16 @@ class FirebaseConfig {
 class APIConfig {
   // API Endpoint for fetching notes (replace with your actual API endpoint)
   static const String notesApiEndpoint = 'https://www.rafay99.com/api/ms_notes';
+  static const String aboutAuthorApiEndpoint = '/api/author';
+  static const String baseURL = 'https://www.rafay99.com';
 }
 
 class NoteSummaryAPI {
+  static const String apiKey = "";
+}
+
+class ChatAPI {
+  // Add your new Gemini API key here for chat functionality
   static const String apiKey = "";
 }
 

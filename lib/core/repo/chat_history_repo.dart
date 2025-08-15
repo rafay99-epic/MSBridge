@@ -1,6 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class ChatHistoryRepo {
