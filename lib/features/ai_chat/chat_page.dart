@@ -87,7 +87,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final colorScheme = theme.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (_) => NotesChatProvider(),
+      create: (_) => ChatProvider(),
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: const CustomAppBar(
@@ -105,7 +105,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
                 // Chat Messages
                 Expanded(
-                  child: Consumer<NotesChatProvider>(
+                  child: Consumer<ChatProvider>(
                     builder: (context, chat, _) {
                       // Auto-scroll to bottom when new messages arrive
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -212,7 +212,9 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               FilterChip(
                 label: const Text('Personal Notes'),
@@ -228,7 +230,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                       _includePersonal ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 8),
               FilterChip(
                 label: const Text('MS Notes'),
                 selected: _includeMsNotes,
@@ -249,63 +250,69 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           const SizedBox(height: 16),
 
           // Status and Actions Section
-          Consumer<NotesChatProvider>(
+          Consumer<ChatProvider>(
             builder: (context, chat, _) {
               return Row(
                 children: [
-                  // Status indicator
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: chat.hasError
-                          ? colorScheme.error.withOpacity(0.1)
-                          : chat.isLoading
-                              ? colorScheme.primary.withOpacity(0.1)
-                              : colorScheme.secondary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
+                  // Status indicator with flexible width
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
                         color: chat.hasError
-                            ? colorScheme.error
+                            ? colorScheme.error.withOpacity(0.1)
                             : chat.isLoading
-                                ? colorScheme.primary
-                                : colorScheme.secondary,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          chat.hasError
-                              ? LineIcons.exclamationTriangle
-                              : chat.isLoading
-                                  ? LineIcons.clock
-                                  : LineIcons.checkCircle,
-                          size: 14,
+                                ? colorScheme.primary.withOpacity(0.1)
+                                : colorScheme.secondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
                           color: chat.hasError
                               ? colorScheme.error
                               : chat.isLoading
                                   ? colorScheme.primary
                                   : colorScheme.secondary,
+                          width: 1,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          chat.sessionStatus,
-                          style: theme.textTheme.bodySmall?.copyWith(
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            chat.hasError
+                                ? LineIcons.exclamationTriangle
+                                : chat.isLoading
+                                    ? LineIcons.clock
+                                    : LineIcons.checkCircle,
+                            size: 14,
                             color: chat.hasError
                                 ? colorScheme.error
                                 : chat.isLoading
                                     ? colorScheme.primary
                                     : colorScheme.secondary,
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              chat.sessionStatus,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: chat.hasError
+                                    ? colorScheme.error
+                                    : chat.isLoading
+                                        ? colorScheme.primary
+                                        : colorScheme.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(width: 8),
 
                   // Clear chat button
                   if (chat.messages.isNotEmpty)
@@ -397,7 +404,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     );
   }
 
-  Widget _buildChatMessages(BuildContext context, NotesChatProvider chat,
+  Widget _buildChatMessages(BuildContext context, ChatProvider chat,
       ColorScheme colorScheme, ThemeData theme) {
     return ListView.builder(
       controller: _scrollController,
@@ -694,17 +701,17 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.2),
-                    width: 1.5,
+                    color: colorScheme.primary.withOpacity(0.4),
+                    width: 2.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: colorScheme.primary.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -715,7 +722,9 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                   decoration: InputDecoration(
                     hintText: 'Ask AI anything...',
                     hintStyle: TextStyle(
-                      color: colorScheme.primary.withOpacity(0.5),
+                      color: colorScheme.primary.withOpacity(0.7),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -732,7 +741,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
               ),
             ),
             const SizedBox(width: 12),
-            Consumer2<NotesChatProvider, AiConsentProvider>(
+            Consumer2<ChatProvider, AiConsentProvider>(
               builder: (context, chat, consent, _) {
                 return Container(
                   decoration: BoxDecoration(
@@ -771,9 +780,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     if (question.isEmpty) return;
 
     final consent = Provider.of<AiConsentProvider>(context, listen: false);
+
+    // Handle consent logic: Personal notes require consent, MS Notes don't
     if (!consent.enabled && _includePersonal) {
-      CustomSnackBar.show(context, 'Enable AI access to use personal notes');
-      return;
+      CustomSnackBar.show(
+          context, 'Personal notes disabled. AI will only access MS Notes.');
+      // Continue with MS Notes only
     }
 
     setState(() {
@@ -781,13 +793,25 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     });
 
     try {
-      final chat = Provider.of<NotesChatProvider>(context, listen: false);
+      final chat = Provider.of<ChatProvider>(context, listen: false);
 
       // Start session if needed
       if (!chat.isReady) {
+        // Personal notes: only include if consent is enabled AND user wants them
+        final canIncludePersonal = consent.enabled && _includePersonal;
+
+        // MS Notes: always include if user wants them (no consent required)
+        final shouldIncludeMsNotes = _includeMsNotes;
+
+        // If personal notes are blocked but user wants them, show info message
+        if (_includePersonal && !consent.enabled) {
+          CustomSnackBar.show(context,
+              'Personal notes disabled. AI will only access MS Notes.');
+        }
+
         await chat.startSession(
-          includePersonal: consent.enabled && _includePersonal,
-          includeMsNotes: _includeMsNotes,
+          includePersonal: canIncludePersonal,
+          includeMsNotes: shouldIncludeMsNotes,
         );
 
         // Check if session failed
@@ -819,7 +843,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
   // Add retry functionality
   void _retryLastQuestion(BuildContext context) async {
-    final chat = Provider.of<NotesChatProvider>(context, listen: false);
+    final chat = Provider.of<ChatProvider>(context, listen: false);
     final response = await chat.retryLastQuestion();
 
     if (response != null) {
@@ -831,8 +855,8 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
   // Add clear chat functionality
   void _clearChat(BuildContext context) {
-    final chat = Provider.of<NotesChatProvider>(context, listen: false);
-    chat.clearMessages();
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+    chat.clearChat();
     CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
   }
 }

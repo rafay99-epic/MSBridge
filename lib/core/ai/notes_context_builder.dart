@@ -21,10 +21,28 @@ class NotesContextBuilder {
     int budget = maxTotalChars;
 
     if (includePersonal) {
-      final box = await Hive.openBox<NoteTakingModel>('notes_taking');
       try {
+        final box = await Hive.openBox<NoteTakingModel>('notes');
+
+        if (!box.isOpen) {
+          await FirebaseCrashlytics.instance.log(
+            'Personal notes box is not open. This may cause issues.',
+          );
+        }
+
         final items = box.values.toList()
           ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+        if (items.isEmpty) {
+          await FirebaseCrashlytics.instance.log(
+            'Personal notes box is empty. No notes found for AI context.',
+          );
+        } else {
+          await FirebaseCrashlytics.instance.log(
+            'Found ${items.length} personal notes for AI context. Budget: $budget characters',
+          );
+        }
+
         for (final n in items) {
           if (budget <= 0) break;
           final text = _safePlain(n.noteContent);
@@ -43,9 +61,21 @@ class NotesContextBuilder {
           budget -= size;
           (root['personal'] as List).add(obj);
         }
+
+        await FirebaseCrashlytics.instance.log(
+          'Added ${(root['personal'] as List).length} personal notes to context. Remaining budget: $budget characters',
+        );
       } catch (e, st) {
-        await FirebaseCrashlytics.instance
-            .recordError(e, st, reason: 'Hive Box Notes Model error');
+        await FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'Failed to load personal notes for AI context',
+          information: [
+            'Box name: notes',
+            'Include personal: $includePersonal'
+          ],
+        );
+        rethrow;
       }
     }
 
@@ -53,6 +83,17 @@ class NotesContextBuilder {
       final box = await Hive.openBox<MSNote>('notesBox');
       try {
         final items = box.values.toList();
+
+        if (items.isEmpty) {
+          await FirebaseCrashlytics.instance.log(
+            'MS Notes box is empty. No MS notes found for AI context.',
+          );
+        } else {
+          await FirebaseCrashlytics.instance.log(
+            'Found ${items.length} MS notes for AI context. Budget: $budget characters',
+          );
+        }
+
         for (final n in items) {
           if (budget <= 0) break;
           final content = (n.body ?? '').trim();
@@ -71,9 +112,21 @@ class NotesContextBuilder {
           budget -= size;
           (root['msNotes'] as List).add(obj);
         }
+
+        await FirebaseCrashlytics.instance.log(
+          'Added ${(root['msNotes'] as List).length} MS notes to context. Remaining budget: $budget characters',
+        );
       } catch (e, st) {
-        await FirebaseCrashlytics.instance
-            .recordError(e, st, reason: 'Hive Box MS Notes Model error');
+        await FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'Failed to load MS notes for AI context',
+          information: [
+            'Box name: notesBox',
+            'Include MS notes: $includeMsNotes'
+          ],
+        );
+        rethrow;
       }
     }
 

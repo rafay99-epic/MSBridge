@@ -145,7 +145,6 @@ class _DynamicLinkObserver extends NavigatorObserver {
 
   void _handleLink(Uri link) async {
     try {
-      // Expect link like https://msbridge.page.link/... resolving to https://<host>/s/{shareId}
       final Uri deep = link;
       final Uri target = deep;
       final List<String> parts =
