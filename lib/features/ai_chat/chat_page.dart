@@ -426,9 +426,25 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: message.isError
-                        ? colorScheme.error.withOpacity(0.1)
-                        : colorScheme.primary.withOpacity(0.1),
+                        ? colorScheme.error.withOpacity(0.15)
+                        : colorScheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: message.isError
+                          ? colorScheme.error.withOpacity(0.3)
+                          : colorScheme.primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (message.isError
+                                ? colorScheme.error
+                                : colorScheme.primary)
+                            .withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     message.isError
@@ -453,7 +469,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                         ? colorScheme.primary
                         : message.isError
                             ? colorScheme.errorContainer
-                            : colorScheme.surface,
+                            : colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16).copyWith(
                       bottomLeft: isUser
                           ? const Radius.circular(16)
@@ -467,16 +483,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                           ? colorScheme.primary
                           : message.isError
                               ? colorScheme.error
-                              : colorScheme.outline.withOpacity(0.2),
-                      width: message.isError ? 2 : 1,
+                              : colorScheme.primary.withOpacity(0.4),
+                      width: message.isError ? 2 : 2.0,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            (isUser ? colorScheme.primary : colorScheme.shadow)
-                                .withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: isUser
+                            ? colorScheme.primary.withOpacity(0.3)
+                            : colorScheme.primary.withOpacity(0.15),
+                        blurRadius: isUser ? 8 : 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -563,29 +579,36 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                           data: message.text,
                           styleSheet: MarkdownStyleSheet(
                             p: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.primary,
+                              color: colorScheme.onSurface,
                               height: 1.5,
+                              fontWeight: FontWeight.w500,
                             ),
                             h1: theme.textTheme.headlineSmall?.copyWith(
-                              color: colorScheme.primary,
+                              color: colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                             h2: theme.textTheme.titleLarge?.copyWith(
-                              color: colorScheme.primary,
+                              color: colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                             h3: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.primary,
+                              color: colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                             code: theme.textTheme.bodyMedium?.copyWith(
                               backgroundColor:
-                                  colorScheme.primary.withOpacity(0.1),
+                                  colorScheme.primary.withOpacity(0.15),
+                              color: colorScheme.onSurface,
                               fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
                             ),
                             codeblockDecoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.1),
+                              color: colorScheme.primary.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: colorScheme.primary.withOpacity(0.3),
+                                width: 1,
+                              ),
                             ),
                           ),
                           selectable: true,
@@ -599,8 +622,19 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     LineIcons.user,
