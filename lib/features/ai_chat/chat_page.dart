@@ -30,14 +30,14 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   void initState() {
     super.initState();
 
-    // Initialize animations
+    // Initialize animations with optimized durations for better performance
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 400), // Reduced from 800ms
       vsync: this,
     );
 
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 300), // Reduced from 600ms
       vsync: this,
     );
 
@@ -46,15 +46,15 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
     ));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.2), // Reduced from 0.3 for better performance
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
     ));
 
     // Start animations

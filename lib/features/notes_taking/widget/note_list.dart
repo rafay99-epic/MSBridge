@@ -84,14 +84,10 @@ class NoteList extends StatelessWidget {
           return GestureDetector(
             onTap: () => handleNoteTap(context, note),
             onLongPress: () => handleNoteLongPress(note),
-            child: AnimatedOpacity(
-              opacity: 1.0,
-              duration: const Duration(milliseconds: 300),
-              child: NoteCard(
-                note: note,
-                isSelected: selectedNoteIds.contains(note.noteId.toString()),
-                isSelectionMode: isSelectionMode,
-              ),
+            child: NoteCard(
+              note: note,
+              isSelected: selectedNoteIds.contains(note.noteId.toString()),
+              isSelectionMode: isSelectionMode,
             ),
           );
         },
@@ -111,7 +107,8 @@ class NoteList extends StatelessWidget {
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
-          transitionDuration: const Duration(milliseconds: 300),
+          transitionDuration: const Duration(
+              milliseconds: 200), // Reduced for better performance
         ),
       );
     }

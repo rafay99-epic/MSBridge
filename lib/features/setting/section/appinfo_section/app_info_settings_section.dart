@@ -7,6 +7,7 @@ import 'package:msbridge/features/setting/widgets/settings_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/features/setting/section/appinfo_section/about_author_page.dart';
 
 class AppInfoSettingsSection extends StatefulWidget {
   const AppInfoSettingsSection({super.key});
@@ -102,6 +103,19 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 child: const MyCMSWebView(
                     pageTitle: "Terms and Conditions",
                     cmsUrl: URL.termsOfService),
+              ),
+            );
+          },
+        ),
+        SettingsTile(
+          title: "About Author",
+          icon: LineIcons.user,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const AboutAuthorPage(),
               ),
             );
           },

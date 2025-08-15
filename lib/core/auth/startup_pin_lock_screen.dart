@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
@@ -36,19 +37,23 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
   void initState() {
     super.initState();
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration:
+          const Duration(milliseconds: 400), // Reduced for better performance
       vsync: this,
     );
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration:
+          const Duration(milliseconds: 300), // Reduced for better performance
       vsync: this,
     );
     _successController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration:
+          const Duration(milliseconds: 500), // Reduced for better performance
       vsync: this,
     );
     _iconController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration:
+          const Duration(milliseconds: 1500), // Reduced for better performance
       vsync: this,
     );
 
@@ -57,15 +62,15 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut,
+      curve: Curves.easeOut, // Better performance curve
     ));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
+      begin: const Offset(0, 0.15), // Reduced offset for better performance
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
     ));
 
     _successAnimation = Tween<double>(
@@ -73,31 +78,37 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _successController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOut, // Changed from elasticOut for better performance
     ));
 
     _iconScaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.1,
+      end: 1.05, // Reduced scale for better performance
     ).animate(CurvedAnimation(
       parent: _iconController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut, // Changed from easeInOut for better performance
     ));
 
     _iconRotationAnimation = Tween<double>(
       begin: 0.0,
-      end: 0.1,
+      end: 0.05, // Reduced rotation for better performance
     ).animate(CurvedAnimation(
       parent: _iconController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut, // Changed from easeInOut for better performance
     ));
 
     _fadeController.forward();
     _slideController.forward();
     _iconController.repeat(reverse: true);
 
+    // Optimized focus management for Android performance
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pinFocusNode.requestFocus();
+      // Use a small delay to ensure smooth keyboard animation
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _pinFocusNode.requestFocus();
+        }
+      });
     });
   }
 
@@ -115,10 +126,13 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
   void _verifyPin(String pin) async {
     if (pin.length != 4) return;
 
-    setState(() {
-      _isVerifying = true;
-      _errorMessage = '';
-    });
+    // Optimized state updates for better performance
+    if (mounted) {
+      setState(() {
+        _isVerifying = true;
+        _errorMessage = '';
+      });
+    }
 
     try {
       final pinProvider =
@@ -129,32 +143,50 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
         // Start success animation
         _successController.forward();
 
-        // Show success message
-        CustomSnackBar.show(
-          context,
-          'Welcome back!',
-          isSuccess: true,
-        );
+        // Show success message (non-blocking)
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            'Welcome back!',
+            isSuccess: true,
+          );
+        }
 
-        // Wait for animation to complete then unlock
-        Future.delayed(const Duration(milliseconds: 600), () {
-          widget.onPinCorrect();
+        // Optimized unlock timing
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) {
+            widget.onPinCorrect();
+          }
         });
       } else {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Incorrect PIN. Please try again.';
+            _isVerifying = false;
+          });
+          _pinController.clear();
+          // Optimized focus management
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _pinFocusNode.requestFocus();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _errorMessage = 'Incorrect PIN. Please try again.';
+          _errorMessage = 'Error verifying PIN. Please try again.';
           _isVerifying = false;
         });
         _pinController.clear();
-        _pinFocusNode.requestFocus();
+        // Optimized focus management
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _pinFocusNode.requestFocus();
+          }
+        });
       }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error verifying PIN. Please try again.';
-        _isVerifying = false;
-      });
-      _pinController.clear();
-      _pinFocusNode.requestFocus();
     }
   }
 
@@ -177,7 +209,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     colorScheme.surface,
-                    colorScheme.surfaceVariant.withOpacity(0.3),
+                    colorScheme.surfaceContainerHighest.withOpacity(0.3),
                     colorScheme.surface,
                   ],
                 ),
@@ -265,7 +297,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant,
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: colorScheme.outline.withOpacity(0.2),
@@ -288,6 +320,12 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                               onCompleted: _verifyPin,
                               obscureText: true,
                               obscuringCharacter: '●',
+                              // Android performance optimizations
+                              autofocus: false, // Let us control focus manually
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               defaultPinTheme: PinTheme(
                                 width: 56,
                                 height: 56,
