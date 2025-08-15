@@ -19,6 +19,7 @@ import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
@@ -211,6 +212,24 @@ class _NotesSettingState extends State<NotesSetting> {
         const SizedBox(height: 12),
         buildModernSettingsTile(
           context,
+          title: "Pull from Cloud",
+          subtitle: "Manually download notes from cloud to this device",
+          icon: LineIcons.download,
+          onTap: () async {
+            try {
+              await ReverseSyncService().syncDataFromFirebaseToHive();
+              if (mounted)
+                CustomSnackBar.show(
+                    context, 'Notes downloaded from cloud successfully',
+                    isSuccess: true);
+            } catch (e) {
+              if (mounted) CustomSnackBar.show(context, 'Download failed: $e');
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
           title: "Auto sync interval",
           subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
           icon: LineIcons.history,
@@ -264,7 +283,6 @@ class _NotesSettingState extends State<NotesSetting> {
               trailing: Switch(
                 value: historyProvider.isHistoryEnabled,
                 onChanged: (value) => historyProvider.toggleHistoryEnabled(),
-                activeColor: Theme.of(context).colorScheme.primary,
               ),
             );
           },
