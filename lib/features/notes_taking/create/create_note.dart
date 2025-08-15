@@ -42,6 +42,10 @@ class _CreateNoteState extends State<CreateNote>
 
   Timer? _debounceTimer;
   final FocusNode _quillFocusNode = FocusNode();
+  final FocusNode _titleFocusNode = FocusNode();
+  final FocusNode _tagFocusNode = FocusNode();
+  final ValueNotifier<String> _currentFocusArea =
+      ValueNotifier<String>('editor');
 
   final ValueNotifier<bool> _isSavingNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _showCheckmarkNotifier = ValueNotifier<bool>(false);
@@ -76,10 +80,43 @@ class _CreateNoteState extends State<CreateNote>
       _controller = QuillController.basic();
     }
 
+    // Add lightweight focus tracking
+    _titleController.addListener(() {
+      if (_titleController.text.isNotEmpty) {
+        _currentFocusArea.value = 'title';
+      }
+    });
+
+    _tagInputController.addListener(() {
+      if (_tagInputController.text.isNotEmpty) {
+        _currentFocusArea.value = 'tags';
+      }
+    });
+
+    // Add focus listeners for accurate tracking
+    _titleFocusNode.addListener(() {
+      if (_titleFocusNode.hasFocus) {
+        _currentFocusArea.value = 'title';
+      }
+    });
+
+    _tagFocusNode.addListener(() {
+      if (_tagFocusNode.hasFocus) {
+        _currentFocusArea.value = 'tags';
+      }
+    });
+
+    _quillFocusNode.addListener(() {
+      if (_quillFocusNode.hasFocus) {
+        _currentFocusArea.value = 'editor';
+      }
+    });
+
     if (FeatureFlag.enableAutoSave) {
       _controller.document.changes.listen((event) {
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
         _debounceTimer = Timer(const Duration(seconds: 3), () {
+          _currentFocusArea.value = 'editor';
           _saveNote();
         });
       });
@@ -102,6 +139,9 @@ class _CreateNoteState extends State<CreateNote>
     _autoSaveTimer?.cancel();
     _debounceTimer?.cancel();
     _quillFocusNode.dispose();
+    _titleFocusNode.dispose();
+    _tagFocusNode.dispose();
+    _currentFocusArea.dispose();
     _isSavingNotifier.dispose();
     _showCheckmarkNotifier.dispose();
 
@@ -197,7 +237,12 @@ class _CreateNoteState extends State<CreateNote>
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = true;
-        FocusScope.of(context).requestFocus(_quillFocusNode);
+
+        // Only restore focus to editor if user was working there
+        // This prevents interrupting title/tag input during auto-save
+        if (_currentFocusArea.value == 'editor' && !_quillFocusNode.hasFocus) {
+          FocusScope.of(context).requestFocus(_quillFocusNode);
+        }
 
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) {
@@ -353,7 +398,12 @@ class _CreateNoteState extends State<CreateNote>
           ),
           Consumer<ShareLinkProvider>(
             builder: (context, shareProvider, _) {
-              if (!shareProvider.shareLinksEnabled) return const SizedBox.shrink();
+              if (!shareProvider.shareLinksEnabled) {
+                return const SizedBox.shrink();
+              }
+              if (_currentNote == null) {
+                return const SizedBox.shrink();
+              }
               return IconButton(
                 tooltip: 'Share link',
                 icon: const Icon(LineIcons.shareSquare),
@@ -378,6 +428,7 @@ class _CreateNoteState extends State<CreateNote>
               padding: const EdgeInsets.only(bottom: 8.0),
               child: TextField(
                 controller: _titleController,
+                focusNode: _titleFocusNode,
                 decoration: const InputDecoration(
                   hintText: 'Title',
                   hintStyle: TextStyle(
@@ -438,6 +489,7 @@ class _CreateNoteState extends State<CreateNote>
                   const SizedBox(height: 10),
                   TextField(
                     controller: _tagInputController,
+                    focusNode: _tagFocusNode,
                     textInputAction: TextInputAction.done,
                     onSubmitted: _addTag,
                     decoration: InputDecoration(
@@ -545,7 +597,8 @@ class _CreateNoteState extends State<CreateNote>
     if (_currentNote == null) {
       await manualSaveNote();
       if (_currentNote == null) {
-        if (mounted) CustomSnackBar.show(context, 'Save the note before sharing');
+        if (mounted)
+          CustomSnackBar.show(context, 'Save the note before sharing');
         return;
       }
     }
@@ -573,7 +626,9 @@ class _CreateNoteState extends State<CreateNote>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Share via link', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text('Share via link',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
                     Switch(
                       value: enabled,
                       onChanged: (value) async {
@@ -584,17 +639,25 @@ class _CreateNoteState extends State<CreateNote>
                               enabled = true;
                               currentUrl = url;
                             });
-                            if (mounted) CustomSnackBar.show(context, 'Share link enabled');
+                            if (mounted) {
+                              CustomSnackBar.show(
+                                  context, 'Share link enabled');
+                            }
                           } else {
                             await ShareRepository.disableShare(note);
                             setStateSheet(() {
                               enabled = false;
                               currentUrl = null;
                             });
-                            if (mounted) CustomSnackBar.show(context, 'Share link disabled');
+                            if (mounted) {
+                              CustomSnackBar.show(
+                                  context, 'Share link disabled');
+                            }
                           }
                         } catch (e) {
-                          if (mounted) CustomSnackBar.show(context, e.toString());
+                          if (mounted) {
+                            CustomSnackBar.show(context, e.toString());
+                          }
                         }
                       },
                     )
@@ -604,15 +667,19 @@ class _CreateNoteState extends State<CreateNote>
                 if (currentUrl != null) ...[
                   SelectableText(
                     currentUrl!,
-                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.9)),
+                    style: TextStyle(
+                        color: theme.colorScheme.primary.withOpacity(0.9)),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       ElevatedButton.icon(
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: currentUrl!));
-                          if (mounted) CustomSnackBar.show(context, 'Link copied');
+                          await Clipboard.setData(
+                              ClipboardData(text: currentUrl!));
+                          if (mounted) {
+                            CustomSnackBar.show(context, 'Link copied');
+                          }
                         },
                         icon: const Icon(LineIcons.copy),
                         label: const Text('Copy'),
@@ -628,7 +695,8 @@ class _CreateNoteState extends State<CreateNote>
                 ] else ...[
                   Text(
                     'Enable to generate a view-only link anyone can open.',
-                    style: TextStyle(color: theme.colorScheme.primary.withOpacity(0.7)),
+                    style: TextStyle(
+                        color: theme.colorScheme.primary.withOpacity(0.7)),
                   ),
                 ]
               ],

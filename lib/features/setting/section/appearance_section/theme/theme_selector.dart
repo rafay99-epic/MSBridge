@@ -357,29 +357,42 @@ class _ThemeSelectorState extends State<ThemeSelector> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Add safety checks to prevent infinite layout
+        if (constraints.maxWidth.isInfinite ||
+            constraints.maxHeight.isInfinite) {
+          return const SizedBox.shrink();
+        }
+
         const crossAxisCount = 2;
         final itemWidth = (constraints.maxWidth - 16) / crossAxisCount;
         final itemHeight = itemWidth * 1.1;
 
-        return Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: AppTheme.values.map((appTheme) {
-            final isSelected = widget.themeProvider.selectedTheme == appTheme;
-            final themeData = AppThemes.themeMap[appTheme]!;
+        // Ensure reasonable dimensions
+        if (itemWidth <= 0 || itemHeight <= 0) {
+          return const SizedBox.shrink();
+        }
 
-            return SizedBox(
-              width: itemWidth,
-              height: itemHeight,
-              child: _buildExpandedThemeCard(
-                context,
-                appTheme,
-                themeData,
-                isSelected,
-                () => widget.themeProvider.setTheme(appTheme),
-              ),
-            );
-          }).toList(),
+        return SingleChildScrollView(
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: AppTheme.values.map((appTheme) {
+              final isSelected = widget.themeProvider.selectedTheme == appTheme;
+              final themeData = AppThemes.themeMap[appTheme]!;
+
+              return SizedBox(
+                width: itemWidth,
+                height: itemHeight,
+                child: _buildExpandedThemeCard(
+                  context,
+                  appTheme,
+                  themeData,
+                  isSelected,
+                  () => widget.themeProvider.setTheme(appTheme),
+                ),
+              );
+            }).toList(),
+          ),
         );
       },
     );

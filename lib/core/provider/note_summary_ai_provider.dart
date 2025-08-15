@@ -12,7 +12,7 @@ class NoteSummaryProvider with ChangeNotifier {
 
   NoteSummaryProvider({required String apiKey, String? modelName})
       : _apiKey = apiKey,
-        _modelName = modelName ?? 'gemini-1.5-pro-latest' {
+        _modelName = modelName ?? AIModelsConfig.models.first.modelName {
     _repository = NoteSummaryRepo();
     _loadSelectedModel();
   }
@@ -28,8 +28,17 @@ class NoteSummaryProvider with ChangeNotifier {
 
   Future<String> _getSelectedModelName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(AIModelsConfig.selectedModelKey) ??
-        'gemini-1.5-pro-latest';
+    final selectedModelKey = prefs.getString(AIModelsConfig.selectedModelKey);
+
+    if (selectedModelKey != null) {
+      // Find the model by key
+      final selectedModel = AIModelsConfig.models.firstWhere(
+          (model) => model.modelName == selectedModelKey,
+          orElse: () => AIModelsConfig.models.first);
+      return selectedModel.modelName;
+    }
+
+    return AIModelsConfig.models.first.modelName;
   }
 
   Future<void> summarizeNote(String noteContent) async {

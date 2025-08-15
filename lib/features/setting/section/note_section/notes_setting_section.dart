@@ -19,8 +19,10 @@ import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/provider/chat_history_provider.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -199,9 +201,31 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             try {
               await SyncService().syncLocalNotesToFirebase();
-              if (mounted) CustomSnackBar.show(context, 'Synced successfully', isSuccess: true);
+              if (mounted) {
+                CustomSnackBar.show(context, 'Synced successfully',
+                    isSuccess: true);
+              }
             } catch (e) {
               if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
+          title: "Pull from Cloud",
+          subtitle: "Manually download notes from cloud to this device",
+          icon: LineIcons.download,
+          onTap: () async {
+            try {
+              await ReverseSyncService().syncDataFromFirebaseToHive();
+              if (mounted) {
+                CustomSnackBar.show(
+                    context, 'Notes downloaded from cloud successfully',
+                    isSuccess: true);
+              }
+            } catch (e) {
+              if (mounted) CustomSnackBar.show(context, 'Download failed: $e');
             }
           },
         ),
@@ -215,7 +239,14 @@ class _NotesSettingState extends State<NotesSetting> {
             final minutes = await _pickInterval(context);
             if (minutes == null) return;
             await AutoSyncScheduler.setIntervalMinutes(minutes);
-            if (mounted) CustomSnackBar.show(context, minutes == 0 ? 'Auto sync disabled' : 'Auto sync set to every $minutes min', isSuccess: true);
+            if (mounted) {
+              CustomSnackBar.show(
+                  context,
+                  minutes == 0
+                      ? 'Auto sync disabled'
+                      : 'Auto sync set to every $minutes min',
+                  isSuccess: true);
+            }
           },
         ),
 
@@ -235,6 +266,26 @@ class _NotesSettingState extends State<NotesSetting> {
               PageTransition(
                 type: PageTransitionType.rightToLeft,
                 child: const ChatAssistantPage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // Chat History Toggle
+        Consumer<ChatHistoryProvider>(
+          builder: (context, historyProvider, _) {
+            return buildModernSettingsTile(
+              context,
+              title: "Chat History",
+              subtitle: historyProvider.isHistoryEnabled
+                  ? "Chat history is being saved"
+                  : "Chat history is disabled",
+              icon: LineIcons.history,
+              trailing: Switch(
+                value: historyProvider.isHistoryEnabled,
+                onChanged: (value) => historyProvider.toggleHistoryEnabled(),
               ),
             );
           },
@@ -314,9 +365,21 @@ class _NotesSettingState extends State<NotesSetting> {
           subtitle: "Create a backup of all your notes",
           icon: LineIcons.download,
           onTap: () async {
-            await BackupService.exportAllNotes();
-            if (mounted) {
-              CustomSnackBar.show(context, 'Backup exported', isSuccess: true);
+            try {
+              final filePath = await BackupService.exportAllNotes(context);
+              if (mounted) {
+                final detailedLocation =
+                    BackupService.getDetailedFileLocation(filePath);
+
+                // Show success message with detailed location (like PDF exporter)
+                CustomSnackBar.show(context,
+                    'Backup exported successfully to $detailedLocation',
+                    isSuccess: true);
+              }
+            } catch (e) {
+              if (mounted) {
+                CustomSnackBar.show(context, 'Backup failed: $e');
+              }
             }
           },
         ),

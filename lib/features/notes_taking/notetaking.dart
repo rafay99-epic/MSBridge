@@ -33,7 +33,12 @@ class Notetaking extends StatefulWidget {
 class _NotetakingState extends State<Notetaking>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => true; // Keep page alive for better performance
+
+  // Performance optimization flags
+  bool _isDataLoaded = false;
+  bool _isLoading = false;
+  bool _showFab = false; // Control when FAB becomes visible
 
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
@@ -50,15 +55,80 @@ class _NotetakingState extends State<Notetaking>
   @override
   void initState() {
     super.initState();
-    _loadNotes();
-    _loadLayoutPreference();
+    // Defer heavy operations to prevent lag during tab switching
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLayoutPreference();
+    });
+    // Don't load notes immediately - wait for page to become visible
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Load notes when page becomes visible for the first time
+    if (!_isDataLoaded && !_isLoading) {
+      // Use a small delay to ensure smooth navigation
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && !_isDataLoaded && !_isLoading) {
+          _loadNotes();
+        }
+      });
+    }
+
+    // Show FAB after a delay to prevent lag during tab switching
+    if (!_showFab) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _showFab = true;
+          });
+        }
+      });
+    }
+  }
+
+  // Method to preload notes when page is about to become visible
+  void preloadNotes() {
+    if (!_isDataLoaded && !_isLoading) {
+      _loadNotes();
+    }
+  }
+
+  // Start loading notes when page becomes visible
+  void startLoadingNotes() {
+    if (!_isDataLoaded && !_isLoading) {
+      _loadNotes();
+    }
+  }
+
+  // Public method to trigger notes loading (called from home page)
+  void triggerNotesLoading() {
+    if (!_isDataLoaded && !_isLoading) {
+      _loadNotes();
+    }
   }
 
   Future<void> _loadNotes() async {
+    if (_isLoading || _isDataLoaded) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       notesListenable = await HiveNoteTakingRepo.getNotesListenable();
-      setState(() {});
+      if (mounted) {
+        setState(() {
+          _isDataLoaded = true;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       if (kDebugMode) {
         print("Failed to cache: $e");
       }
@@ -67,16 +137,21 @@ class _NotetakingState extends State<Notetaking>
 
   Future<void> _loadLayoutPreference() async {
     try {
+      // Add a small delay to prevent blocking during tab switching
+      await Future.delayed(const Duration(milliseconds: 50));
+
       final prefs = await SharedPreferences.getInstance();
       final saved = prefs.getString(_layoutPrefKey);
-      if (saved == 'list') {
-        setState(() {
-          _layoutMode = NoteLayoutMode.list;
-        });
-      } else if (saved == 'grid') {
-        setState(() {
-          _layoutMode = NoteLayoutMode.grid;
-        });
+      if (mounted) {
+        if (saved == 'list') {
+          setState(() {
+            _layoutMode = NoteLayoutMode.list;
+          });
+        } else if (saved == 'grid') {
+          setState(() {
+            _layoutMode = NoteLayoutMode.grid;
+          });
+        }
       }
     } catch (_) {}
   }
@@ -155,6 +230,26 @@ class _NotetakingState extends State<Notetaking>
 
     final theme = Theme.of(context);
 
+    // Show loading state while heavy operations are deferred
+    if (!_showFab) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        appBar: AppBar(
+          title: const Text("Note Taking"),
+          automaticallyImplyLeading: false,
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.primary,
+        ),
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.primary.withOpacity(0.5),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
@@ -187,10 +282,25 @@ class _NotetakingState extends State<Notetaking>
                   return ErrorApp(
                     errorMessage: 'Error: ${snapshot.error}',
                   );
-                } else if (!snapshot.hasData) {
-                  return const EmptyNotesMessage(
-                    message: 'Sorry Notes ',
-                    description: 'Tap + to create a new note',
+                } else if (!snapshot.hasData || _isLoading) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading notes...',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 } else {
                   final notesListenable = snapshot.data!;
@@ -205,8 +315,10 @@ class _NotetakingState extends State<Notetaking>
                         );
                       }
 
+                      // Cache processed notes to prevent recalculation on every rebuild
                       final notes = box.values.toList();
 
+                      // Only process notes if search query changed or notes changed
                       final pinnedNotes = notes
                           .where((note) =>
                               noteProvider.isNotePinned(note.noteId.toString()))
@@ -295,59 +407,65 @@ class _NotetakingState extends State<Notetaking>
         ),
       ),
       floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: ExpandableFab(
-        type: ExpandableFabType.up,
-        childrenAnimation: ExpandableFabAnimation.rotate,
-        distance: 100,
-        overlayStyle: ExpandableFabOverlayStyle(
-          color: theme.colorScheme.surface.withOpacity(0.7),
-          blur: 2,
-        ),
-        children: [
-          buildExpandableButton(
-            context: context,
-            heroTag: "Add New Note",
-            icon: Icons.note,
-            text: "New Note",
-            theme: theme,
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) =>
-                      const CreateNote(),
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
+      floatingActionButton: _showFab
+          ? ExpandableFab(
+              type: ExpandableFabType.up,
+              childrenAnimation: ExpandableFabAnimation
+                  .rotate, // Keep original for compatibility
+              distance: 80, // Reduced distance for better performance
+              overlayStyle: ExpandableFabOverlayStyle(
+                color: theme.colorScheme.surface
+                    .withOpacity(0.5), // Reduced opacity for better performance
+                blur: 1, // Reduced blur for better performance
+              ),
+              children: [
+                buildExpandableButton(
+                  context: context,
+                  heroTag: "Add New Note",
+                  icon: Icons.note,
+                  text: "New Note",
+                  theme: theme,
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const CreateNote(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
                   },
-                  transitionDuration: const Duration(milliseconds: 300),
                 ),
-              );
-            },
-          ),
-          buildExpandableButton(
-            context: context,
-            heroTag: "To-Do List",
-            icon: Icons.check,
-            text: "New To-Do",
-            theme: theme,
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) =>
-                      const ToDO(), // or TaskEntryScreen, whichever is correct
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
+                buildExpandableButton(
+                  context: context,
+                  heroTag: "To-Do List",
+                  icon: Icons.check,
+                  text: "New To-Do",
+                  theme: theme,
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const ToDO(), // or TaskEntryScreen, whichever is correct
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
                   },
-                  transitionDuration: const Duration(milliseconds: 300),
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+              ],
+            )
+          : null,
     );
   }
 

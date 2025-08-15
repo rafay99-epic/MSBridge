@@ -122,16 +122,16 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: Column(
-            children: [
-              // Header Section
-              _buildHeaderSection(context, colorScheme, theme),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section
+                _buildHeaderSection(context, colorScheme, theme),
 
-              // Models List
-              Expanded(
-                child: _buildModelsList(context, colorScheme, theme),
-              ),
-            ],
+                // Models List
+                _buildModelsList(context, colorScheme, theme),
+              ],
+            ),
           ),
         ),
       ),
@@ -205,17 +205,25 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
 
   Widget _buildModelsList(
       BuildContext context, ColorScheme colorScheme, ThemeData theme) {
-    return ListView.separated(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: AIModelsConfig.models.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final model = AIModelsConfig.models[index];
-        final isSelected = model.name == selectedModelName;
-
-        return _buildModelCard(
-            context, model, isSelected, colorScheme, theme, index);
-      },
+      child: Column(
+        children: [
+          for (int index = 0;
+              index < AIModelsConfig.models.length;
+              index++) ...[
+            _buildModelCard(
+                context,
+                AIModelsConfig.models[index],
+                AIModelsConfig.models[index].name == selectedModelName,
+                colorScheme,
+                theme,
+                index),
+            if (index < AIModelsConfig.models.length - 1)
+              const SizedBox(height: 16),
+          ],
+        ],
+      ),
     );
   }
 

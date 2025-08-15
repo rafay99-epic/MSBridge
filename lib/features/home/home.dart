@@ -29,6 +29,18 @@ class _HomeState extends State<Home> {
     // Pre-load the first page
     _pagesLoaded[0] = true;
     _pages[0] = const Msnotes();
+
+    // Pre-load adjacent pages for smoother navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadAdjacentPages();
+    });
+  }
+
+  void _preloadAdjacentPages() {
+    // Pre-load the next page for smoother navigation
+    if (_selectedIndex < _pages.length - 1) {
+      _getPage(_selectedIndex + 1);
+    }
   }
 
   @override
@@ -81,6 +93,11 @@ class _HomeState extends State<Home> {
       _getPage(index);
     }
 
+    // Preload notes if switching to Notes tab (index 3)
+    if (index == 3 && _pages[3] != null) {
+      _preloadNotesData();
+    }
+
     // For non-adjacent tabs, jump instantly to avoid animating
     // through heavy intermediate pages which can cause jank.
     final pageDelta = (index - _selectedIndex).abs();
@@ -89,17 +106,32 @@ class _HomeState extends State<Home> {
       return;
     }
 
+    // Optimized animation for better performance
     controller.animateToPage(
       index,
-      duration: const Duration(milliseconds: 200), // Reduced duration
-      curve: Curves.easeOutCubic,
+      duration: const Duration(
+          milliseconds: 150), // Further reduced for better performance
+      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
     );
   }
 
-  void _onPageChanged(int index) {
-    setState(() {
-      _selectedIndex = index;
+  void _preloadNotesData() {
+    // Preload notes data when Notes tab becomes visible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Trigger notes loading by ensuring the page is loaded
+      if (!_pagesLoaded[3]) {
+        _getPage(3);
+      }
     });
+  }
+
+  void _onPageChanged(int index) {
+    // Only update state if the index actually changed
+    if (_selectedIndex != index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
 
     // Pre-load adjacent pages for smoother navigation
     if (index > 0 && !_pagesLoaded[index - 1]) {
@@ -107,6 +139,11 @@ class _HomeState extends State<Home> {
     }
     if (index < _pages.length - 1 && !_pagesLoaded[index + 1]) {
       _getPage(index + 1);
+    }
+
+    // Preload notes data when Notes tab becomes visible
+    if (index == 3) {
+      _preloadNotesData();
     }
   }
 
@@ -119,10 +156,15 @@ class _HomeState extends State<Home> {
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
-        physics: const BouncingScrollPhysics(),
+        physics:
+            const ClampingScrollPhysics(), // Better performance than BouncingScrollPhysics
         allowImplicitScrolling:
             false, // Disabled to prevent unnecessary loading
-        children: List.generate(5, (index) => _getPage(index)),
+        children: List.generate(
+            5,
+            (index) => RepaintBoundary(
+                  child: _getPage(index),
+                )),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -146,7 +188,8 @@ class _HomeState extends State<Home> {
             tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             gap: 4,
-            duration: const Duration(milliseconds: 200), // Reduced duration
+            duration: const Duration(
+                milliseconds: 150), // Further reduced for better performance
             tabs: [
               GButton(
                 icon: LineIcons.book,
