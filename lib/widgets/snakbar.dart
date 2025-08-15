@@ -29,47 +29,45 @@ class CustomSnackBar {
       backgroundColor: Colors.transparent,
       behavior: SnackBarBehavior.floating,
       elevation: 0,
-      duration: const Duration(seconds: 4),
-      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       content: Container(
+        constraints: const BoxConstraints(
+          minHeight: 56,
+          maxWidth: 400, // Limit maximum width for better proportions
+        ),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: borderColor.withOpacity(0.3),
-            width: 1.5,
+            color: borderColor.withOpacity(0.15),
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color:
-                  (isSuccessMessage ? colorScheme.primary : colorScheme.error)
-                      .withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
               spreadRadius: 0,
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Success/Error Icon
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isSuccessMessage
-                      ? colorScheme.onPrimary.withOpacity(0.2)
-                      : colorScheme.onErrorContainer.withOpacity(0.2),
+                      ? colorScheme.onPrimary.withOpacity(0.15)
+                      : colorScheme.onErrorContainer.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -77,44 +75,52 @@ class CustomSnackBar {
                       ? LineIcons.checkCircle
                       : LineIcons.exclamationTriangle,
                   color: iconColor,
-                  size: 22,
+                  size: 20,
                 ),
               ),
 
               const SizedBox(width: 16),
 
-              // Message Text
+              // Message Text - Centered and properly sized
               Expanded(
                 child: Text(
                   message,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: textColor,
-                    height: 1.3,
+                    height: 1.2,
+                    letterSpacing: 0.2,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
 
               const SizedBox(width: 16),
 
               // Close Button
-              GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isSuccessMessage
-                        ? colorScheme.onPrimary.withOpacity(0.2)
-                        : colorScheme.onErrorContainer.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    LineIcons.times,
-                    color: iconColor,
-                    size: 18,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isSuccessMessage
+                          ? colorScheme.onPrimary.withOpacity(0.15)
+                          : colorScheme.onErrorContainer.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      LineIcons.times,
+                      color: iconColor,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),

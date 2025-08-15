@@ -201,9 +201,10 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             try {
               await SyncService().syncLocalNotesToFirebase();
-              if (mounted)
+              if (mounted) {
                 CustomSnackBar.show(context, 'Synced successfully',
                     isSuccess: true);
+              }
             } catch (e) {
               if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
             }
@@ -218,10 +219,11 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             try {
               await ReverseSyncService().syncDataFromFirebaseToHive();
-              if (mounted)
+              if (mounted) {
                 CustomSnackBar.show(
                     context, 'Notes downloaded from cloud successfully',
                     isSuccess: true);
+              }
             } catch (e) {
               if (mounted) CustomSnackBar.show(context, 'Download failed: $e');
             }
@@ -237,13 +239,14 @@ class _NotesSettingState extends State<NotesSetting> {
             final minutes = await _pickInterval(context);
             if (minutes == null) return;
             await AutoSyncScheduler.setIntervalMinutes(minutes);
-            if (mounted)
+            if (mounted) {
               CustomSnackBar.show(
                   context,
                   minutes == 0
                       ? 'Auto sync disabled'
                       : 'Auto sync set to every $minutes min',
                   isSuccess: true);
+            }
           },
         ),
 
@@ -362,9 +365,21 @@ class _NotesSettingState extends State<NotesSetting> {
           subtitle: "Create a backup of all your notes",
           icon: LineIcons.download,
           onTap: () async {
-            await BackupService.exportAllNotes();
-            if (mounted) {
-              CustomSnackBar.show(context, 'Backup exported', isSuccess: true);
+            try {
+              final filePath = await BackupService.exportAllNotes(context);
+              if (mounted) {
+                final detailedLocation =
+                    BackupService.getDetailedFileLocation(filePath);
+
+                // Show success message with detailed location (like PDF exporter)
+                CustomSnackBar.show(context,
+                    'Backup exported successfully to $detailedLocation',
+                    isSuccess: true);
+              }
+            } catch (e) {
+              if (mounted) {
+                CustomSnackBar.show(context, 'Backup failed: $e');
+              }
             }
           },
         ),
