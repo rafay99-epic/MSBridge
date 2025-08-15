@@ -6,6 +6,9 @@ import 'package:msbridge/core/ai/notes_context_builder.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/database/chat_history/chat_history.dart';
+import 'package:msbridge/core/repo/chat_history_repo.dart';
+import 'package:uuid/uuid.dart';
 
 class ChatMessage {
   final bool fromUser;
@@ -26,6 +29,10 @@ class ChatProvider extends ChangeNotifier {
   String? _contextJson;
   String _modelName = AIModelsConfig.models.first.modelName;
 
+  // Chat history properties
+  String? _currentChatId;
+  bool _isHistoryEnabled = true;
+
   // Error handling states
   bool _isLoading = false;
   bool _hasError = false;
@@ -37,6 +44,10 @@ class ChatProvider extends ChangeNotifier {
   String? get lastErrorMessage => _lastErrorMessage;
   GenerativeModel? get model => _model;
   String get modelName => _modelName;
+
+  // Chat history getters
+  String? get currentChatId => _currentChatId;
+  bool get isHistoryEnabled => _isHistoryEnabled;
 
   // Initialize the chat model
   Future<void> _initializeModel() async {
@@ -139,7 +150,11 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // Ask a question to the AI
-  Future<String?> ask(String question) async {
+  Future<String?> ask(
+    String question, {
+    bool includePersonal = true,
+    bool includeMsNotes = true,
+  }) async {
     if (question.trim().isEmpty) {
       _setError('Question cannot be empty', null, null);
       return null;
@@ -163,6 +178,14 @@ class ChatProvider extends ChangeNotifier {
       // Add user message
       messages.add(ChatMessage(true, question));
       notifyListeners();
+
+      // Save to chat history if enabled
+      if (_isHistoryEnabled) {
+        await saveChatToHistory(
+          includePersonal: includePersonal,
+          includeMsNotes: includeMsNotes,
+        );
+      }
 
       // Prepare content for AI with context from notes
       await FirebaseCrashlytics.instance.log(
@@ -320,6 +343,135 @@ USER_QUESTION: $question'''),
     // Reinitialize the model with new selection
     _model = null;
     await _initializeModel();
+    notifyListeners();
+  }
+
+  // Chat History Methods
+
+  // Set history enabled state
+  void setHistoryEnabled(bool enabled) {
+    _isHistoryEnabled = enabled;
+    notifyListeners();
+  }
+
+  // Save current chat to history
+  Future<void> saveChatToHistory({
+    bool includePersonal = true,
+    bool includeMsNotes = true,
+  }) async {
+    if (!_isHistoryEnabled || messages.isEmpty) return;
+
+    try {
+      // Generate chat ID if not exists
+      if (_currentChatId == null) {
+        _currentChatId = const Uuid().v4();
+      }
+
+      // Create chat title from first user message
+      String title = 'AI Chat';
+      if (messages.isNotEmpty) {
+        final firstUserMessage = messages.firstWhere(
+          (msg) => msg.fromUser,
+          orElse: () => messages.first,
+        );
+        title = firstUserMessage.text.length > 50
+            ? '${firstUserMessage.text.substring(0, 50)}...'
+            : firstUserMessage.text;
+      }
+
+      // Convert messages to history format
+      final historyMessages = messages
+          .map((msg) => ChatHistoryMessage(
+                text: msg.text,
+                fromUser: msg.fromUser,
+                timestamp: DateTime.now(),
+                isError: msg.isError,
+                errorDetails: msg.errorDetails,
+              ))
+          .toList();
+
+      // Create chat history object
+      final chatHistory = ChatHistory(
+        id: _currentChatId!,
+        title: title,
+        messages: historyMessages,
+        createdAt: DateTime.now(),
+        lastUpdated: DateTime.now(),
+        includePersonal: includePersonal,
+        includeMsNotes: includeMsNotes,
+        modelName: _modelName,
+      );
+
+      // Save to Hive
+      await ChatHistoryRepo.saveChatHistory(chatHistory);
+
+      await FirebaseCrashlytics.instance.log(
+        'Chat history saved: ${chatHistory.id} with ${historyMessages.length} messages',
+      );
+    } catch (e, stackTrace) {
+      await FirebaseCrashlytics.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'Failed to save chat history',
+        information: ['Messages count: ${messages.length}'],
+      );
+    }
+  }
+
+  // Load chat from history
+  Future<void> loadChatFromHistory(ChatHistory chatHistory) async {
+    try {
+      // Clear current chat
+      messages.clear();
+      _currentChatId = chatHistory.id;
+      _modelName = chatHistory.modelName;
+
+      // Convert history messages back to chat messages
+      for (final historyMsg in chatHistory.messages) {
+        messages.add(ChatMessage(
+          historyMsg.fromUser,
+          historyMsg.text,
+          isError: historyMsg.isError,
+          errorDetails: historyMsg.errorDetails,
+        ));
+      }
+
+      // Update context based on history settings
+      if (chatHistory.includePersonal || chatHistory.includeMsNotes) {
+        _contextJson = await NotesContextBuilder.buildJson(
+          includePersonal: chatHistory.includePersonal,
+          includeMsNotes: chatHistory.includeMsNotes,
+        );
+      }
+
+      // Initialize model if needed
+      if (_model == null) {
+        await _initializeModel();
+      }
+
+      _clearError();
+      notifyListeners();
+
+      await FirebaseCrashlytics.instance.log(
+        'Chat loaded from history: ${chatHistory.id}',
+      );
+    } catch (e, stackTrace) {
+      await FirebaseCrashlytics.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'Failed to load chat from history',
+        information: ['Chat ID: ${chatHistory.id}'],
+      );
+      _setError('Failed to load chat history', e, stackTrace);
+    }
+  }
+
+  // Start new chat session
+  void startNewChat() {
+    messages.clear();
+    _currentChatId = null;
+    _contextJson = null;
+    _clearError();
     notifyListeners();
   }
 }

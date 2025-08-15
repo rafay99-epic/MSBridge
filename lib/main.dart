@@ -8,7 +8,9 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
+import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
@@ -16,6 +18,7 @@ import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
@@ -43,6 +46,11 @@ void main() async {
     await Hive.openBox<NoteTakingModel>('notes_taking');
     await Hive.openBox<NoteTakingModel>('deleted_notes');
 
+    // Register chat history adapters
+    Hive.registerAdapter(ChatHistoryAdapter());
+    Hive.registerAdapter(ChatHistoryMessageAdapter());
+    await Hive.openBox<ChatHistory>('chat_history');
+
     runApp(
       MultiProvider(
         providers: [
@@ -63,6 +71,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
+          ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
         ],
         child: const MyApp(),
       ),
@@ -130,14 +139,12 @@ class _DynamicLinkObserver extends NavigatorObserver {
   }
 
   void _initDynamicLinks() async {
-    // Handle dynamic links when app is opened from background/terminated
     final PendingDynamicLinkData? initialLink =
         await FirebaseDynamicLinks.instance.getInitialLink();
     if (initialLink?.link != null) {
       _handleLink(initialLink!.link);
     }
 
-    // Handle dynamic links while app is in foreground
     FirebaseDynamicLinks.instance.onLink.listen((data) {
       _handleLink(data.link);
     });

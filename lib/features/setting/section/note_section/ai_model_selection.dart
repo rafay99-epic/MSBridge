@@ -122,16 +122,16 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: Column(
-            children: [
-              // Header Section
-              _buildHeaderSection(context, colorScheme, theme),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section
+                _buildHeaderSection(context, colorScheme, theme),
 
-              // Models List
-              Expanded(
-                child: _buildModelsList(context, colorScheme, theme),
-              ),
-            ],
+                // Models List
+                _buildModelsList(context, colorScheme, theme),
+              ],
+            ),
           ),
         ),
       ),

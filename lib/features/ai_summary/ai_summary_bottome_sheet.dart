@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 void showAiSummaryBottomSheet(BuildContext context) {
   showCupertinoModalBottomSheet(
     context: context,
+    isDismissible: true,
+    enableDrag: true,
     builder: (context) {
       return Consumer<NoteSummaryProvider>(
         builder: (context, noteSummaryProvider, _) {
@@ -18,24 +20,66 @@ void showAiSummaryBottomSheet(BuildContext context) {
           return Material(
             child: SafeArea(
               child: FractionallySizedBox(
-                heightFactor: 0.85,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                heightFactor: 0.9,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      buildTitle(context),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: buildSummaryText(
-                          context,
-                          aiSummary,
-                          isGeneratingSummary,
+                      // Handle bar
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outline
+                              .withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      buildButtonRow(context, aiSummary, isGeneratingSummary),
+
+                      // Header section
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: buildTitle(context),
+                      ),
+
+                      // Summary content
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: buildSummaryText(
+                            context,
+                            aiSummary,
+                            isGeneratingSummary,
+                          ),
+                        ),
+                      ),
+
+                      // Bottom actions
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          border: Border(
+                            top: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: buildButtonRow(
+                            context, aiSummary, isGeneratingSummary),
+                      ),
                     ],
                   ),
                 ),

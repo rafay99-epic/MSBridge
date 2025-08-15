@@ -21,6 +21,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/provider/chat_history_provider.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -199,7 +200,9 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             try {
               await SyncService().syncLocalNotesToFirebase();
-              if (mounted) CustomSnackBar.show(context, 'Synced successfully', isSuccess: true);
+              if (mounted)
+                CustomSnackBar.show(context, 'Synced successfully',
+                    isSuccess: true);
             } catch (e) {
               if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
             }
@@ -215,7 +218,13 @@ class _NotesSettingState extends State<NotesSetting> {
             final minutes = await _pickInterval(context);
             if (minutes == null) return;
             await AutoSyncScheduler.setIntervalMinutes(minutes);
-            if (mounted) CustomSnackBar.show(context, minutes == 0 ? 'Auto sync disabled' : 'Auto sync set to every $minutes min', isSuccess: true);
+            if (mounted)
+              CustomSnackBar.show(
+                  context,
+                  minutes == 0
+                      ? 'Auto sync disabled'
+                      : 'Auto sync set to every $minutes min',
+                  isSuccess: true);
           },
         ),
 
@@ -235,6 +244,27 @@ class _NotesSettingState extends State<NotesSetting> {
               PageTransition(
                 type: PageTransitionType.rightToLeft,
                 child: const ChatAssistantPage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // Chat History Toggle
+        Consumer<ChatHistoryProvider>(
+          builder: (context, historyProvider, _) {
+            return buildModernSettingsTile(
+              context,
+              title: "Chat History",
+              subtitle: historyProvider.isHistoryEnabled
+                  ? "Chat history is being saved"
+                  : "Chat history is disabled",
+              icon: LineIcons.history,
+              trailing: Switch(
+                value: historyProvider.isHistoryEnabled,
+                onChanged: (value) => historyProvider.toggleHistoryEnabled(),
+                activeColor: Theme.of(context).colorScheme.primary,
               ),
             );
           },

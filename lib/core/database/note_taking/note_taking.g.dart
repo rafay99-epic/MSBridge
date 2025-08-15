@@ -24,7 +24,7 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       isDeleted: fields[4] as bool,
       updatedAt: fields[5] as DateTime?,
       userId: fields[6] as String,
-      tags: (fields[7] as List?)?.cast<String>() ?? const [],
+      tags: (fields[7] as List?)?.cast<String>(),
     );
   }
 
