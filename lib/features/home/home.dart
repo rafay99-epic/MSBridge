@@ -169,13 +169,6 @@ class _HomeState extends State<Home> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -187,9 +180,8 @@ class _HomeState extends State<Home> {
             activeColor: colorScheme.primary,
             tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            gap: 4,
-            duration: const Duration(
-                milliseconds: 150), // Further reduced for better performance
+            gap: 5,
+            duration: const Duration(milliseconds: 150),
             tabs: [
               GButton(
                 icon: LineIcons.book,
