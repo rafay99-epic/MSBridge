@@ -106,7 +106,9 @@ class CustomSnackBar {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
