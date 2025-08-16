@@ -4,27 +4,24 @@ import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_page.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
-import 'package:msbridge/features/profile/profile_edit_page.dart';
+
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/backup_service.dart';
-import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
-import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/setting/widgets/bottom_sheet_widgets.dart';
+import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 
 class NavigationMethods {
   static void navigateToProfile(BuildContext context) {
-    Navigator.push(
-      context,
-      PageTransition(
-        type: PageTransitionType.rightToLeft,
-        child: const ProfileEditPage(),
-      ),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) =>
+          BottomSheetWidgets.buildProfileManagementBottomSheet(context),
     );
   }
 
@@ -265,5 +262,9 @@ class NavigationMethods {
   static void navigateToContactMessages(BuildContext context) {
     CustomSnackBar.show(context, 'Contact Messages is under development.',
         isSuccess: false);
+  }
+
+  static void logoutUser(BuildContext context) {
+    showLogoutDialog(context);
   }
 }

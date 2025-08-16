@@ -63,8 +63,8 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
     _allSettings = [
       // Account & Security
       SearchableSetting(
-        title: "Profile",
-        subtitle: "Edit your personal information",
+        title: "Profile Management",
+        subtitle: "Edit profile, change password, and logout",
         icon: LineIcons.user,
         section: "Account & Security",
         onTap: () => NavigationMethods.navigateToProfile(context),
@@ -272,7 +272,7 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                   QuickActionsWidget(
                     theme: theme,
                     colorScheme: colorScheme,
-                    onAskAI: () => NavigationMethods.navigateToAI(context),
+                    onLogout: () => NavigationMethods.logoutUser(context),
                     onSyncNow: () => NavigationMethods.syncNow(context),
                     onBackup: () => NavigationMethods.createBackup(context),
                   ),
@@ -284,8 +284,8 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                     title: "Account & Security",
                     children: [
                       SettingsTile(
-                        title: "Profile",
-                        subtitle: "Edit your personal information",
+                        title: "Profile Management",
+                        subtitle: "Edit profile, change password, and logout",
                         icon: LineIcons.user,
                         onTap: () =>
                             NavigationMethods.navigateToProfile(context),

@@ -4,7 +4,7 @@ import 'package:line_icons/line_icons.dart';
 class QuickActionsWidget extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
-  final VoidCallback onAskAI;
+  final VoidCallback onLogout;
   final VoidCallback onSyncNow;
   final VoidCallback onBackup;
 
@@ -12,7 +12,7 @@ class QuickActionsWidget extends StatelessWidget {
     super.key,
     required this.theme,
     required this.colorScheme,
-    required this.onAskAI,
+    required this.onLogout,
     required this.onSyncNow,
     required this.onBackup,
   });
@@ -25,10 +25,10 @@ class QuickActionsWidget extends StatelessWidget {
         children: [
           Expanded(
             child: QuickActionTile(
-              title: "Ask AI",
-              icon: LineIcons.robot,
-              color: colorScheme.primary,
-              onTap: onAskAI,
+              title: "Logout",
+              icon: LineIcons.alternateSignOut,
+              color: Colors.red,
+              onTap: onLogout,
             ),
           ),
           const SizedBox(width: 12),
