@@ -62,8 +62,19 @@ class _CreateNoteState extends State<CreateNote>
     if (!current.contains(tag)) {
       current.add(tag);
       _tagsNotifier.value = current;
+
+      // Clear input immediately for better UX
+      _tagInputController.clear();
+
+      // Trigger auto-save for tags (faster than content auto-save)
+      if (FeatureFlag.enableAutoSave) {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 1), () {
+          _currentFocusArea.value = 'tags';
+          _saveNote();
+        });
+      }
     }
-    _tagInputController.clear();
   }
 
   @override
@@ -119,6 +130,15 @@ class _CreateNoteState extends State<CreateNote>
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
         _debounceTimer = Timer(const Duration(seconds: 3), () {
           _currentFocusArea.value = 'editor';
+          _saveNote();
+        });
+      });
+
+      // Auto-save when tags change
+      _tagsNotifier.addListener(() {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 2), () {
+          _currentFocusArea.value = 'tags';
           _saveNote();
         });
       });
@@ -455,7 +475,7 @@ class _CreateNoteState extends State<CreateNote>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: TextField(
                 controller: _titleController,
                 focusNode: _titleFocusNode,
@@ -473,81 +493,122 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
-            // Tags editor (redesigned)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
+            // Compact Tags Section (Space Optimized)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Text(
-                      'Tags',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  // Compact Tags Display
                   ValueListenableBuilder<List<String>>(
                     valueListenable: _tagsNotifier,
                     builder: (context, tags, _) {
                       if (tags.isEmpty) {
                         return const SizedBox.shrink();
                       }
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final t in tags)
-                            InputChip(
-                              label: Text(t),
-                              labelStyle: TextStyle(
-                                color: theme.colorScheme.primary,
+                      return SizedBox(
+                        height: 30,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: tags.length,
+                          itemBuilder: (context, index) {
+                            final tag = tags[index];
+                            return Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              child: Chip(
+                                label: Text(
+                                  tag,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                deleteIcon: Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                onDeleted: () {
+                                  final next = List<String>.from(tags)
+                                    ..remove(tag);
+                                  _tagsNotifier.value = next;
+
+                                  // Auto-save when tag is deleted
+                                  if (FeatureFlag.enableAutoSave) {
+                                    if (_debounceTimer?.isActive ?? false)
+                                      _debounceTimer!.cancel();
+                                    _debounceTimer =
+                                        Timer(const Duration(seconds: 1), () {
+                                      _currentFocusArea.value = 'tags';
+                                      _saveNote();
+                                    });
+                                  }
+                                },
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                               ),
-                              backgroundColor:
-                                  theme.colorScheme.surfaceContainerHighest,
-                              onDeleted: () {
-                                final next = List<String>.from(tags)..remove(t);
-                                _tagsNotifier.value = next;
-                              },
-                            ),
-                        ],
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _tagInputController,
-                    focusNode: _tagFocusNode,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: _addTag,
-                    decoration: InputDecoration(
-                      hintText: 'Add a tag and press Enter',
-                      prefixIcon: const Icon(Icons.tag),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.add),
-                        tooltip: 'Add tag',
-                        onPressed: () => _addTag(_tagInputController.text),
-                      ),
-                      border: const OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
+
+                  // Compact Tag Input (Floating Style)
+                  Container(
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _tagInputController,
+                            focusNode: _tagFocusNode,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: _addTag,
+                            style: TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Add tag...',
+                              hintStyle:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                              prefixIcon: Icon(Icons.tag, size: 16),
+                              suffixIcon: IconButton(
+                                icon: Icon(Icons.add, size: 18),
+                                tooltip: 'Add tag',
+                                onPressed: () =>
+                                    _addTag(_tagInputController.text),
+                                padding: EdgeInsets.zero,
+                                constraints:
+                                    BoxConstraints(minWidth: 32, minHeight: 32),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.outlineVariant),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.outlineVariant),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.primary,
+                                    width: 1.5),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              isDense: true,
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -578,7 +639,7 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 16),
             QuillToolbar.simple(
               configurations: QuillSimpleToolbarConfigurations(
                 controller: _controller,
@@ -704,7 +765,7 @@ class _CreateNoteState extends State<CreateNote>
                     style: TextStyle(
                         color: theme.colorScheme.primary.withOpacity(0.9)),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       ElevatedButton.icon(
