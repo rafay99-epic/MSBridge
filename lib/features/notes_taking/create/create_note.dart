@@ -19,6 +19,8 @@ import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/core/services/streak_integration_service.dart';
+import "package:firebase_crashlytics/firebase_crashlytics.dart";
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -231,6 +233,14 @@ class _CreateNoteState extends State<CreateNote>
         );
         if (result.success && result.note != null) {
           _currentNote = result.note;
+
+          // Update streak when note is created via auto-save
+          try {
+            await _updateStreakOnNoteCreation();
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                reason: "Streak update failed on note creation");
+          }
         }
       }
 
@@ -254,7 +264,7 @@ class _CreateNoteState extends State<CreateNote>
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
-        CustomSnackBar.show(context, "Error saving note: $e");
+        CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
       }
     }
     _isSaving = false;
@@ -281,7 +291,7 @@ class _CreateNoteState extends State<CreateNote>
           tags: _tagsNotifier.value,
         );
         if (result.success) {
-          CustomSnackBar.show(context, result.message);
+          CustomSnackBar.show(context, result.message, isSuccess: true);
           Navigator.pop(context);
         }
       } else {
@@ -293,24 +303,35 @@ class _CreateNoteState extends State<CreateNote>
 
         if (result.success) {
           _currentNote = result.note ?? _currentNote;
-          CustomSnackBar.show(context, result.message);
+          CustomSnackBar.show(context, result.message, isSuccess: true);
+
+          // Update streak when note is created
+          try {
+            await _updateStreakOnNoteCreation();
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                reason: "Streak update failed on note creation");
+          }
+
           Navigator.pop(context);
         }
       }
     } catch (e) {
-      CustomSnackBar.show(context, "Error saving note: $e");
+      CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }
 
   Future<void> _generateAiSummary(BuildContext context) async {
     if (_internetHelper.connectivitySubject.value == false) {
-      CustomSnackBar.show(context, "Sorry No Internet Connection!");
+      CustomSnackBar.show(context, "Sorry No Internet Connection!",
+          isSuccess: false);
       return;
     }
 
     final noteContent = _controller.document.toPlainText().trim();
     if (noteContent.isEmpty || noteContent.length < 50) {
-      CustomSnackBar.show(context, "Add more content for AI summarization");
+      CustomSnackBar.show(context, "Add more content for AI summarization",
+          isSuccess: false);
       return;
     }
     final noteSummaryProvider =
@@ -319,6 +340,15 @@ class _CreateNoteState extends State<CreateNote>
     showAiSummaryBottomSheet(context);
 
     noteSummaryProvider.summarizeNote(noteContent);
+  }
+
+  Future<void> _updateStreakOnNoteCreation() async {
+    try {
+      await StreakIntegrationService.onNoteCreated(context);
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Streak update failed on note creation");
+    }
   }
 
   @override
@@ -597,8 +627,10 @@ class _CreateNoteState extends State<CreateNote>
     if (_currentNote == null) {
       await manualSaveNote();
       if (_currentNote == null) {
-        if (mounted)
-          CustomSnackBar.show(context, 'Save the note before sharing');
+        if (mounted) {
+          CustomSnackBar.show(context, 'Save the note before sharing',
+              isSuccess: false);
+        }
         return;
       }
     }
@@ -640,8 +672,8 @@ class _CreateNoteState extends State<CreateNote>
                               currentUrl = url;
                             });
                             if (mounted) {
-                              CustomSnackBar.show(
-                                  context, 'Share link enabled');
+                              CustomSnackBar.show(context, 'Share link enabled',
+                                  isSuccess: true);
                             }
                           } else {
                             await ShareRepository.disableShare(note);
@@ -651,12 +683,14 @@ class _CreateNoteState extends State<CreateNote>
                             });
                             if (mounted) {
                               CustomSnackBar.show(
-                                  context, 'Share link disabled');
+                                  context, 'Share link disabled',
+                                  isSuccess: false);
                             }
                           }
                         } catch (e) {
                           if (mounted) {
-                            CustomSnackBar.show(context, e.toString());
+                            CustomSnackBar.show(context, e.toString(),
+                                isSuccess: false);
                           }
                         }
                       },
@@ -678,7 +712,8 @@ class _CreateNoteState extends State<CreateNote>
                           await Clipboard.setData(
                               ClipboardData(text: currentUrl!));
                           if (mounted) {
-                            CustomSnackBar.show(context, 'Link copied');
+                            CustomSnackBar.show(context, 'Link copied',
+                                isSuccess: true);
                           }
                         },
                         icon: const Icon(LineIcons.copy),

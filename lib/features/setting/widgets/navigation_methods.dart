@@ -1,12 +1,15 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_page.dart';
+import 'package:msbridge/features/setting/section/streak_section/streak_settings_page.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
 
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/core/services/backup_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -73,6 +76,16 @@ class NavigationMethods {
     );
   }
 
+  static void navigateToStreakSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      PageTransition(
+        type: PageTransitionType.rightToLeft,
+        child: const StreakSettingsPage(),
+      ),
+    );
+  }
+
   static void navigateToUpdateApp(BuildContext context) {
     Navigator.push(
       context,
@@ -113,7 +126,7 @@ class NavigationMethods {
     );
   }
 
-  static void syncNow(BuildContext context) async {
+  static Future<void> syncNow(BuildContext context) async {
     try {
       await SyncService().syncLocalNotesToFirebase();
       if (context.mounted) {
@@ -131,6 +144,45 @@ class NavigationMethods {
           isSuccess: false,
         );
       }
+      rethrow; // Re-throw to let the UI handle the error
+    }
+  }
+
+  static Future<void> pullFromCloud(BuildContext context) async {
+    try {
+      // Pull data from cloud
+      await ReverseSyncService().syncDataFromFirebaseToHive();
+
+      // Force refresh the notes list
+      await ReverseSyncService().refreshNotesList();
+
+      // Get count after pulling
+      final afterCount = await ReverseSyncService().getCloudNotesCount();
+
+      if (context.mounted) {
+        if (afterCount > 0) {
+          CustomSnackBar.show(
+            context,
+            'Notes pulled from cloud successfully',
+            isSuccess: true,
+          );
+        } else {
+          CustomSnackBar.show(
+            context,
+            'No notes found in cloud',
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context,
+          'Pull from cloud failed: $e',
+          isSuccess: false,
+        );
+      }
+      rethrow; // Re-throw to let the UI handle the error
     }
   }
 
@@ -148,6 +200,8 @@ class NavigationMethods {
       }
     } catch (e) {
       if (context.mounted) {
+        FirebaseCrashlytics.instance
+            .recordError(e, StackTrace.current, reason: "Backup failed");
         CustomSnackBar.show(
           context,
           'Backup failed: $e',

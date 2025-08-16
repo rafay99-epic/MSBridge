@@ -20,6 +20,7 @@ import 'package:msbridge/core/provider/ai_consent_provider.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
+import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
@@ -71,6 +72,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
+          ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),
       ),

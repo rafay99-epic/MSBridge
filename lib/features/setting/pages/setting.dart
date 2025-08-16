@@ -9,6 +9,9 @@ import 'package:msbridge/features/setting/widgets/settings_section_widget.dart';
 import 'package:msbridge/features/setting/widgets/danger_admin_widgets.dart';
 import 'package:msbridge/features/setting/widgets/app_bar_widget.dart';
 import 'package:msbridge/features/setting/widgets/navigation_methods.dart';
+import 'package:msbridge/widgets/streak_display_widget.dart';
+import 'package:provider/provider.dart';
+import 'package:msbridge/core/provider/streak_provider.dart';
 
 // Searchable setting item model
 class SearchableSetting {
@@ -112,6 +115,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         icon: LineIcons.database,
         section: "Notes & Sharing",
         onTap: () => NavigationMethods.navigateToDataManagement(context),
+      ),
+      SearchableSetting(
+        title: "Streak Settings",
+        subtitle: "Track daily note creation and get motivated",
+        icon: LineIcons.fire,
+        section: "Streak & Motivation",
+        onTap: () => NavigationMethods.navigateToStreakSettings(context),
       ),
 
       // System
@@ -268,12 +278,44 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
 
                   const SizedBox(height: 24),
 
+                  // Streak Display Section
+                  Consumer<StreakProvider>(
+                    builder: (context, streakProvider, child) {
+                      if (streakProvider.isLoading) {
+                        return const SizedBox.shrink();
+                      }
+
+                      if (!streakProvider.streakEnabled) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            child: StreakDisplayWidget(
+                              showExtendedInfo: false,
+                              showAppBar: false,
+                              onTap: () =>
+                                  NavigationMethods.navigateToStreakSettings(
+                                      context),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    },
+                  ),
+
                   // Quick Actions
                   QuickActionsWidget(
                     theme: theme,
                     colorScheme: colorScheme,
                     onLogout: () => NavigationMethods.logoutUser(context),
-                    onSyncNow: () => NavigationMethods.syncNow(context),
+                    onSyncNow: () async =>
+                        await NavigationMethods.syncNow(context),
+                    onPullFromCloud: () async =>
+                        await NavigationMethods.pullFromCloud(context),
                     onBackup: () => NavigationMethods.createBackup(context),
                   ),
 
@@ -340,6 +382,22 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         icon: LineIcons.database,
                         onTap: () =>
                             NavigationMethods.navigateToDataManagement(context),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Streak & Motivation Section
+                  SettingsSectionWidget(
+                    title: "Streak & Motivation",
+                    children: [
+                      SettingsTile(
+                        title: "Streak Settings",
+                        subtitle: "Track daily note creation and get motivated",
+                        icon: LineIcons.fire,
+                        onTap: () =>
+                            NavigationMethods.navigateToStreakSettings(context),
                       ),
                     ],
                   ),
