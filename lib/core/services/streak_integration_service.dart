@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
-import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
@@ -21,15 +20,17 @@ class StreakIntegrationService {
       // Update the streak
       await streakProvider.updateStreakOnActivity();
 
-      // Show success message
+      // Show success message (only for milestones)
       _showStreakUpdateMessage(context, streakProvider);
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,
         stackTrace,
         reason: 'Failed to update streak on note creation',
+        information: [
+          'Context mounted: ${context.mounted}',
+        ],
       );
-      debugPrint('Error updating streak: $e');
     }
   }
 
@@ -47,25 +48,28 @@ class StreakIntegrationService {
           "🎉 First note of the day! Your streak begins!",
           isSuccess: true,
         );
-      } else if (currentStreak % 7 == 0 && currentStreak > streakProvider.currentStreak.currentStreak - 1) {
+      } else if (currentStreak % 7 == 0 &&
+          currentStreak > streakProvider.currentStreak.currentStreak - 1) {
         // Week milestone - only show when first reaching it
         CustomSnackBar.show(
           context,
-          "🔥 Amazing! ${currentStreak}-day streak milestone reached!",
+          "🔥 Amazing! $currentStreak-day streak milestone reached!",
           isSuccess: true,
         );
-      } else if (currentStreak % 30 == 0 && currentStreak > streakProvider.currentStreak.currentStreak - 1) {
+      } else if (currentStreak % 30 == 0 &&
+          currentStreak > streakProvider.currentStreak.currentStreak - 1) {
         // Month milestone - only show when first reaching it
         CustomSnackBar.show(
           context,
-          "🌟 Incredible! ${currentStreak}-day streak milestone reached!",
+          "🌟 Incredible! $currentStreak-day streak milestone reached!",
           isSuccess: true,
         );
-      } else if (currentStreak % 100 == 0 && currentStreak > streakProvider.currentStreak.currentStreak - 1) {
+      } else if (currentStreak % 100 == 0 &&
+          currentStreak > streakProvider.currentStreak.currentStreak - 1) {
         // Century milestone - only show when first reaching it
         CustomSnackBar.show(
           context,
-          "💎 Legendary! ${currentStreak}-day streak milestone reached!",
+          " Legendary! $currentStreak-day streak milestone reached!",
           isSuccess: true,
         );
       }

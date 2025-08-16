@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/models/streak_settings_model.dart';
@@ -24,7 +23,6 @@ class StreakSettingsRepo {
         stackTrace,
         reason: 'Failed to load streak settings',
       );
-      debugPrint('Error loading streak settings: $e');
     }
 
     return StreakSettingsModel.defaultSettings();
@@ -36,8 +34,6 @@ class StreakSettingsRepo {
       final prefs = await SharedPreferences.getInstance();
       final settingsJson = json.encode(settings.toJson());
       await prefs.setString(_settingsKey, settingsJson);
-
-      debugPrint('Streak settings saved successfully');
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -45,7 +41,6 @@ class StreakSettingsRepo {
         reason: 'Failed to save streak settings',
         information: ['Settings: ${settings.toJson()}'],
       );
-      debugPrint('Error saving streak settings: $e');
     }
   }
 
@@ -96,8 +91,6 @@ class StreakSettingsRepo {
       }
 
       await saveStreakSettings(updatedSettings);
-
-      debugPrint('Setting $settingKey updated to $value');
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -105,7 +98,6 @@ class StreakSettingsRepo {
         reason: 'Failed to update streak setting',
         information: ['Setting: $settingKey', 'Value: $value'],
       );
-      debugPrint('Error updating setting $settingKey: $e');
     }
   }
 
@@ -114,15 +106,12 @@ class StreakSettingsRepo {
     try {
       final defaultSettings = StreakSettingsModel.defaultSettings();
       await saveStreakSettings(defaultSettings);
-
-      debugPrint('Streak settings reset to default');
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,
         stackTrace,
         reason: 'Failed to reset streak settings to default',
       );
-      debugPrint('Error resetting streak settings: $e');
     }
   }
 
@@ -197,8 +186,6 @@ class StreakSettingsRepo {
       if (backupData['settings'] != null) {
         final settings = StreakSettingsModel.fromJson(backupData['settings']);
         await saveStreakSettings(settings);
-
-        debugPrint('Streak settings imported successfully');
         return true;
       }
       return false;
@@ -209,7 +196,6 @@ class StreakSettingsRepo {
         reason: 'Failed to import streak settings',
         information: ['Backup data: $backupData'],
       );
-      debugPrint('Error importing streak settings: $e');
       return false;
     }
   }

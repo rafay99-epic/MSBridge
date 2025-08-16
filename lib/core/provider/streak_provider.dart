@@ -119,8 +119,12 @@ class StreakProvider extends ChangeNotifier {
         e,
         stackTrace,
         reason: 'Failed to update streak on activity',
+        information: [
+          'Streak enabled: $_settings.streakEnabled',
+          'Notifications enabled: $_settings.notificationsEnabled',
+          'Current streak before update: ${_currentStreak.currentStreak}',
+        ],
       );
-      debugPrint('Error updating streak: $e');
     }
   }
 
@@ -319,7 +323,7 @@ class StreakProvider extends ChangeNotifier {
 
   // Refresh streak data
   Future<void> refreshStreak() async {
-            await initializeStreak();
+    await initializeStreak();
   }
 
   // Check if streak needs attention

@@ -23,12 +23,12 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final streakProvider =
           Provider.of<StreakProvider>(context, listen: false);
-      
+
       // Ensure streak provider is initialized
       if (!streakProvider.isInitialized) {
         await streakProvider.initializeStreak();
       }
-      
+
       _selectedTime = streakProvider.notificationTime;
     });
   }
@@ -172,8 +172,10 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                 buildSettingsTile(context,
                     title: "Refresh Streak",
                     subtitle: "Update streak data",
-                    icon: LineIcons.syncIcon,
-                    onTap: () => streakProvider.refreshStreak()),
+                    icon: LineIcons.syncIcon, onTap: () async {
+                  await streakProvider.refreshStreak();
+                  setState(() {}); // Force UI refresh
+                }),
                 buildSettingsTile(context,
                     title: "Reset Streak",
                     subtitle: "Start fresh (for testing)",
