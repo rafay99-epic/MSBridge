@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
-import 'package:msbridge/features/changePassword/change_password.dart';
-import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 import 'package:msbridge/features/setting/section/user_section/pin_lock_screen.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/features/profile/profile_edit_page.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 
 class UserSettingsSection extends StatelessWidget {
@@ -19,42 +16,7 @@ class UserSettingsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile Management
-        _buildSubsectionHeader(context, "Profile Management", LineIcons.user),
-        const SizedBox(height: 12),
-        _buildModernSettingsTile(
-          context,
-          title: "Edit Profile",
-          subtitle: "Update your personal information",
-          icon: LineIcons.user,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const ProfileEditPage(),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildModernSettingsTile(
-          context,
-          title: "Change Password",
-          subtitle: "Update your account password",
-          icon: LineIcons.lock,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const Changepassword(),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 24),
+        // Security & Privacy
         _buildSubsectionHeader(
             context, "Security & Privacy", LineIcons.userShield),
         const SizedBox(height: 12),
@@ -277,45 +239,36 @@ class UserSettingsSection extends StatelessWidget {
           // Security & Privacy
           Consumer<FingerprintAuthProvider>(
             builder: (context, fingerprintProvider, child) {
-              return _buildModernSettingsTile(
-                context,
-                title: "Fingerprint Lock",
-                subtitle: "Use biometric authentication to secure the app",
-                icon: LineIcons.fingerprint,
-                trailing: Switch(
-                  value: fingerprintProvider.isFingerprintEnabled,
-                  onChanged: (value) async {
-                    if (value) {
-                      bool authenticated =
-                          await fingerprintProvider.authenticate(context);
-                      if (authenticated) {
-                        fingerprintProvider.setFingerprintEnabled(true);
-                      } else {
-                        CustomSnackBar.show(
-                            context, "Fingerprint authentication failed.");
-                      }
-                    } else {
-                      fingerprintProvider.setFingerprintEnabled(false);
-                    }
-                  },
-                ),
+              return Column(
+                children: [
+                  const SizedBox(height: 12),
+                  _buildModernSettingsTile(
+                    context,
+                    title: "Fingerprint Lock",
+                    subtitle: "Use biometric authentication to secure the app",
+                    icon: LineIcons.fingerprint,
+                    trailing: Switch(
+                      value: fingerprintProvider.isFingerprintEnabled,
+                      onChanged: (value) async {
+                        if (value) {
+                          bool authenticated =
+                              await fingerprintProvider.authenticate(context);
+                          if (authenticated) {
+                            fingerprintProvider.setFingerprintEnabled(true);
+                          } else {
+                            CustomSnackBar.show(
+                                context, "Fingerprint authentication failed.");
+                          }
+                        } else {
+                          fingerprintProvider.setFingerprintEnabled(false);
+                        }
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),
-
-        const SizedBox(height: 24),
-
-        // Account Actions
-        _buildSubsectionHeader(
-            context, "Account Actions", LineIcons.alternateSignOut),
-        const SizedBox(height: 12),
-        _buildModernSettingsTile(
-          context,
-          title: "Logout",
-          subtitle: "Sign out of your account",
-          icon: LineIcons.alternateSignOut,
-          onTap: () => showLogoutDialog(context),
-        ),
       ],
     );
   }

@@ -19,6 +19,8 @@ import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/core/services/streak_integration_service.dart';
+import "package:firebase_crashlytics/firebase_crashlytics.dart";
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note});
@@ -60,8 +62,19 @@ class _CreateNoteState extends State<CreateNote>
     if (!current.contains(tag)) {
       current.add(tag);
       _tagsNotifier.value = current;
+
+      // Clear input immediately for better UX
+      _tagInputController.clear();
+
+      // Trigger auto-save for tags (faster than content auto-save)
+      if (FeatureFlag.enableAutoSave) {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 1), () {
+          _currentFocusArea.value = 'tags';
+          _saveNote();
+        });
+      }
     }
-    _tagInputController.clear();
   }
 
   @override
@@ -117,6 +130,15 @@ class _CreateNoteState extends State<CreateNote>
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
         _debounceTimer = Timer(const Duration(seconds: 3), () {
           _currentFocusArea.value = 'editor';
+          _saveNote();
+        });
+      });
+
+      // Auto-save when tags change
+      _tagsNotifier.addListener(() {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 2), () {
+          _currentFocusArea.value = 'tags';
           _saveNote();
         });
       });
@@ -231,6 +253,14 @@ class _CreateNoteState extends State<CreateNote>
         );
         if (result.success && result.note != null) {
           _currentNote = result.note;
+
+          // Update streak when note is created via auto-save
+          try {
+            await _updateStreakOnNoteCreation();
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                reason: "Streak update failed on note creation");
+          }
         }
       }
 
@@ -254,7 +284,7 @@ class _CreateNoteState extends State<CreateNote>
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
-        CustomSnackBar.show(context, "Error saving note: $e");
+        CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
       }
     }
     _isSaving = false;
@@ -281,7 +311,7 @@ class _CreateNoteState extends State<CreateNote>
           tags: _tagsNotifier.value,
         );
         if (result.success) {
-          CustomSnackBar.show(context, result.message);
+          CustomSnackBar.show(context, result.message, isSuccess: true);
           Navigator.pop(context);
         }
       } else {
@@ -293,24 +323,35 @@ class _CreateNoteState extends State<CreateNote>
 
         if (result.success) {
           _currentNote = result.note ?? _currentNote;
-          CustomSnackBar.show(context, result.message);
+          CustomSnackBar.show(context, result.message, isSuccess: true);
+
+          // Update streak when note is created
+          try {
+            await _updateStreakOnNoteCreation();
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                reason: "Streak update failed on note creation");
+          }
+
           Navigator.pop(context);
         }
       }
     } catch (e) {
-      CustomSnackBar.show(context, "Error saving note: $e");
+      CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }
 
   Future<void> _generateAiSummary(BuildContext context) async {
     if (_internetHelper.connectivitySubject.value == false) {
-      CustomSnackBar.show(context, "Sorry No Internet Connection!");
+      CustomSnackBar.show(context, "Sorry No Internet Connection!",
+          isSuccess: false);
       return;
     }
 
     final noteContent = _controller.document.toPlainText().trim();
     if (noteContent.isEmpty || noteContent.length < 50) {
-      CustomSnackBar.show(context, "Add more content for AI summarization");
+      CustomSnackBar.show(context, "Add more content for AI summarization",
+          isSuccess: false);
       return;
     }
     final noteSummaryProvider =
@@ -319,6 +360,15 @@ class _CreateNoteState extends State<CreateNote>
     showAiSummaryBottomSheet(context);
 
     noteSummaryProvider.summarizeNote(noteContent);
+  }
+
+  Future<void> _updateStreakOnNoteCreation() async {
+    try {
+      await StreakIntegrationService.onNoteCreated(context);
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Streak update failed on note creation");
+    }
   }
 
   @override
@@ -425,7 +475,7 @@ class _CreateNoteState extends State<CreateNote>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: TextField(
                 controller: _titleController,
                 focusNode: _titleFocusNode,
@@ -443,81 +493,122 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
-            // Tags editor (redesigned)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
+            // Compact Tags Section (Space Optimized)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Text(
-                      'Tags',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  // Compact Tags Display
                   ValueListenableBuilder<List<String>>(
                     valueListenable: _tagsNotifier,
                     builder: (context, tags, _) {
                       if (tags.isEmpty) {
                         return const SizedBox.shrink();
                       }
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final t in tags)
-                            InputChip(
-                              label: Text(t),
-                              labelStyle: TextStyle(
-                                color: theme.colorScheme.primary,
+                      return SizedBox(
+                        height: 30,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: tags.length,
+                          itemBuilder: (context, index) {
+                            final tag = tags[index];
+                            return Container(
+                              margin: const EdgeInsets.only(right: 6),
+                              child: Chip(
+                                label: Text(
+                                  tag,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                deleteIcon: Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                onDeleted: () {
+                                  final next = List<String>.from(tags)
+                                    ..remove(tag);
+                                  _tagsNotifier.value = next;
+
+                                  // Auto-save when tag is deleted
+                                  if (FeatureFlag.enableAutoSave) {
+                                    if (_debounceTimer?.isActive ?? false)
+                                      _debounceTimer!.cancel();
+                                    _debounceTimer =
+                                        Timer(const Duration(seconds: 1), () {
+                                      _currentFocusArea.value = 'tags';
+                                      _saveNote();
+                                    });
+                                  }
+                                },
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                               ),
-                              backgroundColor:
-                                  theme.colorScheme.surfaceContainerHighest,
-                              onDeleted: () {
-                                final next = List<String>.from(tags)..remove(t);
-                                _tagsNotifier.value = next;
-                              },
-                            ),
-                        ],
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _tagInputController,
-                    focusNode: _tagFocusNode,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: _addTag,
-                    decoration: InputDecoration(
-                      hintText: 'Add a tag and press Enter',
-                      prefixIcon: const Icon(Icons.tag),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.add),
-                        tooltip: 'Add tag',
-                        onPressed: () => _addTag(_tagInputController.text),
-                      ),
-                      border: const OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
+
+                  // Compact Tag Input (Floating Style)
+                  Container(
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _tagInputController,
+                            focusNode: _tagFocusNode,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: _addTag,
+                            style: TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Add tag...',
+                              hintStyle:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                              prefixIcon: Icon(Icons.tag, size: 16),
+                              suffixIcon: IconButton(
+                                icon: Icon(Icons.add, size: 18),
+                                tooltip: 'Add tag',
+                                onPressed: () =>
+                                    _addTag(_tagInputController.text),
+                                padding: EdgeInsets.zero,
+                                constraints:
+                                    BoxConstraints(minWidth: 32, minHeight: 32),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.outlineVariant),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.outlineVariant),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(
+                                    color: theme.colorScheme.primary,
+                                    width: 1.5),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              isDense: true,
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -548,7 +639,7 @@ class _CreateNoteState extends State<CreateNote>
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 16),
             QuillToolbar.simple(
               configurations: QuillSimpleToolbarConfigurations(
                 controller: _controller,
@@ -597,8 +688,10 @@ class _CreateNoteState extends State<CreateNote>
     if (_currentNote == null) {
       await manualSaveNote();
       if (_currentNote == null) {
-        if (mounted)
-          CustomSnackBar.show(context, 'Save the note before sharing');
+        if (mounted) {
+          CustomSnackBar.show(context, 'Save the note before sharing',
+              isSuccess: false);
+        }
         return;
       }
     }
@@ -640,8 +733,8 @@ class _CreateNoteState extends State<CreateNote>
                               currentUrl = url;
                             });
                             if (mounted) {
-                              CustomSnackBar.show(
-                                  context, 'Share link enabled');
+                              CustomSnackBar.show(context, 'Share link enabled',
+                                  isSuccess: true);
                             }
                           } else {
                             await ShareRepository.disableShare(note);
@@ -651,12 +744,14 @@ class _CreateNoteState extends State<CreateNote>
                             });
                             if (mounted) {
                               CustomSnackBar.show(
-                                  context, 'Share link disabled');
+                                  context, 'Share link disabled',
+                                  isSuccess: false);
                             }
                           }
                         } catch (e) {
                           if (mounted) {
-                            CustomSnackBar.show(context, e.toString());
+                            CustomSnackBar.show(context, e.toString(),
+                                isSuccess: false);
                           }
                         }
                       },
@@ -670,7 +765,7 @@ class _CreateNoteState extends State<CreateNote>
                     style: TextStyle(
                         color: theme.colorScheme.primary.withOpacity(0.9)),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       ElevatedButton.icon(
@@ -678,7 +773,8 @@ class _CreateNoteState extends State<CreateNote>
                           await Clipboard.setData(
                               ClipboardData(text: currentUrl!));
                           if (mounted) {
-                            CustomSnackBar.show(context, 'Link copied');
+                            CustomSnackBar.show(context, 'Link copied',
+                                isSuccess: true);
                           }
                         },
                         icon: const Icon(LineIcons.copy),

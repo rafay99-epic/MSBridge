@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
@@ -16,16 +17,38 @@ class SyncService {
 
   Future<void> _initHive() async {
     await Hive.initFlutter();
+    // Ensure the notes box is open before proceeding
+    await HiveNoteTakingRepo.getBox();
   }
 
   Future<void> startListening() async {
     try {
+      // Ensure Hive is properly initialized first
+      await _initHive();
+
       // Check global sync toggle before syncing
       final enabled = await _isCloudSyncEnabled();
       if (!enabled) return;
+
+      // Refresh Hive box state before syncing
+      await _refreshHiveBoxState();
+
       await syncLocalNotesToFirebase();
     } catch (e) {
-      throw Exception("⚠️ Error starting Hive listener: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Error starting sync service");
+      throw Exception("⚠️ Error starting sync service: $e");
+    }
+  }
+
+  Future<void> _refreshHiveBoxState() async {
+    try {
+      final box = await HiveNoteTakingRepo.getBox();
+      await box.flush();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to refresh Hive box state");
+      // Continue anyway - this is not critical
     }
   }
 
@@ -33,9 +56,19 @@ class SyncService {
     try {
       final enabled = await _isCloudSyncEnabled();
       if (!enabled) return;
-      List<NoteTakingModel> allNotes = await HiveNoteTakingRepo.getNotes();
-      Box<NoteTakingModel> deletedNotesBox =
-          await HiveNoteTakingRepo.getDeletedBox();
+
+      // Get notes with better error handling
+      List<NoteTakingModel> allNotes;
+      Box<NoteTakingModel> deletedNotesBox;
+
+      try {
+        allNotes = await HiveNoteTakingRepo.getNotes();
+        deletedNotesBox = await HiveNoteTakingRepo.getDeletedBox();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Failed to access local notes");
+        throw Exception("⚠️ Failed to access local notes: $e");
+      }
 
       User? user = await _getCurrentUser();
       if (user == null) {
@@ -47,6 +80,8 @@ class SyncService {
       await _syncDeletedNotes(userId, deletedNotesBox);
       await _syncUpdatedNotes(userId, allNotes);
     } catch (e) {
+      FirebaseCrashlytics.instance
+          .recordError(e, StackTrace.current, reason: "General Sync Error");
       throw Exception("⚠️ General Sync Error: $e");
     }
   }
@@ -70,21 +105,35 @@ class SyncService {
 
     for (var note in unsyncedNotes) {
       try {
+        // Skip notes without valid IDs
+        if (note.noteId == null || note.noteId!.isEmpty) {
+          continue;
+        }
+
         CollectionReference userNotesCollection =
             _firestore.collection('users').doc(userId).collection('notes');
 
         Map<String, dynamic> noteData = note.toMap();
 
-        if (note.noteId == null || note.noteId!.isEmpty) {
-          var ref = await userNotesCollection.add(noteData);
-          note.noteId = ref.id;
-        } else {
-          await userNotesCollection.doc(note.noteId).set(noteData);
-        }
+        await userNotesCollection.doc(note.noteId).set(noteData);
 
-        note.isSynced = true;
-        await HiveNoteTakingRepo.updateNote(note);
+        // Re-fetch the note from Hive to ensure it has proper box association
+        try {
+          final box = await HiveNoteTakingRepo.getBox();
+          final freshNote = box.get(note.noteId);
+          if (freshNote != null) {
+            freshNote.isSynced = true;
+            await freshNote.save();
+          }
+        } catch (hiveError) {
+          FirebaseCrashlytics.instance.recordError(
+              hiveError, StackTrace.current,
+              reason: "Failed to update note in Hive after unsynced sync");
+          // Continue with Firebase sync even if Hive update fails
+        }
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Sync Failed for ${note.noteTitle}, ID: ${note.noteId}");
         throw Exception(
             "⚠️ Sync Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
       }
@@ -107,6 +156,9 @@ class SyncService {
 
           await HiveNoteTakingRepo.deleteNote(note);
         } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason:
+                  "Delete from Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}");
           throw Exception(
               "⚠️ Delete from Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
         }
@@ -118,7 +170,11 @@ class SyncService {
       String userId, List<NoteTakingModel> allNotes) async {
     List<NoteTakingModel> updatedNotes = [];
     for (var note in allNotes) {
-      if (note.isSynced && !note.isDeleted && note.userId == userId) {
+      if (note.isSynced &&
+          !note.isDeleted &&
+          note.userId == userId &&
+          note.noteId != null &&
+          note.noteId!.isNotEmpty) {
         try {
           Map<String, dynamic> hiveData = note.toMap();
 
@@ -141,6 +197,9 @@ class SyncService {
             updatedNotes.add(note);
           }
         } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason:
+                  "Error comparing note ${note.noteTitle}, ID: ${note.noteId}");
           throw Exception(
               "⚠️ Error comparing note ${note.noteTitle}, ID: ${note.noteId}: $e");
         }
@@ -154,8 +213,26 @@ class SyncService {
         Map<String, dynamic> noteData = note.toMap();
 
         await userNotesCollection.doc(note.noteId).set(noteData);
-        await HiveNoteTakingRepo.updateNote(note);
+
+        // Re-fetch the note from Hive to ensure it has proper box association
+        try {
+          final box = await HiveNoteTakingRepo.getBox();
+          final freshNote = box.get(note.noteId);
+          if (freshNote != null) {
+            // Update the fresh note with new data
+            freshNote.isSynced = true;
+            await freshNote.save();
+          }
+        } catch (hiveError) {
+          FirebaseCrashlytics.instance.recordError(
+              hiveError, StackTrace.current,
+              reason: "Failed to update note in Hive after Firebase sync");
+          // Continue with Firebase sync even if Hive update fails
+        }
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason:
+                "Update in Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}");
         throw Exception(
             "⚠️ Update in Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
       }

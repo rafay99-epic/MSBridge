@@ -20,7 +20,10 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: const CustomAppBar(title: "Appearance"),
+      appBar: const CustomAppBar(
+        title: "Appearance",
+        showBackButton: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),

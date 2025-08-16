@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:flutter/foundation.dart';
 
 class ReverseSyncService {
   final AuthRepo _authRepo = AuthRepo();
@@ -10,61 +12,181 @@ class ReverseSyncService {
 
   Future<void> syncDataFromFirebaseToHive() async {
     try {
+      // Check if Hive is initialized - let the repo handle this
+      try {
+        await HiveNoteTakingRepo.getBox();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Failed to initialize Hive notes box");
+        throw Exception("Failed to initialize local storage: $e");
+      }
+
       final userResult = await _authRepo.getCurrentUser();
 
       if (!userResult.isSuccess || userResult.user == null) {
-        return;
+        final errorMessage = userResult.error ?? "User not authenticated";
+        FirebaseCrashlytics.instance.recordError(
+            Exception(errorMessage), StackTrace.current,
+            reason: "User not authenticated");
+        throw Exception(errorMessage);
       }
 
       final user = userResult.user!;
       final userId = user.uid;
 
-      final isHiveEmpty = await HiveNoteTakingRepo.isBoxEmpty();
+      // Always pull from cloud, regardless of local state
+      try {
+        final userNotesCollection =
+            _firestore.collection('users').doc(userId).collection('notes');
 
-      if (isHiveEmpty) {
+        final QuerySnapshot notesSnapshot = await userNotesCollection.get();
+
+        if (notesSnapshot.docs.isEmpty) {
+          return; // No notes in cloud
+        }
+
+        // Clear existing local notes to avoid duplicates
+        final box = await HiveNoteTakingRepo.getBox();
         try {
-          final userNotesCollection =
-              _firestore.collection('users').doc(userId).collection('notes');
+          await box.clear();
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to clear local notes");
+          // Continue anyway - might be empty already
+        }
 
-          final QuerySnapshot notesSnapshot = await userNotesCollection.get();
+        const batchSize = 50;
+        for (var i = 0; i < notesSnapshot.docs.length; i += batchSize) {
+          final batch = notesSnapshot.docs.sublist(
+              i,
+              (i + batchSize < notesSnapshot.docs.length)
+                  ? i + batchSize
+                  : notesSnapshot.docs.length);
 
-          const batchSize = 50;
-          for (var i = 0; i < notesSnapshot.docs.length; i += batchSize) {
-            final batch = notesSnapshot.docs.sublist(
-                i,
-                (i + batchSize < notesSnapshot.docs.length)
-                    ? i + batchSize
-                    : notesSnapshot.docs.length);
+          final Map<String, NoteTakingModel> notesToAdd = {};
+          for (final doc in batch) {
+            final data = doc.data() as Map<String, dynamic>;
 
-            final Map<String, NoteTakingModel> notesToAdd = {};
-            for (final doc in batch) {
-              final data = doc.data() as Map<String, dynamic>;
-
-              final noteMap = {
-                'noteId': doc.id,
-                'noteTitle': data['noteTitle'] ?? '',
-                'noteContent': data['noteContent'] ?? '',
-                'isSynced': data['isSynced'] ?? false,
-                'isDeleted': data['isDeleted'] ?? false,
-                'updatedAt':
-                    data['updatedAt'] ?? DateTime.now().toIso8601String(),
-                'userId': userId,
-                'tags': (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
-              };
-
-              final note = NoteTakingModel.fromMap(noteMap);
-              notesToAdd[note.noteId!] = note;
+            // Skip deleted notes
+            if (data['isDeleted'] == true) {
+              continue;
             }
 
-            final box = await HiveNoteTakingRepo.getBox();
-            await box.putAll(notesToAdd);
+            // Handle date parsing more safely
+            String updatedAtString;
+            try {
+              if (data['updatedAt'] != null) {
+                updatedAtString = data['updatedAt'].toString();
+                // Validate the date string
+                DateTime.parse(updatedAtString);
+              } else {
+                updatedAtString = DateTime.now().toIso8601String();
+              }
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                  reason: "Invalid date format in cloud note");
+              updatedAtString = DateTime.now().toIso8601String();
+            }
+
+            final noteMap = {
+              'noteId': doc.id,
+              'noteTitle': data['noteTitle'] ?? '',
+              'noteContent': data['noteContent'] ?? '',
+              'isSynced': true, // Mark as synced since it came from cloud
+              'isDeleted': false,
+              'updatedAt': updatedAtString,
+              'userId': userId,
+              'tags':
+                  (data['tags'] as List?)?.map((e) => e.toString()).toList() ??
+                      const [],
+            };
+
+            try {
+              final note = NoteTakingModel.fromMap(noteMap);
+              notesToAdd[note.noteId!] = note;
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                  reason: "Failed to create NoteTakingModel from map");
+              debugPrint('Failed to create note from map: $e, data: $noteMap');
+              continue; // Skip this note and continue with others
+            }
           }
-        } catch (firebaseError) {
-          rethrow;
+
+          if (notesToAdd.isNotEmpty) {
+            try {
+              await box.putAll(notesToAdd);
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                  reason: "Failed to save notes to local box");
+              throw Exception("Failed to save notes locally: $e");
+            }
+          }
         }
+
+        // Force refresh the Hive box
+        try {
+          await box.flush();
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to flush Hive box");
+          // Continue anyway - flush failure shouldn't break the operation
+        }
+      } catch (firebaseError) {
+        FirebaseCrashlytics.instance.recordError(
+            firebaseError, StackTrace.current,
+            reason: "Failed to fetch notes from cloud");
+        throw Exception("Failed to fetch notes from cloud: $firebaseError");
       }
     } catch (authError) {
-      rethrow;
+      FirebaseCrashlytics.instance.recordError(authError, StackTrace.current,
+          reason: "Authentication failed");
+      throw Exception("Authentication failed: $authError");
+    }
+  }
+
+  // Get count of notes pulled from cloud
+  Future<int> getCloudNotesCount() async {
+    try {
+      final userResult = await _authRepo.getCurrentUser();
+
+      if (!userResult.isSuccess || userResult.user == null) {
+        return 0;
+      }
+
+      final user = userResult.user!;
+      final userId = user.uid;
+
+      final userNotesCollection =
+          _firestore.collection('users').doc(userId).collection('notes');
+
+      final QuerySnapshot notesSnapshot = await userNotesCollection.get();
+
+      // Count only non-deleted notes
+      int count = 0;
+      for (final doc in notesSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['isDeleted'] != true) {
+          count++;
+        }
+      }
+
+      return count;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Force refresh the notes list after pulling from cloud
+  Future<void> refreshNotesList() async {
+    try {
+      // Get the Hive box and force a refresh
+      final box = await HiveNoteTakingRepo.getBox();
+
+      // Trigger a box change to refresh the UI
+      await box.flush();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to refresh notes list");
     }
   }
 }

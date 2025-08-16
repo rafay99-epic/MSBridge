@@ -4,70 +4,181 @@ import 'package:msbridge/features/auth/login/login.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:line_icons/line_icons.dart';
 
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void showLogoutDialog(BuildContext context) {
   final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
 
   showDialog(
     context: context,
+    barrierDismissible: true,
     builder: (context) => Dialog(
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Confirm Logout",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Are you sure you want to log out?",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: theme.colorScheme.primary.withOpacity(0.8),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    "No",
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    handleLogout(context);
-                  },
-                  child: Text(
-                    "Yes",
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.secondary),
-                  ),
-                ),
-              ],
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        constraints: const BoxConstraints(
+          maxWidth: 400,
+          minHeight: 200,
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: 0,
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon and Title Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  LineIcons.alternateSignOut,
+                  size: 32,
+                  color: colorScheme.error,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Text(
+                "Confirm Logout",
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.primary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Text(
+                "Are you sure you want to log out? This will clear all local data and return you to the login screen.",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 15,
+                  color: colorScheme.primary.withOpacity(0.7),
+                  height: 1.4,
+                  letterSpacing: 0.1,
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Action Buttons
+              Row(
+                children: [
+                  // Cancel Button
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.outline.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => Navigator.pop(context),
+                          child: Center(
+                            child: Text(
+                              "Cancel",
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.primary.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Logout Button
+                  Expanded(
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            colorScheme.error,
+                            colorScheme.error.withOpacity(0.8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.error.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            Navigator.pop(context);
+                            handleLogout(context);
+                          },
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  LineIcons.alternateSignOut,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Logout",
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -76,11 +187,85 @@ void showLogoutDialog(BuildContext context) {
 
 void handleLogout(BuildContext context) async {
   final authRepo = AuthRepo();
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
 
+  // Enhanced loading dialog
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (context) => const Center(child: CircularProgressIndicator()),
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        constraints: const BoxConstraints(
+          maxWidth: 300,
+          minHeight: 160,
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Loading indicator with custom styling
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(colorScheme.secondary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Text(
+                "Logging out...",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Text(
+                "Please wait while we secure your data",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: colorScheme.primary.withOpacity(0.6),
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
   );
 
   final error = await authRepo.logout();

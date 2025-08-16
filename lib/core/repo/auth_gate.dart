@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
@@ -34,10 +35,16 @@ class AuthGate extends StatelessWidget {
                     final syncService = SyncService();
                     await syncService.startListening();
                   } catch (e) {
-                    CustomSnackBar.show(
-                      context,
-                      "Error starting sync service: $e",
-                    );
+                    if (context.mounted) {
+                      FirebaseCrashlytics.instance.recordError(
+                          e, StackTrace.current,
+                          reason: "Error starting sync service");
+                      CustomSnackBar.show(
+                        context,
+                        "Error starting sync service: $e",
+                        isSuccess: false,
+                      );
+                    }
                   }
                 });
               }
@@ -48,10 +55,16 @@ class AuthGate extends StatelessWidget {
                         ReverseSyncService();
                     await reverseSyncService.syncDataFromFirebaseToHive();
                   } catch (e) {
-                    CustomSnackBar.show(
-                      context,
-                      "Error starting sync service: $e",
-                    );
+                    if (context.mounted) {
+                      FirebaseCrashlytics.instance.recordError(
+                          e, StackTrace.current,
+                          reason: "Error starting reverse sync service");
+                      CustomSnackBar.show(
+                        context,
+                        "Error starting reverse sync service: $e",
+                        isSuccess: false,
+                      );
+                    }
                   }
                 });
               }
