@@ -195,8 +195,7 @@ class BackupService {
     } catch (_) {
       try {
         // Fallback to file_selector
-        final typeGroup =
-            const fsel.XTypeGroup(label: 'json', extensions: ['json']);
+        const typeGroup = fsel.XTypeGroup(label: 'json', extensions: ['json']);
         final fsel.XFile? xfile =
             await fsel.openFile(acceptedTypeGroups: [typeGroup]);
         if (xfile == null) {

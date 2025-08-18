@@ -3,8 +3,10 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/utils/version_download_utils.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -35,7 +37,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: "Version History",
         backbutton: true,
       ),
@@ -290,14 +292,43 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      LineIcons.eye,
-                      color: colorScheme.primary,
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        _showVersionPreview(version, theme, colorScheme),
+                  // Action buttons
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Download button
+                      IconButton(
+                        icon: Icon(
+                          LineIcons.download,
+                          color: colorScheme.secondary,
+                          size: 20,
+                        ),
+                        onPressed: () => _downloadVersion(version),
+                        tooltip: 'Download version',
+                      ),
+                      // Restore button
+                      IconButton(
+                        icon: Icon(
+                          LineIcons.undo,
+                          color: colorScheme.primary,
+                          size: 20,
+                        ),
+                        onPressed: () => _showRestoreConfirmation(
+                            version, theme, colorScheme),
+                        tooltip: 'Restore this version',
+                      ),
+                      // Preview button
+                      IconButton(
+                        icon: Icon(
+                          LineIcons.eye,
+                          color: colorScheme.primary,
+                          size: 20,
+                        ),
+                        onPressed: () =>
+                            _showVersionPreview(version, theme, colorScheme),
+                        tooltip: 'Preview version',
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -675,5 +706,130 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
         ),
       ),
     );
+  }
+
+  /// Download a specific version as a JSON file
+  void _downloadVersion(NoteVersion version) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Downloading version...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Download the version
+      final filePath =
+          await VersionDownloadUtils.downloadVersionAsJson(version);
+
+      // Show success message with user-friendly location
+      if (mounted) {
+        final userFriendlyLocation =
+            VersionDownloadUtils.getUserFriendlyPath(filePath);
+        final fileName = filePath.split('/').last;
+        CustomSnackBar.show(
+          context,
+          'Version downloaded successfully!\nFile: $fileName\nLocation: $userFriendlyLocation',
+          isSuccess: true,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Error downloading version: $e',
+          isSuccess: false,
+        );
+      }
+    }
+  }
+
+  /// Show confirmation dialog for restoring a version
+  void _showRestoreConfirmation(
+      NoteVersion version, ThemeData theme, ColorScheme colorScheme) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          'Restore Version ${version.versionNumber}?',
+          style: TextStyle(color: colorScheme.primary),
+        ),
+        content: Text(
+          'This will create a new note with the content from version ${version.versionNumber}. '
+          'The original note will remain unchanged.\n\n'
+          'Are you sure you want to proceed?',
+          style: TextStyle(color: colorScheme.primary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colorScheme.primary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _restoreVersion(version);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Restore a note from a specific version
+  void _restoreVersion(NoteVersion version) async {
+    try {
+      final versionProvider =
+          Provider.of<NoteVersionProvider>(context, listen: false);
+
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Restoring version...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      // Restore the version
+      final success = await versionProvider.restoreNoteFromVersion(
+        version,
+        widget.note.userId,
+      );
+
+      if (success && mounted) {
+        CustomSnackBar.show(
+          context,
+          'Note restored successfully from version ${version.versionNumber}!',
+          isSuccess: true,
+        );
+
+        // Navigate back to notes list
+        Navigator.pop(context);
+      } else if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Error restoring note: ${versionProvider.error}',
+          isSuccess: false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Error restoring note: $e',
+          isSuccess: false,
+        );
+      }
+    }
   }
 }

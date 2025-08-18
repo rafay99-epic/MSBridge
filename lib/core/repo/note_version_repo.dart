@@ -188,4 +188,166 @@ class NoteVersionRepo {
       NoteVersion? oldVersion, NoteVersion newVersion) {
     return VersionDiffUtils.compareVersions(oldVersion, newVersion);
   }
+
+  /// Restore a specific version to create a new note
+  static Future<NoteVersion> restoreVersion({
+    required NoteVersion versionToRestore,
+    required String newNoteId,
+    required String userId,
+  }) async {
+    try {
+      final box = await getBox();
+
+      // Create a new version from the restored content
+      final restoredVersion = versionToRestore.createRestoredVersion(
+        newNoteId: newNoteId,
+        userId: userId,
+        newVersionNumber: 1, // Start fresh with version 1
+      );
+
+      // Add to the versions box
+      await box.add(restoredVersion);
+
+      return restoredVersion;
+    } catch (e) {
+      throw Exception('Error restoring version: $e');
+    }
+  }
+
+  /// Get all versions for a specific note, sorted by version number
+  static Future<List<NoteVersion>> getVersionsForNote(String noteId) async {
+    try {
+      final box = await getBox();
+      final versions =
+          box.values.where((version) => version.noteId == noteId).toList();
+
+      // Sort by version number ascending (oldest first)
+      versions.sort((a, b) => a.versionNumber.compareTo(b.versionNumber));
+      return versions;
+    } catch (e) {
+      throw Exception('Error getting versions for note: $e');
+    }
+  }
+
+  /// Export version data for download
+  static Map<String, dynamic> exportVersionData(NoteVersion version) {
+    return {
+      'versionId': version.versionId,
+      'noteId': version.noteId,
+      'noteTitle': version.noteTitle,
+      'noteContent': version.noteContent,
+      'tags': version.tags,
+      'createdAt': version.createdAt.toIso8601String(),
+      'userId': version.userId,
+      'changeDescription': version.changeDescription,
+      'versionNumber': version.versionNumber,
+      'changes': version.changes,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'exportFormat': 'MSBridge_Note_Version',
+    };
+  }
+
+  /// Clean up old versions based on max versions setting
+  static Future<Map<String, dynamic>> cleanupOldVersions(
+      int maxVersionsToKeep) async {
+    try {
+      final box = await getBox();
+      final allVersions = box.values.toList();
+
+      // Group versions by noteId
+      final Map<String, List<NoteVersion>> noteVersions = {};
+      for (final version in allVersions) {
+        noteVersions.putIfAbsent(version.noteId, () => []).add(version);
+      }
+
+      int totalDeleted = 0;
+      int totalNotesAffected = 0;
+
+      // Process each note's versions
+      for (final noteId in noteVersions.keys) {
+        final versions = noteVersions[noteId]!;
+        if (versions.length > maxVersionsToKeep) {
+          // Sort by version number (oldest first)
+          versions.sort((a, b) => a.versionNumber.compareTo(b.versionNumber));
+
+          // Keep only the latest maxVersionsToKeep versions
+          final versionsToDelete =
+              versions.take(versions.length - maxVersionsToKeep).toList();
+
+          // Delete old versions
+          for (final version in versionsToDelete) {
+            await box.delete(version.key);
+            totalDeleted++;
+          }
+
+          totalNotesAffected++;
+        }
+      }
+
+      return {
+        'success': true,
+        'message':
+            'Cleanup completed: $totalDeleted versions deleted from $totalNotesAffected notes',
+        'deletedCount': totalDeleted,
+        'notesAffected': totalNotesAffected,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error during cleanup: $e',
+        'deletedCount': 0,
+        'notesAffected': 0,
+      };
+    }
+  }
+
+  /// Get total version count across all notes
+  static Future<int> getTotalVersionCount() async {
+    try {
+      final box = await getBox();
+      return box.length;
+    } catch (e) {
+      throw Exception('Error getting total version count: $e');
+    }
+  }
+
+  /// Get storage usage information
+  static Future<Map<String, dynamic>> getStorageInfo() async {
+    try {
+      final box = await getBox();
+      final allVersions = box.values.toList();
+
+      // Group by noteId to count unique notes
+      final uniqueNotes = allVersions.map((v) => v.noteId).toSet().length;
+
+      // Calculate total content size (rough estimate)
+      int totalContentSize = 0;
+      for (final version in allVersions) {
+        totalContentSize += version.noteContent.length;
+        totalContentSize += version.noteTitle.length;
+        totalContentSize += version.tags.join('').length;
+      }
+
+      return {
+        'totalVersions': allVersions.length,
+        'uniqueNotes': uniqueNotes,
+        'totalContentSize': totalContentSize,
+        'averageVersionsPerNote': allVersions.length / uniqueNotes,
+        'oldestVersion': allVersions.isNotEmpty
+            ? allVersions
+                .map((v) => v.createdAt)
+                .reduce((a, b) => a.isBefore(b) ? a : b)
+                .toIso8601String()
+            : null,
+        'newestVersion': allVersions.isNotEmpty
+            ? allVersions
+                .map((v) => v.createdAt)
+                .reduce((a, b) => a.isAfter(b) ? a : b)
+                .toIso8601String()
+            : null,
+      };
+    } catch (e) {
+      throw Exception('Error getting storage info: $e');
+    }
+  }
 }

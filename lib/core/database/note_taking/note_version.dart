@@ -110,4 +110,25 @@ class NoteVersion extends HiveObject {
       previousVersionId: previousVersionId ?? this.previousVersionId,
     );
   }
+
+  /// Create a new version from this restored version
+  NoteVersion createRestoredVersion({
+    required String newNoteId,
+    required String userId,
+    required int newVersionNumber,
+  }) {
+    return NoteVersion(
+      versionId: null, // Will be generated
+      noteId: newNoteId,
+      noteTitle: noteTitle,
+      noteContent: noteContent,
+      tags: tags,
+      createdAt: DateTime.now(),
+      userId: userId,
+      changeDescription: 'Restored from version $versionNumber',
+      versionNumber: newVersionNumber,
+      changes: ['Restored from version $versionNumber'],
+      previousVersionId: '', // This will be the current version
+    );
+  }
 }

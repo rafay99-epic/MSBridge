@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
+import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 
 class NoteVersionProvider with ChangeNotifier {
   List<NoteVersion> _versions = [];
@@ -137,6 +138,119 @@ class NoteVersionProvider with ChangeNotifier {
       );
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<void> clearAllVersions() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await NoteVersionRepo.clearAllVersions();
+      _versions.clear();
+      _currentNoteId = null;
+    } catch (e) {
+      _error = 'Error clearing all versions: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Restore a note from a specific version
+  Future<bool> restoreNoteFromVersion(
+      NoteVersion version, String userId) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final result = await NoteTakingActions.restoreNoteFromVersion(
+        versionToRestore: version,
+        userId: userId,
+      );
+
+      if (result.success) {
+        // Reload versions for the current note
+        if (_currentNoteId != null) {
+          await loadVersions(_currentNoteId!);
+        }
+        return true;
+      } else {
+        _error = result.message;
+        return false;
+      }
+    } catch (e) {
+      _error = 'Error restoring note: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Export version data for download
+  Map<String, dynamic> exportVersionData(NoteVersion version) {
+    return NoteVersionRepo.exportVersionData(version);
+  }
+
+  /// Get version count for a specific note
+  Future<int> getVersionCountForNote(String noteId) async {
+    try {
+      return await NoteVersionRepo.getVersionCount(noteId);
+    } catch (e) {
+      _error = 'Error getting version count: $e';
+      return 0;
+    }
+  }
+
+  /// Clean up old versions based on max versions setting
+  Future<bool> cleanupOldVersions(int maxVersionsToKeep) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      final result =
+          await NoteVersionRepo.cleanupOldVersions(maxVersionsToKeep);
+
+      if (result['success'] == true) {
+        // Reload versions if we have a current note
+        if (_currentNoteId != null) {
+          await loadVersions(_currentNoteId!);
+        }
+        return true;
+      } else {
+        _error = result['message'] ?? 'Unknown error during cleanup';
+        return false;
+      }
+    } catch (e) {
+      _error = 'Error cleaning up versions: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Get total version count across all notes
+  Future<int> getTotalVersionCount() async {
+    try {
+      return await NoteVersionRepo.getTotalVersionCount();
+    } catch (e) {
+      _error = 'Error getting total version count: $e';
+      return 0;
+    }
+  }
+
+  /// Get storage usage information
+  Future<Map<String, dynamic>> getStorageInfo() async {
+    try {
+      return await NoteVersionRepo.getStorageInfo();
+    } catch (e) {
+      _error = 'Error getting storage info: $e';
+      return {};
     }
   }
 }
