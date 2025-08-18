@@ -23,6 +23,7 @@ import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
+import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -286,6 +287,27 @@ class _NotesSettingState extends State<NotesSetting> {
               trailing: Switch(
                 value: historyProvider.isHistoryEnabled,
                 onChanged: (value) => historyProvider.toggleHistoryEnabled(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 24),
+
+        // Version History
+        buildSubsectionHeader(context, "Version History", LineIcons.history),
+        const SizedBox(height: 12),
+        buildModernSettingsTile(
+          context,
+          title: "Version History Settings",
+          subtitle: "Manage note version retention and cleanup",
+          icon: LineIcons.history,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const VersionHistorySettings(),
               ),
             );
           },

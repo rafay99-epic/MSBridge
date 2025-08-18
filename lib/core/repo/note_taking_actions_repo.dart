@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/utils/uuid.dart';
 
 class NoteTakingActions {
@@ -55,18 +56,48 @@ class NoteTakingActions {
     required String content,
     required bool isSynced,
     List<String>? tags,
+    String changeDescription = '',
   }) async {
     try {
       final List<String> newTags = tags ?? note.tags;
-      if (note.noteTitle == title && note.noteContent == content && _listEquals(note.tags, newTags)) {
+      if (note.noteTitle == title &&
+          note.noteContent == content &&
+          _listEquals(note.tags, newTags)) {
         return SaveNoteResult(success: true, message: "No changes detected.");
       }
 
+      // Create version before updating
+      try {
+        // Get the previous version ID for change tracking
+        String? previousVersionId;
+        if (note.versionNumber > 1) {
+          final previousVersion = await NoteVersionRepo.getPreviousVersion(
+              note.noteId!, note.versionNumber);
+          previousVersionId = previousVersion?.versionId;
+        }
+
+        await NoteVersionRepo.createVersion(
+          noteId: note.noteId!,
+          noteTitle: note.noteTitle,
+          noteContent: note.noteContent,
+          tags: note.tags,
+          userId: note.userId,
+          versionNumber: note.versionNumber,
+          changeDescription: changeDescription,
+          previousVersionId: previousVersionId,
+        );
+      } catch (versionError) {
+        // Log version creation error but continue with note update
+        print('Warning: Failed to create version: $versionError');
+      }
+
+      // Update note
       note.noteTitle = title;
       note.noteContent = content;
       note.updatedAt = DateTime.now();
       note.isSynced = isSynced;
       note.tags = newTags;
+      note.versionNumber++;
 
       await HiveNoteTakingRepo.updateNote(note);
 
