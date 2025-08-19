@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
@@ -38,6 +39,14 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+  } catch (e) {
+    FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+        reason: 'Failed to set preferred orientations');
+  }
 
   try {
     await Firebase.initializeApp();
@@ -85,7 +94,6 @@ void main() async {
       ),
     );
 
-    // Initialize auto sync scheduler after app providers are ready
     await AutoSyncScheduler.initialize();
 
     bool weWantFatalErrorRecording = true;
@@ -108,6 +116,8 @@ void main() async {
       );
     }).sendPort);
   } catch (e) {
+    FirebaseCrashlytics.instance
+        .recordError(e, StackTrace.current, reason: 'Failed to initialize app');
     runApp(ErrorApp(errorMessage: e.toString()));
   }
 }

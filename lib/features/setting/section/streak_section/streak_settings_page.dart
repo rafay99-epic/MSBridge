@@ -1,11 +1,15 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/widgets/buildSectionHeader.dart';
 import 'package:msbridge/widgets/buildSettingsTile.dart';
 import 'package:msbridge/widgets/streak_display_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
 class StreakSettingsPage extends StatefulWidget {
   const StreakSettingsPage({super.key});
@@ -166,19 +170,167 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                 ],
 
                 const SizedBox(height: 24),
+                buildSectionHeader(context, "Cloud Sync", LineIcons.cloud),
+                const SizedBox(height: 16),
+                FutureBuilder<bool>(
+                  future: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    return prefs
+                            .getBool(StreakSyncService.streakCloudToggleKey) ??
+                        true;
+                  }(),
+                  builder: (context, snap) {
+                    final value = snap.data ?? true;
+                    return _buildMainToggle(
+                      context,
+                      "Sync streak across devices",
+                      "Keep your streak consistent on all devices",
+                      value,
+                      (enabled) async {
+                        try {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool(
+                              StreakSyncService.streakCloudToggleKey, enabled);
+                          if (enabled) {
+                            await StreakSyncService().syncNow();
+                            if (context.mounted) {
+                              CustomSnackBar.show(
+                                context,
+                                'Streak cloud sync enabled and synced',
+                                isSuccess: true,
+                              );
+                            }
+                            FirebaseCrashlytics.instance
+                                .log('Streak sync toggle ON and synced');
+                          } else {
+                            if (context.mounted) {
+                              CustomSnackBar.show(
+                                context,
+                                'Streak cloud sync disabled',
+                                isSuccess: true,
+                              );
+                            }
+                            FirebaseCrashlytics.instance
+                                .log('Streak sync toggle OFF');
+                          }
+                        } catch (e, st) {
+                          FirebaseCrashlytics.instance.recordError(
+                            e,
+                            st,
+                            reason: 'Failed toggling streak cloud sync',
+                          );
+                          if (context.mounted) {
+                            CustomSnackBar.show(
+                              context,
+                              'Failed to update streak sync setting: $e',
+                              isSuccess: false,
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() {});
+                        }
+                      },
+                      LineIcons.cloud,
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
                 buildSectionHeader(context, "Streak Actions", LineIcons.cog),
                 const SizedBox(height: 16),
 
                 buildSettingsTile(context,
                     title: "Refresh Streak",
-                    subtitle: "Update streak data",
+                    subtitle:
+                        "Reload local streak and reschedule notifications",
                     icon: LineIcons.syncIcon, onTap: () async {
-                  await streakProvider.refreshStreak();
-                  setState(() {}); // Force UI refresh
+                  try {
+                    await streakProvider.refreshStreak();
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Streak refreshed',
+                        isSuccess: true,
+                      );
+                    }
+                  } catch (e, st) {
+                    FirebaseCrashlytics.instance.recordError(
+                      e,
+                      st,
+                      reason: 'Refresh streak failed',
+                    );
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Failed to refresh streak: $e',
+                        isSuccess: false,
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() {});
+                  }
+                }),
+                buildSettingsTile(context,
+                    title: "Sync Now",
+                    subtitle: "Push/pull streak with cloud",
+                    icon: LineIcons.cloud, onTap: () async {
+                  try {
+                    await StreakSyncService().syncNow();
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Streak synced with cloud',
+                        isSuccess: true,
+                      );
+                    }
+                    FirebaseCrashlytics.instance.log('Streak syncNow success');
+                  } catch (e, st) {
+                    FirebaseCrashlytics.instance.recordError(
+                      e,
+                      st,
+                      reason: 'Streak syncNow failed',
+                    );
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Failed to sync streak: $e',
+                        isSuccess: false,
+                      );
+                    }
+                  }
+                }),
+                buildSettingsTile(context,
+                    title: "Pull from Cloud",
+                    subtitle: "Fetch streak from cloud and merge",
+                    icon: LineIcons.cloud, onTap: () async {
+                  try {
+                    await StreakSyncService().pullCloudToLocal();
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Streak pulled from cloud',
+                        isSuccess: true,
+                      );
+                    }
+                    FirebaseCrashlytics.instance.log('Streak pull success');
+                  } catch (e, st) {
+                    FirebaseCrashlytics.instance.recordError(
+                      e,
+                      st,
+                      reason: 'Streak pull failed',
+                    );
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Failed to pull streak: $e',
+                        isSuccess: false,
+                      );
+                    }
+                  }
                 }),
                 buildSettingsTile(context,
                     title: "Reset Streak",
-                    subtitle: "Start fresh (for testing)",
+                    subtitle: "Set streak to 0 and start over (irreversible)",
                     icon: LineIcons.redo,
                     onTap: () => _showResetDialog(context, streakProvider)),
               ],

@@ -146,6 +146,7 @@ class NoteTakingActions {
                 });
               }
             } catch (e) {
+              FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
               // Don't fail the note update if Firebase sync fails
               print('Failed to sync version to Firebase: $e');
             }
