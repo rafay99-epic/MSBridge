@@ -24,6 +24,8 @@ import 'package:msbridge/features/setting/section/note_section/version_history_s
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
+import 'package:msbridge/features/setting/section/appearance_section/font_selection_page.dart';
+import 'package:msbridge/features/setting/pages/appearance_settings_page.dart';
 
 class BottomSheetWidgets {
   static Widget buildAISmartFeaturesBottomSheet(BuildContext context) {
@@ -168,6 +170,36 @@ class BottomSheetWidgets {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildNotesContent(context, theme, colorScheme),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  static Widget buildAppearanceBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDragHandle(colorScheme),
+          const SizedBox(height: 20),
+          _buildBottomSheetHeader(
+              context, "Appearance & Fonts", theme, colorScheme),
+          const SizedBox(height: 20),
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildAppearanceContent(context, theme, colorScheme),
             ),
           ),
           const SizedBox(height: 20),
@@ -1241,6 +1273,123 @@ class BottomSheetWidgets {
   }
 
   static Widget _buildProfileActionTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.primary.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: colorScheme.primary.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildAppearanceContent(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Appearance Option
+        _buildAppearanceActionTile(
+          context,
+          "Appearance",
+          "Customize themes, colors, and visual preferences",
+          LineIcons.palette,
+          () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const AppearanceSettingsPage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Font Option
+        _buildAppearanceActionTile(
+          context,
+          "Font",
+          "Choose your preferred font family",
+          LineIcons.font,
+          () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const FontSelectionPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildAppearanceActionTile(
     BuildContext context,
     String title,
     String subtitle,
