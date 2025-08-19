@@ -111,11 +111,18 @@ class NoteTakingActions {
             previousVersionId: previousVersionId,
           );
 
+          // Enforce local cap immediately after creating version
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final int keepCount = prefs.getInt('max_versions_to_keep') ?? 3;
+            await NoteVersionRepo.deleteOldVersions(note.noteId!, keepCount);
+          } catch (_) {}
+
           // Increment version number
           note.versionNumber++;
 
           // Sync the created version to Firebase
-          if (newVersion != null) {
+          if (true) {
             try {
               final FirebaseFirestore firestore = FirebaseFirestore.instance;
               final User? user = FirebaseAuth.instance.currentUser;
@@ -144,6 +151,19 @@ class NoteTakingActions {
                   'createdAt': newVersion.createdAt.toIso8601String(),
                   'syncedAt': DateTime.now().toIso8601String(),
                 });
+
+                // Enforce per-note max versions in cloud
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final int keepCount =
+                      prefs.getInt('max_versions_to_keep') ?? 3;
+                  await _pruneCloudVersions(
+                    firestore: firestore,
+                    userId: user.uid,
+                    noteId: note.noteId!,
+                    keepLatest: keepCount,
+                  );
+                } catch (_) {}
               }
             } catch (e) {
               FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
@@ -424,6 +444,38 @@ class NoteTakingActions {
     } catch (e) {
       return true; // Default to enabled if there's an error
     }
+  }
+}
+
+/// Helper to prune cloud versions to keep only the latest N per note
+Future<void> _pruneCloudVersions({
+  required FirebaseFirestore firestore,
+  required String userId,
+  required String noteId,
+  required int keepLatest,
+}) async {
+  try {
+    final versionsRef = firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .doc(noteId)
+        .collection('versions');
+
+    // Order by versionNumber descending, skip first keepLatest, delete the rest
+    final snapshot =
+        await versionsRef.orderBy('versionNumber', descending: true).get();
+
+    if (snapshot.docs.length <= keepLatest) return;
+    final toDelete = snapshot.docs.skip(keepLatest);
+    final batch = firestore.batch();
+    for (final doc in toDelete) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  } catch (e, st) {
+    FirebaseCrashlytics.instance.recordError(e, st,
+        reason: 'Failed pruning cloud versions for noteId=$noteId');
   }
 }
 

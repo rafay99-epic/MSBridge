@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
@@ -170,66 +171,112 @@ class _NotesSettingState extends State<NotesSetting> {
             },
           ),
         ),
-        if (syncSettings.cloudSyncEnabled) ...[
-          const SizedBox(height: 12),
-          buildModernSettingsTile(
-            context,
-            title: "Push to Cloud",
-            subtitle: "Manually push notes to the cloud",
-            icon: LineIcons.syncIcon,
-            onTap: () async {
-              try {
-                await SyncService().syncLocalNotesToFirebase();
-                if (mounted) {
-                  CustomSnackBar.show(context, 'Synced successfully',
-                      isSuccess: true);
-                }
-              } catch (e) {
-                if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          buildModernSettingsTile(
-            context,
-            title: "Pull from Cloud",
-            subtitle: "Manually download notes from cloud to this device",
-            icon: LineIcons.download,
-            onTap: () async {
-              try {
-                await ReverseSyncService().syncDataFromFirebaseToHive();
-                if (mounted) {
-                  CustomSnackBar.show(
-                      context, 'Notes downloaded from cloud successfully',
-                      isSuccess: true);
-                }
-              } catch (e) {
-                if (mounted)
-                  CustomSnackBar.show(context, 'Download failed: $e');
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          buildModernSettingsTile(
-            context,
-            title: "Auto sync interval",
-            subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
-            icon: LineIcons.history,
-            onTap: () async {
-              final minutes = await _pickInterval(context);
-              if (minutes == null) return;
-              await AutoSyncScheduler.setIntervalMinutes(minutes);
-              if (mounted) {
-                CustomSnackBar.show(
-                    context,
-                    minutes == 0
-                        ? 'Auto sync disabled'
-                        : 'Auto sync set to every $minutes min',
-                    isSuccess: true);
-              }
-            },
-          ),
-        ],
+        // Only show sync options when cloud sync is enabled
+        Consumer<SyncSettingsProvider>(
+          builder: (context, syncSettings, _) {
+            if (!syncSettings.cloudSyncEnabled) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                buildModernSettingsTile(
+                  context,
+                  title: "Push to Cloud",
+                  subtitle: "Manually push notes to the cloud",
+                  icon: LineIcons.syncIcon,
+                  onTap: () async {
+                    // Check if cloud sync is enabled before proceeding
+                    if (!syncSettings.cloudSyncEnabled) {
+                      CustomSnackBar.show(context,
+                          'Please enable Cloud sync in Cloud Sync settings first',
+                          isSuccess: false);
+                      return;
+                    }
+
+                    try {
+                      await SyncService().syncLocalNotesToFirebase();
+                      if (mounted) {
+                        CustomSnackBar.show(context, 'Synced successfully',
+                            isSuccess: true);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        FirebaseCrashlytics.instance.recordError(
+                            e, StackTrace.current,
+                            reason: "Failed to sync notes to cloud");
+                        CustomSnackBar.show(context, 'Sync failed: $e',
+                            isSuccess: false);
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                buildModernSettingsTile(
+                  context,
+                  title: "Pull from Cloud",
+                  subtitle: "Manually download notes from cloud to this device",
+                  icon: LineIcons.download,
+                  onTap: () async {
+                    // Check if cloud sync is enabled before proceeding
+                    if (!syncSettings.cloudSyncEnabled) {
+                      CustomSnackBar.show(context,
+                          'Please enable Cloud sync in Cloud Sync settings first',
+                          isSuccess: false);
+                      return;
+                    }
+
+                    try {
+                      await ReverseSyncService().syncDataFromFirebaseToHive();
+                      if (mounted) {
+                        CustomSnackBar.show(
+                            context, 'Notes downloaded from cloud successfully',
+                            isSuccess: true);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        FirebaseCrashlytics.instance.recordError(
+                            e, StackTrace.current,
+                            reason: "Failed to download notes from cloud");
+                        CustomSnackBar.show(context, 'Download failed: $e',
+                            isSuccess: false);
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                buildModernSettingsTile(
+                  context,
+                  title: "Auto sync interval",
+                  subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
+                  icon: LineIcons.history,
+                  onTap: () async {
+                    // Check if cloud sync is enabled before proceeding
+                    if (!syncSettings.cloudSyncEnabled) {
+                      CustomSnackBar.show(context,
+                          'Please enable Cloud sync in Cloud Sync settings first',
+                          isSuccess: false);
+                      return;
+                    }
+
+                    final minutes = await _pickInterval(context);
+                    if (minutes == null) return;
+                    await AutoSyncScheduler.setIntervalMinutes(minutes);
+                    if (mounted) {
+                      CustomSnackBar.show(
+                          context,
+                          minutes == 0
+                              ? 'Auto sync disabled'
+                              : 'Auto sync set to every $minutes min',
+                          isSuccess: true);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        ),
 
         const SizedBox(height: 24),
 

@@ -1,8 +1,9 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/utils/version_diff_utils.dart';
 import 'package:msbridge/utils/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class NoteVersionRepo {
   static const String _boxName = 'note_versions';
@@ -37,6 +38,9 @@ class NoteVersionRepo {
   }) async {
     try {
       final box = await getBox();
+      // Enforce per-note version cap immediately after creating the next version
+      final prefs = await SharedPreferences.getInstance();
+      final int maxVersionsToKeep = prefs.getInt('max_versions_to_keep') ?? 3;
 
       // Get the previous version to detect changes
       NoteVersion? previousVersion;
@@ -73,6 +77,11 @@ class NoteVersionRepo {
       );
 
       await box.add(version);
+
+      // After adding, prune old versions beyond the cap (keep newest first)
+      try {
+        await deleteOldVersions(noteId, maxVersionsToKeep);
+      } catch (_) {}
     } catch (e) {
       throw Exception('Error creating note version: $e');
     }
