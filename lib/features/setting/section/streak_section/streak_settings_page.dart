@@ -187,13 +187,18 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                       "Keep your streak consistent on all devices",
                       value,
                       (enabled) async {
+                        final prev = value; // snapshot before change
                         try {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool(
                               StreakSyncService.streakCloudToggleKey, enabled);
                           if (enabled) {
-                            await StreakSyncService().syncNow();
+                            final ok = await StreakSyncService().syncNow();
+                            if (!ok) throw Exception('Sync failed or disabled');
                             if (context.mounted) {
+                              await Provider.of<StreakProvider>(context,
+                                      listen: false)
+                                  .refreshStreak();
                               CustomSnackBar.show(
                                 context,
                                 'Streak cloud sync enabled and synced',
@@ -214,6 +219,12 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                                 .log('Streak sync toggle OFF');
                           }
                         } catch (e, st) {
+                          // Roll back pref on failure
+                          try {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool(
+                                StreakSyncService.streakCloudToggleKey, prev);
+                          } catch (_) {}
                           FirebaseCrashlytics.instance.recordError(
                             e,
                             st,
@@ -275,12 +286,17 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                     subtitle: "Push/pull streak with cloud",
                     icon: LineIcons.cloud, onTap: () async {
                   try {
-                    await StreakSyncService().syncNow();
+                    final ok = await StreakSyncService().syncNow();
+                    // ensure UI reflects pulled values
                     if (context.mounted) {
+                      await Provider.of<StreakProvider>(context, listen: false)
+                          .refreshStreak();
                       CustomSnackBar.show(
                         context,
-                        'Streak synced with cloud',
-                        isSuccess: true,
+                        ok
+                            ? 'Streak synced with cloud'
+                            : 'Sync disabled or no changes',
+                        isSuccess: ok,
                       );
                     }
                     FirebaseCrashlytics.instance.log('Streak syncNow success');
@@ -306,6 +322,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                   try {
                     await StreakSyncService().pullCloudToLocal();
                     if (context.mounted) {
+                      await Provider.of<StreakProvider>(context, listen: false)
+                          .refreshStreak();
                       CustomSnackBar.show(
                         context,
                         'Streak pulled from cloud',

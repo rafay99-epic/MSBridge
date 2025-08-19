@@ -383,6 +383,9 @@ class NoteTakingActions {
         tags: versionToRestore.tags,
         versionNumber: 1, // Start fresh with version 1
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        isSynced: false,
+        isDeleted: false,
       );
 
       // Save the restored note

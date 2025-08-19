@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/utils/version_diff_utils.dart';
@@ -279,10 +280,9 @@ class NoteVersionRepo {
       final existingVersion =
           box.values.firstWhere((v) => v.versionId == version.versionId);
 
-      if (existingVersion != null) {
-        await box.put(existingVersion.key, version);
-      }
+      await box.put(existingVersion.key, version);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       throw Exception('Error updating version: $e');
     }
   }
@@ -387,7 +387,8 @@ class NoteVersionRepo {
         'totalVersions': allVersions.length,
         'uniqueNotes': uniqueNotes,
         'totalContentSize': totalContentSize,
-        'averageVersionsPerNote': allVersions.length / uniqueNotes,
+        'averageVersionsPerNote':
+            uniqueNotes == 0 ? 0.0 : allVersions.length / uniqueNotes,
         'oldestVersion': allVersions.isNotEmpty
             ? allVersions
                 .map((v) => v.createdAt)

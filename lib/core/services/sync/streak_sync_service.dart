@@ -111,16 +111,20 @@ class StreakSyncService {
     }
   }
 
-  Future<void> syncNow() async {
+  Future<bool> syncNow() async {
     try {
       if (!await _isGlobalCloudSyncEnabled() ||
-          !await _isStreakCloudSyncEnabled()) return;
+          !await _isStreakCloudSyncEnabled()) {
+        return false; // sync disabled
+      }
       await pullCloudToLocal();
       // after pull, push at most once per day
       await pushTodayIfDue();
+      return true;
     } catch (e, st) {
       FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'Streak syncNow failed');
+      return false;
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 
@@ -10,8 +11,14 @@ class VersionDownloadUtils {
       Directory? downloadsDirectory;
 
       if (Platform.isAndroid) {
-        // For Android, use device downloads folder
-        downloadsDirectory = Directory('/storage/emulated/0/Download');
+        final publicDownloads = Directory('/storage/emulated/0/Download');
+        try {
+          downloadsDirectory = publicDownloads;
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: 'Error getting public downloads directory');
+          downloadsDirectory = null;
+        }
       } else if (Platform.isIOS) {
         // For iOS, use app documents directory
         final appDir = await getApplicationDocumentsDirectory();
@@ -20,11 +27,15 @@ class VersionDownloadUtils {
       }
 
       if (downloadsDirectory == null) {
+        FirebaseCrashlytics.instance
+            .log('Could not find the downloads directory');
         throw Exception('Could not find the downloads directory');
       }
 
       // Create downloads directory if it doesn't exist
       if (!await downloadsDirectory.exists()) {
+        FirebaseCrashlytics.instance
+            .log('Downloads directory does not exist, creating it');
         await downloadsDirectory.create(recursive: true);
       }
 
@@ -33,6 +44,7 @@ class VersionDownloadUtils {
       final filename =
           'MSBridge_Note_V${version.versionNumber}_$timestamp.json';
       final file = File('${downloadsDirectory.path}/$filename');
+      FirebaseCrashlytics.instance.log('File path: ${file.path}');
 
       // Export version data
       final exportData = {
@@ -46,6 +58,7 @@ class VersionDownloadUtils {
         'changeDescription': version.changeDescription,
         'versionNumber': version.versionNumber,
         'changes': version.changes,
+        'previousVersionId': version.previousVersionId,
         'exportedAt': DateTime.now().toIso8601String(),
         'exportFormat': 'MSBridge_Note_Version',
         'appVersion': '1.0.0',
@@ -53,9 +66,11 @@ class VersionDownloadUtils {
 
       // Write to file
       await file.writeAsString(jsonEncode(exportData), flush: true);
-
+      FirebaseCrashlytics.instance.log('File written successfully');
       return file.path;
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'Error downloading version');
       throw Exception('Error downloading version: $e');
     }
   }

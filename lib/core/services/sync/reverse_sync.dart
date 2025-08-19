@@ -3,7 +3,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:flutter/foundation.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class ReverseSyncService {
