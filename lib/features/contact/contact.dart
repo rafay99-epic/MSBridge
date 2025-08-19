@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:msbridge/core/repo/contact_repo.dart';
 import 'package:msbridge/utils/img.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
@@ -30,26 +29,26 @@ class ContactPage extends StatelessWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           title: Text(
-            "Failed to send message: $e",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+            "Failed to send message",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           content: Text(
-            e.toString(),
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
+            "There was an error sending your message. Please try again later.",
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
             ),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
                 'OK',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
@@ -68,10 +67,18 @@ class ContactPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text("Feedback"),
+        title: Text(
+          "Contact Us",
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -93,9 +100,18 @@ class ContactPage extends StatelessWidget {
                 'MS Bridge',
                 style: TextStyle(
                   letterSpacing: .5,
-                  fontSize: 25,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'We\'d love to hear from you',
+                style: TextStyle(
+                  fontSize: 16,
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
               const SizedBox(height: 35),
@@ -121,24 +137,29 @@ class ContactPage extends StatelessWidget {
                 hintText: 'Enter your message',
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => sendMessage(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => sendMessage(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
                   ),
-                ),
-                child: Text(
-                  'Submit',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 16,
+                  child: const Text(
+                    'Send Message',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 40),
             ],
           ),
         ),

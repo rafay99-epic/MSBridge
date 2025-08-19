@@ -14,6 +14,7 @@ import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/widgets/edge_autoscroll_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
@@ -54,6 +55,7 @@ class _CreateNoteState extends State<CreateNote>
   String _lastSavedContent = "";
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
+  bool _hasSelection = false;
 
   void _addTag(String rawTag) {
     final tag = rawTag.trim();
@@ -92,6 +94,17 @@ class _CreateNoteState extends State<CreateNote>
     } else {
       _controller = QuillController.basic();
     }
+
+    // Track selection to provide an explicit copy/paste fallback
+    _controller.addListener(() {
+      final selection = _controller.selection;
+      final bool hasSelection = selection.isValid && !selection.isCollapsed;
+      if (_hasSelection != hasSelection && mounted) {
+        setState(() {
+          _hasSelection = hasSelection;
+        });
+      }
+    });
 
     // Add lightweight focus tracking
     _titleController.addListener(() {
@@ -371,6 +384,181 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
+  // Compact copy/paste methods
+  Future<void> _copySelectedText() async {
+    try {
+      final selection = _controller.selection;
+      final fullText = _controller.document.toPlainText();
+      if (selection.isValid && !selection.isCollapsed) {
+        final start = selection.start.clamp(0, fullText.length);
+        final end = selection.end.clamp(0, fullText.length);
+        final selectedText = fullText.substring(start, end);
+        await Clipboard.setData(ClipboardData(text: selectedText));
+        if (mounted) {
+          // Compact snackbar that doesn't take much space
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Copied',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSecondary)),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(8),
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+          Exception("Copy failed"), StackTrace.current,
+          reason: "Copy failed");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copy failed',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onError)),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _cutSelectedText() async {
+    try {
+      final selection = _controller.selection;
+      final fullText = _controller.document.toPlainText();
+      if (selection.isValid && !selection.isCollapsed) {
+        final start = selection.start.clamp(0, fullText.length);
+        final end = selection.end.clamp(0, fullText.length);
+        final selectedText = fullText.substring(start, end);
+        await Clipboard.setData(ClipboardData(text: selectedText));
+        _controller.replaceText(
+          selection.start,
+          selection.end - selection.start,
+          '',
+          selection,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Cut',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSecondary)),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(8),
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+          Exception("Cut failed"), StackTrace.current,
+          reason: "Cut failed");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cut failed',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onError)),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pasteText() async {
+    try {
+      final data = await Clipboard.getData('text/plain');
+      final text = data?.text ?? '';
+      if (text.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Clipboard empty',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onTertiary)),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(8),
+              backgroundColor: Theme.of(context).colorScheme.tertiary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        }
+        return;
+      }
+      final selection = _controller.selection;
+      final length = selection.end - selection.start;
+      _controller.replaceText(
+        selection.start,
+        length < 0 ? 0 : length,
+        text,
+        selection,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pasted',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSecondary)),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance
+          .recordError(e, StackTrace.current, reason: "Paste failed");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Paste failed',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onError)),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -380,65 +568,32 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          ValueListenableBuilder<bool>(
-            valueListenable: _isSavingNotifier,
-            builder: (context, isSaving, child) {
-              if (FeatureFlag.enableAutoSave && isSaving) {
-                return const Padding(
-                  padding: EdgeInsets.only(right: 10.0),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 15,
-                        height: 15,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        "Auto Saving...",
-                        style: TextStyle(
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                return const SizedBox.shrink();
-              }
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: _showCheckmarkNotifier,
-            builder: (context, showCheckmark, child) {
-              if (FeatureFlag.enableAutoSave && showCheckmark) {
-                return const Padding(
-                  padding: EdgeInsets.only(right: 10.0),
-                  child: Row(
-                    children: [
-                      Icon(LineIcons.checkCircleAlt,
-                          color: Colors.green, size: 20),
-                      SizedBox(width: 5),
-                      Text(
-                        "Content Saved",
-                        style: TextStyle(
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                return const SizedBox.shrink();
-              }
-            },
-          ),
+          // Text editing actions (compact)
+          if (_hasSelection) ...[
+            IconButton(
+              tooltip: 'Copy',
+              icon: const Icon(Icons.copy, size: 20),
+              onPressed: _copySelectedText,
+            ),
+            IconButton(
+              tooltip: 'Cut',
+              icon: const Icon(Icons.content_cut, size: 20),
+              onPressed: _cutSelectedText,
+            ),
+          ],
           IconButton(
-            icon: const Icon(LineIcons.robot),
+            tooltip: 'Paste',
+            icon: const Icon(Icons.paste, size: 20),
+            onPressed: _pasteText,
+          ),
+
+          // Main actions
+          IconButton(
+            icon: const Icon(LineIcons.robot, size: 22),
             onPressed: () => _generateAiSummary(context),
           ),
           IconButton(
-            icon: const Icon(LineIcons.fileExport),
+            icon: const Icon(LineIcons.fileExport, size: 22),
             onPressed: () => showExportOptions(
               context,
               theme,
@@ -448,21 +603,18 @@ class _CreateNoteState extends State<CreateNote>
           ),
           Consumer<ShareLinkProvider>(
             builder: (context, shareProvider, _) {
-              if (!shareProvider.shareLinksEnabled) {
-                return const SizedBox.shrink();
-              }
-              if (_currentNote == null) {
+              if (!shareProvider.shareLinksEnabled || _currentNote == null) {
                 return const SizedBox.shrink();
               }
               return IconButton(
                 tooltip: 'Share link',
-                icon: const Icon(LineIcons.shareSquare),
+                icon: const Icon(LineIcons.shareSquare, size: 22),
                 onPressed: _openShareSheet,
               );
             },
           ),
           IconButton(
-            icon: const Icon(LineIcons.save),
+            icon: const Icon(LineIcons.save, size: 22),
             onPressed: () async {
               await manualSaveNote();
             },
@@ -479,6 +631,12 @@ class _CreateNoteState extends State<CreateNote>
               child: TextField(
                 controller: _titleController,
                 focusNode: _titleFocusNode,
+                contextMenuBuilder: (BuildContext context,
+                    EditableTextState editableTextState) {
+                  return AdaptiveTextSelectionToolbar.editableText(
+                    editableTextState: editableTextState,
+                  );
+                },
                 decoration: const InputDecoration(
                   hintText: 'Title',
                   hintStyle: TextStyle(
@@ -538,8 +696,9 @@ class _CreateNoteState extends State<CreateNote>
 
                                   // Auto-save when tag is deleted
                                   if (FeatureFlag.enableAutoSave) {
-                                    if (_debounceTimer?.isActive ?? false)
+                                    if (_debounceTimer?.isActive ?? false) {
                                       _debounceTimer!.cancel();
+                                    }
                                     _debounceTimer =
                                         Timer(const Duration(seconds: 1), () {
                                       _currentFocusArea.value = 'tags';
@@ -561,7 +720,7 @@ class _CreateNoteState extends State<CreateNote>
                   ),
 
                   // Compact Tag Input (Floating Style)
-                  Container(
+                  SizedBox(
                     height: 40,
                     child: Row(
                       children: [
@@ -571,20 +730,26 @@ class _CreateNoteState extends State<CreateNote>
                             focusNode: _tagFocusNode,
                             textInputAction: TextInputAction.done,
                             onSubmitted: _addTag,
-                            style: TextStyle(fontSize: 14),
+                            contextMenuBuilder: (BuildContext context,
+                                EditableTextState editableTextState) {
+                              return AdaptiveTextSelectionToolbar.editableText(
+                                editableTextState: editableTextState,
+                              );
+                            },
+                            style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Add tag...',
-                              hintStyle:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
-                              prefixIcon: Icon(Icons.tag, size: 16),
+                              hintStyle: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                              prefixIcon: const Icon(Icons.tag, size: 16),
                               suffixIcon: IconButton(
-                                icon: Icon(Icons.add, size: 18),
+                                icon: const Icon(Icons.add, size: 18),
                                 tooltip: 'Add tag',
                                 onPressed: () =>
                                     _addTag(_tagInputController.text),
                                 padding: EdgeInsets.zero,
-                                constraints:
-                                    BoxConstraints(minWidth: 32, minHeight: 32),
+                                constraints: const BoxConstraints(
+                                    minWidth: 32, minHeight: 32),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
@@ -602,7 +767,7 @@ class _CreateNoteState extends State<CreateNote>
                                     color: theme.colorScheme.primary,
                                     width: 1.5),
                               ),
-                              contentPadding: EdgeInsets.symmetric(
+                              contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                               isDense: true,
                             ),
@@ -616,30 +781,122 @@ class _CreateNoteState extends State<CreateNote>
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: Builder(
-                builder: (context) => QuillEditor.basic(
-                  configurations: QuillEditorConfigurations(
-                    controller: _controller,
-                    sharedConfigurations:
-                        const QuillSharedConfigurations(locale: Locale('en')),
-                    placeholder: 'Note...',
-                    expands: true,
-                    customStyles: DefaultStyles(
-                      paragraph: DefaultTextBlockStyle(
-                          TextStyle(
-                            fontSize: 16,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const VerticalSpacing(5, 0),
-                          const VerticalSpacing(0, 0),
-                          null),
+              child: EdgeAutoScrollWrapper(
+                activationPadding: 48,
+                maxPixelsPerTick: 6,
+                child: Builder(
+                  builder: (context) => QuillEditor.basic(
+                    configurations: QuillEditorConfigurations(
+                      controller: _controller,
+                      sharedConfigurations:
+                          const QuillSharedConfigurations(locale: Locale('en')),
+                      placeholder: 'Note...',
+                      expands: true,
+                      customStyles: DefaultStyles(
+                        paragraph: DefaultTextBlockStyle(
+                            TextStyle(
+                              fontSize: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const VerticalSpacing(5, 0),
+                            const VerticalSpacing(0, 0),
+                            null),
+                      ),
                     ),
+                    focusNode: _quillFocusNode,
                   ),
-                  focusNode: _quillFocusNode,
                 ),
               ),
             ),
             const SizedBox(height: 16),
+
+            // Auto-save status indicators at bottom
+            if (FeatureFlag.enableAutoSave) ...[
+              ValueListenableBuilder<bool>(
+                valueListenable: _isSavingNotifier,
+                builder: (context, isSaving, child) {
+                  if (isSaving) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.secondary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.secondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Auto-saving...",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: _showCheckmarkNotifier,
+                builder: (context, showCheckmark, child) {
+                  if (showCheckmark) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LineIcons.checkCircleAlt,
+                            color: Colors.green,
+                            size: 16,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Content saved",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+
             QuillToolbar.simple(
               configurations: QuillSimpleToolbarConfigurations(
                 controller: _controller,

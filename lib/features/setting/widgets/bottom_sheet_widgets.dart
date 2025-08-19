@@ -1,5 +1,7 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+// sync imports are declared near top
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +21,11 @@ import 'package:msbridge/features/setting/section/user_section/logout/logout_dia
 import 'package:msbridge/core/services/backup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
+import 'package:msbridge/features/setting/section/appearance_section/font_selection_page.dart';
+import 'package:msbridge/features/setting/pages/appearance_settings_page.dart';
 
 class BottomSheetWidgets {
   static Widget buildAISmartFeaturesBottomSheet(BuildContext context) {
@@ -163,6 +170,36 @@ class BottomSheetWidgets {
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildNotesContent(context, theme, colorScheme),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  static Widget buildAppearanceBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDragHandle(colorScheme),
+          const SizedBox(height: 20),
+          _buildBottomSheetHeader(
+              context, "Appearance & Fonts", theme, colorScheme),
+          const SizedBox(height: 20),
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildAppearanceContent(context, theme, colorScheme),
             ),
           ),
           const SizedBox(height: 20),
@@ -453,7 +490,14 @@ class BottomSheetWidgets {
               return Switch(
                 value: syncSettings.cloudSyncEnabled,
                 onChanged: (bool value) async {
-                  // Sync logic implementation
+                  await syncSettings.setCloudSyncEnabled(value);
+                  if (context.mounted) {
+                    CustomSnackBar.show(
+                      context,
+                      value ? 'Cloud sync enabled' : 'Cloud sync disabled',
+                      isSuccess: value,
+                    );
+                  }
                 },
               );
             },
@@ -465,8 +509,27 @@ class BottomSheetWidgets {
           "Sync Now",
           "Manually push notes to the cloud",
           LineIcons.syncIcon,
-          () {
-            // Sync now logic
+          () async {
+            final syncSettings = context.read<SyncSettingsProvider>();
+            if (!syncSettings.cloudSyncEnabled) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Cloud sync is disabled',
+                    isSuccess: false);
+              }
+              return;
+            }
+            try {
+              await SyncService().syncLocalNotesToFirebase();
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Sync completed', isSuccess: true);
+              }
+            } catch (e, st) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Sync failed: $e',
+                    isSuccess: false);
+              }
+              FirebaseCrashlytics.instance.recordError(e, st);
+            }
           },
         ),
         const SizedBox(height: 12),
@@ -476,7 +539,26 @@ class BottomSheetWidgets {
           "Manually download notes from cloud to this device",
           LineIcons.download,
           () async {
-            // Pull from cloud logic
+            final syncSettings = context.read<SyncSettingsProvider>();
+            if (!syncSettings.cloudSyncEnabled) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Cloud sync is disabled',
+                    isSuccess: false);
+              }
+              return;
+            }
+            try {
+              await ReverseSyncService().syncDataFromFirebaseToHive();
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Pull completed', isSuccess: true);
+              }
+            } catch (e, st) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Pull failed: $e',
+                    isSuccess: false);
+              }
+              FirebaseCrashlytics.instance.recordError(e, st);
+            }
           },
         ),
         const SizedBox(height: 12),
@@ -486,10 +568,92 @@ class BottomSheetWidgets {
           "Choose how often to auto-sync (Off/15/30/60 min)",
           LineIcons.history,
           () async {
-            // Auto sync interval logic
+            final minutes = await _showAutoSyncIntervalDialog(context);
+            if (minutes != null) {
+              await AutoSyncScheduler.setIntervalMinutes(minutes);
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  minutes == 0
+                      ? 'Auto sync turned off'
+                      : 'Auto sync set to every $minutes minutes',
+                  isSuccess: true,
+                );
+              }
+            }
           },
         ),
       ],
+    );
+  }
+
+  static Future<int?> _showAutoSyncIntervalDialog(BuildContext context) async {
+    int selected = await AutoSyncScheduler.getIntervalMinutes();
+    return showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          title: const Text('Auto sync interval'),
+          content: StatefulBuilder(
+            builder: (context, setLocal) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildIntervalOption(setLocal, 'Off', 0, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 15 minutes', 15, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 30 minutes', 30, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 60 minutes', 60, selected),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, selected),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Widget _buildIntervalOption(void Function(void Function()) setLocal,
+      String label, int value, int current) {
+    return InkWell(
+      onTap: () => setLocal(() {}),
+      child: Row(
+        children: [
+          Radio<int>(
+            value: value,
+            groupValue: current,
+            onChanged: (v) {
+              if (v == null) return;
+              setLocal(() {
+                // This function is used inside the dialog where 'selected'
+                // is captured by the parent closure. We just trigger rebuild;
+                // the actual selection is handled in the parent builder.
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
     );
   }
 
@@ -1132,6 +1296,123 @@ class BottomSheetWidgets {
   }
 
   static Widget _buildProfileActionTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.primary.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: colorScheme.primary.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildAppearanceContent(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Appearance Option
+        _buildAppearanceActionTile(
+          context,
+          "Appearance",
+          "Customize themes, colors, and visual preferences",
+          LineIcons.palette,
+          () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const AppearanceSettingsPage(),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Font Option
+        _buildAppearanceActionTile(
+          context,
+          "Font",
+          "Choose your preferred font family",
+          LineIcons.font,
+          () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const FontSelectionPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildAppearanceActionTile(
     BuildContext context,
     String title,
     String subtitle,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/pages/app_info_page.dart';
-import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_page.dart';
 import 'package:msbridge/features/setting/section/streak_section/streak_settings_page.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
 
@@ -39,12 +38,12 @@ class NavigationMethods {
   }
 
   static void navigateToAppearance(BuildContext context) {
-    Navigator.push(
-      context,
-      PageTransition(
-        type: PageTransitionType.rightToLeft,
-        child: const AppearanceSettingsPage(),
-      ),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) =>
+          BottomSheetWidgets.buildAppearanceBottomSheet(context),
     );
   }
 

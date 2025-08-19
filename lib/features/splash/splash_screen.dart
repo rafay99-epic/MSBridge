@@ -85,38 +85,44 @@ class _SplashScreenState extends State<SplashScreen> {
                         scale: Curves.easeInOut.transform(value),
                         child: Opacity(
                           opacity: value,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 50.0),
-                                  child: SvgPicture.asset(
-                                    page['image'],
-                                    width: 300,
+                          child: Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(20),
+                                    child: SvgPicture.asset(
+                                      page['image'],
+                                      width: 280,
+                                      height: 280,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 40),
-                                Text(
-                                  page['title'],
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.primary,
+                                  const SizedBox(height: 32),
+                                  Text(
+                                    page['title'],
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  page['body'],
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: theme.colorScheme.primary,
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    page['body'],
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.7),
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -126,14 +132,30 @@ class _SplashScreenState extends State<SplashScreen> {
                 },
               ),
             ),
-            Padding(
+            Container(
               padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: theme.colorScheme.outline.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
                     onPressed: _navigateToLogin,
-                    child: const Text('Skip'),
+                    child: Text(
+                      'Skip',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -150,8 +172,25 @@ class _SplashScreenState extends State<SplashScreen> {
                         _navigateToLogin();
                       }
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
                     child: Text(
-                        _currentPage == _pages.length - 1 ? 'Done' : 'Next'),
+                      _currentPage == _pages.length - 1
+                          ? 'Get Started'
+                          : 'Next',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -174,17 +213,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Widget _indicator(bool isActive, ThemeData theme) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      margin: const EdgeInsets.symmetric(horizontal: 3.0),
-      height: 10.0,
-      width: isActive ? 22.0 : 10.0,
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      height: 8.0,
+      width: isActive ? 24.0 : 8.0,
       decoration: BoxDecoration(
         color: isActive
             ? theme.colorScheme.primary
-            : theme.colorScheme.secondary.withOpacity(0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-        border: isActive
-            ? Border.all(color: theme.colorScheme.primary, width: 1.5)
+            : theme.colorScheme.outline.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
             : null,
       ),
     );
