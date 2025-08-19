@@ -509,14 +509,26 @@ class BottomSheetWidgets {
           "Sync Now",
           "Manually push notes to the cloud",
           LineIcons.syncIcon,
-          () {
+          () async {
+            final syncSettings = context.read<SyncSettingsProvider>();
+            if (!syncSettings.cloudSyncEnabled) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Cloud sync is disabled',
+                    isSuccess: false);
+              }
+              return;
+            }
             try {
-              // Sync now logic
-              SyncService().syncLocalNotesToFirebase();
-              CustomSnackBar.show(context, 'Sync started', isSuccess: true);
-            } catch (e) {
-              CustomSnackBar.show(context, 'Sync failed: $e', isSuccess: false);
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+              await SyncService().syncLocalNotesToFirebase();
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Sync completed', isSuccess: true);
+              }
+            } catch (e, st) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Sync failed: $e',
+                    isSuccess: false);
+              }
+              FirebaseCrashlytics.instance.recordError(e, st);
             }
           },
         ),
@@ -527,14 +539,25 @@ class BottomSheetWidgets {
           "Manually download notes from cloud to this device",
           LineIcons.download,
           () async {
+            final syncSettings = context.read<SyncSettingsProvider>();
+            if (!syncSettings.cloudSyncEnabled) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Cloud sync is disabled',
+                    isSuccess: false);
+              }
+              return;
+            }
             try {
               await ReverseSyncService().syncDataFromFirebaseToHive();
               if (context.mounted) {
                 CustomSnackBar.show(context, 'Pull completed', isSuccess: true);
               }
-            } catch (e) {
-              CustomSnackBar.show(context, 'Pull failed: $e', isSuccess: false);
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+            } catch (e, st) {
+              if (context.mounted) {
+                CustomSnackBar.show(context, 'Pull failed: $e',
+                    isSuccess: false);
+              }
+              FirebaseCrashlytics.instance.recordError(e, st);
             }
           },
         ),
