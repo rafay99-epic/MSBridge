@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
@@ -68,17 +69,41 @@ class ForgetPassword extends StatelessWidget {
                         elevation: 2,
                       ),
                       onPressed: () async {
-                        final authRepo = AuthRepo();
-                        final result = await authRepo.resetPassword(
-                          emailController.text,
-                        );
-                        if (result.isSuccess) {
-                          emailController.clear();
-                          CustomSnackBar.show(context,
-                              "Password reset successful. Check your inbox.");
-                        } else {
+                        final email = emailController.text.trim();
+                        if (email.isEmpty) {
                           CustomSnackBar.show(
-                              context, "Password reset failed.");
+                              context, "Please enter your email.");
+                          return;
+                        }
+                        final authRepo = AuthRepo();
+                        try {
+                          final result = await authRepo.resetPassword(email);
+                          if (result.isSuccess) {
+                            emailController.clear();
+                            CustomSnackBar.show(
+                              context,
+                              "Password reset email sent. Check your inbox.",
+                              isSuccess: true,
+                            );
+                          } else {
+                            FirebaseCrashlytics.instance.recordError(
+                                result.error, StackTrace.current,
+                                reason: "Password reset failed");
+                            CustomSnackBar.show(
+                              context,
+                              result.error ?? "Password reset failed.",
+                              isSuccess: false,
+                            );
+                          }
+                        } catch (e) {
+                          FirebaseCrashlytics.instance.recordError(
+                              e, StackTrace.current,
+                              reason: "Password reset failed");
+                          CustomSnackBar.show(
+                            context,
+                            "Password reset failed.",
+                            isSuccess: false,
+                          );
                         }
                       },
                       child: Text(
