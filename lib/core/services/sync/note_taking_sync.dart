@@ -267,8 +267,6 @@ class SyncService {
           note.noteId != null &&
           note.noteId!.isNotEmpty) {
         try {
-          Map<String, dynamic> hiveData = note.toMap();
-
           DocumentSnapshot snapshot = await _firestore
               .collection('users')
               .doc(userId)
@@ -277,14 +275,70 @@ class SyncService {
               .get();
 
           if (snapshot.exists) {
-            Map<String, dynamic> firestoreData =
-                snapshot.data() as Map<String, dynamic>;
-            bool mapsAreEqual = _mapsEqual(hiveData, firestoreData);
+            final firestoreData = snapshot.data() as Map<String, dynamic>;
 
-            if (!mapsAreEqual) {
+            // Parse updatedAt from cloud and local
+            DateTime parseUpdatedAt(dynamic value) {
+              if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);
+              if (value is Timestamp) return value.toDate();
+              if (value is String) {
+                try {
+                  return DateTime.parse(value);
+                } catch (_) {
+                  return DateTime.fromMillisecondsSinceEpoch(0);
+                }
+              }
+              return DateTime.fromMillisecondsSinceEpoch(0);
+            }
+
+            final cloudUpdatedAt = parseUpdatedAt(firestoreData['updatedAt']);
+            final localUpdatedAt = note.updatedAt;
+
+            // Conflict resolution:
+            // - If cloud >= local, keep cloud (update local)
+            // - If local > cloud, push local (queue for update)
+            if (!cloudUpdatedAt.isBefore(localUpdatedAt)) {
+              try {
+                // Update local from cloud
+                final box = await HiveNoteTakingRepo.getBox();
+                final fresh = box.get(note.noteId);
+                if (fresh != null) {
+                  fresh.noteTitle =
+                      (firestoreData['noteTitle'] ?? '') as String;
+                  fresh.noteContent =
+                      (firestoreData['noteContent'] ?? '') as String;
+                  final tags = (firestoreData['tags'] as List?)
+                          ?.map((e) => e.toString())
+                          .toList() ??
+                      <String>[];
+                  fresh.tags = tags;
+                  fresh.isDeleted =
+                      (firestoreData['isDeleted'] ?? false) as bool;
+                  fresh.isSynced = true;
+                  // Use parsed cloud time or now if missing
+                  fresh.updatedAt =
+                      cloudUpdatedAt == DateTime.fromMillisecondsSinceEpoch(0)
+                          ? DateTime.now()
+                          : cloudUpdatedAt;
+                  await fresh.save();
+
+                  // Log conflict kept cloud
+                  FirebaseCrashlytics.instance.log(
+                      'Conflict resolved (kept cloud) for noteId=${note.noteId} cloudUpdatedAt=$cloudUpdatedAt localUpdatedAt=$localUpdatedAt');
+                }
+              } catch (e) {
+                FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                    reason:
+                        'Failed applying cloud winner for note ${note.noteId}');
+              }
+            } else {
+              // Local is newer → queue for pushing to cloud
               updatedNotes.add(note);
+              FirebaseCrashlytics.instance.log(
+                  'Conflict resolved (kept local) for noteId=${note.noteId} cloudUpdatedAt=$cloudUpdatedAt localUpdatedAt=$localUpdatedAt');
             }
           } else {
+            // Not in cloud yet → push local
             updatedNotes.add(note);
           }
         } catch (e) {
@@ -330,7 +384,7 @@ class SyncService {
     }
   }
 
-  bool _mapsEqual(Map map1, Map map2) {
+  bool mapsEqual(Map map1, Map map2) {
     if (map1.length != map2.length) {
       return false;
     }
