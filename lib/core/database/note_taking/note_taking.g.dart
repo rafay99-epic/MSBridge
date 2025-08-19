@@ -25,13 +25,15 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       updatedAt: fields[5] as DateTime?,
       userId: fields[6] as String,
       tags: (fields[7] as List?)?.cast<String>(),
+      versionNumber: fields[8] as int,
+      createdAt: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteTakingModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.noteId)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       ..writeByte(6)
       ..write(obj.userId)
       ..writeByte(7)
-      ..write(obj.tags);
+      ..write(obj.tags)
+      ..writeByte(8)
+      ..write(obj.versionNumber)
+      ..writeByte(9)
+      ..write(obj.createdAt);
   }
 
   @override

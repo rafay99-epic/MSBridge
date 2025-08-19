@@ -4,6 +4,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
+import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
 import 'package:provider/provider.dart';
 
 class NoteCard extends StatefulWidget {
@@ -161,21 +162,54 @@ class _NoteCardState extends State<NoteCard> {
           Positioned(
             top: 8,
             right: 8,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) =>
-                  ScaleTransition(scale: animation, child: child),
-              child: IconButton(
-                key: ValueKey<bool>(isPinned),
-                icon: Icon(
-                    isPinned ? LineIcons.thumbtack : Icons.push_pin_outlined),
-                color: theme.colorScheme.primary,
-                onPressed: () =>
-                    noteProvider.togglePin(widget.note.noteId.toString()),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Version History Button
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    icon: Icon(
+                      LineIcons.history,
+                      size: 20,
+                    ),
+                    color: theme.colorScheme.secondary,
+                    onPressed: () => _showVersionHistory(context),
+                  ),
+                ),
+                // Pin Button
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
+                  child: IconButton(
+                    key: ValueKey<bool>(isPinned),
+                    icon: Icon(isPinned
+                        ? LineIcons.thumbtack
+                        : Icons.push_pin_outlined),
+                    color: theme.colorScheme.primary,
+                    onPressed: () =>
+                        noteProvider.togglePin(widget.note.noteId.toString()),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showVersionHistory(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            VersionHistoryScreen(note: widget.note),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 200),
       ),
     );
   }

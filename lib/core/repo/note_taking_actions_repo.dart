@@ -1,8 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/utils/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NoteTakingActions {
   static Future<SaveNoteResult> saveNote({
@@ -55,13 +59,108 @@ class NoteTakingActions {
     required String content,
     required bool isSynced,
     List<String>? tags,
+    String changeDescription = '',
   }) async {
     try {
       final List<String> newTags = tags ?? note.tags;
-      if (note.noteTitle == title && note.noteContent == content && _listEquals(note.tags, newTags)) {
+      if (note.noteTitle == title &&
+          note.noteContent == content &&
+          _listEquals(note.tags, newTags)) {
         return SaveNoteResult(success: true, message: "No changes detected.");
       }
 
+      // Create version history if enabled
+      final versionHistoryEnabled = await _isVersionHistoryEnabled();
+      if (versionHistoryEnabled) {
+        try {
+          // Get the previous version ID for change tracking
+          String? previousVersionId;
+          final existingVersions =
+              await NoteVersionRepo.getNoteVersions(note.noteId!);
+          if (existingVersions.isNotEmpty) {
+            previousVersionId = existingVersions.first.versionId;
+          }
+
+          // Create new version locally first
+          final versionId = generateUuid();
+          final newVersion = NoteVersion(
+            versionId: versionId,
+            noteId: note.noteId!,
+            noteTitle: note.noteTitle,
+            noteContent: note.noteContent,
+            tags: note.tags,
+            createdAt: DateTime.now(),
+            userId: note.userId,
+            changeDescription: changeDescription,
+            versionNumber: note.versionNumber,
+            changes: changeDescription.isNotEmpty
+                ? [changeDescription]
+                : ['Content updated'],
+            previousVersionId: previousVersionId ?? '',
+          );
+
+          // Save version to local storage
+          await NoteVersionRepo.createVersion(
+            noteId: note.noteId!,
+            noteTitle: note.noteTitle,
+            noteContent: note.noteContent,
+            tags: note.tags,
+            userId: note.userId,
+            versionNumber: note.versionNumber,
+            changeDescription: changeDescription,
+            previousVersionId: previousVersionId,
+          );
+
+          // Increment version number
+          note.versionNumber++;
+
+          // Sync the created version to Firebase
+          if (newVersion != null) {
+            try {
+              final FirebaseFirestore firestore = FirebaseFirestore.instance;
+              final User? user = FirebaseAuth.instance.currentUser;
+              if (user != null &&
+                  note.noteId != null &&
+                  note.noteId!.isNotEmpty) {
+                // Add version to Firebase with all required fields
+                await firestore
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection('notes')
+                    .doc(note.noteId)
+                    .collection('versions')
+                    .doc(newVersion.versionId)
+                    .set({
+                  'versionId': newVersion.versionId,
+                  'noteId': newVersion.noteId,
+                  'noteTitle': newVersion.noteTitle,
+                  'noteContent': newVersion.noteContent,
+                  'tags': newVersion.tags,
+                  'userId': newVersion.userId,
+                  'versionNumber': newVersion.versionNumber,
+                  'changeDescription': newVersion.changeDescription,
+                  'previousVersionId': newVersion.previousVersionId,
+                  'changes': newVersion.changes,
+                  'createdAt': newVersion.createdAt.toIso8601String(),
+                  'syncedAt': DateTime.now().toIso8601String(),
+                });
+              }
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+              // Don't fail the note update if Firebase sync fails
+              print('Failed to sync version to Firebase: $e');
+            }
+          }
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+          print('Failed to create version: $e');
+          throw Exception("Error creating version: $e");
+
+          // Don't fail the note update if version creation fails
+        }
+      }
+
+      // Update note
       note.noteTitle = title;
       note.noteContent = content;
       note.updatedAt = DateTime.now();
@@ -76,6 +175,7 @@ class NoteTakingActions {
         note: note,
       );
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(success: false, message: "Error updating note: $e");
     }
   }
@@ -106,6 +206,7 @@ class NoteTakingActions {
       return SaveNoteResult(
           success: true, message: "Notes moved to recycle bin");
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(
           success: false, message: "Error deleting notes: $e");
     }
@@ -159,6 +260,7 @@ class NoteTakingActions {
             : "Selected notes permanently deleted.",
       );
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(
           success: false, message: "Error deleting notes: $e");
     }
@@ -195,6 +297,7 @@ class NoteTakingActions {
             : "All notes permanently deleted.",
       );
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(
           success: false, message: "Error deleting all notes: $e");
     }
@@ -227,8 +330,99 @@ class NoteTakingActions {
       }
       return SaveNoteResult(success: true, message: "Notes Restored");
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(
           success: false, message: "Error restoring notes: $e");
+    }
+  }
+
+  static Future<SaveNoteResult> deleteNote(String noteId) async {
+    try {
+      final notes = await HiveNoteTakingRepo.getNotes();
+      final note = notes.firstWhere(
+        (n) => n.noteId == noteId,
+        orElse: () => NoteTakingModel(
+          noteId: '',
+          noteTitle: '',
+          noteContent: '',
+          userId: '',
+        ),
+      );
+
+      if (note.noteId!.isEmpty) {
+        return SaveNoteResult(success: false, message: "Note not found.");
+      }
+
+      note.isDeleted = true;
+      note.updatedAt = DateTime.now();
+      await HiveNoteTakingRepo.updateNote(note);
+
+      return SaveNoteResult(
+          success: true, message: "Note deleted successfully.");
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+      return SaveNoteResult(success: false, message: "Error deleting note: $e");
+    }
+  }
+
+  /// Restore a note from a specific version
+  static Future<SaveNoteResult> restoreNoteFromVersion({
+    required NoteVersion versionToRestore,
+    required String userId,
+  }) async {
+    try {
+      // Generate a new note ID for the restored note
+      final newNoteId = generateUuid();
+
+      // Create a new note from the restored version
+      final restoredNote = NoteTakingModel(
+        noteId: newNoteId,
+        noteTitle: versionToRestore.noteTitle,
+        noteContent: versionToRestore.noteContent,
+        userId: userId,
+        tags: versionToRestore.tags,
+        versionNumber: 1, // Start fresh with version 1
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        isSynced: false,
+        isDeleted: false,
+      );
+
+      // Save the restored note
+      await HiveNoteTakingRepo.addNote(restoredNote);
+
+      // Create a version entry for the restored note
+      await NoteVersionRepo.createVersion(
+        noteId: newNoteId,
+        noteTitle: versionToRestore.noteTitle,
+        noteContent: versionToRestore.noteContent,
+        tags: versionToRestore.tags,
+        userId: userId,
+        versionNumber: 1,
+        changeDescription:
+            'Restored from version ${versionToRestore.versionNumber} of note: ${versionToRestore.noteTitle}',
+      );
+
+      return SaveNoteResult(
+        success: true,
+        message:
+            "Note restored successfully from version ${versionToRestore.versionNumber}",
+        note: restoredNote,
+      );
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+      return SaveNoteResult(
+          success: false, message: "Error restoring note: $e");
+    }
+  }
+
+  /// Check if version history is enabled
+  static Future<bool> _isVersionHistoryEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('version_history_enabled') ?? true;
+    } catch (e) {
+      return true; // Default to enabled if there's an error
     }
   }
 }

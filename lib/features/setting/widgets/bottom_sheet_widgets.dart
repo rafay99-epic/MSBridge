@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
@@ -14,6 +16,9 @@ import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/profile/profile_edit_page.dart';
 import 'package:msbridge/features/changePassword/change_password.dart';
 import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/core/services/backup_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
 
 class BottomSheetWidgets {
   static Widget buildAISmartFeaturesBottomSheet(BuildContext context) {
@@ -446,7 +451,7 @@ class BottomSheetWidgets {
           Consumer<SyncSettingsProvider>(
             builder: (context, syncSettings, _) {
               return Switch(
-                value: syncSettings.cloudSyncEnabled ?? false,
+                value: syncSettings.cloudSyncEnabled,
                 onChanged: (bool value) async {
                   // Sync logic implementation
                 },
@@ -631,8 +636,27 @@ class BottomSheetWidgets {
           "Export Backup",
           "Create a backup of all your notes",
           LineIcons.download,
-          () {
-            // Export backup logic
+          () async {
+            try {
+              final filePath = await BackupService.exportAllNotes(context);
+              if (context.mounted) {
+                final detailedLocation =
+                    BackupService.getDetailedFileLocation(filePath);
+                CustomSnackBar.show(
+                  context,
+                  'Backup exported successfully to $detailedLocation',
+                  isSuccess: true,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  'Backup failed: $e',
+                  isSuccess: false,
+                );
+              }
+            }
           },
         ),
         const SizedBox(height: 12),
@@ -642,7 +666,24 @@ class BottomSheetWidgets {
           "Restore notes from a backup file",
           LineIcons.upload,
           () async {
-            // Import backup logic
+            try {
+              final report = await BackupService.importFromFile();
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  'Import: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped',
+                  isSuccess: true,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  'Import failed: $e',
+                  isSuccess: false,
+                );
+              }
+            }
           },
         ),
         const SizedBox(height: 12),
@@ -652,7 +693,13 @@ class BottomSheetWidgets {
           "View and restore deleted notes",
           LineIcons.trash,
           () {
-            // Recycle bin logic
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const DeletedNotes(),
+              ),
+            );
           },
         ),
       ],
@@ -729,38 +776,71 @@ class BottomSheetWidgets {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildNotesSectionHeader(context, "Ask AI", LineIcons.comments),
+        // Version History section
+        _buildNotesSectionHeader(context, "Version History", LineIcons.history),
         const SizedBox(height: 12),
+        StatefulBuilder(
+          builder: (ctx, setLocal) {
+            return FutureBuilder<bool>(
+              future: () async {
+                final prefs = await SharedPreferences.getInstance();
+                return prefs.getBool('version_history_enabled') ?? true;
+              }(),
+              builder: (context, snapshot) {
+                final isEnabled = snapshot.data ?? true;
+                return _buildNotesToggleTile(
+                  context,
+                  "Enable Version History",
+                  isEnabled
+                      ? "Automatically track changes to your notes"
+                      : "Version tracking is currently disabled",
+                  LineIcons.history,
+                  isEnabled,
+                  (value) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('version_history_enabled', value);
+                    setLocal(() {});
+                    if (context.mounted) {
+                      // Show more informative feedback
+                      if (value) {
+                        CustomSnackBar.show(
+                          context,
+                          'Version History enabled! Your notes will now track changes automatically.',
+                          isSuccess: true,
+                        );
+                      } else {
+                        CustomSnackBar.show(
+                          context,
+                          'Version History disabled. No new versions will be created.',
+                          isSuccess: false,
+                        );
+                      }
+                    }
+                  },
+                );
+              },
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
         _buildNotesActionTile(
           context,
-          "Ask AI",
-          "Chat over your notes and MS Notes",
-          LineIcons.comments,
+          "Version History Settings",
+          "Configure version limits and cleanup",
+          LineIcons.cog,
           () {
             Navigator.push(
               context,
               PageTransition(
                 type: PageTransitionType.rightToLeft,
-                child: const ChatAssistantPage(),
+                child: const VersionHistorySettings(),
               ),
             );
           },
         ),
-        const SizedBox(height: 12),
-        Consumer<ChatHistoryProvider>(
-          builder: (context, historyProvider, _) {
-            return _buildNotesToggleTile(
-              context,
-              "Chat History",
-              historyProvider.isHistoryEnabled
-                  ? "Chat history is being saved"
-                  : "Chat history is disabled",
-              LineIcons.history,
-              historyProvider.isHistoryEnabled,
-              (value) => historyProvider.toggleHistoryEnabled(),
-            );
-          },
-        ),
+
         const SizedBox(height: 24),
         _buildNotesSectionHeader(
             context, "Sharing & Collaboration", LineIcons.share),

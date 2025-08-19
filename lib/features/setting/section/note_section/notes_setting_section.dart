@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/config/ai_model_choice.dart';
-import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
-import 'package:msbridge/features/setting/section/note_section/ai_model_selection.dart';
 import 'package:msbridge/widgets/buildModernSettingsTile.dart';
 import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/core/services/backup_service.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
-import 'package:msbridge/core/provider/chat_history_provider.dart';
+import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});
@@ -32,12 +26,9 @@ class NotesSetting extends StatefulWidget {
 }
 
 class _NotesSettingState extends State<NotesSetting> {
-  String? selectedModelName;
-
   @override
   void initState() {
     super.initState();
-    _loadSelectedModel();
   }
 
   Future<int?> _pickInterval(BuildContext context) async {
@@ -63,76 +54,79 @@ class _NotesSettingState extends State<NotesSetting> {
     );
   }
 
-  Future<void> _deleteAllCloudNotes(BuildContext context) async {
-    try {
-      final auth = FirebaseAuth.instance;
-      final user = auth.currentUser;
-      if (user == null) return;
-      final firestore = FirebaseFirestore.instance;
-      final col =
-          firestore.collection('users').doc(user.uid).collection('notes');
-      final snap = await col.get();
-      final batch = firestore.batch();
-      for (final d in snap.docs) {
-        batch.delete(d.reference);
-      }
-      await batch.commit();
-    } catch (e) {
-      if (mounted)
-        CustomSnackBar.show(context, 'Failed to delete cloud notes: $e');
-    }
+  Future<bool> _getVersionHistoryEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('version_history_enabled') ?? true;
   }
 
-  Future<void> _loadSelectedModel() async {
+  Future<void> _setVersionHistoryEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      selectedModelName = prefs.getString(AIModelsConfig.selectedModelKey) ??
-          'gemini-1.5-pro-latest';
-    });
+    await prefs.setBool('version_history_enabled', value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final autoSaveProvider = Provider.of<AutoSaveProvider>(context);
     final shareProvider = Provider.of<ShareLinkProvider>(context);
     final syncSettings = Provider.of<SyncSettingsProvider>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // AI & Smart Features
-        buildSubsectionHeader(context, "AI & Smart Features", LineIcons.robot),
+        // Version History
+        buildSubsectionHeader(context, "Version History", LineIcons.history),
         const SizedBox(height: 12),
+
+        // Version History Toggle
+        Consumer<NoteVersionProvider>(
+          builder: (context, versionProvider, _) {
+            return buildModernSettingsTile(
+              context,
+              title: "Enable Version History",
+              subtitle: "Automatically track changes to your notes",
+              icon: LineIcons.history,
+              trailing: FutureBuilder<bool>(
+                future: _getVersionHistoryEnabled(),
+                builder: (context, snapshot) {
+                  final isEnabled = snapshot.data ?? true;
+                  return Switch(
+                    value: isEnabled,
+                    onChanged: (value) async {
+                      await _setVersionHistoryEnabled(value);
+                      if (mounted) {
+                        setState(() {});
+                        CustomSnackBar.show(
+                          context,
+                          value
+                              ? 'Version History enabled'
+                              : 'Version History disabled',
+                          isSuccess: true,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
         buildModernSettingsTile(
           context,
-          title: "AI Summary Model",
-          subtitle: "Choose your preferred AI model for note summaries",
-          icon: LineIcons.robot,
+          title: "Version History Settings",
+          subtitle: "Manage note version retention and cleanup",
+          icon: LineIcons.cog,
           onTap: () {
             Navigator.push(
               context,
               PageTransition(
                 type: PageTransitionType.rightToLeft,
-                child: const AIModelSelectionPage(),
+                child: const VersionHistorySettings(),
               ),
             );
           },
         ),
-        if (FeatureFlag.enableAutoSave) ...[
-          const SizedBox(height: 12),
-          buildModernSettingsTile(
-            context,
-            title: "Auto Save Notes",
-            subtitle: "Automatically save notes as you type",
-            icon: LineIcons.save,
-            trailing: Switch(
-              value: autoSaveProvider.autoSaveEnabled,
-              onChanged: (bool value) {
-                autoSaveProvider.autoSaveEnabled = value;
-              },
-            ),
-          ),
-        ],
 
         const SizedBox(height: 24),
 
@@ -169,127 +163,73 @@ class _NotesSettingState extends State<NotesSetting> {
                   },
                 );
                 if (confirm != true) return;
-                await _deleteAllCloudNotes(context);
                 await syncSettings.setCloudSyncEnabled(false);
-                if (mounted) {
-                  CustomSnackBar.show(
-                      context, 'Cloud sync disabled. Cloud notes removed.',
-                      isSuccess: true);
-                }
               } else {
                 await syncSettings.setCloudSyncEnabled(true);
-                try {
-                  await SyncService().syncLocalNotesToFirebase();
-                  if (mounted) {
-                    CustomSnackBar.show(
-                        context, 'Cloud sync enabled. Notes synced to cloud.',
-                        isSuccess: true);
-                  }
-                } catch (e) {
-                  if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
-                }
               }
             },
           ),
         ),
-        const SizedBox(height: 12),
-        buildModernSettingsTile(
-          context,
-          title: "Sync now",
-          subtitle: "Manually push notes to the cloud",
-          icon: LineIcons.syncIcon,
-          onTap: () async {
-            try {
-              await SyncService().syncLocalNotesToFirebase();
-              if (mounted) {
-                CustomSnackBar.show(context, 'Synced successfully',
-                    isSuccess: true);
+        if (syncSettings.cloudSyncEnabled) ...[
+          const SizedBox(height: 12),
+          buildModernSettingsTile(
+            context,
+            title: "Push to Cloud",
+            subtitle: "Manually push notes to the cloud",
+            icon: LineIcons.syncIcon,
+            onTap: () async {
+              try {
+                await SyncService().syncLocalNotesToFirebase();
+                if (mounted) {
+                  CustomSnackBar.show(context, 'Synced successfully',
+                      isSuccess: true);
+                }
+              } catch (e) {
+                if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
               }
-            } catch (e) {
-              if (mounted) CustomSnackBar.show(context, 'Sync failed: $e');
-            }
-          },
-        ),
-        const SizedBox(height: 12),
-        buildModernSettingsTile(
-          context,
-          title: "Pull from Cloud",
-          subtitle: "Manually download notes from cloud to this device",
-          icon: LineIcons.download,
-          onTap: () async {
-            try {
-              await ReverseSyncService().syncDataFromFirebaseToHive();
+            },
+          ),
+          const SizedBox(height: 12),
+          buildModernSettingsTile(
+            context,
+            title: "Pull from Cloud",
+            subtitle: "Manually download notes from cloud to this device",
+            icon: LineIcons.download,
+            onTap: () async {
+              try {
+                await ReverseSyncService().syncDataFromFirebaseToHive();
+                if (mounted) {
+                  CustomSnackBar.show(
+                      context, 'Notes downloaded from cloud successfully',
+                      isSuccess: true);
+                }
+              } catch (e) {
+                if (mounted)
+                  CustomSnackBar.show(context, 'Download failed: $e');
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          buildModernSettingsTile(
+            context,
+            title: "Auto sync interval",
+            subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
+            icon: LineIcons.history,
+            onTap: () async {
+              final minutes = await _pickInterval(context);
+              if (minutes == null) return;
+              await AutoSyncScheduler.setIntervalMinutes(minutes);
               if (mounted) {
                 CustomSnackBar.show(
-                    context, 'Notes downloaded from cloud successfully',
+                    context,
+                    minutes == 0
+                        ? 'Auto sync disabled'
+                        : 'Auto sync set to every $minutes min',
                     isSuccess: true);
               }
-            } catch (e) {
-              if (mounted) CustomSnackBar.show(context, 'Download failed: $e');
-            }
-          },
-        ),
-        const SizedBox(height: 12),
-        buildModernSettingsTile(
-          context,
-          title: "Auto sync interval",
-          subtitle: "Choose how often to auto-sync (Off/15/30/60 min)",
-          icon: LineIcons.history,
-          onTap: () async {
-            final minutes = await _pickInterval(context);
-            if (minutes == null) return;
-            await AutoSyncScheduler.setIntervalMinutes(minutes);
-            if (mounted) {
-              CustomSnackBar.show(
-                  context,
-                  minutes == 0
-                      ? 'Auto sync disabled'
-                      : 'Auto sync set to every $minutes min',
-                  isSuccess: true);
-            }
-          },
-        ),
-
-        const SizedBox(height: 24),
-
-        // Ask AI
-        buildSubsectionHeader(context, "Ask AI", LineIcons.comments),
-        const SizedBox(height: 12),
-        buildModernSettingsTile(
-          context,
-          title: "Ask AI",
-          subtitle: "Chat over your notes and MS Notes",
-          icon: LineIcons.comments,
-          onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const ChatAssistantPage(),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 12),
-
-        // Chat History Toggle
-        Consumer<ChatHistoryProvider>(
-          builder: (context, historyProvider, _) {
-            return buildModernSettingsTile(
-              context,
-              title: "Chat History",
-              subtitle: historyProvider.isHistoryEnabled
-                  ? "Chat history is being saved"
-                  : "Chat history is disabled",
-              icon: LineIcons.history,
-              trailing: Switch(
-                value: historyProvider.isHistoryEnabled,
-                onChanged: (value) => historyProvider.toggleHistoryEnabled(),
-              ),
-            );
-          },
-        ),
+            },
+          ),
+        ],
 
         const SizedBox(height: 24),
 

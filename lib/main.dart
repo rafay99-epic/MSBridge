@@ -4,10 +4,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
@@ -21,6 +23,7 @@ import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
+import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
@@ -36,6 +39,14 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+  } catch (e) {
+    FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+        reason: 'Failed to set preferred orientations');
+  }
 
   try {
     await Firebase.initializeApp();
@@ -45,6 +56,10 @@ void main() async {
     Hive.registerAdapter(NoteTakingModelAdapter());
     await Hive.openBox<NoteTakingModel>('notes_taking');
     await Hive.openBox<NoteTakingModel>('deleted_notes');
+
+    // Register note version adapter
+    Hive.registerAdapter(NoteVersionAdapter());
+    await Hive.openBox<NoteVersion>('note_versions');
 
     // Register chat history adapters
     Hive.registerAdapter(ChatHistoryAdapter());
@@ -63,6 +78,7 @@ void main() async {
           ChangeNotifierProvider(
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
+          ChangeNotifierProvider(create: (_) => NoteVersionProvider()),
           if (FeatureFlag.enableFingerprintLock)
             ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
           if (FeatureFlag.enableAutoSave)
@@ -78,7 +94,6 @@ void main() async {
       ),
     );
 
-    // Initialize auto sync scheduler after app providers are ready
     await AutoSyncScheduler.initialize();
 
     bool weWantFatalErrorRecording = true;
@@ -101,6 +116,8 @@ void main() async {
       );
     }).sendPort);
   } catch (e) {
+    FirebaseCrashlytics.instance
+        .recordError(e, StackTrace.current, reason: 'Failed to initialize app');
     runApp(ErrorApp(errorMessage: e.toString()));
   }
 }

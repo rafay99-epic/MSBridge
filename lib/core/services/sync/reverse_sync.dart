@@ -3,7 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:flutter/foundation.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class ReverseSyncService {
   final AuthRepo _authRepo = AuthRepo();
@@ -98,29 +98,40 @@ class ReverseSyncService {
               'userId': userId,
               'tags':
                   (data['tags'] as List?)?.map((e) => e.toString()).toList() ??
-                      const [],
+                      [],
+              'versionNumber': data['versionNumber'] ?? 1,
+              'createdAt': data['createdAt'] ?? updatedAtString,
             };
 
             try {
               final note = NoteTakingModel.fromMap(noteMap);
-              notesToAdd[note.noteId!] = note;
+              notesToAdd[doc.id] = note;
             } catch (e) {
               FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: "Failed to create NoteTakingModel from map");
-              debugPrint('Failed to create note from map: $e, data: $noteMap');
-              continue; // Skip this note and continue with others
+                  reason: "Failed to create note from map");
+              continue;
             }
           }
 
-          if (notesToAdd.isNotEmpty) {
+          // Add notes to Hive in batches
+          for (final note in notesToAdd.values) {
             try {
-              await box.putAll(notesToAdd);
+              await HiveNoteTakingRepo.addNote(note);
             } catch (e) {
               FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: "Failed to save notes to local box");
-              throw Exception("Failed to save notes locally: $e");
+                  reason: "Failed to add note to Hive");
+              continue;
             }
           }
+        }
+
+        // Sync versions from Firebase after notes are synced
+        try {
+          await _syncVersionsFromFirebase(userId);
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to sync versions from Firebase");
+          // Don't fail the entire sync if version sync fails
         }
 
         // Force refresh the Hive box
@@ -141,6 +152,68 @@ class ReverseSyncService {
       FirebaseCrashlytics.instance.recordError(authError, StackTrace.current,
           reason: "Authentication failed");
       throw Exception("Authentication failed: $authError");
+    }
+  }
+
+  /// Sync versions from Firebase for all notes
+  Future<void> _syncVersionsFromFirebase(String userId) async {
+    try {
+      // Get all notes to sync their versions
+      final notesCollection =
+          _firestore.collection('users').doc(userId).collection('notes');
+
+      final notesSnapshot = await notesCollection.get();
+
+      for (final noteDoc in notesSnapshot.docs) {
+        final noteId = noteDoc.id;
+
+        // Get versions subcollection for this note
+        final versionsCollection = noteDoc.reference.collection('versions');
+        final versionsSnapshot = await versionsCollection.get();
+
+        if (versionsSnapshot.docs.isNotEmpty) {
+          // Clear existing local versions for this note
+          await NoteVersionRepo.clearVersionsForNote(noteId);
+
+          // Import versions from Firebase
+          for (final versionDoc in versionsSnapshot.docs) {
+            final data = versionDoc.data();
+            await _importVersionFromFirebase(data, userId, noteId);
+          }
+        }
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to sync versions from Firebase");
+      throw Exception("Failed to sync versions from Firebase: $e");
+    }
+  }
+
+  /// Import a version from Firebase
+  Future<void> _importVersionFromFirebase(
+      Map<String, dynamic> data, String userId, String noteId) async {
+    try {
+      // Validate required fields
+      final noteIdFromData = data['noteId'] as String?;
+      if (noteIdFromData == null || noteIdFromData.isEmpty) {
+        return;
+      }
+
+      // Create version using the repo
+      await NoteVersionRepo.createVersion(
+        noteId: noteIdFromData,
+        noteTitle: data['noteTitle'] ?? '',
+        noteContent: data['noteContent'] ?? '',
+        tags: List<String>.from(data['tags'] ?? []),
+        userId: userId,
+        versionNumber: data['versionNumber'] ?? 1,
+        changeDescription: data['changeDescription'] ?? '',
+        previousVersionId: data['previousVersionId'] ?? '',
+      );
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Error importing version from Firebase");
+      // Continue with other versions
     }
   }
 

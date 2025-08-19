@@ -321,9 +321,22 @@ class StreakProvider extends ChangeNotifier {
     }
   }
 
-  // Refresh streak data
+  // Refresh streak data from local storage and notify UI
   Future<void> refreshStreak() async {
-    await initializeStreak();
+    _setLoading(true);
+    try {
+      _currentStreak = await StreakRepo.getStreakData();
+      // keep settings as-is
+      notifyListeners();
+    } catch (e, stackTrace) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        stackTrace,
+        reason: 'Failed to refresh streak from storage',
+      );
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // Check if streak needs attention
