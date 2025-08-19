@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
+import 'package:msbridge/core/services/sync/version_sync_service.dart';
 
 class NoteVersionProvider with ChangeNotifier {
   List<NoteVersion> _versions = [];
@@ -251,6 +253,22 @@ class NoteVersionProvider with ChangeNotifier {
     } catch (e) {
       _error = 'Error getting storage info: $e';
       return {};
+    }
+  }
+
+  /// Get version sync status
+  Future<Map<String, dynamic>> getVersionSyncStatus() async {
+    try {
+      final versionSyncService = VersionSyncService();
+      return await versionSyncService.getVersionSyncStatus();
+    } catch (e) {
+      _error = 'Error getting sync status: $e';
+      return {
+        'enabled': false,
+        'message': 'Error: $e',
+        'localVersions': 0,
+        'cloudVersions': 0,
+      };
     }
   }
 }

@@ -69,21 +69,37 @@ class NoteTakingActions {
         return SaveNoteResult(success: true, message: "No changes detected.");
       }
 
-      // Create version before updating
-      try {
-        // Respect Version History toggle
-        final prefs = await SharedPreferences.getInstance();
-        final versioningEnabled =
-            prefs.getBool('version_history_enabled') ?? true;
-        if (versioningEnabled) {
+      // Create version history if enabled
+      final versionHistoryEnabled = await _isVersionHistoryEnabled();
+      if (versionHistoryEnabled) {
+        try {
           // Get the previous version ID for change tracking
           String? previousVersionId;
-          if (note.versionNumber > 1) {
-            final previousVersion = await NoteVersionRepo.getPreviousVersion(
-                note.noteId!, note.versionNumber);
-            previousVersionId = previousVersion?.versionId;
+          final existingVersions =
+              await NoteVersionRepo.getNoteVersions(note.noteId!);
+          if (existingVersions.isNotEmpty) {
+            previousVersionId = existingVersions.first.versionId;
           }
 
+          // Create new version locally first
+          final versionId = generateUuid();
+          final newVersion = NoteVersion(
+            versionId: versionId,
+            noteId: note.noteId!,
+            noteTitle: note.noteTitle,
+            noteContent: note.noteContent,
+            tags: note.tags,
+            createdAt: DateTime.now(),
+            userId: note.userId,
+            changeDescription: changeDescription,
+            versionNumber: note.versionNumber,
+            changes: changeDescription.isNotEmpty
+                ? [changeDescription]
+                : ['Content updated'],
+            previousVersionId: previousVersionId ?? '',
+          );
+
+          // Save version to local storage
           await NoteVersionRepo.createVersion(
             noteId: note.noteId!,
             noteTitle: note.noteTitle,
@@ -94,10 +110,53 @@ class NoteTakingActions {
             changeDescription: changeDescription,
             previousVersionId: previousVersionId,
           );
+
+          // Increment version number
+          note.versionNumber++;
+
+          // Sync the created version to Firebase
+          if (newVersion != null) {
+            try {
+              final FirebaseFirestore firestore = FirebaseFirestore.instance;
+              final User? user = FirebaseAuth.instance.currentUser;
+              if (user != null &&
+                  note.noteId != null &&
+                  note.noteId!.isNotEmpty) {
+                // Add version to Firebase with all required fields
+                await firestore
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection('notes')
+                    .doc(note.noteId)
+                    .collection('versions')
+                    .doc(newVersion.versionId)
+                    .set({
+                  'versionId': newVersion.versionId,
+                  'noteId': newVersion.noteId,
+                  'noteTitle': newVersion.noteTitle,
+                  'noteContent': newVersion.noteContent,
+                  'tags': newVersion.tags,
+                  'userId': newVersion.userId,
+                  'versionNumber': newVersion.versionNumber,
+                  'changeDescription': newVersion.changeDescription,
+                  'previousVersionId': newVersion.previousVersionId,
+                  'changes': newVersion.changes,
+                  'createdAt': newVersion.createdAt.toIso8601String(),
+                  'syncedAt': DateTime.now().toIso8601String(),
+                });
+              }
+            } catch (e) {
+              // Don't fail the note update if Firebase sync fails
+              print('Failed to sync version to Firebase: $e');
+            }
+          }
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+          print('Failed to create version: $e');
+          throw Exception("Error creating version: $e");
+
+          // Don't fail the note update if version creation fails
         }
-      } catch (versionError) {
-        FirebaseCrashlytics.instance
-            .recordError(versionError, StackTrace.current);
       }
 
       // Update note
@@ -106,19 +165,6 @@ class NoteTakingActions {
       note.updatedAt = DateTime.now();
       note.isSynced = isSynced;
       note.tags = newTags;
-
-      // Increment version only if versioning is enabled
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final versioningEnabled =
-            prefs.getBool('version_history_enabled') ?? true;
-        if (versioningEnabled) {
-          note.versionNumber++;
-        }
-      } catch (_) {
-        // If prefs fail, keep existing behavior (increment)
-        note.versionNumber++;
-      }
 
       await HiveNoteTakingRepo.updateNote(note);
 
@@ -363,6 +409,16 @@ class NoteTakingActions {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       return SaveNoteResult(
           success: false, message: "Error restoring note: $e");
+    }
+  }
+
+  /// Check if version history is enabled
+  static Future<bool> _isVersionHistoryEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('version_history_enabled') ?? true;
+    } catch (e) {
+      return true; // Default to enabled if there's an error
     }
   }
 }

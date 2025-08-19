@@ -6,8 +6,7 @@ import 'package:msbridge/widgets/buildSectionHeader.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/utils/version_download_utils.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class VersionHistorySettings extends StatefulWidget {
   const VersionHistorySettings({super.key});
@@ -49,17 +48,14 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
 
   Future<void> _loadStorageInfo() async {
     try {
-      final versionProvider =
-          Provider.of<NoteVersionProvider>(context, listen: false);
-      final storageInfo = await versionProvider.getStorageInfo();
-      final totalVersions = await versionProvider.getTotalVersionCount();
+      final storageInfo = await NoteVersionRepo.getStorageInfo();
+      final totalVersions = await NoteVersionRepo.getTotalVersionCount();
 
       setState(() {
         _storageInfo = storageInfo;
         _totalVersions = totalVersions;
       });
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       // Handle error silently
     }
   }
@@ -74,9 +70,6 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
   }
 
   Future<void> _cleanupOldVersions() async {
-    final versionProvider =
-        Provider.of<NoteVersionProvider>(context, listen: false);
-
     // Show confirmation dialog
     final shouldProceed = await _showCleanupConfirmation();
     if (!shouldProceed) return;
@@ -86,10 +79,10 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
     });
 
     try {
-      final success =
-          await versionProvider.cleanupOldVersions(_maxVersionsToKeep);
+      final result =
+          await NoteVersionRepo.cleanupOldVersions(_maxVersionsToKeep);
 
-      if (success && mounted) {
+      if (result['success'] == true && mounted) {
         // Reload storage info
         await _loadStorageInfo();
 
@@ -102,11 +95,12 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
       } else if (mounted) {
         CustomSnackBar.show(
           context,
-          "Error during cleanup: ${versionProvider.error}",
+          "Error during cleanup: ${result['message'] ?? 'Unknown error'}",
           isSuccess: false,
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
       if (mounted) {
         CustomSnackBar.show(
           context,
@@ -363,25 +357,6 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
 
             const SizedBox(height: 24),
 
-            buildSectionHeader(context, "Actions", LineIcons.tools),
-            const SizedBox(height: 16),
-            buildModernSettingsTile(
-              context,
-              title: "Clean Up Old Versions",
-              subtitle: "Remove versions beyond the limit for all notes",
-              icon: LineIcons.broom,
-              onTap: _isLoading ? null : _cleanupOldVersions,
-              trailing: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(LineIcons.arrowRight, color: colorScheme.primary),
-            ),
-
-            const SizedBox(height: 24),
-
             // Information
             buildSectionHeader(context, "Information", LineIcons.infoCircle),
             const SizedBox(height: 16),
@@ -467,6 +442,25 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 24),
+
+            buildSectionHeader(context, "Actions", LineIcons.tools),
+            const SizedBox(height: 16),
+            buildModernSettingsTile(
+              context,
+              title: "Clean Up Old Versions",
+              subtitle: "Remove versions beyond the limit for all notes",
+              icon: LineIcons.broom,
+              onTap: _isLoading ? null : _cleanupOldVersions,
+              trailing: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(LineIcons.arrowRight, color: colorScheme.primary),
             ),
           ],
         ),

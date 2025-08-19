@@ -247,6 +247,61 @@ class NoteVersionRepo {
     };
   }
 
+  /// Get all versions from the database
+  static Future<List<NoteVersion>> getAllVersions() async {
+    try {
+      final box = await getBox();
+      return box.values.toList();
+    } catch (e) {
+      throw Exception('Error getting all versions: $e');
+    }
+  }
+
+  /// Clear all versions for a specific user
+  static Future<void> clearVersionsForUser(String userId) async {
+    try {
+      final box = await getBox();
+      final versionsToDelete =
+          box.values.where((version) => version.userId == userId).toList();
+
+      for (final version in versionsToDelete) {
+        await box.delete(version.key);
+      }
+    } catch (e) {
+      throw Exception('Error clearing versions for user: $e');
+    }
+  }
+
+  /// Update an existing version
+  static Future<void> updateVersion(NoteVersion version) async {
+    try {
+      final box = await getBox();
+      final existingVersion =
+          box.values.firstWhere((v) => v.versionId == version.versionId);
+
+      if (existingVersion != null) {
+        await box.put(existingVersion.key, version);
+      }
+    } catch (e) {
+      throw Exception('Error updating version: $e');
+    }
+  }
+
+  /// Clear all versions for a specific note
+  static Future<void> clearVersionsForNote(String noteId) async {
+    try {
+      final box = await getBox();
+      final versionsToDelete =
+          box.values.where((version) => version.noteId == noteId).toList();
+
+      for (final version in versionsToDelete) {
+        await box.delete(version.key);
+      }
+    } catch (e) {
+      throw Exception('Error clearing versions for note: $e');
+    }
+  }
+
   /// Clean up old versions based on max versions setting
   static Future<Map<String, dynamic>> cleanupOldVersions(
       int maxVersionsToKeep) async {

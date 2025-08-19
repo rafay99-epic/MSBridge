@@ -6,6 +6,7 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -79,6 +80,19 @@ class SyncService {
       await _syncUnsyncedNotes(userId, allNotes);
       await _syncDeletedNotes(userId, deletedNotesBox);
       await _syncUpdatedNotes(userId, allNotes);
+
+      // Sync versions for each note
+      try {
+        for (final note in allNotes) {
+          if (note.noteId != null && note.userId == userId) {
+            await _syncNoteVersions(userId, note.noteId!);
+          }
+        }
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Failed to sync note versions");
+        // Don't fail the entire sync if version sync fails
+      }
     } catch (e) {
       FirebaseCrashlytics.instance
           .recordError(e, StackTrace.current, reason: "General Sync Error");
@@ -142,6 +156,8 @@ class SyncService {
 
   Future<void> _syncDeletedNotes(
       String userId, Box<NoteTakingModel> deletedNotesBox) async {
+    final deletedNoteIds = <String>[];
+
     for (var note in deletedNotesBox.values) {
       if (note.isDeleted &&
           note.isSynced &&
@@ -153,6 +169,7 @@ class SyncService {
               _firestore.collection('users').doc(userId).collection('notes');
 
           await userNotesCollection.doc(note.noteId).delete();
+          deletedNoteIds.add(note.noteId!);
 
           await HiveNoteTakingRepo.deleteNote(note);
         } catch (e) {
@@ -163,6 +180,80 @@ class SyncService {
               "⚠️ Delete from Firebase Failed for ${note.noteTitle}, ID: ${note.noteId}: $e");
         }
       }
+    }
+
+    // Clean up versions for deleted notes
+    if (deletedNoteIds.isNotEmpty) {
+      try {
+        for (final noteId in deletedNoteIds) {
+          await _cleanupNoteVersions(userId, noteId);
+        }
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Failed to cleanup versions for deleted notes");
+        // Don't fail the entire sync if version cleanup fails
+      }
+    }
+  }
+
+  /// Sync versions for a specific note
+  Future<void> _syncNoteVersions(String userId, String noteId) async {
+    try {
+      final versions = await NoteVersionRepo.getNoteVersions(noteId);
+      if (versions.isEmpty) return;
+
+      final noteDocRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(noteId);
+
+      // Create versions subcollection
+      final versionsCollection = noteDocRef.collection('versions');
+
+      // Sync each version
+      for (final version in versions) {
+        final versionData = version.toMap();
+        versionData['syncedAt'] = DateTime.now().toIso8601String();
+
+        await versionsCollection.doc(version.versionId).set(versionData);
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to sync versions for note $noteId");
+      throw Exception("Failed to sync versions for note $noteId: $e");
+    }
+  }
+
+  /// Clean up versions for a deleted note
+  Future<void> _cleanupNoteVersions(String userId, String noteId) async {
+    try {
+      // Clean up local versions
+      await NoteVersionRepo.clearVersionsForNote(noteId);
+
+      // Clean up Firebase versions
+      final noteDocRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(noteId);
+
+      final versionsCollection = noteDocRef.collection('versions');
+      final versionsSnapshot = await versionsCollection.get();
+
+      // Delete all versions in batch
+      final batch = _firestore.batch();
+      for (final doc in versionsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      if (versionsSnapshot.docs.isNotEmpty) {
+        await batch.commit();
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to cleanup versions for note $noteId");
+      throw Exception("Failed to cleanup versions for note $noteId: $e");
     }
   }
 
