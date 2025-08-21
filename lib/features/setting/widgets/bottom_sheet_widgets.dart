@@ -21,8 +21,26 @@ import 'package:msbridge/core/services/backup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
 import 'package:msbridge/widgets/buildSubsectionHeader.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
 
 class BottomSheetWidgets {
+  // Helper method to format time ago
+  static String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return "${difference.inDays}d ago";
+    } else if (difference.inHours > 0) {
+      return "${difference.inHours}h ago";
+    } else if (difference.inMinutes > 0) {
+      return "${difference.inMinutes}m ago";
+    } else {
+      return "Just now";
+    }
+  }
+
   static Widget buildAISmartFeaturesBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -84,33 +102,7 @@ class BottomSheetWidgets {
   }
 
   static Widget buildSyncBottomSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildDragHandle(colorScheme),
-          const SizedBox(height: 20),
-          _buildBottomSheetHeader(
-              context, "Sync & Cloud Settings", theme, colorScheme),
-          const SizedBox(height: 20),
-          Flexible(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _buildSyncContent(context, theme, colorScheme),
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
+    return _SyncBottomSheetContent();
   }
 
   static Widget buildDataManagementBottomSheet(BuildContext context) {
@@ -455,7 +447,16 @@ class BottomSheetWidgets {
               return Switch(
                 value: syncSettings.cloudSyncEnabled,
                 onChanged: (bool value) async {
-                  // Sync logic implementation
+                  await syncSettings.setCloudSyncEnabled(value);
+
+                  // Show feedback
+                  if (context.mounted) {
+                    CustomSnackBar.show(
+                      context,
+                      value ? "Cloud sync enabled" : "Cloud sync disabled",
+                      isSuccess: true,
+                    );
+                  }
                 },
               );
             },
@@ -466,6 +467,63 @@ class BottomSheetWidgets {
         // Settings Sync Section
         buildSubsectionHeader(context, "Settings Sync", LineIcons.cog),
         const SizedBox(height: 12),
+
+        // Sync Status Indicator
+        Consumer<UserSettingsProvider>(
+          builder: (context, userSettings, _) {
+            final isInSync = userSettings.isInSync;
+            final lastSynced = userSettings.lastSyncedAt;
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: isInSync
+                    ? colorScheme.primary.withOpacity(0.05)
+                    : colorScheme.error.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isInSync
+                      ? colorScheme.primary.withOpacity(0.2)
+                      : colorScheme.error.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isInSync ? Icons.check_circle : Icons.warning,
+                    size: 16,
+                    color: isInSync ? colorScheme.primary : colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isInSync
+                          ? "Settings are in sync with cloud"
+                          : "Settings need to be synced",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            isInSync ? colorScheme.primary : colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (lastSynced != null)
+                    Text(
+                      "Last: ${_formatTimeAgo(lastSynced)}",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            (isInSync ? colorScheme.primary : colorScheme.error)
+                                .withOpacity(0.7),
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
 
         _buildSyncActionTile(
           context,
@@ -1319,6 +1377,538 @@ class BottomSheetWidgets {
                 size: 20,
                 color: colorScheme.primary.withOpacity(0.5),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Stateful sync bottom sheet content
+class _SyncBottomSheetContent extends StatefulWidget {
+  @override
+  State<_SyncBottomSheetContent> createState() =>
+      _SyncBottomSheetContentState();
+}
+
+class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
+  // Individual loading states for each sync action
+  bool _isSyncingSettingsToCloud = false;
+  bool _isDownloadingSettingsFromCloud = false;
+  bool _isBidirectionalSettingsSync = false;
+  bool _isSyncingNotesToCloud = false;
+  bool _isPullingFromCloud = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BottomSheetWidgets._buildDragHandle(colorScheme),
+          const SizedBox(height: 20),
+          BottomSheetWidgets._buildBottomSheetHeader(
+              context, "Sync & Cloud Settings", theme, colorScheme),
+          const SizedBox(height: 20),
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _buildSyncContent(context, theme, colorScheme),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncContent(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSyncSection(
+          context,
+          "Cloud Sync (Firebase)",
+          "Sync your notes across devices",
+          LineIcons.cloud,
+          Consumer<SyncSettingsProvider>(
+            builder: (context, syncSettings, _) {
+              return Switch(
+                value: syncSettings.cloudSyncEnabled,
+                onChanged: (bool value) async {
+                  // Sync logic implementation
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Settings Sync Section
+        buildSubsectionHeader(context, "Settings Sync", LineIcons.cog),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Sync Settings to Cloud",
+          "Upload your app settings to Firebase",
+          LineIcons.upload,
+          _isSyncingSettingsToCloud,
+          () async => await _syncSettingsToCloud(context),
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Download Settings from Cloud",
+          "Get your settings from Firebase",
+          LineIcons.download,
+          _isDownloadingSettingsFromCloud,
+          () async => await _downloadSettingsFromCloud(context),
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Bidirectional Settings Sync",
+          "Smart sync that resolves conflicts",
+          LineIcons.syncIcon,
+          _isBidirectionalSettingsSync,
+          () async => await _bidirectionalSettingsSync(context),
+        ),
+        const SizedBox(height: 24),
+
+        // Notes Sync Section
+        buildSubsectionHeader(context, "Notes Sync", LineIcons.fileAlt),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Sync Now",
+          "Manually push notes to the cloud",
+          LineIcons.syncIcon,
+          _isSyncingNotesToCloud,
+          () async => await _syncNotesToCloud(context),
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Pull from Cloud",
+          "Manually download notes from cloud to this device",
+          LineIcons.download,
+          _isPullingFromCloud,
+          () async => await _pullFromCloud(context),
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Auto sync interval",
+          "Choose how often to auto-sync (Off/15/30/60 min)",
+          LineIcons.history,
+          false,
+          () async => await _showAutoSyncIntervalDialog(context),
+        ),
+      ],
+    );
+  }
+
+  // Settings sync methods
+  Future<void> _syncSettingsToCloud(BuildContext context) async {
+    setState(() => _isSyncingSettingsToCloud = true);
+
+    try {
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
+      final success = await userSettings.syncToFirebase();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        // Show snackbar after closing
+        if (success) {
+          CustomSnackBar.show(
+            context,
+            "Settings synced to cloud successfully!",
+            isSuccess: true,
+          );
+        } else {
+          CustomSnackBar.show(
+            context,
+            "Failed to sync settings to cloud",
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Error syncing settings: $e",
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() => _isSyncingSettingsToCloud = false);
+    }
+  }
+
+  Future<void> _downloadSettingsFromCloud(BuildContext context) async {
+    setState(() => _isDownloadingSettingsFromCloud = true);
+
+    try {
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
+      final success = await userSettings.syncFromFirebase();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        // Show snackbar after closing
+        if (success) {
+          CustomSnackBar.show(
+            context,
+            "Settings downloaded from cloud successfully!",
+            isSuccess: true,
+          );
+        } else {
+          CustomSnackBar.show(
+            context,
+            "Failed to download settings from cloud",
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Error downloading settings: $e",
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() => _isDownloadingSettingsFromCloud = false);
+    }
+  }
+
+  Future<void> _bidirectionalSettingsSync(BuildContext context) async {
+    setState(() => _isBidirectionalSettingsSync = true);
+
+    try {
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
+      final success = await userSettings.forceSync();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        // Show snackbar after closing
+        if (success) {
+          CustomSnackBar.show(
+            context,
+            "Settings synced bidirectionally successfully!",
+            isSuccess: true,
+          );
+        } else {
+          CustomSnackBar.show(
+            context,
+            "Failed to sync settings bidirectionally",
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Error syncing settings bidirectionally: $e",
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() => _isBidirectionalSettingsSync = false);
+    }
+  }
+
+  // Notes sync methods
+  Future<void> _syncNotesToCloud(BuildContext context) async {
+    setState(() => _isSyncingNotesToCloud = true);
+
+    try {
+      // Use the actual sync service
+      final syncService = SyncService();
+      await syncService.syncLocalNotesToFirebase();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Notes synced to cloud successfully!",
+          isSuccess: true,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Error syncing notes: $e",
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() => _isSyncingNotesToCloud = false);
+    }
+  }
+
+  Future<void> _pullFromCloud(BuildContext context) async {
+    setState(() => _isPullingFromCloud = true);
+
+    try {
+      // Use the actual reverse sync service
+      final reverseSyncService = ReverseSyncService();
+      await reverseSyncService.syncDataFromFirebaseToHive();
+
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Successfully pulled data from cloud!",
+          isSuccess: true,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Close bottom sheet
+
+        CustomSnackBar.show(
+          context,
+          "Error pulling from cloud: $e",
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() => _isPullingFromCloud = false);
+    }
+  }
+
+  Future<void> _showAutoSyncIntervalDialog(BuildContext context) async {
+    // Show auto sync interval picker
+    // This would be implemented based on your existing logic
+  }
+
+  String _formatLastSyncTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return "${difference.inDays}d ago";
+    } else if (difference.inHours > 0) {
+      return "${difference.inHours}h ago";
+    } else if (difference.inMinutes > 0) {
+      return "${difference.inMinutes}m ago";
+    } else {
+      return "Just now";
+    }
+  }
+
+  // Helper methods for building UI components
+  Widget _buildSyncSection(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Widget trailing,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.primary.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncActionTile(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    bool isLoading,
+    VoidCallback onTap,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Check if cloud sync is enabled
+    final isCloudSyncEnabled =
+        Provider.of<SyncSettingsProvider>(context, listen: false)
+            .cloudSyncEnabled;
+    final isDisabled = !isCloudSyncEnabled;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: (isLoading || isDisabled) ? null : onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDisabled
+                ? colorScheme.surface.withOpacity(0.5)
+                : colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDisabled
+                  ? colorScheme.outline.withOpacity(0.05)
+                  : colorScheme.outline.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDisabled
+                      ? colorScheme.primary.withOpacity(0.05)
+                      : colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isDisabled
+                      ? colorScheme.primary.withOpacity(0.3)
+                      : colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isDisabled
+                            ? colorScheme.primary.withOpacity(0.3)
+                            : colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDisabled
+                            ? colorScheme.primary.withOpacity(0.3)
+                            : colorScheme.primary.withOpacity(0.6),
+                      ),
+                    ),
+                    if (isDisabled) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        "Cloud sync is disabled",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error.withOpacity(0.7),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (isLoading)
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colorScheme.primary,
+                    ),
+                  ),
+                )
+              else if (isDisabled)
+                Icon(
+                  Icons.block,
+                  size: 20,
+                  color: colorScheme.error.withOpacity(0.5),
+                )
+              else
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: colorScheme.primary.withOpacity(0.5),
+                ),
             ],
           ),
         ),
