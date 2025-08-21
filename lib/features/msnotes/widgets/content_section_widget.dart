@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/html_render.dart';
+import 'package:msbridge/widgets/custom_markdown_renderer.dart';
 
 class ContentSectionWidget extends StatelessWidget {
   final String? content;
@@ -47,24 +47,10 @@ class ContentSectionWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            buildHtmlContent(
-              content,
-              ThemeData(
-                colorScheme: colorScheme,
-                textTheme: TextTheme(
-                  bodyLarge: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    height: 1.6,
-                  ),
-                  bodyMedium: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.8),
-                    fontSize: 15,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              context,
+            CustomMarkdownRenderer(
+              data: content ?? '',
+              colorScheme: colorScheme,
+              shrinkWrap: true,
             ),
           ],
         ),

@@ -7,6 +7,7 @@ import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
+import 'package:msbridge/core/provider/user_settings_provider.dart';
 import 'package:msbridge/features/setting/section/note_section/ai_model_selection.dart';
 import 'package:msbridge/features/setting/section/user_section/user_settings_section.dart';
 import 'package:msbridge/features/setting/pages/shared_notes_page.dart';
@@ -19,6 +20,7 @@ import 'package:msbridge/features/setting/section/user_section/logout/logout_dia
 import 'package:msbridge/core/services/backup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
+import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 
 class BottomSheetWidgets {
   static Widget buildAISmartFeaturesBottomSheet(BuildContext context) {
@@ -460,6 +462,126 @@ class BottomSheetWidgets {
           ),
         ),
         const SizedBox(height: 16),
+
+        // Settings Sync Section
+        buildSubsectionHeader(context, "Settings Sync", LineIcons.cog),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Sync Settings to Cloud",
+          "Upload your app settings to Firebase",
+          LineIcons.upload,
+          () async {
+            // Settings sync logic
+            try {
+              final userSettings =
+                  Provider.of<UserSettingsProvider>(context, listen: false);
+              final success = await userSettings.syncToFirebase();
+              if (success && context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Settings synced to cloud successfully!",
+                  isSuccess: true,
+                );
+              } else if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Failed to sync settings to cloud",
+                  isSuccess: false,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Error syncing settings: $e",
+                  isSuccess: false,
+                );
+              }
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Download Settings from Cloud",
+          "Get your settings from Firebase",
+          LineIcons.download,
+          () async {
+            // Settings download logic
+            try {
+              final userSettings =
+                  Provider.of<UserSettingsProvider>(context, listen: false);
+              final success = await userSettings.syncFromFirebase();
+              if (success && context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Settings downloaded from cloud successfully!",
+                  isSuccess: true,
+                );
+              } else if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Failed to download settings from cloud",
+                  isSuccess: false,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Error downloading settings: $e",
+                  isSuccess: false,
+                );
+              }
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildSyncActionTile(
+          context,
+          "Bidirectional Settings Sync",
+          "Smart sync that resolves conflicts",
+          LineIcons.syncIcon,
+          () async {
+            // Bidirectional sync logic
+            try {
+              final userSettings =
+                  Provider.of<UserSettingsProvider>(context, listen: false);
+              final success = await userSettings.forceSync();
+              if (success && context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Settings synced bidirectionally successfully!",
+                  isSuccess: true,
+                );
+              } else if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Failed to sync settings bidirectionally",
+                  isSuccess: false,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                CustomSnackBar.show(
+                  context,
+                  "Error syncing settings bidirectionally: $e",
+                  isSuccess: false,
+                );
+              }
+            }
+          },
+        ),
+        const SizedBox(height: 24),
+
+        // Notes Sync Section
+        buildSubsectionHeader(context, "Notes Sync", LineIcons.fileAlt),
+        const SizedBox(height: 12),
+
         _buildSyncActionTile(
           context,
           "Sync Now",

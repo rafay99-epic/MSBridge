@@ -24,6 +24,7 @@ import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/provider/user_settings_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
@@ -79,6 +80,7 @@ void main() async {
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
           ChangeNotifierProvider(create: (_) => NoteVersionProvider()),
+          ChangeNotifierProvider(create: (_) => UserSettingsProvider()),
           if (FeatureFlag.enableFingerprintLock)
             ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
           if (FeatureFlag.enableAutoSave)
