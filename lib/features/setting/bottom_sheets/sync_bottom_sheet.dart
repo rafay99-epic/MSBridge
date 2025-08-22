@@ -26,6 +26,7 @@ class SyncBottomSheet extends StatefulWidget {
 class _SyncBottomSheetState extends State<SyncBottomSheet> {
   bool _isSyncingNotesToCloud = false;
   bool _isPullingFromCloud = false;
+  bool _isTogglingCloud = false; // guard to prevent re-entrancy
 
   @override
   Widget build(BuildContext context) {
@@ -49,24 +50,25 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
               return Switch(
                 value: syncSettings.cloudSyncEnabled,
                 onChanged: (bool value) async {
-                  final prev = syncSettings.cloudSyncEnabled;
+                  if (_isTogglingCloud) return; // atomic guard
+                  _isTogglingCloud = true;
+                  final prevEnabled = syncSettings.cloudSyncEnabled;
                   try {
+                    // Persist toggle first (UI state follows provider)
                     await syncSettings.setCloudSyncEnabled(value);
-
-                    // Persist to full user settings as well
                     final userSettings = context.read<UserSettingsProvider>();
                     await userSettings.setCloudSyncEnabled(value);
 
+                    // Start/stop services atomically
                     if (value) {
-                      // Enable/start sync
                       await AutoSyncScheduler.initialize();
                       await SyncService().startListening();
                     } else {
-                      // Disable background timer immediately
                       await AutoSyncScheduler.setIntervalMinutes(0);
+                      await SyncService().stopListening();
                     }
 
-                    if (context.mounted) {
+                    if (mounted) {
                       CustomSnackBar.show(
                         context,
                         value ? "Cloud sync enabled" : "Cloud sync disabled",
@@ -74,20 +76,32 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                       );
                     }
                   } catch (e, s) {
+                    // Roll back both provider and runtime services
                     FirebaseCrashlytics.instance
                         .recordError(e, s, reason: 'Toggle cloud sync failed');
-                    // Revert UI state
-                    await syncSettings.setCloudSyncEnabled(prev);
-                    final userSettings = context.read<UserSettingsProvider>();
-                    await userSettings.setCloudSyncEnabled(prev);
+                    try {
+                      await syncSettings.setCloudSyncEnabled(prevEnabled);
+                      final userSettings = context.read<UserSettingsProvider>();
+                      await userSettings.setCloudSyncEnabled(prevEnabled);
 
-                    if (context.mounted) {
+                      if (prevEnabled) {
+                        await AutoSyncScheduler.initialize();
+                        await SyncService().startListening();
+                      } else {
+                        await AutoSyncScheduler.setIntervalMinutes(0);
+                        await SyncService().stopListening();
+                      }
+                    } catch (_) {}
+
+                    if (mounted) {
                       CustomSnackBar.show(
                         context,
                         'Failed to update cloud sync. Please try again.',
                         isSuccess: false,
                       );
                     }
+                  } finally {
+                    _isTogglingCloud = false;
                   }
                 },
               );
@@ -123,7 +137,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         SettingActionTile(
           title: "Sync Now",
           subtitle: "Manually push notes to the cloud",
-          icon: LineIcons.syncIcon,
+          icon: LineIcons.redo,
           isLoading: _isSyncingNotesToCloud,
           isDisabled: !context.watch<SyncSettingsProvider>().cloudSyncEnabled,
           onTap: () => _syncNotesToCloud(context),

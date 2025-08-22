@@ -248,6 +248,11 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Error syncing settings: $e'),
+        StackTrace.current,
+        reason: 'Error syncing settings: $e',
+      );
       CustomSnackBar.show(
         context,
         "Error syncing settings: $e",
@@ -255,7 +260,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
       );
     } finally {
       setState(() {
-        _isSyncing = false;
+        if (!mounted) {
+          _isSyncing = false;
+        }
       });
     }
   }
@@ -282,6 +289,11 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Error force syncing settings: $e'),
+        StackTrace.current,
+        reason: 'Error force syncing settings: $e',
+      );
       CustomSnackBar.show(
         context,
         "Error force syncing settings: $e",
@@ -452,6 +464,11 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Error uploading settings: $e'),
+        StackTrace.current,
+        reason: 'Error uploading settings: $e',
+      );
       CustomSnackBar.show(
         context,
         "Error uploading settings: $e",
@@ -486,6 +503,11 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Error downloading settings: $e'),
+        StackTrace.current,
+        reason: 'Error downloading settings: $e',
+      );
       CustomSnackBar.show(
         context,
         "Error downloading settings: $e",

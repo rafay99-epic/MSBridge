@@ -642,6 +642,7 @@ class _NotetakingState extends State<Notetaking>
         note: note,
         isSelected: _selectedNoteIds.contains(note.noteId.toString()),
         isSelectionMode: _isSelectionMode,
+        isGridLayout: _layoutMode == NoteLayoutMode.grid,
       ),
     );
   }
