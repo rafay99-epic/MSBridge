@@ -36,7 +36,7 @@ class NoteTemplate extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.isBuiltIn = false,
-  })  : tags = tags ?? const [],
+  })  : tags = List<String>.from(tags ?? const []),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 }
