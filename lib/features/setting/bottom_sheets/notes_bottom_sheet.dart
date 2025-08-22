@@ -144,7 +144,11 @@ class NotesBottomSheet extends StatelessWidget {
   }
 
   Future<void> _toggleShareLinks(
-      BuildContext context, bool value, ShareLinkProvider provider) async {
+      BuildContext context,
+      bool value,
+      ShareLinkProvider provider,
+  ) async {
+    final prev = provider.shareLinksEnabled;
     if (!value) {
       final confirm = await showDialog<bool>(
         context: context,
@@ -168,8 +172,19 @@ class NotesBottomSheet extends StatelessWidget {
           );
         },
       );
-      if (confirm == true) {
+      if (confirm != true) return;
+      try {
         await ShareRepository.disableAllShares();
+      } catch (e) {
+        if (context.mounted) {
+          CustomSnackBar.show(
+            context,
+            'Failed to disable existing shares. Please try again.',
+            isSuccess: false,
+          );
+        }
+        provider.shareLinksEnabled = prev;
+        return;
       }
     }
     provider.shareLinksEnabled = value;
