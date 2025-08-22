@@ -57,7 +57,7 @@ class NoteTemplateAdapter extends TypeAdapter<NoteTemplate> {
       templateId: fields[0] as String,
       title: fields[1] as String,
       contentJson: fields[2] as String,
-      tags: (fields[3] as List).cast<String>(),
+      tags: (fields[3] as List?)?.cast<String>() ?? const [],
       userId: fields[4] as String?,
       createdAt: fields[5] as DateTime?,
       updatedAt: fields[6] as DateTime?,
