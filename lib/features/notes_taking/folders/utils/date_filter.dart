@@ -46,8 +46,10 @@ List<NoteTakingModel> applyDateFilter(
   if (sel.filter == DateFilter.all) return notes;
   final range = computeRange(sel, DateTime.now());
   return notes
-      .where((n) =>
-          n.updatedAt.isAfter(range.start) && n.updatedAt.isBefore(range.end))
+      .where((n) {
+        final ts = n.updatedAt;
+        return !ts.isBefore(range.start) && ts.isBefore(range.end);
+      })
       .toList();
 }
 
