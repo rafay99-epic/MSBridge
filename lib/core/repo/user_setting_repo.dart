@@ -180,8 +180,7 @@ class UserSettingsRepo {
           settings = await createDefaultSettings(userId);
         }
       }
-
-      return settings!;
+      return settings;
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: 'Failed to get or create settings');
@@ -276,7 +275,14 @@ class UserSettingsRepo {
       }
 
       final settings = UserSettingsModel.fromMap(backupData['settings']);
-      await saveLocalSettings(settings);
+
+      // Validate backup data structure
+      if (backupData['settings'] is! Map<String, dynamic>) {
+        FirebaseCrashlytics.instance.log('Invalid backup data structure');
+        return false;
+      } else {
+        await saveLocalSettings(settings);
+      }
 
       // Only sync to Firebase if cloud sync is enabled
       if (settings.cloudSyncEnabled) {

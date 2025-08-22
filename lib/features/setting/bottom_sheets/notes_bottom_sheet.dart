@@ -1,4 +1,5 @@
 // features/setting/bottom_sheets/notes_bottom_sheet.dart
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
@@ -15,7 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotesBottomSheet extends StatelessWidget {
-  const NotesBottomSheet({Key? key}) : super(key: key);
+  const NotesBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +31,7 @@ class NotesBottomSheet extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Version History section
-        SettingSectionHeader(
+        const SettingSectionHeader(
           title: "Version History",
           icon: LineIcons.history,
         ),
@@ -78,7 +79,7 @@ class NotesBottomSheet extends StatelessWidget {
         ),
 
         const SizedBox(height: 24),
-        SettingSectionHeader(
+        const SettingSectionHeader(
           title: "Sharing & Collaboration",
           icon: LineIcons.share,
         ),
@@ -144,9 +145,9 @@ class NotesBottomSheet extends StatelessWidget {
   }
 
   Future<void> _toggleShareLinks(
-      BuildContext context,
-      bool value,
-      ShareLinkProvider provider,
+    BuildContext context,
+    bool value,
+    ShareLinkProvider provider,
   ) async {
     final prev = provider.shareLinksEnabled;
     if (!value) {
@@ -176,6 +177,8 @@ class NotesBottomSheet extends StatelessWidget {
       try {
         await ShareRepository.disableAllShares();
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: 'Failed to disable existing shares');
         if (context.mounted) {
           CustomSnackBar.show(
             context,

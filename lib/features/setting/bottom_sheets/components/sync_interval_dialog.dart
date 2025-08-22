@@ -1,9 +1,10 @@
 // features/setting/components/sync_interval_dialog.dart
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 
 class SyncIntervalDialog extends StatefulWidget {
-  const SyncIntervalDialog({Key? key}) : super(key: key);
+  const SyncIntervalDialog({super.key});
 
   @override
   State<SyncIntervalDialog> createState() => _SyncIntervalDialogState();
@@ -17,7 +18,7 @@ class SyncIntervalDialog extends StatefulWidget {
 }
 
 class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
-  late int _selectedInterval;
+  int _selectedInterval = 0;
   bool _isLoading = true;
 
   @override
@@ -27,11 +28,22 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
   }
 
   Future<void> _loadCurrentInterval() async {
-    final interval = await AutoSyncScheduler.getIntervalMinutes();
-    setState(() {
-      _selectedInterval = interval;
-      _isLoading = false;
-    });
+    try {
+      final interval = await AutoSyncScheduler.getIntervalMinutes();
+      if (!mounted) return;
+      setState(() {
+        _selectedInterval = interval;
+        _isLoading = false;
+      });
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'Failed to load current interval');
+      if (!mounted) return;
+      setState(() {
+        _selectedInterval = 0; // Off
+        _isLoading = false;
+      });
+    }
   }
 
   @override
