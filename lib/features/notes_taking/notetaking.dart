@@ -268,6 +268,7 @@ class _NotetakingState extends State<Notetaking>
         ),
       ),
       body: ChangeNotifierProvider(
+        key: ValueKey(_layoutMode),
         create: (context) {
           final noteProvider = NoteePinProvider();
           noteProvider.initialize();
@@ -350,20 +351,37 @@ class _NotetakingState extends State<Notetaking>
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: MasonryGridView.count(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount:
-                                      _layoutMode == NoteLayoutMode.grid
-                                          ? 2
-                                          : 1,
-                                  mainAxisSpacing: 10,
-                                  crossAxisSpacing: 10,
-                                  itemCount: pinnedNotes.length,
-                                  itemBuilder: (context, index) {
-                                    final note = pinnedNotes[index];
-                                    return _buildNoteItem(note, context);
-                                  },
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 250),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, anim) =>
+                                      FadeTransition(
+                                    opacity: anim,
+                                    child: ScaleTransition(
+                                      scale:
+                                          Tween<double>(begin: 0.98, end: 1.0)
+                                              .animate(anim),
+                                      child: child,
+                                    ),
+                                  ),
+                                  child: MasonryGridView.count(
+                                    key: ValueKey(_layoutMode),
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    crossAxisCount:
+                                        _layoutMode == NoteLayoutMode.grid
+                                            ? 2
+                                            : 1,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    itemCount: pinnedNotes.length,
+                                    itemBuilder: (context, index) {
+                                      final note = pinnedNotes[index];
+                                      return _buildNoteItem(note, context);
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
@@ -381,18 +399,35 @@ class _NotetakingState extends State<Notetaking>
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: MasonryGridView.count(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount:
-                                    _layoutMode == NoteLayoutMode.grid ? 2 : 1,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10,
-                                itemCount: unpinnedNotes.length,
-                                itemBuilder: (context, index) {
-                                  final note = unpinnedNotes[index];
-                                  return _buildNoteItem(note, context);
-                                },
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                transitionBuilder: (child, anim) =>
+                                    FadeTransition(
+                                  opacity: anim,
+                                  child: ScaleTransition(
+                                    scale: Tween<double>(begin: 0.98, end: 1.0)
+                                        .animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                child: MasonryGridView.count(
+                                  key: ValueKey(_layoutMode),
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount:
+                                      _layoutMode == NoteLayoutMode.grid
+                                          ? 2
+                                          : 1,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  itemCount: unpinnedNotes.length,
+                                  itemBuilder: (context, index) {
+                                    final note = unpinnedNotes[index];
+                                    return _buildNoteItem(note, context);
+                                  },
+                                ),
                               ),
                             ),
                           ],

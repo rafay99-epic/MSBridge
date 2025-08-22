@@ -76,8 +76,8 @@ class NoteList extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
         itemCount: notesList.length,
         itemBuilder: (context, index) {
           final note = notesList[index];
