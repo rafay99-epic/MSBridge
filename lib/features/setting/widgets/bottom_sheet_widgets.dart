@@ -486,18 +486,12 @@ class BottomSheetWidgets {
                 onChanged: (bool value) async {
                   await syncSettings.setCloudSyncEnabled(value);
 
-
                   // Show feedback
                   if (context.mounted) {
                     CustomSnackBar.show(
                       context,
                       value ? "Cloud sync enabled" : "Cloud sync disabled",
                       isSuccess: true,
-                  if (context.mounted) {
-                    CustomSnackBar.show(
-                      context,
-                      value ? 'Cloud sync enabled' : 'Cloud sync disabled',
-                      isSuccess: value,
                     );
                   }
                 },

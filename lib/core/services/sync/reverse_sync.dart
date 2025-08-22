@@ -81,10 +81,7 @@ class ReverseSyncService {
             for (final doc in batch) {
               final data = doc.data() as Map<String, dynamic>;
 
-              // Skip deleted notes
-              if (data['isDeleted'] == true) {
-                continue;
-              }
+              // Do not skip deleted notes here; we handle deletion later
 
               // Handle date parsing more safely
               String updatedAtString;
@@ -102,28 +99,40 @@ class ReverseSyncService {
                 updatedAtString = DateTime.now().toIso8601String();
               }
 
-              final noteMap = {
-                'noteId': doc.id,
-                'noteTitle': data['noteTitle'] ?? '',
-                'noteContent': data['noteContent'] ?? '',
-                'isSynced': true, // Mark as synced since it came from cloud
-                'isDeleted': false,
-                'updatedAt': updatedAtString,
-                'userId': userId,
-                'tags': (data['tags'] as List?)
+              try {
+                final DateTime parsedUpdatedAt =
+                    DateTime.tryParse(updatedAtString) ?? DateTime.now();
+                final List<String> parsedTags = (data['tags'] as List?)
                         ?.map((e) => e.toString())
                         .toList() ??
-                    [],
-                'versionNumber': data['versionNumber'] ?? 1,
-                'createdAt': data['createdAt'] ?? updatedAtString,
-              };
+                    [];
+                final int parsedVersionNumber = () {
+                  final dynamic v = data['versionNumber'];
+                  if (v is int) return v;
+                  if (v is String) return int.tryParse(v) ?? 1;
+                  return 1;
+                }();
+                final String createdAtSource =
+                    (data['createdAt']?.toString()) ?? updatedAtString;
+                final DateTime parsedCreatedAt =
+                    DateTime.tryParse(createdAtSource) ?? DateTime.now();
 
-              try {
-                final note = NoteTakingModel.fromMap(noteMap);
+                final note = NoteTakingModel(
+                  noteId: doc.id,
+                  noteTitle: data['noteTitle'] ?? '',
+                  noteContent: data['noteContent'] ?? '',
+                  isSynced: true,
+                  isDeleted: data['isDeleted'] == true,
+                  updatedAt: parsedUpdatedAt,
+                  userId: userId,
+                  tags: parsedTags,
+                  versionNumber: parsedVersionNumber,
+                  createdAt: parsedCreatedAt,
+                );
                 notesToAdd[doc.id] = note;
               } catch (e) {
                 FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                    reason: "Failed to create note from map");
+                    reason: "Failed to create note from cloud data");
                 continue;
               }
             }
@@ -294,7 +303,7 @@ class ReverseSyncService {
   }
 
   /// Check if cloud sync is enabled
-  Future<bool> _isCloudSyncEnabled() async {
+  Future<bool> isCloudSyncEnabled() async {
     try {
       // Import SharedPreferences to check the cloud sync setting
       final prefs = await SharedPreferences.getInstance();
