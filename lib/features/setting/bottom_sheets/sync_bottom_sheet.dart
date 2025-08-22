@@ -9,24 +9,21 @@ import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
-import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/sync_interval_dialog.dart';
-import 'package:msbridge/features/setting/utils/time_formatter.dart';
 import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+import 'package:msbridge/features/setting/pages/settings_sync_page.dart';
+import 'package:page_transition/page_transition.dart';
 
 class SyncBottomSheet extends StatefulWidget {
-  const SyncBottomSheet({Key? key}) : super(key: key);
+  const SyncBottomSheet({super.key});
 
   @override
   State<SyncBottomSheet> createState() => _SyncBottomSheetState();
 }
 
 class _SyncBottomSheetState extends State<SyncBottomSheet> {
-  bool _isSyncingSettingsToCloud = false;
-  bool _isDownloadingSettingsFromCloud = false;
-  bool _isBidirectionalSettingsSync = false;
   bool _isSyncingNotesToCloud = false;
   bool _isPullingFromCloud = false;
 
@@ -39,9 +36,6 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,91 +96,23 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         ),
         const SizedBox(height: 16),
 
-        // Settings Sync Section
+        // Settings Sync Section (moved to its own page)
         buildSubsectionHeader(context, "Settings Sync", LineIcons.cog),
         const SizedBox(height: 12),
-
-        // Sync Status Indicator
-        Consumer<UserSettingsProvider>(
-          builder: (context, userSettings, _) {
-            final isInSync = userSettings.isInSync;
-            final lastSynced = userSettings.lastSyncedAt;
-
-            return Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: isInSync
-                    ? colorScheme.primary.withOpacity(0.05)
-                    : colorScheme.error.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isInSync
-                      ? colorScheme.primary.withOpacity(0.2)
-                      : colorScheme.error.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isInSync ? Icons.check_circle : Icons.warning,
-                    size: 16,
-                    color: isInSync ? colorScheme.primary : colorScheme.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isInSync
-                          ? "Settings are in sync with cloud"
-                          : "Settings need to be synced",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            isInSync ? colorScheme.primary : colorScheme.error,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (lastSynced != null)
-                    Text(
-                      "Last: ${TimeFormatter.formatTimeAgo(lastSynced)}",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            (isInSync ? colorScheme.primary : colorScheme.error)
-                                .withOpacity(0.7),
-                        fontSize: 11,
-                      ),
-                    ),
-                ],
+        SettingActionTile(
+          title: "Open Settings Sync",
+          subtitle:
+              "Advanced options: bidirectional sync, export/import, reset",
+          icon: LineIcons.cog,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const SettingsSyncPage(),
               ),
             );
           },
-        ),
-
-        SettingActionTile(
-          title: "Sync Settings to Cloud",
-          subtitle: "Upload your app settings to Firebase",
-          icon: LineIcons.upload,
-          isLoading: _isSyncingSettingsToCloud,
-          onTap: () => _syncSettingsToCloud(context),
-        ),
-        const SizedBox(height: 12),
-
-        SettingActionTile(
-          title: "Download Settings from Cloud",
-          subtitle: "Get your settings from Firebase",
-          icon: LineIcons.download,
-          isLoading: _isDownloadingSettingsFromCloud,
-          onTap: () => _downloadSettingsFromCloud(context),
-        ),
-        const SizedBox(height: 12),
-
-        SettingActionTile(
-          title: "Bidirectional Settings Sync",
-          subtitle: "Smart sync that resolves conflicts",
-          icon: LineIcons.syncIcon,
-          isLoading: _isBidirectionalSettingsSync,
-          onTap: () => _bidirectionalSettingsSync(context),
         ),
         const SizedBox(height: 24),
 
@@ -233,15 +159,14 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
     Widget trailing,
   ) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.05),
+        color: theme.colorScheme.primary.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: theme.colorScheme.primary.withOpacity(0.1),
           width: 1,
         ),
       ),
@@ -250,13 +175,13 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: theme.colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: colorScheme.primary,
+              color: theme.colorScheme.primary,
             ),
           ),
           const SizedBox(width: 16),
@@ -268,14 +193,14 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.6),
+                    color: theme.colorScheme.primary.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -287,121 +212,11 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
     );
   }
 
-  // Settings sync methods
-  Future<void> _syncSettingsToCloud(BuildContext context) async {
-    setState(() => _isSyncingSettingsToCloud = true);
-
-    try {
-      final userSettings =
-          Provider.of<UserSettingsProvider>(context, listen: false);
-      final success = await userSettings.syncToFirebase();
-
-      if (context.mounted) {
-        if (success) {
-          CustomSnackBar.show(
-            context,
-            "Settings synced to cloud successfully!",
-            isSuccess: true,
-          );
-        } else {
-          CustomSnackBar.show(
-            context,
-            "Failed to sync settings to cloud",
-            isSuccess: false,
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context,
-          "Error syncing settings: $e",
-          isSuccess: false,
-        );
-      }
-    } finally {
-      setState(() => _isSyncingSettingsToCloud = false);
-    }
-  }
-
-  Future<void> _downloadSettingsFromCloud(BuildContext context) async {
-    setState(() => _isDownloadingSettingsFromCloud = true);
-
-    try {
-      final userSettings =
-          Provider.of<UserSettingsProvider>(context, listen: false);
-      final success = await userSettings.syncFromFirebase();
-
-      if (context.mounted) {
-        if (success) {
-          CustomSnackBar.show(
-            context,
-            "Settings downloaded from cloud successfully!",
-            isSuccess: true,
-          );
-        } else {
-          CustomSnackBar.show(
-            context,
-            "Failed to download settings from cloud",
-            isSuccess: false,
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context,
-          "Error downloading settings: $e",
-          isSuccess: false,
-        );
-      }
-    } finally {
-      setState(() => _isDownloadingSettingsFromCloud = false);
-    }
-  }
-
-  Future<void> _bidirectionalSettingsSync(BuildContext context) async {
-    setState(() => _isBidirectionalSettingsSync = true);
-
-    try {
-      final userSettings =
-          Provider.of<UserSettingsProvider>(context, listen: false);
-      final success = await userSettings.forceSync();
-
-      if (context.mounted) {
-        if (success) {
-          CustomSnackBar.show(
-            context,
-            "Settings synced bidirectionally successfully!",
-            isSuccess: true,
-          );
-        } else {
-          CustomSnackBar.show(
-            context,
-            "Failed to sync settings bidirectionally",
-            isSuccess: false,
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context,
-          "Error syncing settings bidirectionally: $e",
-          isSuccess: false,
-        );
-      }
-    } finally {
-      setState(() => _isBidirectionalSettingsSync = false);
-    }
-  }
-
   // Notes sync methods
   Future<void> _syncNotesToCloud(BuildContext context) async {
     setState(() => _isSyncingNotesToCloud = true);
 
     try {
-      // Use the actual sync service
       final syncService = SyncService();
       await syncService.syncLocalNotesToFirebase();
 
@@ -429,7 +244,6 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
     setState(() => _isPullingFromCloud = true);
 
     try {
-      // Use the actual reverse sync service
       final reverseSyncService = ReverseSyncService();
       await reverseSyncService.syncDataFromFirebaseToHive();
 

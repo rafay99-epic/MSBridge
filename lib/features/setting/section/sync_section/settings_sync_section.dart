@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +9,9 @@ import 'package:msbridge/widgets/buildModernSettingsTile.dart';
 import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/core/services/sync/settings_sync_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:msbridge/core/permissions/permission.dart';
 
 class SettingsSyncSection extends StatefulWidget {
   const SettingsSyncSection({super.key});
@@ -393,21 +399,68 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
 
   Future<void> _exportSettings() async {
     try {
+      // Request storage permission (Android)
+      bool hasPermission = true;
+      try {
+        hasPermission =
+            await PermissionHandler.checkAndRequestFilePermission(context);
+      } catch (_) {}
+      if (!hasPermission) {
+        FirebaseCrashlytics.instance.recordError(
+          Exception('Storage permission denied.'),
+          StackTrace.current,
+          reason: 'Storage permission denied.',
+        );
+        throw Exception('Storage permission denied.');
+      }
+
       final userSettings =
           Provider.of<UserSettingsProvider>(context, listen: false);
-      await userSettings.exportSettings();
+      final backup = await userSettings.exportSettings();
 
-      // For now, just show a success message
-      // In a real app, you'd save this to a file or share it
+      final jsonString = const JsonEncoder.withIndent('  ').convert(backup);
+      final bytes = utf8.encode(jsonString);
+
+      final timestamp = DateTime.now();
+      final formatted =
+          '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}_${timestamp.hour.toString().padLeft(2, '0')}-${timestamp.minute.toString().padLeft(2, '0')}';
+      final fileName = 'msbridge-settings-backup-$formatted.json';
+
+      Directory? downloadsDirectory;
+      if (Platform.isAndroid) {
+        downloadsDirectory = Directory('/storage/emulated/0/Download');
+        if (!await downloadsDirectory.exists()) {
+          await downloadsDirectory.create(recursive: true);
+        }
+      } else if (Platform.isIOS) {
+        downloadsDirectory = await getApplicationDocumentsDirectory();
+        downloadsDirectory = Directory('${downloadsDirectory.path}/Downloads');
+        if (!await downloadsDirectory.exists()) {
+          await downloadsDirectory.create(recursive: true);
+        }
+      } else {
+        downloadsDirectory = await getApplicationDocumentsDirectory();
+      }
+
+      final file = File('${downloadsDirectory.path}/$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
       CustomSnackBar.show(
         context,
-        "Settings exported successfully!",
+        'Settings exported to ${file.path}',
         isSuccess: true,
       );
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Export failed: $e'),
+        StackTrace.current,
+        reason: 'Export failed: $e',
+      );
+      if (!mounted) return;
       CustomSnackBar.show(
         context,
-        "Failed to export settings: $e",
+        'Export failed: $e',
         isSuccess: false,
       );
     }
@@ -415,17 +468,35 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
 
   Future<void> _importSettings() async {
     try {
-      // For now, just show a message
-      // In a real app, you'd show a file picker
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null || result.files.single.path == null) {
+        return; // user cancelled
+      }
+      final path = result.files.single.path!;
+      final content = await File(path).readAsString();
+      final Map<String, dynamic> backup = json.decode(content);
+
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
+      final success = await userSettings.importSettings(backup);
+
       CustomSnackBar.show(
         context,
-        "Import functionality coming soon!",
-        isSuccess: false,
+        success ? 'Settings imported successfully!' : 'Import failed',
+        isSuccess: success,
       );
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Import failed: $e'),
+        StackTrace.current,
+        reason: 'Import failed: $e',
+      );
       CustomSnackBar.show(
         context,
-        "Failed to import settings: $e",
+        'Import failed: $e',
         isSuccess: false,
       );
     }
@@ -484,6 +555,11 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Reset failed: $e'),
+        StackTrace.current,
+        reason: 'Reset failed: $e',
+      );
       CustomSnackBar.show(
         context,
         "Error resetting settings: $e",
