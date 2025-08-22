@@ -59,10 +59,14 @@ class SettingsSyncService {
         return await _settingsRepo.syncToFirebase(localSettings);
       } else if (cloudNewer) {
         // Cloud is newer, sync to local
-        await _settingsRepo.saveLocalSettings(cloudSettings);
+        await _settingsRepo.saveLocalSettings(
+          cloudSettings.copyWith(
+            isSynced: true,
+            lastSyncedAt: DateTime.now(),
+          ),
+        );
         return true;
       } else {
-        // Same timestamp, already in sync
         return true;
       }
     } catch (e) {

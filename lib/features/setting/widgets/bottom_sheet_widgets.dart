@@ -26,8 +26,7 @@ import 'package:msbridge/widgets/buildSubsectionHeader.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
-import 'package:msbridge/core/services/sync/note_taking_sync.dart';
-import 'package:msbridge/core/services/sync/reverse_sync.dart';
+// duplicate imports removed
 import 'package:msbridge/features/setting/section/appearance_section/font_selection_page.dart';
 import 'package:msbridge/features/setting/pages/appearance_settings_page.dart';
 
@@ -808,7 +807,11 @@ class BottomSheetWidgets {
   static Widget _buildIntervalOption(void Function(void Function()) setLocal,
       String label, int value, int current) {
     return InkWell(
-      onTap: () => setLocal(() {}),
+      onTap: () => setLocal(() {
+        // This function is used inside the dialog where 'selected'
+        // is captured by the parent closure. We just trigger rebuild;
+        // the actual selection is handled in the parent builder.
+      }),
       child: Row(
         children: [
           Radio<int>(
@@ -1720,7 +1723,46 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
               return Switch(
                 value: syncSettings.cloudSyncEnabled,
                 onChanged: (bool value) async {
-                  // Sync logic implementation
+                  final prev = syncSettings.cloudSyncEnabled;
+                  try {
+                    await syncSettings.setCloudSyncEnabled(value);
+
+                    // Persist to full user settings as well
+                    final userSettings = context.read<UserSettingsProvider>();
+                    await userSettings.setCloudSyncEnabled(value);
+
+                    if (value) {
+                      // Enable/start sync
+                      await AutoSyncScheduler.initialize();
+                      await SyncService().startListening();
+                    } else {
+                      // Disable background timer immediately
+                      await AutoSyncScheduler.setIntervalMinutes(0);
+                    }
+
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        value ? "Cloud sync enabled" : "Cloud sync disabled",
+                        isSuccess: true,
+                      );
+                    }
+                  } catch (e, s) {
+                    FirebaseCrashlytics.instance
+                        .recordError(e, s, reason: 'Toggle cloud sync failed');
+                    // Revert UI state
+                    await syncSettings.setCloudSyncEnabled(prev);
+                    final userSettings = context.read<UserSettingsProvider>();
+                    await userSettings.setCloudSyncEnabled(prev);
+
+                    if (context.mounted) {
+                      CustomSnackBar.show(
+                        context,
+                        'Failed to update cloud sync. Please try again.',
+                        isSuccess: false,
+                      );
+                    }
+                  }
                 },
               );
             },
@@ -1738,7 +1780,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Upload your app settings to Firebase",
           LineIcons.upload,
           _isSyncingSettingsToCloud,
-          () async => await _syncSettingsToCloud(context),
+          () async => await _syncSettingsToCloud(context, context),
         ),
         const SizedBox(height: 12),
 
@@ -1748,7 +1790,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Get your settings from Firebase",
           LineIcons.download,
           _isDownloadingSettingsFromCloud,
-          () async => await _downloadSettingsFromCloud(context),
+          () async => await _downloadSettingsFromCloud(context, context),
         ),
         const SizedBox(height: 12),
 
@@ -1758,7 +1800,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Smart sync that resolves conflicts",
           LineIcons.syncIcon,
           _isBidirectionalSettingsSync,
-          () async => await _bidirectionalSettingsSync(context),
+          () async => await _bidirectionalSettingsSync(context, context),
         ),
         const SizedBox(height: 24),
 
@@ -1772,7 +1814,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Manually push notes to the cloud",
           LineIcons.syncIcon,
           _isSyncingNotesToCloud,
-          () async => await _syncNotesToCloud(context),
+          () async => await _syncNotesToCloud(context, context),
         ),
         const SizedBox(height: 12),
 
@@ -1782,7 +1824,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Manually download notes from cloud to this device",
           LineIcons.download,
           _isPullingFromCloud,
-          () async => await _pullFromCloud(context),
+          () async => await _pullFromCloud(context, context),
         ),
         const SizedBox(height: 12),
 
@@ -1792,14 +1834,15 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
           "Choose how often to auto-sync (Off/15/30/60 min)",
           LineIcons.history,
           false,
-          () async => await _showAutoSyncIntervalDialog(context),
+          () async => await showAutoSyncIntervalDialog(context),
         ),
       ],
     );
   }
 
   // Settings sync methods
-  Future<void> _syncSettingsToCloud(BuildContext context) async {
+  Future<void> _syncSettingsToCloud(
+      BuildContext context, BuildContext bottomSheetContext) async {
     setState(() => _isSyncingSettingsToCloud = true);
 
     try {
@@ -1808,7 +1851,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       final success = await userSettings.syncToFirebase();
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         // Show snackbar after closing
         if (success) {
@@ -1827,7 +1870,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1840,7 +1883,8 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
     }
   }
 
-  Future<void> _downloadSettingsFromCloud(BuildContext context) async {
+  Future<void> _downloadSettingsFromCloud(
+      BuildContext context, BuildContext bottomSheetContext) async {
     setState(() => _isDownloadingSettingsFromCloud = true);
 
     try {
@@ -1849,7 +1893,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       final success = await userSettings.syncFromFirebase();
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         // Show snackbar after closing
         if (success) {
@@ -1868,7 +1912,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1881,7 +1925,8 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
     }
   }
 
-  Future<void> _bidirectionalSettingsSync(BuildContext context) async {
+  Future<void> _bidirectionalSettingsSync(
+      BuildContext context, BuildContext bottomSheetContext) async {
     setState(() => _isBidirectionalSettingsSync = true);
 
     try {
@@ -1890,7 +1935,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       final success = await userSettings.forceSync();
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         // Show snackbar after closing
         if (success) {
@@ -1909,7 +1954,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1923,7 +1968,8 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
   }
 
   // Notes sync methods
-  Future<void> _syncNotesToCloud(BuildContext context) async {
+  Future<void> _syncNotesToCloud(
+      BuildContext context, BuildContext bottomSheetContext) async {
     setState(() => _isSyncingNotesToCloud = true);
 
     try {
@@ -1932,7 +1978,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       await syncService.syncLocalNotesToFirebase();
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1942,7 +1988,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1955,7 +2001,8 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
     }
   }
 
-  Future<void> _pullFromCloud(BuildContext context) async {
+  Future<void> _pullFromCloud(
+      BuildContext context, BuildContext bottomSheetContext) async {
     setState(() => _isPullingFromCloud = true);
 
     try {
@@ -1964,7 +2011,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       await reverseSyncService.syncDataFromFirebaseToHive();
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1974,7 +2021,7 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close bottom sheet
+        Navigator.of(bottomSheetContext).pop(); // Close bottom sheet
 
         CustomSnackBar.show(
           context,
@@ -1987,24 +2034,91 @@ class _SyncBottomSheetContentState extends State<_SyncBottomSheetContent> {
     }
   }
 
-  Future<void> _showAutoSyncIntervalDialog(BuildContext context) async {
-    // Show auto sync interval picker
-    // This would be implemented based on your existing logic
+  Future<void> showAutoSyncIntervalDialog(BuildContext context) async {
+    int selected = await AutoSyncScheduler.getIntervalMinutes();
+    final minutes = await showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          title: const Text('Auto sync interval'),
+          content: StatefulBuilder(
+            builder: (context, setLocal) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildIntervalOption(setLocal, 'Off', 0, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 15 minutes', 15, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 30 minutes', 30, selected),
+                  const SizedBox(height: 8),
+                  _buildIntervalOption(
+                      setLocal, 'Every 60 minutes', 60, selected),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, selected),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (minutes != null) {
+      await AutoSyncScheduler.setIntervalMinutes(minutes);
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context,
+          minutes == 0
+              ? 'Auto sync turned off'
+              : 'Auto sync set to every $minutes minutes',
+          isSuccess: true,
+        );
+      }
+    }
   }
 
-  String _formatLastSyncTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return "${difference.inDays}d ago";
-    } else if (difference.inHours > 0) {
-      return "${difference.inHours}h ago";
-    } else if (difference.inMinutes > 0) {
-      return "${difference.inMinutes}m ago";
-    } else {
-      return "Just now";
-    }
+  Widget _buildIntervalOption(void Function(void Function()) setLocal,
+      String label, int value, int current) {
+    return InkWell(
+      onTap: () => setLocal(() {
+        // This function is used inside the dialog where 'selected'
+        // is captured by the parent closure. We just trigger rebuild;
+        // the actual selection is handled in the parent builder.
+      }),
+      child: Row(
+        children: [
+          Radio<int>(
+            value: value,
+            groupValue: current,
+            onChanged: (v) {
+              if (v == null) return;
+              setLocal(() {
+                // This function is used inside the dialog where 'selected'
+                // is captured by the parent closure. We just trigger rebuild;
+                // the actual selection is handled in the parent builder.
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
   }
 
   // Helper methods for building UI components

@@ -182,7 +182,7 @@ class StreakIntegrationService {
               onPressed: () {
                 Navigator.pop(context);
                 // Navigate to note creation
-                // This would be implemented based on your app's navigation
+                Navigator.pushNamed(context, '/create-note');
               },
               child: const Text('Create Note'),
             ),

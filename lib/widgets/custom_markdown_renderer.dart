@@ -81,10 +81,10 @@ class CustomMarkdownRenderer extends StatelessWidget {
       }
 
       // Add mermaid block
-      final mermaidContent = match.group(1) ?? '';
-      if (mermaidContent.trim().isNotEmpty) {
-        parts.add(ContentPart(
-            content: '```mermaid\n$mermaidContent\n```', isMermaid: true));
+
+      final mermaidContent = (match.group(1) ?? '').trim();
+      if (mermaidContent.isNotEmpty) {
+        parts.add(ContentPart(content: mermaidContent, isMermaid: true));
       }
 
       lastIndex = match.end;
