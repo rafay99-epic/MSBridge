@@ -18,6 +18,7 @@ import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/features/notes_taking/templates/templates_hub.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -466,6 +467,28 @@ class _NotetakingState extends State<Notetaking>
                       PageRouteBuilder(
                         pageBuilder: (context, animation, secondaryAnimation) =>
                             const CreateNote(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
+                  },
+                ),
+                buildExpandableButton(
+                  context: context,
+                  heroTag: "Templates",
+                  icon: Icons.description,
+                  text: "Templates",
+                  theme: theme,
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const TemplatesHubPage(),
                         transitionsBuilder:
                             (context, animation, secondaryAnimation, child) {
                           return FadeTransition(

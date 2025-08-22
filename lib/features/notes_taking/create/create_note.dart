@@ -13,6 +13,10 @@ import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/core/database/templates/note_template.dart';
+import 'package:msbridge/core/repo/template_repo.dart';
+import 'package:msbridge/features/notes_taking/templates/templates_hub.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/edge_autoscroll_wrapper.dart';
 import 'package:provider/provider.dart';
@@ -24,9 +28,10 @@ import 'package:msbridge/core/services/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
 
 class CreateNote extends StatefulWidget {
-  const CreateNote({super.key, this.note});
+  const CreateNote({super.key, this.note, this.initialTemplate});
 
   final NoteTakingModel? note;
+  final NoteTemplate? initialTemplate;
 
   @override
   State<CreateNote> createState() => _CreateNoteState();
@@ -91,6 +96,20 @@ class _CreateNoteState extends State<CreateNote>
       );
       _currentNote = widget.note;
       _tagsNotifier.value = List<String>.from(widget.note!.tags);
+    } else if (widget.initialTemplate != null) {
+      try {
+        _controller = QuillController(
+          document: Document.fromJson(
+              jsonDecode(widget.initialTemplate!.contentJson)),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        _titleController.text = widget.initialTemplate!.title;
+        _tagsNotifier.value = List<String>.from(widget.initialTemplate!.tags);
+      } catch (_) {
+        FirebaseCrashlytics.instance.recordError(_, StackTrace.current,
+            reason: "Error loading template");
+        _controller = QuillController.basic();
+      }
     } else {
       _controller = QuillController.basic();
     }
@@ -601,6 +620,11 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
+          IconButton(
+            tooltip: 'Templates',
+            icon: const Icon(LineIcons.clone, size: 22),
+            onPressed: _openTemplatesPicker,
+          ),
           Consumer<ShareLinkProvider>(
             builder: (context, shareProvider, _) {
               if (!shareProvider.shareLinksEnabled || _currentNote == null) {
@@ -652,8 +676,8 @@ class _CreateNoteState extends State<CreateNote>
               ),
             ),
             // Compact Tags Section (Space Optimized)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8.0),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -792,6 +816,13 @@ class _CreateNoteState extends State<CreateNote>
                           const QuillSharedConfigurations(locale: Locale('en')),
                       placeholder: 'Note...',
                       expands: true,
+                      onTapUp: (_, __) {
+                        // Steal focus from tag input if needed
+                        if (!_quillFocusNode.hasFocus) {
+                          FocusScope.of(context).requestFocus(_quillFocusNode);
+                        }
+                        return false;
+                      },
                       customStyles: DefaultStyles(
                         paragraph: DefaultTextBlockStyle(
                             TextStyle(
@@ -897,47 +928,217 @@ class _CreateNoteState extends State<CreateNote>
               ),
             ],
 
-            QuillToolbar.simple(
-              configurations: QuillSimpleToolbarConfigurations(
-                controller: _controller,
-                sharedConfigurations: const QuillSharedConfigurations(
-                  locale: Locale('en'),
+            Listener(
+              onPointerDown: (_) {
+                if (!_quillFocusNode.hasFocus) {
+                  FocusScope.of(context).requestFocus(_quillFocusNode);
+                }
+              },
+              child: QuillToolbar.simple(
+                configurations: QuillSimpleToolbarConfigurations(
+                  controller: _controller,
+                  sharedConfigurations: const QuillSharedConfigurations(
+                    locale: Locale('en'),
+                  ),
+                  multiRowsDisplay: false,
+                  toolbarSize: 40,
+                  showCodeBlock: true,
+                  showQuote: true,
+                  showLink: true,
+                  showFontSize: true,
+                  showFontFamily: true,
+                  showIndent: true,
+                  showDividers: true,
+                  showUnderLineButton: true,
+                  showLeftAlignment: true,
+                  showCenterAlignment: true,
+                  showRightAlignment: true,
+                  showJustifyAlignment: true,
+                  showHeaderStyle: true,
+                  showListNumbers: true,
+                  showListBullets: true,
+                  showListCheck: true,
+                  showStrikeThrough: true,
+                  showInlineCode: true,
+                  showColorButton: true,
+                  showBackgroundColorButton: true,
+                  showClearFormat: true,
+                  showAlignmentButtons: true,
+                  showUndo: true,
+                  showRedo: true,
+                  showDirection: false,
+                  showSearchButton: true,
+                  headerStyleType: HeaderStyleType.buttons,
                 ),
-                multiRowsDisplay: false,
-                toolbarSize: 40,
-                showCodeBlock: true,
-                showQuote: true,
-                showLink: true,
-                showFontSize: true,
-                showFontFamily: true,
-                showIndent: true,
-                showDividers: true,
-                showUnderLineButton: true,
-                showLeftAlignment: true,
-                showCenterAlignment: true,
-                showRightAlignment: true,
-                showJustifyAlignment: true,
-                showHeaderStyle: true,
-                showListNumbers: true,
-                showListBullets: true,
-                showListCheck: true,
-                showStrikeThrough: true,
-                showInlineCode: true,
-                showColorButton: true,
-                showBackgroundColorButton: true,
-                showClearFormat: true,
-                showAlignmentButtons: true,
-                showUndo: true,
-                showRedo: true,
-                showDirection: false,
-                showSearchButton: true,
-                headerStyleType: HeaderStyleType.buttons,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _openTemplatesPicker() async {
+    final theme = Theme.of(context);
+    final listenable = await TemplateRepo.getTemplatesListenable();
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.6,
+            child: ValueListenableBuilder(
+              valueListenable: listenable,
+              builder: (context, Box<NoteTemplate> box, _) {
+                final items = box.values.toList()
+                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                if (items.isEmpty) {
+                  return Center(
+                    child: Text('No templates yet',
+                        style: TextStyle(color: theme.colorScheme.primary)),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final t = items[index];
+                    return ListTile(
+                      title: Text(t.title,
+                          style: TextStyle(color: theme.colorScheme.primary)),
+                      subtitle: t.tags.isEmpty
+                          ? null
+                          : Text(t.tags.join(' · '),
+                              style: TextStyle(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.7))),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await _applyTemplateInEditor(t);
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      const TemplatesHubPage(),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return FadeTransition(
+                                    opacity: animation, child: child);
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 300),
+                            ),
+                          );
+                        },
+                        tooltip: 'Manage templates',
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _applyTemplateInEditor(NoteTemplate t) async {
+    try {
+      final templateDoc = Document.fromJson(jsonDecode(t.contentJson));
+      // If editor empty, replace; else confirm replace vs insert
+      final isEmpty = _controller.document.isEmpty();
+      if (isEmpty) {
+        _controller = QuillController(
+          document: templateDoc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        setState(() {
+          _titleController.text = t.title;
+          _tagsNotifier.value = List<String>.from(t.tags);
+        });
+      } else {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (dctx) {
+            final theme = Theme.of(dctx);
+            return AlertDialog(
+              backgroundColor: theme.colorScheme.surface,
+              title: Text('Apply template?',
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              content: Text('Replace current content or insert at cursor?',
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'insert'),
+                    child: const Text('Insert')),
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'replace'),
+                    child: const Text('Replace')),
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'cancel'),
+                    child: const Text('Cancel')),
+              ],
+            );
+          },
+        );
+        if (action == 'replace') {
+          _controller = QuillController(
+            document: templateDoc,
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+          setState(() {
+            _titleController.text = t.title;
+            _tagsNotifier.value = List<String>.from(t.tags);
+          });
+        } else if (action == 'insert') {
+          final selection = _controller.selection;
+          final delta = templateDoc.toDelta();
+          // Insert delta at current cursor by replaceText repeatedly
+          // For simplicity, insert plain text fallback if needed
+          try {
+            final ops = delta.toList();
+            for (final op in ops) {
+              final insert = op.data;
+              if (insert is String) {
+                _controller.replaceText(
+                  selection.start,
+                  0,
+                  insert,
+                  selection,
+                );
+              }
+            }
+          } catch (_) {
+            _controller.replaceText(
+              selection.start,
+              0,
+              templateDoc.toPlainText(),
+              selection,
+            );
+          }
+        }
+      }
+      // Trigger save so it lands in Hive via existing flow
+      await _saveNote();
+      if (mounted) CustomSnackBar.show(context, 'Template applied');
+    } catch (e) {
+      if (mounted)
+        CustomSnackBar.show(context, 'Failed to apply template',
+            isSuccess: false);
+    }
   }
 
   Future<void> _openShareSheet() async {
