@@ -391,9 +391,10 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
     try {
       contentJson = jsonEncode(_controller.document.toDelta().toJson());
     } catch (_) {
-      contentJson = _controller.document.toPlainText();
+      // Ensure we still persist valid Delta JSON
+      final fallbackDoc = Document()..insert(0, _controller.document.toPlainText());
+      contentJson = jsonEncode(fallbackDoc.toDelta().toJson());
     }
-
     if (widget.template == null) {
       final t = NoteTemplate(
         templateId: generateUuid(),
