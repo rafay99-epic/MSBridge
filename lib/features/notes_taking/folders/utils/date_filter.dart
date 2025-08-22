@@ -26,7 +26,14 @@ DateTimeRange computeRange(DateFilterSelection sel, DateTime now) {
       final end = DateTime(now.year, now.month + 1, 1);
       return DateTimeRange(start: start, end: end);
     case DateFilter.custom:
-      return sel.customRange ?? DateTimeRange(start: DateTime(1970), end: now);
+      final r = sel.customRange;
+      if (r == null) {
+        return DateTimeRange(start: DateTime(1970), end: now);
+      }
+      final start = DateTime(r.start.year, r.start.month, r.start.day);
+      final endExclusive = DateTime(r.end.year, r.end.month, r.end.day)
+          .add(const Duration(days: 1));
+      return DateTimeRange(start: start, end: endExclusive);
     case DateFilter.all:
       return DateTimeRange(start: DateTime(1970), end: now);
   }
