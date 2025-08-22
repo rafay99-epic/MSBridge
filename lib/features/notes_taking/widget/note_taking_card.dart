@@ -13,13 +13,13 @@ class NoteCard extends StatefulWidget {
     required this.note,
     required this.isSelected,
     required this.isSelectionMode,
-    this.isGridLayout = false, // Add this parameter
+    this.isGridLayout = false,
   });
 
   final NoteTakingModel note;
   final bool isSelected;
   final bool isSelectionMode;
-  final bool isGridLayout; // Add this field
+  final bool isGridLayout;
 
   @override
   State<NoteCard> createState() => _NoteCardState();

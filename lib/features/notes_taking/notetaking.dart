@@ -18,7 +18,7 @@ import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/features/notes_taking/templates/templates_hub.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -15,7 +15,7 @@ import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/repo/template_repo.dart';
-import 'package:msbridge/features/notes_taking/templates/templates_hub.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/edge_autoscroll_wrapper.dart';
@@ -90,10 +90,36 @@ class _CreateNoteState extends State<CreateNote>
 
     if (widget.note != null) {
       _titleController.text = widget.note!.noteTitle;
-      _controller = QuillController(
-        document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
+      final String raw = (widget.note!.noteContent).trim();
+      if (raw.startsWith('[')) {
+        try {
+          final dynamic decoded = jsonDecode(raw);
+          if (decoded is List) {
+            _controller = QuillController(
+              document: Document.fromJson(decoded),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+          } else {
+            _controller = QuillController(
+              document: Document()..insert(0, widget.note!.noteContent),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+          }
+        } catch (_) {
+          FirebaseCrashlytics.instance.recordError(
+              Exception("Error loading note"), StackTrace.current,
+              reason: "Error loading note");
+          _controller = QuillController(
+            document: Document()..insert(0, widget.note!.noteContent),
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+        }
+      } else {
+        _controller = QuillController(
+          document: Document()..insert(0, widget.note!.noteContent),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      }
       _currentNote = widget.note;
       _tagsNotifier.value = List<String>.from(widget.note!.tags);
     } else if (widget.initialTemplate != null) {
@@ -106,7 +132,8 @@ class _CreateNoteState extends State<CreateNote>
         _titleController.text = widget.initialTemplate!.title;
         _tagsNotifier.value = List<String>.from(widget.initialTemplate!.tags);
       } catch (_) {
-        FirebaseCrashlytics.instance.recordError(_, StackTrace.current,
+        FirebaseCrashlytics.instance.recordError(
+            Exception("Error loading template"), StackTrace.current,
             reason: "Error loading template");
         _controller = QuillController.basic();
       }
