@@ -295,36 +295,137 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
   }
 
   void _showSyncDirectionDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Choose Sync Direction"),
-        content: const Text(
-          "Select how you want to sync your settings:",
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          title: Row(
+            children: [
+              Icon(Icons.sync_alt, color: colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Choose sync direction',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildSyncOption(
+                ctx,
+                icon: LineIcons.arrowUp,
+                title: 'Upload to Cloud',
+                subtitle: 'Push local settings to Firebase',
+                color: colorScheme.primary,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _syncToFirebase();
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildSyncOption(
+                ctx,
+                icon: LineIcons.arrowDown,
+                title: 'Download from Cloud',
+                subtitle: 'Replace local settings with cloud copy',
+                color: colorScheme.secondary,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _syncFromFirebase();
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildSyncOption(
+                ctx,
+                icon: LineIcons.syncIcon,
+                title: 'Bidirectional',
+                subtitle: 'Smart merge based on last updated time',
+                color: colorScheme.primary,
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _manualSync();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSyncOption(
+    BuildContext ctx, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(ctx);
+    final colorScheme = theme.colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _syncToFirebase();
-            },
-            child: const Text("Upload to Cloud"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _syncFromFirebase();
-            },
-            child: const Text("Download from Cloud"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _manualSync();
-            },
-            child: const Text("Bidirectional"),
-          ),
-        ],
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: colorScheme.outline),
+          ],
+        ),
       ),
     );
   }
