@@ -29,7 +29,12 @@ class TemplateRepo {
 
   static Future<void> updateTemplate(NoteTemplate template) async {
     template.updatedAt = DateTime.now();
-    await template.save();
+    if (template.isInBox) {
+      await template.save();
+    } else {
+      final box = await getBox();
+      await box.put(template.templateId, template);
+    }
   }
 
   static Future<void> deleteTemplate(NoteTemplate template) async {
