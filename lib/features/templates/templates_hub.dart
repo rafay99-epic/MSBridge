@@ -177,7 +177,11 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
           selection: const TextSelection.collapsed(offset: 0),
         );
       } catch (_) {
-        _controller = QuillController.basic();
+        // Try interpreting stored content as plain text instead of blanking it
+        _controller = QuillController(
+          document: Document()..insert(0, widget.template!.contentJson),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
       }
       _tagsNotifier.value = List<String>.from(widget.template!.tags);
     } else {
