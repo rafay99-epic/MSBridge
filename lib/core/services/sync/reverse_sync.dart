@@ -15,13 +15,23 @@ class ReverseSyncService {
 
   Future<void> syncDataFromFirebaseToHive() async {
     try {
-      // Check if Hive is initialized - let the repo handle this
       try {
         await HiveNoteTakingRepo.getBox();
       } catch (e) {
         FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
             reason: "Failed to initialize Hive notes box");
         throw Exception("Failed to initialize local storage: $e");
+      }
+
+      // Respect global cloud-sync user toggle (privacy choice)
+      try {
+        final enabled = await _isCloudSyncEnabled();
+        if (!enabled) {
+          return;
+        }
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+            reason: "Sorry User, Cloud sync is disabled");
       }
 
       final userResult = await _authRepo.getCurrentUser();
@@ -37,95 +47,145 @@ class ReverseSyncService {
       final user = userResult.user!;
       final userId = user.uid;
 
-      // Always pull from cloud, regardless of local state
+      // Incremental pull from cloud: only notes updated since last successful pull
       try {
         final userNotesCollection =
             _firestore.collection('users').doc(userId).collection('notes');
 
-        final QuerySnapshot notesSnapshot = await userNotesCollection.get();
+        // Load last successful reverse sync timestamp (ISO 8601 string)
+        final prefs = await SharedPreferences.getInstance();
+        final lastSyncKey = 'reverse_sync_last_ts_$userId';
+        final String lastSyncIso =
+            prefs.getString(lastSyncKey) ?? '1970-01-01T00:00:00Z';
 
-        if (notesSnapshot.docs.isEmpty) {
-          return; // No notes in cloud
-        }
+        // Query only changed notes since last sync
+        Query query = userNotesCollection
+            .where('updatedAt', isGreaterThan: lastSyncIso)
+            .orderBy('updatedAt', descending: false)
+            .limit(100);
+        QuerySnapshot notesSnapshot = await query.get();
 
-        // Clear existing local notes to avoid duplicates
         final box = await HiveNoteTakingRepo.getBox();
-        try {
-          await box.clear();
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-              reason: "Failed to clear local notes");
-          // Continue anyway - might be empty already
-        }
+        DateTime newestSeen = DateTime.tryParse(lastSyncIso) ??
+            DateTime.fromMillisecondsSinceEpoch(0);
 
-        const batchSize = 50;
-        for (var i = 0; i < notesSnapshot.docs.length; i += batchSize) {
-          final batch = notesSnapshot.docs.sublist(
-              i,
-              (i + batchSize < notesSnapshot.docs.length)
-                  ? i + batchSize
-                  : notesSnapshot.docs.length);
+        while (true) {
+          final docs = notesSnapshot.docs;
+          if (docs.isEmpty) break;
+          const batchSize = 50;
+          for (var i = 0; i < docs.length; i += batchSize) {
+            final batch = docs.sublist(
+                i, (i + batchSize < docs.length) ? i + batchSize : docs.length);
 
-          final Map<String, NoteTakingModel> notesToAdd = {};
-          for (final doc in batch) {
-            final data = doc.data() as Map<String, dynamic>;
+            final Map<String, NoteTakingModel> notesToAdd = {};
+            for (final doc in batch) {
+              final data = doc.data() as Map<String, dynamic>;
 
-            // Skip deleted notes
-            if (data['isDeleted'] == true) {
-              continue;
-            }
+              // Skip deleted notes
+              if (data['isDeleted'] == true) {
+                continue;
+              }
 
-            // Handle date parsing more safely
-            String updatedAtString;
-            try {
-              if (data['updatedAt'] != null) {
-                updatedAtString = data['updatedAt'].toString();
-                // Validate the date string
-                DateTime.parse(updatedAtString);
-              } else {
+              // Handle date parsing more safely
+              String updatedAtString;
+              try {
+                if (data['updatedAt'] != null) {
+                  updatedAtString = data['updatedAt'].toString();
+                  // Validate the date string
+                  DateTime.parse(updatedAtString);
+                } else {
+                  updatedAtString = DateTime.now().toIso8601String();
+                }
+              } catch (e) {
+                FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                    reason: "Invalid date format in cloud note");
                 updatedAtString = DateTime.now().toIso8601String();
               }
-            } catch (e) {
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: "Invalid date format in cloud note");
-              updatedAtString = DateTime.now().toIso8601String();
+
+              final noteMap = {
+                'noteId': doc.id,
+                'noteTitle': data['noteTitle'] ?? '',
+                'noteContent': data['noteContent'] ?? '',
+                'isSynced': true, // Mark as synced since it came from cloud
+                'isDeleted': false,
+                'updatedAt': updatedAtString,
+                'userId': userId,
+                'tags': (data['tags'] as List?)
+                        ?.map((e) => e.toString())
+                        .toList() ??
+                    [],
+                'versionNumber': data['versionNumber'] ?? 1,
+                'createdAt': data['createdAt'] ?? updatedAtString,
+              };
+
+              try {
+                final note = NoteTakingModel.fromMap(noteMap);
+                notesToAdd[doc.id] = note;
+              } catch (e) {
+                FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                    reason: "Failed to create note from map");
+                continue;
+              }
             }
 
-            final noteMap = {
-              'noteId': doc.id,
-              'noteTitle': data['noteTitle'] ?? '',
-              'noteContent': data['noteContent'] ?? '',
-              'isSynced': true, // Mark as synced since it came from cloud
-              'isDeleted': false,
-              'updatedAt': updatedAtString,
-              'userId': userId,
-              'tags':
-                  (data['tags'] as List?)?.map((e) => e.toString()).toList() ??
-                      [],
-              'versionNumber': data['versionNumber'] ?? 1,
-              'createdAt': data['createdAt'] ?? updatedAtString,
-            };
+            // Upsert notes to Hive in batches (handle deletes)
+            for (final entry in notesToAdd.entries) {
+              final noteId = entry.key;
+              final note = entry.value;
+              try {
+                // Track newest updatedAt we see for watermark
+                if (note.updatedAt.isAfter(newestSeen)) {
+                  newestSeen = note.updatedAt;
+                }
 
-            try {
-              final note = NoteTakingModel.fromMap(noteMap);
-              notesToAdd[doc.id] = note;
-            } catch (e) {
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: "Failed to create note from map");
-              continue;
+                // Find existing local note
+                NoteTakingModel? existing;
+                for (int i = 0; i < box.length; i++) {
+                  final n = box.getAt(i);
+                  if (n?.noteId == noteId) {
+                    existing = n;
+                    break;
+                  }
+                }
+
+                if (note.isDeleted) {
+                  // Remove locally if present
+                  if (existing != null) {
+                    await HiveNoteTakingRepo.deleteNote(existing);
+                    await NoteVersionRepo.clearVersionsForNote(noteId);
+                  }
+                } else {
+                  if (existing != null) {
+                    existing.noteTitle = note.noteTitle;
+                    existing.noteContent = note.noteContent;
+                    existing.tags = note.tags;
+                    existing.isDeleted = false;
+                    existing.isSynced = true;
+                    existing.updatedAt = note.updatedAt;
+                    existing.versionNumber = note.versionNumber;
+                    await HiveNoteTakingRepo.updateNote(existing);
+                  } else {
+                    await HiveNoteTakingRepo.addNote(note);
+                  }
+                }
+              } catch (e) {
+                FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+                    reason: "Failed to upsert note to Hive");
+                continue;
+              }
             }
           }
 
-          // Add notes to Hive in batches
-          for (final note in notesToAdd.values) {
-            try {
-              await HiveNoteTakingRepo.addNote(note);
-            } catch (e) {
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: "Failed to add note to Hive");
-              continue;
-            }
-          }
+          final lastDoc = docs.last;
+          notesSnapshot = await query.startAfterDocument(lastDoc).get();
+        }
+
+        try {
+          final nextIso = newestSeen.toUtc().toIso8601String();
+          await prefs.setString(lastSyncKey, nextIso);
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to persist watermark");
         }
 
         // Sync versions from Firebase after notes are synced
@@ -134,7 +194,6 @@ class ReverseSyncService {
         } catch (e) {
           FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
               reason: "Failed to sync versions from Firebase");
-          // Don't fail the entire sync if version sync fails
         }
 
         // Sync settings from Firebase
@@ -167,6 +226,11 @@ class ReverseSyncService {
     }
   }
 
+  Future<bool> _isCloudSyncEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('cloud_sync_enabled') ?? true;
+  }
+
   /// Sync versions from Firebase for all notes
   Future<void> _syncVersionsFromFirebase(String userId) async {
     try {
@@ -174,14 +238,20 @@ class ReverseSyncService {
       final notesCollection =
           _firestore.collection('users').doc(userId).collection('notes');
 
-      final notesSnapshot = await notesCollection.get();
+      final notesSnapshot = await notesCollection
+          .orderBy('updatedAt', descending: true)
+          .limit(100)
+          .get();
 
       for (final noteDoc in notesSnapshot.docs) {
         final noteId = noteDoc.id;
 
         // Get versions subcollection for this note
         final versionsCollection = noteDoc.reference.collection('versions');
-        final versionsSnapshot = await versionsCollection.get();
+        final versionsSnapshot = await versionsCollection
+            .orderBy('versionNumber', descending: true)
+            .limit(100)
+            .get();
 
         if (versionsSnapshot.docs.isNotEmpty) {
           // Clear existing local versions for this note

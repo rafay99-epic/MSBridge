@@ -2,6 +2,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QuickActionsWidget extends StatefulWidget {
   final ThemeData theme;
@@ -28,6 +29,23 @@ class QuickActionsWidget extends StatefulWidget {
 class _QuickActionsWidgetState extends State<QuickActionsWidget> {
   bool _isSyncing = false;
   bool _isPulling = false;
+  bool _cloudSyncEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCloudSyncStatus();
+  }
+
+  Future<void> _loadCloudSyncStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('cloud_sync_enabled') ?? true;
+    if (mounted) {
+      setState(() {
+        _cloudSyncEnabled = enabled;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +68,13 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
                 : QuickActionTile(
                     title: "Sync Now",
                     icon: LineIcons.syncIcon,
-                    color: widget.colorScheme.secondary,
-                    onTap: _handleSync,
+                    color: _cloudSyncEnabled
+                        ? widget.colorScheme.secondary
+                        : Colors.grey,
+                    onTap: _cloudSyncEnabled
+                        ? _handleSync
+                        : _showEnableCloudSyncMessage,
+                    disabled: !_cloudSyncEnabled,
                   ),
           ),
           const SizedBox(width: 12),
@@ -61,8 +84,13 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
                 : QuickActionTile(
                     title: "Pull Cloud",
                     icon: LineIcons.cloud,
-                    color: widget.colorScheme.tertiary,
-                    onTap: _handlePullFromCloud,
+                    color: _cloudSyncEnabled
+                        ? widget.colorScheme.tertiary
+                        : Colors.grey,
+                    onTap: _cloudSyncEnabled
+                        ? _handlePullFromCloud
+                        : _showEnableCloudSyncMessage,
+                    disabled: !_cloudSyncEnabled,
                   ),
           ),
           const SizedBox(width: 12),
@@ -157,7 +185,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Sync completed successfully!'),
+            content: Text(' Sync completed successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
@@ -167,7 +195,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Sync failed: $e'),
+            content: Text(' Sync failed: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -202,6 +230,14 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
       }
     }
   }
+
+  void _showEnableCloudSyncMessage() {
+    CustomSnackBar.show(
+      context,
+      'Please enable Cloud sync in Cloud Sync settings first',
+      isSuccess: false,
+    );
+  }
 }
 
 class QuickActionTile extends StatelessWidget {
@@ -209,6 +245,7 @@ class QuickActionTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final bool disabled;
 
   const QuickActionTile({
     super.key,
@@ -216,6 +253,7 @@ class QuickActionTile extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
@@ -225,15 +263,15 @@ class QuickActionTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: disabled ? null : onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withOpacity(disabled ? 0.05 : 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: color.withOpacity(0.2),
+              color: color.withOpacity(disabled ? 0.1 : 0.2),
               width: 1,
             ),
           ),
@@ -242,14 +280,14 @@ class QuickActionTile extends StatelessWidget {
               Icon(
                 icon,
                 size: 24,
-                color: color,
+                color: disabled ? Colors.grey : color,
               ),
               const SizedBox(height: 8),
               Text(
                 title,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: color,
+                  color: disabled ? Colors.grey : color,
                 ),
                 textAlign: TextAlign.center,
               ),

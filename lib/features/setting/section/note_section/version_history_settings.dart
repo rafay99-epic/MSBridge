@@ -17,7 +17,7 @@ class VersionHistorySettings extends StatefulWidget {
 
 class _VersionHistorySettingsState extends State<VersionHistorySettings> {
   bool _isLoading = false;
-  int _maxVersionsToKeep = 10;
+  int _maxVersionsToKeep = 3;
   bool _autoCleanupEnabled = true;
   bool _versionHistoryEnabled = true;
   Map<String, dynamic> _storageInfo = {};
@@ -33,7 +33,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _maxVersionsToKeep = prefs.getInt('max_versions_to_keep') ?? 10;
+      _maxVersionsToKeep = prefs.getInt('max_versions_to_keep') ?? 3;
       _autoCleanupEnabled = prefs.getBool('auto_cleanup_enabled') ?? true;
       _versionHistoryEnabled = prefs.getBool('version_history_enabled') ?? true;
     });
@@ -166,9 +166,9 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                   Text("Keep last $_maxVersionsToKeep versions"),
                   Slider(
                     value: _maxVersionsToKeep.toDouble(),
-                    min: 5,
+                    min: 3,
                     max: 50,
-                    divisions: 9,
+                    divisions: 47,
                     label: _maxVersionsToKeep.toString(),
                     onChanged: (value) {
                       setState(() {
@@ -179,7 +179,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("5"),
+                      Text("3"),
                       Text("50"),
                     ],
                   ),

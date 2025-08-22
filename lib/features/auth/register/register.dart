@@ -37,135 +37,150 @@ class _RegisterState extends State<Register> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                "Create Account",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: theme.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Fill in the details to sign up.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: theme.primary.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Full Name
-              CustomTextField(
-                hintText: "Full Name",
-                icon: LineIcons.user,
-                isPassword: false,
-                controller: _fullnameController,
-              ),
-              const SizedBox(height: 16),
-
-              // Email + Passwords (Autofill)
-              AutofillGroup(
-                child: Column(
-                  children: [
-                    CustomTextField(
-                      hintText: "Email",
-                      icon: LineIcons.envelope,
-                      isPassword: false,
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      enableSuggestions: true,
-                      autocorrect: false,
-                      autofillHints: const [AutofillHints.username, AutofillHints.email],
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      hintText: "Password",
-                      icon: LineIcons.lock,
-                      isPassword: true,
-                      controller: _passwordController,
-                      textInputAction: TextInputAction.next,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      autofillHints: const [AutofillHints.newPassword],
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      hintText: "Re-enter Password",
-                      icon: LineIcons.lock,
-                      isPassword: true,
-                      controller: _confirmPasswordController,
-                      textInputAction: TextInputAction.done,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      autofillHints: const [AutofillHints.newPassword],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-
-              // Phone Number
-              CustomTextField(
-                hintText: "Phone Number",
-                icon: LineIcons.phone,
-                isPassword: false,
-                keyboardType: TextInputType.phone,
-                controller: _phoneNumberController,
-              ),
-              const SizedBox(height: 24),
-
-              // Sign Up Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.secondary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => _registerUser(context),
-                  child: Text(
-                    "Sign Up",
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                kToolbarHeight,
+          ),
+          child: IntrinsicHeight(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  // Title
+                  Text(
+                    "Create Account",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: theme.primary,
+                      color: theme.onSurface,
                     ),
                   ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    "Already have an account? Login",
-                    style: TextStyle(fontSize: 16, color: theme.secondary),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Fill in the details to sign up.",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.onSurface.withOpacity(0.7),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 32),
+
+                  // Full Name
+                  CustomTextField(
+                    hintText: "Full Name",
+                    icon: LineIcons.user,
+                    isPassword: false,
+                    controller: _fullnameController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Email + Passwords (Autofill)
+                  AutofillGroup(
+                    child: Column(
+                      children: [
+                        CustomTextField(
+                          hintText: "Email",
+                          icon: LineIcons.envelope,
+                          isPassword: false,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          enableSuggestions: true,
+                          autocorrect: false,
+                          autofillHints: const [
+                            AutofillHints.username,
+                            AutofillHints.email
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          hintText: "Password",
+                          icon: LineIcons.lock,
+                          isPassword: true,
+                          controller: _passwordController,
+                          textInputAction: TextInputAction.next,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                          autofillHints: const [AutofillHints.newPassword],
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          hintText: "Re-enter Password",
+                          icon: LineIcons.lock,
+                          isPassword: true,
+                          controller: _confirmPasswordController,
+                          textInputAction: TextInputAction.done,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                          autofillHints: const [AutofillHints.newPassword],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+
+                  // Phone Number
+                  CustomTextField(
+                    hintText: "Phone Number",
+                    icon: LineIcons.phone,
+                    isPassword: false,
+                    keyboardType: TextInputType.phone,
+                    controller: _phoneNumberController,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Sign Up Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primary,
+                        foregroundColor: theme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                      ),
+                      onPressed: () => _registerUser(context),
+                      child: Text(
+                        "Sign Up",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: theme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Center(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Already have an account? Login",
+                        style: TextStyle(fontSize: 16, color: theme.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// **Register User Function**
   void _registerUser(BuildContext context) async {
     if (_fullnameController.text.isEmpty ||
         _emailController.text.isEmpty ||
