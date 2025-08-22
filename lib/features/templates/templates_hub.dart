@@ -10,6 +10,7 @@ import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/utils/uuid.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
 
 class TemplatesHubPage extends StatefulWidget {
   const TemplatesHubPage({super.key});
@@ -27,9 +28,16 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Templates'),
+        title: Text('Templates',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            )),
+        centerTitle: false,
+        elevation: 1,
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.primary,
+        shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
         actions: [
           IconButton(
             icon: const Icon(LineIcons.plusCircle),
@@ -61,54 +69,31 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
                 ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
               return Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Search templates...',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onChanged: (v) => setState(() => _search = v.trim()),
-                    ),
+                  TemplatesSearchField(
+                    onChanged: (v) => setState(() => _search = v),
                   ),
                   Expanded(
                     child: items.isEmpty
                         ? Center(
-                            child: Text('No templates yet',
-                                style: TextStyle(
-                                    color: theme.colorScheme.primary)),
+                            child: Text(
+                              'No templates yet',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.7),
+                              ),
+                            ),
                           )
-                        : ListView.separated(
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                             itemCount: items.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
                             itemBuilder: (context, index) {
                               final t = items[index];
-                              return ListTile(
-                                title: Text(t.title,
-                                    style: TextStyle(
-                                        color: theme.colorScheme.primary)),
-                                subtitle: t.tags.isEmpty
-                                    ? null
-                                    : Text(t.tags.join(' · '),
-                                        style: TextStyle(
-                                            color: theme.colorScheme.primary
-                                                .withOpacity(0.7))),
-                                leading: const Icon(LineIcons.fileAlt),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (val) {
-                                    if (val == 'edit') _editTemplate(t);
-                                    if (val == 'delete') _deleteTemplate(t);
-                                  },
-                                  itemBuilder: (ctx) => const [
-                                    PopupMenuItem(
-                                        value: 'edit', child: Text('Edit')),
-                                    PopupMenuItem(
-                                        value: 'delete', child: Text('Delete')),
-                                  ],
-                                ),
+                              return TemplateListItem(
+                                title: t.title,
+                                tags: t.tags,
                                 onTap: () => _applyTemplate(t),
+                                onEdit: () => _editTemplate(t),
+                                onDelete: () => _deleteTemplate(t),
                               );
                             },
                           ),
@@ -126,7 +111,7 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
     await Navigator.push(
       context,
       PageTransition(
-        child: TemplateEditorPage(),
+        child: const TemplateEditorPage(),
         type: PageTransitionType.rightToLeft,
         duration: const Duration(milliseconds: 300),
       ),
@@ -164,7 +149,7 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
 }
 
 class TemplateEditorPage extends StatefulWidget {
-  TemplateEditorPage({super.key, this.template});
+  const TemplateEditorPage({super.key, this.template});
   final NoteTemplate? template;
 
   @override
@@ -177,6 +162,9 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
   final TextEditingController _tagInputController = TextEditingController();
   final ValueNotifier<List<String>> _tagsNotifier =
       ValueNotifier<List<String>>(<String>[]);
+  final FocusNode _quillFocusNode = FocusNode();
+  final FocusNode _titleFocusNode = FocusNode();
+  final FocusNode _tagFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -203,6 +191,9 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
     _titleController.dispose();
     _tagInputController.dispose();
     _tagsNotifier.dispose();
+    _quillFocusNode.dispose();
+    _titleFocusNode.dispose();
+    _tagFocusNode.dispose();
     super.dispose();
   }
 
@@ -212,13 +203,21 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(widget.template == null ? 'New Template' : 'Edit Template'),
+        title: Text(
+          widget.template == null ? 'New Template' : 'Edit Template',
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        elevation: 1,
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.primary,
         actions: [
           IconButton(
             icon: const Icon(LineIcons.save),
             onPressed: _saveTemplate,
+            tooltip: 'Save',
           )
         ],
       ),
@@ -228,6 +227,7 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
           children: [
             TextField(
               controller: _titleController,
+              focusNode: _titleFocusNode,
               decoration: const InputDecoration(
                 hintText: 'Template title',
                 border: InputBorder.none,
@@ -238,50 +238,128 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                 color: theme.colorScheme.primary,
               ),
             ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _tagInputController,
-                    decoration: const InputDecoration(
-                      hintText: 'Add tag and press +',
-                    ),
-                    onSubmitted: _addTag,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(LineIcons.plus),
-                  onPressed: () => _addTag(_tagInputController.text),
-                ),
-              ],
+            // Tags list styled like notes
+            ValueListenableBuilder<List<String>>(
+              valueListenable: _tagsNotifier,
+              builder: (_, tags, __) {
+                return TagChipsRow(
+                  tags: tags,
+                  onRemove: (tag) {
+                    final copy = List<String>.from(_tagsNotifier.value);
+                    copy.remove(tag);
+                    _tagsNotifier.value = copy;
+                  },
+                );
+              },
+            ),
+            // Tag input styled like notes
+            TagInputField(
+              controller: _tagInputController,
+              focusNode: _tagFocusNode,
+              onSubmit: _addTag,
             ),
             ValueListenableBuilder<List<String>>(
               valueListenable: _tagsNotifier,
               builder: (_, tags, __) {
-                if (tags.isEmpty) return const SizedBox.shrink();
-                return Wrap(
-                  spacing: 6,
-                  children: tags
-                      .map((t) => Chip(
-                            label: Text(t),
-                            onDeleted: () {
-                              final copy =
-                                  List<String>.from(_tagsNotifier.value);
-                              copy.remove(t);
-                              _tagsNotifier.value = copy;
-                            },
-                          ))
-                      .toList(),
-                );
+                return const SizedBox.shrink();
               },
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: QuillEditor.basic(
-                configurations: QuillEditorConfigurations(
-                  controller: _controller,
-                  sharedConfigurations: const QuillSharedConfigurations(),
-                ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: QuillEditor.basic(
+                      configurations: QuillEditorConfigurations(
+                        controller: _controller,
+                        sharedConfigurations: const QuillSharedConfigurations(),
+                        placeholder: 'Start composing your template...',
+                        expands: true,
+                        onTapUp: (_, __) {
+                          if (!_quillFocusNode.hasFocus) {
+                            FocusScope.of(context)
+                                .requestFocus(_quillFocusNode);
+                          }
+                          return false;
+                        },
+                      ),
+                      focusNode: _quillFocusNode,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
+                      child: Listener(
+                        onPointerDown: (_) {
+                          if (!_quillFocusNode.hasFocus) {
+                            FocusScope.of(context)
+                                .requestFocus(_quillFocusNode);
+                          }
+                        },
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    theme.colorScheme.shadow.withOpacity(0.06),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant
+                                  .withOpacity(0.6),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: QuillToolbar.simple(
+                              configurations: QuillSimpleToolbarConfigurations(
+                                controller: _controller,
+                                sharedConfigurations:
+                                    const QuillSharedConfigurations(),
+                                multiRowsDisplay: false,
+                                toolbarSize: 44,
+                                showCodeBlock: true,
+                                showQuote: true,
+                                showLink: true,
+                                showFontSize: true,
+                                showFontFamily: true,
+                                showIndent: true,
+                                showDividers: true,
+                                showUnderLineButton: true,
+                                showLeftAlignment: true,
+                                showCenterAlignment: true,
+                                showRightAlignment: true,
+                                showJustifyAlignment: true,
+                                showHeaderStyle: true,
+                                showListNumbers: true,
+                                showListBullets: true,
+                                showListCheck: true,
+                                showStrikeThrough: true,
+                                showInlineCode: true,
+                                showColorButton: true,
+                                showBackgroundColorButton: true,
+                                showClearFormat: true,
+                                showAlignmentButtons: true,
+                                showUndo: true,
+                                showRedo: true,
+                                showDirection: false,
+                                showSearchButton: true,
+                                headerStyleType: HeaderStyleType.buttons,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
