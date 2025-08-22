@@ -5,7 +5,7 @@ import 'package:msbridge/features/msnotes/msnotes.dart';
 import 'package:msbridge/features/search/search.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
-import 'package:msbridge/features/setting/pages/setting.dart';
+import 'package:msbridge/features/setting/section/search/search_setting.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

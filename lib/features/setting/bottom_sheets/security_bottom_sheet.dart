@@ -1,0 +1,16 @@
+// features/setting/bottom_sheets/security_bottom_sheet.dart
+import 'package:flutter/material.dart';
+import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
+import 'package:msbridge/features/setting/section/user_section/user_settings_section.dart';
+
+class SecurityBottomSheet extends StatelessWidget {
+  const SecurityBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BottomSheetBase(
+      title: "Security Settings",
+      content: UserSettingsSection(),
+    );
+  }
+}

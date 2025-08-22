@@ -5,197 +5,160 @@ import 'package:msbridge/features/setting/section/appearance_section/theme/theme
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:provider/provider.dart';
 
-class AppearanceSettingsPage extends StatefulWidget {
+class AppearanceSettingsPage extends StatelessWidget {
   const AppearanceSettingsPage({super.key});
 
   @override
-  State<AppearanceSettingsPage> createState() => _AppearanceSettingsPageState();
-}
-
-class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
-  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: const CustomAppBar(
-        title: "Appearance",
+        title: 'Appearance',
         showBackButton: true,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.primary.withOpacity(0.1),
-                      colorScheme.secondary.withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        LineIcons.palette,
-                        size: 32,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Customize Your Experience",
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.primary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Choose themes, colors, and visual preferences",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.primary.withOpacity(0.7),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.2),
                 ),
               ),
+              child: Column(
+                children: [
+                  Icon(
+                    LineIcons.palette,
+                    size: 48,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Customize Your Experience',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose themes, colors, and visual preferences',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
 
-              const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-              // Theme Selection
-              Consumer<ThemeProvider>(
-                builder: (context, themeProvider, _) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Theme Selection
+            _buildSectionHeader(context, "Theme Selection", LineIcons.palette),
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        "Theme Selection",
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          LineIcons.palette,
+                          size: 20,
                           color: colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: colorScheme.outline.withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: ThemeSelector(themeProvider: themeProvider),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 32),
-
-              // Current Theme Info
-              Consumer<ThemeProvider>(
-                builder: (context, themeProvider, _) {
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Current Theme",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                themeProvider.dynamicColorsEnabled
-                                    ? Icons.auto_awesome
-                                    : Icons.palette,
-                                size: 20,
+                            Text(
+                              "Choose Your Theme",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
                                 color: colorScheme.primary,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    themeProvider.effectiveThemeName,
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    themeProvider.dynamicColorsEnabled
-                                        ? "Dynamic colors enabled"
-                                        : "Static theme selected",
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                          colorScheme.primary.withOpacity(0.6),
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(height: 4),
+                            Text(
+                              "Select your preferred app appearance",
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.primary.withOpacity(0.6),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ThemeSelector(themeProvider: themeProvider),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colorScheme.primary,
+          ),
+        ),
+      ],
     );
   }
 }
