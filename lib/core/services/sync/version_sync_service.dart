@@ -59,7 +59,14 @@ class VersionSyncService {
 
       // Import versions from Firebase
       for (final doc in versionsSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+        final raw = doc.data() as Map<String, dynamic>;
+        // Ensure versionId (doc id) and noteId (parent) are set in the payload
+        final String? noteIdFromPath = doc.reference.parent.parent?.id;
+        final Map<String, dynamic> data = {
+          ...raw,
+          'versionId': raw['versionId'] ?? doc.id,
+          if (noteIdFromPath != null) 'noteId': raw['noteId'] ?? noteIdFromPath,
+        };
         await _importVersionFromFirebase(data, userId);
       }
     } catch (e) {
@@ -76,7 +83,9 @@ class VersionSyncService {
       // Store under users/{userId}/notes/{noteId}/versions/{versionId}
       final noteId = version.noteId;
       if (noteId.isEmpty) {
-        throw Exception('Version ${version.versionId} missing noteId');
+        FirebaseCrashlytics.instance.log(
+            'Skipping version push: missing noteId for versionId=${version.versionId}');
+        return; // skip bad record
       }
       final versionsCollection = _firestore
           .collection('users')
@@ -86,9 +95,11 @@ class VersionSyncService {
           .collection('versions');
 
       final versionData = version.toMap();
-      versionData['syncedAt'] = DateTime.now().toIso8601String();
+      versionData['syncedAt'] = FieldValue.serverTimestamp();
 
-      await versionsCollection.doc(version.versionId).set(versionData);
+      await versionsCollection
+          .doc(version.versionId)
+          .set(versionData, SetOptions(merge: true));
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Error syncing version ${version.versionId} to Firebase");
@@ -157,8 +168,17 @@ class VersionSyncService {
         await NoteVersionRepo.clearVersionsForNote(noteId);
       }
 
-      // Clean up Firebase versions under nested path
-      final batch = _firestore.batch();
+      // Clean up Firebase versions under nested path (chunked to 500 ops max)
+      WriteBatch batch = _firestore.batch();
+      int opCount = 0;
+      Future<void> commitIfNeeded() async {
+        if (opCount >= 500) {
+          await batch.commit();
+          batch = _firestore.batch();
+          opCount = 0;
+        }
+      }
+
       for (final noteId in deletedNoteIds) {
         final versionsRef = _firestore
             .collection('users')
@@ -169,9 +189,13 @@ class VersionSyncService {
         final snap = await versionsRef.get();
         for (final doc in snap.docs) {
           batch.delete(doc.reference);
+          opCount++;
+          await commitIfNeeded();
         }
       }
-      await batch.commit();
+      if (opCount > 0) {
+        await batch.commit();
+      }
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Error cleaning up versions for deleted notes");

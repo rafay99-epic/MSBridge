@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/models/user_model.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:msbridge/core/services/background/scheduler_registration.dart';
 
 class AuthResult {
   final User? user;
@@ -20,8 +23,23 @@ class AuthRepo {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       final user = _auth.currentUser;
+      // Re-register background periodic sync after successful sign-in
+      try {
+        await SchedulerRegistration.registerAdaptive();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to register background periodic sync: $e',
+        );
+      }
       return AuthResult(user: user);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Login failed: $e',
+      );
       return AuthResult(error: "Login failed: $e");
     }
   }
@@ -37,6 +55,11 @@ class AuthRepo {
 
       User? user = userCredential.user;
       if (user == null) {
+        FirebaseCrashlytics.instance.recordError(
+          Exception('User registration failed.'),
+          StackTrace.current,
+          reason: 'User registration failed.',
+        );
         return AuthResult(error: "User registration failed.");
       }
 
@@ -57,16 +80,37 @@ class AuthRepo {
 
       return AuthResult(user: user);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Registration failed: $e',
+      );
       return AuthResult(error: "Registration failed: $e");
     }
   }
 
   Future<String?> logout() async {
     try {
+      // Cancel background sync jobs immediately on logout
+      try {
+        await Workmanager().cancelByUniqueName('msbridge.periodic.all.id');
+        await Workmanager().cancelByUniqueName('msbridge.oneoff.sync.id');
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to cancel background sync jobs: $e',
+        );
+      }
       await _auth.signOut();
       _authStateController.add(null);
       return null;
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Logout failed: $e',
+      );
       return "Logout failed: $e";
     }
   }
@@ -79,6 +123,11 @@ class AuthRepo {
       }
       return AuthResult(error: "No user session found.");
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to get current user: $e',
+      );
       return AuthResult(error: "No user session found.");
     }
   }
@@ -121,6 +170,11 @@ class AuthRepo {
             error: "Email not verified. Please check your inbox.");
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Email verification check failed: $e',
+      );
       return AuthResult(error: "Email verification check failed: $e");
     }
   }
@@ -151,6 +205,11 @@ class AuthRepo {
       await user.sendEmailVerification();
       return AuthResult(error: "Verification email sent successfully!");
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to send verification email: $e',
+      );
       return AuthResult(error: "Failed to send verification email: $e");
     }
   }
@@ -164,6 +223,11 @@ class AuthRepo {
         return AuthResult(error: "No user logged in.");
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to get current user email: $e',
+      );
       return AuthResult(error: "Failed to get current user email: $e");
     }
   }
@@ -186,14 +250,16 @@ class AuthRepo {
         'id': user.uid,
         'email': user.email ?? '',
         'fullName': (data['fullName'] as String?) ?? (user.displayName ?? ''),
-        'phoneNumber': (data['phoneNumber'] as String?) ?? (user.phoneNumber ?? ''),
+        'phoneNumber':
+            (data['phoneNumber'] as String?) ?? (user.phoneNumber ?? ''),
       };
     } catch (e) {
       return null;
     }
   }
 
-  Future<String?> updateUserProfile({required String fullName, required String phoneNumber}) async {
+  Future<String?> updateUserProfile(
+      {required String fullName, required String phoneNumber}) async {
     try {
       final user = _auth.currentUser;
       if (user == null) return 'No user logged in';
@@ -240,6 +306,11 @@ class AuthRepo {
 
       return AuthResult(user: null); // success indicated by error == null
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to delete user and data: $e',
+      );
       return AuthResult(error: "Failed to delete user and data: $e");
     }
   }
@@ -263,6 +334,11 @@ class AuthRepo {
         return AuthResult(user: user, error: 'User document not found.');
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to get user role: $e',
+      );
       return AuthResult(user: null, error: "Error getting user role: $e");
     }
   }
@@ -275,6 +351,11 @@ class AuthRepo {
       }
       return AuthResult(user: user, error: user.uid);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to get user ID: $e',
+      );
       return AuthResult(user: null, error: "Error getting user ID: $e");
     }
   }

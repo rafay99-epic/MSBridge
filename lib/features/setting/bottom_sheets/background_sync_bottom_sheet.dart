@@ -51,6 +51,16 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
   }
 
   Future<void> _triggerOneOff(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('bg_sync_last_status');
+    await prefs.remove('bg_sync_last_message');
+    await prefs.remove('bg_sync_last_ended_at');
+    setState(() {
+      _lastStatus = null;
+      _lastMessage = null;
+      _lastEndedAt = null;
+    });
+
     await WorkSchedulerUI.triggerOnce();
     // Poll for result for up to 10 seconds
     for (int i = 0; i < 20; i++) {

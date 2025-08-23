@@ -62,17 +62,17 @@ class AutoSyncScheduler {
       // Serialize runs to avoid overlap
       if (_isSyncing) return;
       _isSyncing = true;
+      final span = Telemetry.start('notes.periodicSync');
       try {
-        final span = Telemetry.start('notes.periodicSync');
         await SyncService().syncLocalNotesToFirebase();
-        span.end();
-      } catch (e) {
+      } catch (e, st) {
         FirebaseCrashlytics.instance.recordError(
           e,
-          StackTrace.current,
+          st,
           reason: 'Failed to sync notes',
         );
       } finally {
+        span.end();
         _isSyncing = false;
       }
     });
@@ -91,17 +91,17 @@ class AutoSyncScheduler {
       if (await Telemetry.isKillSwitchOn()) return;
       if (_isTemplatesSyncing) return;
       _isTemplatesSyncing = true;
+      final span = Telemetry.start('templates.periodicSync');
       try {
-        final span = Telemetry.start('templates.periodicSync');
         await TemplatesSyncService().syncLocalTemplatesToFirebase();
-        span.end();
-      } catch (e) {
+      } catch (e, st) {
         FirebaseCrashlytics.instance.recordError(
           e,
-          StackTrace.current,
+          st,
           reason: 'Failed to sync templates',
         );
       } finally {
+        span.end();
         _isTemplatesSyncing = false;
       }
     });
@@ -118,18 +118,18 @@ class AutoSyncScheduler {
       if (await Telemetry.isKillSwitchOn()) return;
       if (_isStreakSyncing) return;
       _isStreakSyncing = true;
+      final span = Telemetry.start('streak.periodicSync');
       try {
-        final span = Telemetry.start('streak.periodicSync');
         await StreakSyncService().pullCloudToLocal();
         await StreakSyncService().pushTodayIfDue();
-        span.end();
-      } catch (e) {
+      } catch (e, st) {
         FirebaseCrashlytics.instance.recordError(
           e,
-          StackTrace.current,
+          st,
           reason: 'Failed to sync streak',
         );
       } finally {
+        span.end();
         _isStreakSyncing = false;
       }
     });
