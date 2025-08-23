@@ -170,12 +170,6 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                   isDisabled: !provider.cloudSyncEnabled || !provider.enabled,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Stored at users/{userId}/templates',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.6),
-                  ),
-                ),
               ],
             );
           },

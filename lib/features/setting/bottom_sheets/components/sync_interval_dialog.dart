@@ -46,7 +46,8 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SettingSectionHeader(title: 'Choose Interval', icon: Icons.timer),
+          const SettingSectionHeader(
+              title: 'Choose Interval', icon: Icons.timer),
           const SizedBox(height: 12),
           _buildIntervalOption('Off', 0),
           const SizedBox(height: 8),
@@ -83,8 +84,7 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final bool selected = _selectedInterval == value;
-    return InkWell
-        (
+    return InkWell(
       onTap: () => setState(() => _selectedInterval = value),
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -120,8 +120,7 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
               ),
             ),
             if (selected)
-              Icon(Icons.check_circle,
-                  size: 18, color: colorScheme.secondary),
+              Icon(Icons.check_circle, size: 18, color: colorScheme.secondary),
           ],
         ),
       ),
