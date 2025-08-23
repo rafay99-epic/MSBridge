@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
+import 'package:msbridge/core/services/sync/templates_sync.dart';
 
 class TemplateRepo {
   static const String _boxName = 'note_templates';
@@ -25,6 +26,8 @@ class TemplateRepo {
   static Future<void> createTemplate(NoteTemplate template) async {
     final box = await getBox();
     await box.put(template.templateId, template);
+    // Best-effort immediate cloud sync for this template
+    TemplatesSyncService().syncLocalTemplatesToFirebase();
   }
 
   static Future<void> updateTemplate(NoteTemplate template) async {
@@ -35,9 +38,12 @@ class TemplateRepo {
       final box = await getBox();
       await box.put(template.templateId, template);
     }
+    TemplatesSyncService().syncLocalTemplatesToFirebase();
   }
 
   static Future<void> deleteTemplate(NoteTemplate template) async {
+    final id = template.templateId;
     await template.delete();
+    TemplatesSyncService().deleteTemplateInCloud(id);
   }
 }

@@ -96,6 +96,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         onTap: () => NavigationMethods.navigateToAISmartFeatures(context),
       ),
       SearchableSetting(
+        title: "Templates",
+        subtitle: "Enable, sync, and pull templates from cloud",
+        icon: LineIcons.clone,
+        section: "Notes & Sharing",
+        onTap: () => NavigationMethods.navigateToTemplatesSettings(context),
+      ),
+      SearchableSetting(
         title: "Notes & Sharing",
         subtitle: "Chat history and shareable links",
         icon: LineIcons.comments,
@@ -360,6 +367,14 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         icon: LineIcons.robot,
                         onTap: () =>
                             NavigationMethods.navigateToAISmartFeatures(
+                                context),
+                      ),
+                      SettingsTile(
+                        title: "Templates",
+                        subtitle: "Enable, sync, and pull templates from cloud",
+                        icon: LineIcons.clone,
+                        onTap: () =>
+                            NavigationMethods.navigateToTemplatesSettings(
                                 context),
                       ),
                       SettingsTile(

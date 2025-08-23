@@ -361,6 +361,10 @@ class NavigationMethods {
     BottomSheetManager.showSyncBottomSheet(context);
   }
 
+  static void navigateToTemplatesSettings(BuildContext context) {
+    BottomSheetManager.showTemplatesBottomSheet(context);
+  }
+
   static void navigateToDataManagement(BuildContext context) {
     BottomSheetManager.showDataManagementBottomSheet(context);
   }

@@ -1,49 +1,39 @@
 // features/setting/components/sync_interval_dialog.dart
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
+import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 
 class SyncIntervalDialog extends StatefulWidget {
-  const SyncIntervalDialog({super.key});
+  const SyncIntervalDialog({super.key, this.initialMinutes, this.title});
+
+  final int? initialMinutes;
+  final String? title;
 
   @override
   State<SyncIntervalDialog> createState() => _SyncIntervalDialogState();
 
-  static Future<int?> show(BuildContext context) async {
-    return showDialog<int>(
+  // Returns selected minutes (0,15,30,60) via bottom sheet
+  static Future<int?> show(BuildContext context,
+      {int? initialMinutes, String? title}) async {
+    return showModalBottomSheet<int>(
       context: context,
-      builder: (context) => const SyncIntervalDialog(),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => SyncIntervalDialog(
+        initialMinutes: initialMinutes,
+        title: title,
+      ),
     );
   }
 }
 
 class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
-  int _selectedInterval = 0;
-  bool _isLoading = true;
+  late int _selectedInterval;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentInterval();
-  }
-
-  Future<void> _loadCurrentInterval() async {
-    try {
-      final interval = await AutoSyncScheduler.getIntervalMinutes();
-      if (!mounted) return;
-      setState(() {
-        _selectedInterval = interval;
-        _isLoading = false;
-      });
-    } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to load current interval');
-      if (!mounted) return;
-      setState(() {
-        _selectedInterval = 0; // Off
-        _isLoading = false;
-      });
-    }
+    _selectedInterval = widget.initialMinutes ?? 0;
   }
 
   @override
@@ -51,23 +41,13 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    if (_isLoading) {
-      return AlertDialog(
-        backgroundColor: colorScheme.surface,
-        content: const SizedBox(
-          height: 100,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    return AlertDialog(
-      backgroundColor: colorScheme.surface,
-      title: const Text('Auto sync interval'),
+    return BottomSheetBase(
+      title: widget.title ?? 'Auto sync interval',
       content: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SettingSectionHeader(title: 'Choose Interval', icon: Icons.timer),
+          const SizedBox(height: 12),
           _buildIntervalOption('Off', 0),
           const SizedBox(height: 8),
           _buildIntervalOption('Every 15 minutes', 15),
@@ -75,38 +55,75 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
           _buildIntervalOption('Every 30 minutes', 30),
           const SizedBox(height: 8),
           _buildIntervalOption('Every 60 minutes', 60),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, _selectedInterval),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.secondary,
+                  foregroundColor: colorScheme.onSecondary,
+                ),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _selectedInterval),
-          child: const Text('Save'),
-        ),
-      ],
     );
   }
 
   Widget _buildIntervalOption(String label, int value) {
-    return InkWell(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bool selected = _selectedInterval == value;
+    return InkWell
+        (
       onTap: () => setState(() => _selectedInterval = value),
-      child: Row(
-        children: [
-          Radio<int>(
-            value: value,
-            groupValue: _selectedInterval,
-            onChanged: (v) {
-              if (v != null) {
-                setState(() => _selectedInterval = v);
-              }
-            },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? colorScheme.secondary.withOpacity(0.08)
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? colorScheme.secondary
+                : colorScheme.outline.withOpacity(0.2),
           ),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
+        ),
+        child: Row(
+          children: [
+            Radio<int>(
+              value: value,
+              groupValue: _selectedInterval,
+              activeColor: colorScheme.secondary,
+              onChanged: (v) {
+                if (v != null) setState(() => _selectedInterval = v);
+              },
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.primary,
+                ),
+              ),
+            ),
+            if (selected)
+              Icon(Icons.check_circle,
+                  size: 18, color: colorScheme.secondary),
+          ],
+        ),
       ),
     );
   }
