@@ -38,6 +38,9 @@ import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
 import 'package:msbridge/theme/colors.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
+import 'package:msbridge/core/services/background/scheduler_registration.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -58,7 +61,7 @@ void main() async {
     Hive.registerAdapter(MSNoteAdapter());
     await Hive.openBox<MSNote>('notesBox');
     Hive.registerAdapter(NoteTakingModelAdapter());
-    await Hive.openBox<NoteTakingModel>('notes_taking');
+    await Hive.openBox<NoteTakingModel>('notes');
     await Hive.openBox<NoteTakingModel>('deleted_notes');
 
     // Register note version adapter
@@ -73,6 +76,15 @@ void main() async {
     // Register templates adapter
     Hive.registerAdapter(NoteTemplateAdapter());
     await Hive.openBox<NoteTemplate>('note_templates');
+
+    // Initialize Workmanager for background tasks
+    try {
+      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+      await SchedulerRegistration.registerAdaptive();
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'Workmanager init failed');
+    }
 
     runApp(
       MultiProvider(

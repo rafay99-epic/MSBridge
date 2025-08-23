@@ -66,6 +66,7 @@ dependencies:
   flutter_local_notifications: ^16.3.2
   timezone: ^0.9.2
   markdown_widget: ^2.3.2+8
+  workmanager: ^0.5.2
 
 dev_dependencies:
   flutter_test:

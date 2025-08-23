@@ -47,13 +47,10 @@ class VersionSyncService {
 
       final userId = user.uid;
 
-      // Get versions from Firebase
-      final versionsCollection = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('note_versions');
-
-      final QuerySnapshot versionsSnapshot = await versionsCollection.get();
+      final QuerySnapshot versionsSnapshot = await _firestore
+          .collectionGroup('versions')
+          .where('userId', isEqualTo: userId)
+          .get();
 
       if (versionsSnapshot.docs.isEmpty) return;
 
@@ -76,10 +73,17 @@ class VersionSyncService {
   Future<void> _syncVersionToFirebase(
       NoteVersion version, String userId) async {
     try {
+      // Store under users/{userId}/notes/{noteId}/versions/{versionId}
+      final noteId = version.noteId;
+      if (noteId.isEmpty) {
+        throw Exception('Version ${version.versionId} missing noteId');
+      }
       final versionsCollection = _firestore
           .collection('users')
           .doc(userId)
-          .collection('note_versions');
+          .collection('notes')
+          .doc(noteId)
+          .collection('versions');
 
       final versionData = version.toMap();
       versionData['syncedAt'] = DateTime.now().toIso8601String();
@@ -99,7 +103,6 @@ class VersionSyncService {
       // Validate required fields before creating version
       final noteId = data['noteId'];
       if (noteId == null || noteId.toString().isEmpty) {
-        print('Skipping version with invalid noteId: ${data['versionId']}');
         return;
       }
 
@@ -154,30 +157,21 @@ class VersionSyncService {
         await NoteVersionRepo.clearVersionsForNote(noteId);
       }
 
-      // Clean up Firebase versions
-      final versionsCollection = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('note_versions');
-
+      // Clean up Firebase versions under nested path
       final batch = _firestore.batch();
-
       for (final noteId in deletedNoteIds) {
-        // Query for versions of this note
-        final query = versionsCollection.where('noteId', isEqualTo: noteId);
-        final querySnapshot = await query.get();
-
-        // Add delete operations to batch
-        for (final doc in querySnapshot.docs) {
+        final versionsRef = _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('notes')
+            .doc(noteId)
+            .collection('versions');
+        final snap = await versionsRef.get();
+        for (final doc in snap.docs) {
           batch.delete(doc.reference);
         }
       }
-
-      // Execute batch delete if there are operations
-      final operations = batch.commit();
-      if (operations != null) {
-        await operations;
-      }
+      await batch.commit();
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Error cleaning up versions for deleted notes");
@@ -247,13 +241,11 @@ class VersionSyncService {
       final userId = user.uid;
       final localVersions = await NoteVersionRepo.getTotalVersionCount();
 
-      // Get cloud versions count
-      final versionsCollection = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('note_versions');
-
-      final cloudSnapshot = await versionsCollection.get();
+      // Get cloud versions count via collection group
+      final cloudSnapshot = await _firestore
+          .collectionGroup('versions')
+          .where('userId', isEqualTo: userId)
+          .get();
       final cloudVersions = cloudSnapshot.docs.length;
 
       return {

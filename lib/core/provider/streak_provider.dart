@@ -5,6 +5,7 @@ import 'package:msbridge/core/repo/streak_repo.dart';
 import 'package:msbridge/core/repo/streak_settings_repo.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:msbridge/core/services/telemetry/telemetry.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
 class StreakProvider extends ChangeNotifier {
@@ -127,6 +128,9 @@ class StreakProvider extends ChangeNotifier {
         );
         // non-fatal; already logged inside service
       }
+
+      // touch activity for adaptive scheduling
+      await Telemetry.touchLastActivity();
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,

@@ -43,6 +43,8 @@ class TemplatesSyncService {
 
   Future<void> syncLocalTemplatesToFirebase() async {
     try {
+      // Ensure box is ready in background isolate too
+      await TemplateRepo.getBox();
       final enabled = await _isCloudSyncEnabled();
       if (!enabled) return;
 

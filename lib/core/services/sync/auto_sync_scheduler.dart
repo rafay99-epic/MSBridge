@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/core/services/telemetry/telemetry.dart';
 
 class AutoSyncScheduler {
   static const String _prefKeyMinutes = 'cloud_sync_interval_minutes';
@@ -57,11 +58,14 @@ class AutoSyncScheduler {
       final prefs = await SharedPreferences.getInstance();
       final enabled = prefs.getBool('cloud_sync_enabled') ?? true;
       if (!enabled) return;
+      if (await Telemetry.isKillSwitchOn()) return;
       // Serialize runs to avoid overlap
       if (_isSyncing) return;
       _isSyncing = true;
       try {
+        final span = Telemetry.start('notes.periodicSync');
         await SyncService().syncLocalNotesToFirebase();
+        span.end();
       } catch (e) {
         FirebaseCrashlytics.instance.recordError(
           e,
@@ -84,10 +88,13 @@ class AutoSyncScheduler {
       final tpl = prefs.getBool('templates_cloud_sync_enabled') ?? true;
       final tplEnabled = prefs.getBool('templates_enabled') ?? true;
       if (!(global && tpl && tplEnabled)) return;
+      if (await Telemetry.isKillSwitchOn()) return;
       if (_isTemplatesSyncing) return;
       _isTemplatesSyncing = true;
       try {
+        final span = Telemetry.start('templates.periodicSync');
         await TemplatesSyncService().syncLocalTemplatesToFirebase();
+        span.end();
       } catch (e) {
         FirebaseCrashlytics.instance.recordError(
           e,
@@ -108,11 +115,14 @@ class AutoSyncScheduler {
       final global = prefs.getBool('cloud_sync_enabled') ?? true;
       final streakEnabled = prefs.getBool('streak_cloud_sync_enabled') ?? true;
       if (!(global && streakEnabled)) return;
+      if (await Telemetry.isKillSwitchOn()) return;
       if (_isStreakSyncing) return;
       _isStreakSyncing = true;
       try {
+        final span = Telemetry.start('streak.periodicSync');
         await StreakSyncService().pullCloudToLocal();
         await StreakSyncService().pushTodayIfDue();
+        span.end();
       } catch (e) {
         FirebaseCrashlytics.instance.recordError(
           e,
