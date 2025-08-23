@@ -750,7 +750,8 @@ class _CreateNoteState extends State<CreateNote>
                                   tag,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: theme.colorScheme.primary,
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.85),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -759,7 +760,14 @@ class _CreateNoteState extends State<CreateNote>
                                 deleteIcon: Icon(
                                   Icons.close,
                                   size: 18,
-                                  color: theme.colorScheme.primary,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.75),
+                                ),
+                                shape: StadiumBorder(
+                                  side: BorderSide(
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15),
+                                  ),
                                 ),
                                 onDeleted: () {
                                   final next = List<String>.from(tags)
@@ -801,7 +809,13 @@ class _CreateNoteState extends State<CreateNote>
                             controller: _tagInputController,
                             focusNode: _tagFocusNode,
                             textInputAction: TextInputAction.done,
-                            onSubmitted: _addTag,
+                            onSubmitted: (raw) {
+                              final v = raw.trim();
+                              if (v.isEmpty) return;
+                              _addTag(v);
+                              _tagInputController.clear();
+                              FocusScope.of(context).unfocus();
+                            },
                             contextMenuBuilder: (BuildContext context,
                                 EditableTextState editableTextState) {
                               return AdaptiveTextSelectionToolbar.editableText(
@@ -811,33 +825,50 @@ class _CreateNoteState extends State<CreateNote>
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Add tag...',
-                              hintStyle: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                              prefixIcon: const Icon(Icons.tag, size: 16),
+                              hintStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.5)),
+                              prefixIcon: Icon(Icons.tag,
+                                  size: 16,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.7)),
                               suffixIcon: IconButton(
-                                icon: const Icon(Icons.add, size: 18),
+                                icon: Icon(Icons.add,
+                                    size: 18,
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.8)),
                                 tooltip: 'Add tag',
-                                onPressed: () =>
-                                    _addTag(_tagInputController.text),
+                                onPressed: () {
+                                  final v = _tagInputController.text.trim();
+                                  if (v.isEmpty) return;
+                                  _addTag(v);
+                                  _tagInputController.clear();
+                                  FocusScope.of(context).unfocus();
+                                },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
                                     minWidth: 32, minHeight: 32),
                               ),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
-                                    color: theme.colorScheme.outlineVariant),
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15)),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
-                                    color: theme.colorScheme.outlineVariant),
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
                                     color: theme.colorScheme.primary,
-                                    width: 1.5),
+                                    width: 1.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
