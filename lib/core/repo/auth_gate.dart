@@ -6,10 +6,11 @@ import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -30,49 +31,34 @@ class AuthGate extends StatelessWidget {
             } else if (!user.emailVerified) {
               return const EmailVerificationScreen();
             } else {
-              if (FeatureFlag.enableSyncLayer) {
-                WidgetsBinding.instance.addPostFrameCallback((_) async {
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                Future<void>(() async {
                   try {
-                    final syncService = SyncService();
-                    final templatesSync = TemplatesSyncService();
-                    await syncService.startListening();
-                    await templatesSync.startListening();
-                  } catch (e) {
-                    if (context.mounted) {
-                      FirebaseCrashlytics.instance.recordError(
-                          e, StackTrace.current,
-                          reason: "Error starting sync service");
-                      CustomSnackBar.show(
-                        context,
-                        "Error starting sync service: $e",
-                        isSuccess: false,
-                      );
+                    await AutoSyncScheduler.initialize();
+
+                    if (FeatureFlag.enableReverseSyncLayer) {
+                      final reverse = ReverseSyncService();
+                      await reverse.syncDataFromFirebaseToHive();
+                      await TemplatesSyncService().pullTemplatesFromCloud();
+                      await StreakSyncService().syncNow();
                     }
+
+                    if (FeatureFlag.enableSyncLayer) {
+                      final syncService = SyncService();
+                      final templatesSync = TemplatesSyncService();
+                      await syncService.startListening();
+                      await templatesSync.startListening();
+                      await StreakSyncService().pushTodayIfDue();
+                    }
+                  } catch (e) {
+                    FirebaseCrashlytics.instance.recordError(
+                      e,
+                      StackTrace.current,
+                      reason: 'Background startup sync failed',
+                    );
                   }
                 });
-              }
-              if (FeatureFlag.enableReverseSyncLayer) {
-                WidgetsBinding.instance.addPostFrameCallback((_) async {
-                  try {
-                    final ReverseSyncService reverseSyncService =
-                        ReverseSyncService();
-                    await reverseSyncService.syncDataFromFirebaseToHive();
-                    // Pull templates as well when reverse layer is enabled
-                    await TemplatesSyncService().pullTemplatesFromCloud();
-                  } catch (e) {
-                    if (context.mounted) {
-                      FirebaseCrashlytics.instance.recordError(
-                          e, StackTrace.current,
-                          reason: "Error starting reverse sync service");
-                      CustomSnackBar.show(
-                        context,
-                        "Error starting reverse sync service: $e",
-                        isSuccess: false,
-                      );
-                    }
-                  }
-                });
-              }
+              });
 
               return const Home();
             }

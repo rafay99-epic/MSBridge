@@ -5,6 +5,7 @@ import 'package:msbridge/core/repo/streak_repo.dart';
 import 'package:msbridge/core/repo/streak_settings_repo.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
 class StreakProvider extends ChangeNotifier {
   StreakModel _currentStreak = StreakModel.initial();
@@ -113,6 +114,18 @@ class StreakProvider extends ChangeNotifier {
       // Update notifications if needed
       if (_settings.notificationsEnabled) {
         await _updateNotifications();
+      }
+
+      // Immediately sync streak changes to cloud (respects toggles)
+      try {
+        await StreakSyncService().pushLocalToCloud();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to sync streak to cloud: $e',
+        );
+        // non-fatal; already logged inside service
       }
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
