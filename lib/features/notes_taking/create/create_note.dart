@@ -61,6 +61,7 @@ class _CreateNoteState extends State<CreateNote>
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
   bool _hasSelection = false;
+  StreamSubscription? _docChangesSub;
 
   void _addTag(String rawTag) {
     final tag = rawTag.trim();
@@ -141,16 +142,7 @@ class _CreateNoteState extends State<CreateNote>
       _controller = QuillController.basic();
     }
 
-    // Track selection to provide an explicit copy/paste fallback
-    _controller.addListener(() {
-      final selection = _controller.selection;
-      final bool hasSelection = selection.isValid && !selection.isCollapsed;
-      if (_hasSelection != hasSelection && mounted) {
-        setState(() {
-          _hasSelection = hasSelection;
-        });
-      }
-    });
+    _attachControllerListeners();
 
     // Add lightweight focus tracking
     _titleController.addListener(() {
@@ -185,14 +177,6 @@ class _CreateNoteState extends State<CreateNote>
     });
 
     if (FeatureFlag.enableAutoSave) {
-      _controller.document.changes.listen((event) {
-        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-        _debounceTimer = Timer(const Duration(seconds: 3), () {
-          _currentFocusArea.value = 'editor';
-          _saveNote();
-        });
-      });
-
       // Auto-save when tags change
       _tagsNotifier.addListener(() {
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
@@ -212,6 +196,7 @@ class _CreateNoteState extends State<CreateNote>
 
   @override
   void dispose() {
+    _docChangesSub?.cancel();
     _controller.dispose();
     _titleController.dispose();
     _tagInputController.dispose();
@@ -247,6 +232,42 @@ class _CreateNoteState extends State<CreateNote>
         _saveNote();
       }
     });
+  }
+
+  void _attachControllerListeners() {
+    // Selection tracking
+    _controller.addListener(() {
+      final selection = _controller.selection;
+      final bool hasSelection = selection.isValid && !selection.isCollapsed;
+      if (_hasSelection != hasSelection && mounted) {
+        setState(() {
+          _hasSelection = hasSelection;
+        });
+      }
+    });
+
+    // Debounced document changes for auto-save
+    if (FeatureFlag.enableAutoSave) {
+      _docChangesSub?.cancel();
+      _docChangesSub = _controller.document.changes.listen((event) {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 3), () {
+          _currentFocusArea.value = 'editor';
+          _saveNote();
+        });
+      });
+    }
+  }
+
+  void _reinitializeController(Document newDoc) {
+    // Dispose old controller to avoid leaks
+    _docChangesSub?.cancel();
+    _controller.dispose();
+    _controller = QuillController(
+      document: newDoc,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    _attachControllerListeners();
   }
 
   Future<void> loadQuillContent(String noteContent) async {
@@ -1088,10 +1109,7 @@ class _CreateNoteState extends State<CreateNote>
       // If editor empty, replace; else confirm replace vs insert
       final isEmpty = _controller.document.isEmpty();
       if (isEmpty) {
-        _controller = QuillController(
-          document: templateDoc,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
+        _reinitializeController(templateDoc);
         setState(() {
           _titleController.text = t.title;
           _tagsNotifier.value = List<String>.from(t.tags);
@@ -1122,10 +1140,7 @@ class _CreateNoteState extends State<CreateNote>
           },
         );
         if (action == 'replace') {
-          _controller = QuillController(
-            document: templateDoc,
-            selection: const TextSelection.collapsed(offset: 0),
-          );
+          _reinitializeController(templateDoc);
           setState(() {
             _titleController.text = t.title;
             _tagsNotifier.value = List<String>.from(t.tags);
