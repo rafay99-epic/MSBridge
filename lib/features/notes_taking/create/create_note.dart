@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
@@ -106,10 +107,10 @@ class _CreateNoteState extends State<CreateNote>
               selection: const TextSelection.collapsed(offset: 0),
             );
           }
-        } catch (_) {
+        } catch (e) {
           FirebaseCrashlytics.instance.recordError(
               Exception("Error loading note"), StackTrace.current,
-              reason: "Error loading note");
+              reason: "Error loading note: $e");
           _controller = QuillController(
             document: Document()..insert(0, widget.note!.noteContent),
             selection: const TextSelection.collapsed(offset: 0),
@@ -132,10 +133,10 @@ class _CreateNoteState extends State<CreateNote>
         );
         _titleController.text = widget.initialTemplate!.title;
         _tagsNotifier.value = List<String>.from(widget.initialTemplate!.tags);
-      } catch (_) {
+      } catch (e) {
         FirebaseCrashlytics.instance.recordError(
             Exception("Error loading template"), StackTrace.current,
-            reason: "Error loading template");
+            reason: "Error loading template: $e");
         _controller = QuillController.basic();
       }
     } else {
@@ -284,6 +285,11 @@ class _CreateNoteState extends State<CreateNote>
             selection: const TextSelection.collapsed(offset: 0));
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Failed to load Quill content'),
+        StackTrace.current,
+        reason: 'Failed to load Quill content: $e',
+      );
       _controller = QuillController(
           document: Document()..insert(0, noteContent),
           selection: const TextSelection.collapsed(offset: 0));
@@ -310,6 +316,11 @@ class _CreateNoteState extends State<CreateNote>
       try {
         content = await encodeContent(_controller.document.toDelta());
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          Exception('Failed to encode content'),
+          StackTrace.current,
+          reason: 'Failed to encode content: $e',
+        );
         content = _controller.document.toPlainText().trim();
       }
       if (title.isEmpty && content.isEmpty) {
@@ -339,7 +350,7 @@ class _CreateNoteState extends State<CreateNote>
             await _updateStreakOnNoteCreation();
           } catch (e) {
             FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                reason: "Streak update failed on note creation");
+                reason: "Streak update failed on note creation: $e");
           }
         }
       }
@@ -364,6 +375,11 @@ class _CreateNoteState extends State<CreateNote>
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
+        FirebaseCrashlytics.instance.recordError(
+          Exception('Failed to save note'),
+          StackTrace.current,
+          reason: 'Failed to save note: $e',
+        );
         CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
       }
     }
@@ -417,6 +433,11 @@ class _CreateNoteState extends State<CreateNote>
         }
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Failed to save note'),
+        StackTrace.current,
+        reason: 'Failed to save note: $e',
+      );
       CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }
@@ -1178,23 +1199,27 @@ class _CreateNoteState extends State<CreateNote>
           });
         } else if (action == 'insert') {
           final selection = _controller.selection;
-          final delta = templateDoc.toDelta();
-          // Insert delta at current cursor by replaceText repeatedly
-          // For simplicity, insert plain text fallback if needed
+          final templateDelta = templateDoc.toDelta();
           try {
-            final ops = delta.toList();
-            for (final op in ops) {
-              final insert = op.data;
-              if (insert is String) {
-                _controller.replaceText(
-                  selection.start,
-                  0,
-                  insert,
-                  selection,
-                );
+            final insertDelta = Delta()..retain(selection.start);
+            for (final op in templateDelta.toList()) {
+              if (op.isInsert) {
+                insertDelta.insert(op.data, op.attributes);
               }
             }
-          } catch (_) {
+            _controller.document.compose(insertDelta, ChangeSource.local);
+            final insertedLen = templateDelta.length;
+            _controller.updateSelection(
+              TextSelection.collapsed(offset: selection.start + insertedLen),
+              ChangeSource.local,
+            );
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(
+              Exception('Failed to apply template'),
+              StackTrace.current,
+              reason: 'Failed to apply template: $e',
+            );
+            // Fallback to plain text insert
             _controller.replaceText(
               selection.start,
               0,
@@ -1286,6 +1311,11 @@ class _CreateNoteState extends State<CreateNote>
                             }
                           }
                         } catch (e) {
+                          FirebaseCrashlytics.instance.recordError(
+                            e,
+                            StackTrace.current,
+                            reason: 'Failed to enable/disable share',
+                          );
                           if (mounted) {
                             CustomSnackBar.show(context, e.toString(),
                                 isSuccess: false);
