@@ -25,6 +25,11 @@ class UserSettingsModel {
   final bool versionHistoryEnabled;
   final String selectedAIModel;
 
+  // Templates settings
+  final bool templatesEnabled;
+  final bool templatesCloudSyncEnabled;
+  final int templatesSyncIntervalMinutes;
+
   // Sync metadata
   final bool isSynced;
   final DateTime? lastSyncedAt;
@@ -47,6 +52,9 @@ class UserSettingsModel {
     required this.cloudSyncEnabled,
     required this.versionHistoryEnabled,
     required this.selectedAIModel,
+    this.templatesEnabled = true,
+    this.templatesCloudSyncEnabled = true,
+    this.templatesSyncIntervalMinutes = 0,
     this.isSynced = false,
     this.lastSyncedAt,
   });
@@ -70,6 +78,9 @@ class UserSettingsModel {
       'cloudSyncEnabled': cloudSyncEnabled,
       'versionHistoryEnabled': versionHistoryEnabled,
       'selectedAIModel': selectedAIModel,
+      'templatesEnabled': templatesEnabled,
+      'templatesCloudSyncEnabled': templatesCloudSyncEnabled,
+      'templatesSyncIntervalMinutes': templatesSyncIntervalMinutes,
       'isSynced': isSynced,
       'lastSyncedAt': lastSyncedAt?.toIso8601String(),
     };
@@ -95,6 +106,9 @@ class UserSettingsModel {
       cloudSyncEnabled: map['cloudSyncEnabled'] ?? true,
       versionHistoryEnabled: map['versionHistoryEnabled'] ?? true,
       selectedAIModel: map['selectedAIModel'] ?? 'gpt-3.5-turbo',
+      templatesEnabled: map['templatesEnabled'] ?? true,
+      templatesCloudSyncEnabled: map['templatesCloudSyncEnabled'] ?? true,
+      templatesSyncIntervalMinutes: map['templatesSyncIntervalMinutes'] ?? 0,
       isSynced: map['isSynced'] ?? false,
       lastSyncedAt: map['lastSyncedAt'] != null
           ? DateTime.parse(map['lastSyncedAt'])
@@ -125,6 +139,9 @@ class UserSettingsModel {
     bool? cloudSyncEnabled,
     bool? versionHistoryEnabled,
     String? selectedAIModel,
+    bool? templatesEnabled,
+    bool? templatesCloudSyncEnabled,
+    int? templatesSyncIntervalMinutes,
     bool? isSynced,
     DateTime? lastSyncedAt,
   }) {
@@ -148,6 +165,11 @@ class UserSettingsModel {
       versionHistoryEnabled:
           versionHistoryEnabled ?? this.versionHistoryEnabled,
       selectedAIModel: selectedAIModel ?? this.selectedAIModel,
+      templatesEnabled: templatesEnabled ?? this.templatesEnabled,
+      templatesCloudSyncEnabled:
+          templatesCloudSyncEnabled ?? this.templatesCloudSyncEnabled,
+      templatesSyncIntervalMinutes:
+          templatesSyncIntervalMinutes ?? this.templatesSyncIntervalMinutes,
       isSynced: isSynced ?? this.isSynced,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
     );

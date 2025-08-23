@@ -28,7 +28,18 @@ class UserSettingsRepo {
       final settingsJson = prefs.getString(_settingsKey);
 
       if (settingsJson != null) {
-        return UserSettingsModel.fromJson(settingsJson);
+        var model = UserSettingsModel.fromJson(settingsJson);
+        final tplEnabled = prefs.getBool('templates_enabled');
+        final tplCloud = prefs.getBool('templates_cloud_sync_enabled');
+        final tplInterval = prefs.getInt('templates_sync_interval_minutes');
+        model = model.copyWith(
+          templatesEnabled: tplEnabled ?? model.templatesEnabled,
+          templatesCloudSyncEnabled:
+              tplCloud ?? model.templatesCloudSyncEnabled,
+          templatesSyncIntervalMinutes:
+              tplInterval ?? model.templatesSyncIntervalMinutes,
+        );
+        return model;
       }
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
@@ -43,6 +54,12 @@ class UserSettingsRepo {
       final prefs = await SharedPreferences.getInstance();
       final settingsJson = settings.toJson();
       await prefs.setString(_settingsKey, settingsJson);
+      // Also persist template settings for runtime consumers
+      await prefs.setBool('templates_enabled', settings.templatesEnabled);
+      await prefs.setBool(
+          'templates_cloud_sync_enabled', settings.templatesCloudSyncEnabled);
+      await prefs.setInt('templates_sync_interval_minutes',
+          settings.templatesSyncIntervalMinutes);
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: 'Failed to save local settings');
@@ -70,6 +87,9 @@ class UserSettingsRepo {
       cloudSyncEnabled: true,
       versionHistoryEnabled: true,
       selectedAIModel: 'gpt-3.5-turbo',
+      templatesEnabled: true,
+      templatesCloudSyncEnabled: true,
+      templatesSyncIntervalMinutes: 0,
     );
 
     await saveLocalSettings(defaultSettings);
@@ -173,7 +193,7 @@ class UserSettingsRepo {
         }
       }
 
-      return settings!;
+      return settings;
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: 'Failed to get or create settings');
@@ -240,6 +260,12 @@ class UserSettingsRepo {
         return settings.copyWith(versionHistoryEnabled: value as bool);
       case 'selectedAIModel':
         return settings.copyWith(selectedAIModel: value as String);
+      case 'templatesEnabled':
+        return settings.copyWith(templatesEnabled: value as bool);
+      case 'templatesCloudSyncEnabled':
+        return settings.copyWith(templatesCloudSyncEnabled: value as bool);
+      case 'templatesSyncIntervalMinutes':
+        return settings.copyWith(templatesSyncIntervalMinutes: value as int);
       default:
         throw Exception('Unknown setting key: $key');
     }
