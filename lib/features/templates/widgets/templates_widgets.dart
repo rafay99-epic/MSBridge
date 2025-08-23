@@ -272,7 +272,13 @@ class TagInputField extends StatelessWidget {
               controller: controller,
               focusNode: focusNode,
               textInputAction: TextInputAction.done,
-              onSubmitted: onSubmit,
+              onSubmitted: (raw) {
+                final value = raw.trim();
+                if (value.isEmpty) return;
+                onSubmit(value);
+                controller.clear();
+                FocusScope.of(context).unfocus();
+              },
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Add tag and press +',
@@ -281,7 +287,13 @@ class TagInputField extends StatelessWidget {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.add, size: 18),
                   tooltip: 'Add tag',
-                  onPressed: () => onSubmit(controller.text),
+                  onPressed: () {
+                    final value = controller.text.trim();
+                    if (value.isEmpty) return;
+                    onSubmit(value);
+                    controller.clear();
+                    FocusScope.of(context).unfocus();
+                  },
                   padding: EdgeInsets.zero,
                   constraints:
                       const BoxConstraints(minWidth: 32, minHeight: 32),

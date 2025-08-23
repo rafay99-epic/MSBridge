@@ -32,9 +32,6 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
   }
 
   Widget _buildContent(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -75,10 +72,12 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                     // Also respect global cloud sync
                     final prefs = await SharedPreferences.getInstance();
                     final global = prefs.getBool('cloud_sync_enabled') ?? true;
-                    if (!provider.cloudSyncEnabled || !global) {
+                    if (!provider.enabled ||
+                        !provider.cloudSyncEnabled ||
+                        !global) {
                       CustomSnackBar.show(
                         context,
-                        'Cloud sync is disabled',
+                        'Templates sync is disabled',
                         isSuccess: false,
                       );
                       return;
@@ -111,10 +110,12 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                   onTap: () async {
                     final prefs = await SharedPreferences.getInstance();
                     final global = prefs.getBool('cloud_sync_enabled') ?? true;
-                    if (!provider.cloudSyncEnabled || !global) {
+                    if (!provider.enabled ||
+                        !provider.cloudSyncEnabled ||
+                        !global) {
                       CustomSnackBar.show(
                         context,
-                        'Cloud sync is disabled',
+                        'Templates sync is disabled',
                         isSuccess: false,
                       );
                       return;

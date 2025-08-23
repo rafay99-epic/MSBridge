@@ -1162,9 +1162,15 @@ class _CreateNoteState extends State<CreateNote>
       await _saveNote();
       if (mounted) CustomSnackBar.show(context, 'Template applied');
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         CustomSnackBar.show(context, 'Failed to apply template',
             isSuccess: false);
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to apply template',
+        );
+      }
     }
   }
 

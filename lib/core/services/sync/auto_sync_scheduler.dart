@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
@@ -10,6 +11,8 @@ class AutoSyncScheduler {
       'templates_sync_interval_minutes';
   static Timer? _timer;
   static Timer? _templatesTimer;
+  static bool _isSyncing = false;
+  static bool _isTemplatesSyncing = false;
 
   static Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
@@ -50,8 +53,20 @@ class AutoSyncScheduler {
       final prefs = await SharedPreferences.getInstance();
       final enabled = prefs.getBool('cloud_sync_enabled') ?? true;
       if (!enabled) return;
-      // Fire and forget
-      SyncService().syncLocalNotesToFirebase();
+      // Serialize runs to avoid overlap
+      if (_isSyncing) return;
+      _isSyncing = true;
+      try {
+        await SyncService().syncLocalNotesToFirebase();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to sync notes',
+        );
+      } finally {
+        _isSyncing = false;
+      }
     });
   }
 
@@ -65,7 +80,19 @@ class AutoSyncScheduler {
       final tpl = prefs.getBool('templates_cloud_sync_enabled') ?? true;
       final tplEnabled = prefs.getBool('templates_enabled') ?? true;
       if (!(global && tpl && tplEnabled)) return;
-      TemplatesSyncService().syncLocalTemplatesToFirebase();
+      if (_isTemplatesSyncing) return;
+      _isTemplatesSyncing = true;
+      try {
+        await TemplatesSyncService().syncLocalTemplatesToFirebase();
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to sync templates',
+        );
+      } finally {
+        _isTemplatesSyncing = false;
+      }
     });
   }
 }
