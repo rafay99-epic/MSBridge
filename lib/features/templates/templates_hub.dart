@@ -8,7 +8,10 @@ import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/utils/uuid.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/utils/empty_ui.dart';
+import 'package:msbridge/widgets/warning_dialog_box.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
 
@@ -21,27 +24,32 @@ class TemplatesHubPage extends StatefulWidget {
 
 class _TemplatesHubPageState extends State<TemplatesHubPage> {
   String _search = '';
+  String? _selectedTemplateId;
+  double _contentOpacity = 1.0;
+
+  Future<void> _fadePulse() async {
+    if (!mounted) return;
+    setState(() => _contentOpacity = 0.6);
+    await Future.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
+    setState(() => _contentOpacity = 1.0);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text('Templates',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            )),
-        centerTitle: false,
-        elevation: 1,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
+      appBar: CustomAppBar(
+        backbutton: true,
+        title: 'Templates',
         actions: [
           IconButton(
             icon: const Icon(LineIcons.plusCircle),
-            onPressed: _createNewTemplate,
+            onPressed: () async {
+              _fadePulse();
+              await _createNewTemplate();
+            },
             tooltip: 'New Template',
           ),
         ],
@@ -73,30 +81,74 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
                     onChanged: (v) => setState(() => _search = v),
                   ),
                   Expanded(
-                    child: items.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No templates yet',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color:
-                                    theme.colorScheme.primary.withOpacity(0.7),
-                              ),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      opacity: _contentOpacity,
+                      child: items.isEmpty
+                          ? const EmptyNotesMessage(
+                              message: 'No Templates Yet',
+                              description:
+                                  'Create your first template to save and reuse note formats easily',
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final t = items[index];
+                                final isSelected =
+                                    t.templateId == _selectedTemplateId;
+                                return TemplateListItem(
+                                  title: t.title,
+                                  tags: t.tags,
+                                  isSelected: isSelected,
+                                  onTap: () {
+                                    if (_selectedTemplateId != null) {
+                                      setState(
+                                          () => _selectedTemplateId = null);
+                                    } else {
+                                      _fadePulse();
+                                      _applyTemplate(t);
+                                    }
+                                  },
+                                  onLongPress: () {
+                                    setState(() {
+                                      _selectedTemplateId =
+                                          isSelected ? null : t.templateId;
+                                    });
+                                  },
+                                  onEdit: () async {
+                                    _fadePulse();
+                                    await _editTemplate(t);
+                                    if (mounted) {
+                                      setState(
+                                          () => _selectedTemplateId = null);
+                                    }
+                                  },
+                                  onDelete: () async {
+                                    final theme = Theme.of(context);
+                                    showConfirmationDialog(
+                                      context,
+                                      theme,
+                                      () async {
+                                        _fadePulse();
+                                        await _deleteTemplate(t);
+                                        if (mounted) {
+                                          setState(
+                                              () => _selectedTemplateId = null);
+                                        }
+                                      },
+                                      'Delete Template?',
+                                      'Are you sure you want to delete this template?',
+                                      confirmButtonText: 'Delete',
+                                      isDestructive: true,
+                                      icon: Icons.delete_outline,
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                            itemCount: items.length,
-                            itemBuilder: (context, index) {
-                              final t = items[index];
-                              return TemplateListItem(
-                                title: t.title,
-                                tags: t.tags,
-                                onTap: () => _applyTemplate(t),
-                                onEdit: () => _editTemplate(t),
-                                onDelete: () => _deleteTemplate(t),
-                              );
-                            },
-                          ),
+                    ),
                   ),
                 ],
               );
@@ -143,8 +195,6 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
         duration: const Duration(milliseconds: 300),
       ),
     );
-    // If you want immediate create with auto-save, you can also route with
-    // arguments; actual wiring will happen in editor picker integration.
   }
 }
 
@@ -392,7 +442,8 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
       contentJson = jsonEncode(_controller.document.toDelta().toJson());
     } catch (_) {
       // Ensure we still persist valid Delta JSON
-      final fallbackDoc = Document()..insert(0, _controller.document.toPlainText());
+      final fallbackDoc = Document()
+        ..insert(0, _controller.document.toPlainText());
       contentJson = jsonEncode(fallbackDoc.toDelta().toJson());
     }
     if (widget.template == null) {

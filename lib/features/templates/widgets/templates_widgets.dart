@@ -49,14 +49,18 @@ class TemplateListItem extends StatelessWidget {
     required this.title,
     required this.tags,
     required this.onTap,
+    this.onLongPress,
     required this.onEdit,
     required this.onDelete,
+    this.isSelected = false,
   });
   final String title;
   final List<String> tags;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -66,13 +70,18 @@ class TemplateListItem extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
+            color: isSelected
+                ? theme.colorScheme.secondary.withOpacity(0.08)
+                : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.outlineVariant.withOpacity(0.6),
+              color: isSelected
+                  ? theme.colorScheme.secondary
+                  : theme.colorScheme.outlineVariant.withOpacity(0.6),
             ),
             boxShadow: [
               BoxShadow(
@@ -85,7 +94,19 @@ class TemplateListItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(LineIcons.fileAlt, color: theme.colorScheme.secondary),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  LineIcons.fileAlt,
+                  color: theme.colorScheme.secondary,
+                  size: 22,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -102,31 +123,81 @@ class TemplateListItem extends StatelessWidget {
                     ),
                     if (tags.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2.0),
-                        child: Text(
-                          tags.join(' · '),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary.withOpacity(0.7),
-                          ),
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: -6,
+                          children:
+                              tags.map((t) => _TagChip(label: t)).toList(),
                         ),
                       ),
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
-                onSelected: (val) {
-                  if (val == 'edit') onEdit();
-                  if (val == 'delete') onDelete();
-                },
-                itemBuilder: (ctx) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  PopupMenuItem(value: 'delete', child: Text('Delete')),
-                ],
-              ),
+              if (isSelected)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                        side: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        textStyle: theme.textTheme.labelMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      label: const Text('Delete'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                        side: BorderSide(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        textStyle: theme.textTheme.labelMedium,
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+        ),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.primary.withOpacity(0.9),
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
