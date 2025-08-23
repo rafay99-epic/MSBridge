@@ -12,7 +12,6 @@ import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/widgets/warning_dialog_box.dart';
-import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
 
 class TemplatesHubPage extends StatefulWidget {
@@ -160,23 +159,25 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
   }
 
   Future<void> _createNewTemplate() async {
-    await Navigator.push(
-      context,
-      PageTransition(
-        child: const TemplateEditorPage(),
-        type: PageTransitionType.rightToLeft,
-        duration: const Duration(milliseconds: 300),
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const TemplateEditorPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
 
   Future<void> _editTemplate(NoteTemplate t) async {
-    await Navigator.push(
-      context,
-      PageTransition(
-        child: TemplateEditorPage(template: t),
-        type: PageTransitionType.rightToLeft,
-        duration: const Duration(milliseconds: 300),
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            TemplateEditorPage(template: t),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
@@ -187,12 +188,13 @@ class _TemplatesHubPageState extends State<TemplatesHubPage> {
   }
 
   Future<void> _applyTemplate(NoteTemplate t) async {
-    await Navigator.push(
-      context,
-      PageTransition(
-        child: CreateNote(initialTemplate: t),
-        type: PageTransitionType.rightToLeft,
-        duration: const Duration(milliseconds: 300),
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CreateNote(initialTemplate: t),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }

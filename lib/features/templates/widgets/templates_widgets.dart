@@ -25,16 +25,20 @@ class TemplatesSearchField extends StatelessWidget {
           isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide:
-                BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                BorderSide(color: theme.colorScheme.primary, width: 1.0),
           ),
         ),
         onChanged: (v) => onChanged(v.trim()),
@@ -81,7 +85,7 @@ class TemplateListItem extends StatelessWidget {
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.secondary
-                  : theme.colorScheme.outlineVariant.withOpacity(0.6),
+                  : theme.colorScheme.outlineVariant.withOpacity(0.15),
             ),
             boxShadow: [
               BoxShadow(
@@ -185,18 +189,18 @@ class _TagChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          color: theme.colorScheme.outlineVariant.withOpacity(0.15),
         ),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary.withOpacity(0.9),
+          color: theme.colorScheme.primary.withOpacity(0.8),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -227,7 +231,7 @@ class TagChipsRow extends StatelessWidget {
                 tag,
                 style: TextStyle(
                   fontSize: 13,
-                  color: theme.colorScheme.primary,
+                  color: theme.colorScheme.primary.withOpacity(0.85),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -235,12 +239,17 @@ class TagChipsRow extends StatelessWidget {
               deleteIcon: Icon(
                 Icons.close,
                 size: 18,
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.primary.withOpacity(0.75),
               ),
               onDeleted: () => onRemove(tag),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              shape: StadiumBorder(
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                ),
+              ),
             ),
           );
         },
@@ -282,10 +291,19 @@ class TagInputField extends StatelessWidget {
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Add tag and press +',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
-                prefixIcon: const Icon(Icons.tag, size: 16),
+                hintStyle: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.primary.withOpacity(0.5),
+                ),
+                prefixIcon: Icon(
+                  Icons.tag,
+                  size: 16,
+                  color: theme.colorScheme.primary.withOpacity(0.7),
+                ),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: Icon(Icons.add,
+                      size: 18,
+                      color: theme.colorScheme.primary.withOpacity(0.8)),
                   tooltip: 'Add tag',
                   onPressed: () {
                     final value = controller.text.trim();
@@ -298,20 +316,24 @@ class TagInputField extends StatelessWidget {
                   constraints:
                       const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide:
-                      BorderSide(color: theme.colorScheme.primary, width: 1.5),
+                      BorderSide(color: theme.colorScheme.primary, width: 1.0),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
