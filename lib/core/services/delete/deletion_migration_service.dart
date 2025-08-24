@@ -282,19 +282,22 @@ class DeletionMigrationService {
   /// Get migration status
   static Future<Map<String, dynamic>> getMigrationStatus() async {
     try {
+      if (!Hive.isBoxOpen(_boxName)) {
+        await Hive.openBox<NoteTakingModel>(_boxName);
+      }
       final notesBox = Hive.box<NoteTakingModel>(_boxName);
-      final deletedBox = Hive.box<NoteTakingModel>(_deletedBoxName);
-
       final hasDeletedBox = Hive.isBoxOpen(_deletedBoxName);
+      final deletedNotesCount = hasDeletedBox
+          ? Hive.box<NoteTakingModel>(_deletedBoxName).length
+          : 0;
       final totalNotes = notesBox.values.length;
-      final deletedNotes = hasDeletedBox ? deletedBox.values.length : 0;
 
       return {
         'hasDeletedBox': hasDeletedBox,
         'totalNotes': totalNotes,
-        'deletedNotes': deletedNotes,
+        'deletedNotes': deletedNotesCount,
         'migrationRequired':
-            !hasDeletedBox || totalNotes > 0 && deletedNotes == 0,
+            !hasDeletedBox || (totalNotes > 0 && deletedNotesCount == 0),
       };
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(
