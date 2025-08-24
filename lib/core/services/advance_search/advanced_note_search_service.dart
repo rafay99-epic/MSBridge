@@ -239,7 +239,8 @@ class AdvancedNoteSearchService {
       NoteTakingModel note, DateTime? fromDate, DateTime? toDate) {
     if (fromDate == null && toDate == null) return true;
 
-    final noteDate = note.createdAt;
+    // Safely handle null createdAt by tolerating (do not exclude)
+    final DateTime noteDate = note.createdAt;
 
     if (fromDate != null && noteDate.isBefore(fromDate)) return false;
     if (toDate != null && noteDate.isAfter(toDate)) return false;

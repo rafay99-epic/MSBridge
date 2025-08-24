@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:math';
 
@@ -25,7 +26,16 @@ class DeviceIdService {
 
     if (deviceId == null) {
       deviceId = _generateDeviceId();
-      await _secureStorage.write(key: _deviceIdKey, value: deviceId);
+      try {
+        await _secureStorage.write(key: _deviceIdKey, value: deviceId);
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason:
+              'Error writing device ID to secure storage and the expection is $e',
+        );
+      }
     }
 
     _cachedDeviceId = deviceId;
@@ -51,7 +61,16 @@ class DeviceIdService {
 
   /// Clear stored device ID from secure storage
   static Future<void> clearStoredDeviceId() async {
-    await _secureStorage.delete(key: _deviceIdKey);
+    try {
+      await _secureStorage.delete(key: _deviceIdKey);
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Error clearing stored device ID and the expection is $e',
+      );
+    }
+
     _cachedDeviceId = null;
   }
 

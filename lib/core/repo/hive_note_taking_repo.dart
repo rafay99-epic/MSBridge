@@ -138,11 +138,6 @@ class HiveNoteTakingRepo {
       final box = await getBox();
       await addNoteToDeletedBox(note);
 
-      // Delete all versions for this note on soft delete as requested
-      if (note.noteId != null && note.noteId!.isNotEmpty) {
-        await NoteVersionRepo.clearVersionsForNote(note.noteId!);
-      }
-
       for (int i = 0; i < box.length; i++) {
         if (box.getAt(i)?.noteId == note.noteId) {
           await box.deleteAt(i);

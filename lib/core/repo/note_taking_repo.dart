@@ -18,7 +18,7 @@ class NoteTakingRepo {
   static Box<NoteTakingModel> get _deletedBox =>
       Hive.box<NoteTakingModel>(_deletedBoxName);
 
-  /// Add a new note
+/// Add a new note
   static Future<void> addNote(NoteTakingModel note) async {
     try {
       final deviceId = await DeviceIdService.getDeviceId();
@@ -46,7 +46,11 @@ class NoteTakingRepo {
 
       await note.save();
     } catch (e) {
-      print('Error updating note: $e');
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Error updating note and the expection is $e',
+      );
       rethrow;
     }
   }

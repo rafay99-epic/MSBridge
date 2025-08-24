@@ -1191,7 +1191,12 @@ class _CreateNoteState extends State<CreateNote>
                 insertDelta.insert(op.data, op.attributes);
               }
             }
-            _controller.document.compose(insertDelta, ChangeSource.local);
+            // Use controller-level compose to keep history/selection mapping
+            _controller.compose(
+              insertDelta,
+              _controller.selection,
+              ChangeSource.local,
+            );
             final insertedLen = templateDelta.length;
             _controller.updateSelection(
               TextSelection.collapsed(offset: selection.start + insertedLen),

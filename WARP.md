@@ -32,7 +32,7 @@ flutter run -d <device-id>
 flutter analyze
 
 # Run linter
-flutter pub run flutter_lints
+flutter analyze
 
 # Generate code (for Hive adapters)
 flutter packages pub run build_runner build

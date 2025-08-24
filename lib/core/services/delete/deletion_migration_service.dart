@@ -66,16 +66,6 @@ class DeletionMigrationService {
     }
   }
 
-  static Future<void> migrateExistingData() async {
-    // Ensure both boxes exist/open
-    await _ensureDeletedNotesBoxExists();
-    if (!Hive.isBoxOpen(_boxName)) {
-      await Hive.openBox<NoteTakingModel>(_boxName);
-    }
-
-    // ... rest of migration logic
-  }
-
   /// Migrate existing deleted notes to the new system
   static Future<void> _migrateExistingDeletedNotes() async {
     try {
@@ -135,13 +125,9 @@ class DeletionMigrationService {
       for (final note in notesBox.values) {
         try {
           // Only update if fields are missing
-          if (note.deviceId == null) {
-            note.deviceId = deviceId;
-          }
+          note.deviceId ??= deviceId;
 
-          if (note.lastSyncAt == null) {
-            note.lastSyncAt = note.updatedAt;
-          }
+          note.lastSyncAt ??= note.updatedAt;
 
           // Save the updated note
           await note.save();
@@ -172,13 +158,13 @@ class DeletionMigrationService {
       final deletedBox = Hive.box<NoteTakingModel>(_deletedBoxName);
 
       // Remove any notes that are in both boxes (shouldn't happen)
-      final deletedIds = deletedBox.values
-          .map((d) => d.noteId)
-          .whereType<String>()
-          .toSet();
+      final deletedIds =
+          deletedBox.values.map((d) => d.noteId).whereType<String>().toSet();
       final duplicateNotes = <String>[
         for (final note in notesBox.values)
-          if (note.isDeleted && note.noteId != null && deletedIds.contains(note.noteId))
+          if (note.isDeleted &&
+              note.noteId != null &&
+              deletedIds.contains(note.noteId))
             note.noteId!
       ];
 
@@ -288,9 +274,8 @@ class DeletionMigrationService {
       }
       final notesBox = Hive.box<NoteTakingModel>(_boxName);
       final hasDeletedBox = Hive.isBoxOpen(_deletedBoxName);
-      final deletedNotesCount = hasDeletedBox
-          ? Hive.box<NoteTakingModel>(_deletedBoxName).length
-          : 0;
+      final deletedNotesCount =
+          hasDeletedBox ? Hive.box<NoteTakingModel>(_deletedBoxName).length : 0;
       final totalNotes = notesBox.values.length;
 
       return {

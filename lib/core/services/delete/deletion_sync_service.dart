@@ -21,31 +21,16 @@ class DeletionSyncService {
       // Mark note as deleted locally
       note.markAsDeleted(deviceId, userId);
 
-static Future<void> markNoteAsDeleted(
-  NoteTakingModel note,
-  String userId,
-) async {
-  try {
-    final deviceId = await DeviceIdService.getDeviceId();
+      // Add to deleted notes collection in Firebase
+      await _addToDeletedNotesCollection(note, userId, deviceId);
 
-    // Mark note as deleted locally
-    note.markAsDeleted(deviceId, userId);
-
-    // If note has no remote id yet, defer remote sync
-    if (note.noteId == null || note.noteId!.isEmpty) {
+      // Update the note in Firebase to mark as deleted
+      await _updateNoteDeletionStatus(note, userId);
+    } catch (e) {
+      // If Firebase sync fails, keep local deletion but mark for retry
       note.isDeletionSynced = false;
-      return;
+      rethrow;
     }
-    // Add to deleted notes collection in Firebase
-    await _addToDeletedNotesCollection(note, userId, deviceId);
-    // Update the note in Firebase to mark as deleted
-    await _updateNoteDeletionStatus(note, userId);
-  } catch (e) {
-    // If Firebase sync fails, keep local deletion but mark for retry
-    note.isDeletionSynced = false;
-    rethrow;
-  }
-}
   }
 
   /// Restore a deleted note
