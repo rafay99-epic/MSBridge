@@ -25,7 +25,7 @@ import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
-import 'package:msbridge/core/services/streak_integration_service.dart';
+import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
 
 class CreateNote extends StatefulWidget {

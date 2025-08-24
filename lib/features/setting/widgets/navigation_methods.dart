@@ -9,7 +9,7 @@ import 'package:msbridge/features/update_app/update_app.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/backup_service.dart';
+import 'package:msbridge/core/services/backup/backup_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';

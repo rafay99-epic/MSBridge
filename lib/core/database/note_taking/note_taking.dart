@@ -34,6 +34,22 @@ class NoteTakingModel extends HiveObject {
   @HiveField(9)
   DateTime createdAt;
 
+  // New fields for deletion sync
+  @HiveField(10)
+  DateTime? deletedAt;
+
+  @HiveField(11)
+  String? deletedBy;
+
+  @HiveField(12)
+  String? deviceId;
+
+  @HiveField(13)
+  bool isDeletionSynced;
+
+  @HiveField(14)
+  DateTime? lastSyncAt;
+
   NoteTakingModel({
     this.noteId,
     required this.noteTitle,
@@ -45,9 +61,47 @@ class NoteTakingModel extends HiveObject {
     List<String>? tags,
     this.versionNumber = 1,
     DateTime? createdAt,
+    this.deletedAt,
+    this.deletedBy,
+    this.deviceId,
+    this.isDeletionSynced = false,
+    this.lastSyncAt,
   })  : updatedAt = updatedAt ?? DateTime.now(),
         tags = tags ?? const [],
         createdAt = createdAt ?? DateTime.now();
+
+  /// Mark note as deleted with proper tracking
+  void markAsDeleted(String deviceId, String userId) {
+    isDeleted = true;
+    deletedAt = DateTime.now();
+    deletedBy = userId;
+    deviceId = deviceId;
+    isDeletionSynced = false;
+    updatedAt = DateTime.now();
+  }
+
+  /// Mark note as restored
+  void restore() {
+    isDeleted = false;
+    deletedAt = null;
+    deletedBy = null;
+    deviceId = null;
+    isDeletionSynced = false;
+    updatedAt = DateTime.now();
+  }
+
+  /// Check if note should be synced (not deleted or deletion already synced)
+  bool get shouldSync {
+    if (!isDeleted) return !isSynced;
+    return !isDeletionSynced;
+  }
+
+  /// Check if note is permanently deleted (older than cleanup threshold)
+  bool get isPermanentlyDeleted {
+    if (deletedAt == null) return false;
+    final cleanupThreshold = DateTime.now().subtract(const Duration(days: 30));
+    return deletedAt!.isBefore(cleanupThreshold);
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -61,6 +115,11 @@ class NoteTakingModel extends HiveObject {
       'tags': tags,
       'versionNumber': versionNumber,
       'createdAt': createdAt.toIso8601String(),
+      'deletedAt': deletedAt?.toIso8601String(),
+      'deletedBy': deletedBy,
+      'deviceId': deviceId,
+      'isDeletionSynced': isDeletionSynced,
+      'lastSyncAt': lastSyncAt?.toIso8601String(),
     };
   }
 
@@ -80,6 +139,14 @@ class NoteTakingModel extends HiveObject {
       createdAt: data['createdAt'] != null
           ? DateTime.parse(data['createdAt'])
           : DateTime.now(),
+      deletedAt:
+          data['deletedAt'] != null ? DateTime.parse(data['deletedAt']) : null,
+      deletedBy: data['deletedBy'],
+      deviceId: data['deviceId'],
+      isDeletionSynced: data['isDeletionSynced'] ?? false,
+      lastSyncAt: data['lastSyncAt'] != null
+          ? DateTime.parse(data['lastSyncAt'])
+          : null,
     );
   }
 
@@ -94,6 +161,11 @@ class NoteTakingModel extends HiveObject {
     List<String>? tags,
     int? versionNumber,
     DateTime? createdAt,
+    DateTime? deletedAt,
+    String? deletedBy,
+    String? deviceId,
+    bool? isDeletionSynced,
+    DateTime? lastSyncAt,
   }) {
     return NoteTakingModel(
       noteId: noteId ?? this.noteId,
@@ -106,6 +178,11 @@ class NoteTakingModel extends HiveObject {
       tags: tags ?? this.tags,
       versionNumber: versionNumber ?? this.versionNumber,
       createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      deletedBy: deletedBy ?? this.deletedBy,
+      deviceId: deviceId ?? this.deviceId,
+      isDeletionSynced: isDeletionSynced ?? this.isDeletionSynced,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
     );
   }
 }

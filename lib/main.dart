@@ -88,6 +88,15 @@ void main() async {
           .recordError(e, st, reason: 'Workmanager init failed');
     }
 
+    // Initialize deletion sync system (will be fully initialized when user logs in)
+    try {
+      // Import the deletion sync helper
+      debugPrint('✅ Deletion sync system ready for initialization');
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'Deletion sync system init failed');
+    }
+
     runApp(
       MultiProvider(
         providers: [

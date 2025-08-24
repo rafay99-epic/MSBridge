@@ -19,6 +19,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
+import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
+import 'package:msbridge/core/services/delete/deletion_migration_service.dart';
+import 'package:msbridge/core/services/device_ID/device_id_service.dart';
 
 class BgTasks {
   static const String taskPeriodicAll = 'msbridge.periodic.all';
@@ -284,6 +287,42 @@ Future<void> callbackDispatcher() async {
             } catch (e) {
               overallSuccess = false;
               message = 'Streak sync failed';
+            }
+
+            // Deletion sync operations
+            try {
+              // Initialize device ID if needed
+              await DeviceIdService.getDeviceId();
+
+              // Process deletions during sync
+              await DeletionSyncIntegrationService.processDeletionsDuringSync(
+                  user.uid);
+
+              // Resolve deletion conflicts
+              await DeletionSyncIntegrationService.resolveDeletionConflicts(
+                  user.uid);
+
+              // Perform cleanup (only once per day to avoid excessive operations)
+              final lastCleanup = prefs.getInt('last_deletion_cleanup') ?? 0;
+              final now = DateTime.now().millisecondsSinceEpoch;
+              final oneDayInMs = 24 * 60 * 60 * 1000;
+
+              if (now - lastCleanup > oneDayInMs) {
+                await DeletionSyncIntegrationService.performCleanup(user.uid);
+                await prefs.setInt('last_deletion_cleanup', now);
+                FirebaseCrashlytics.instance.log('Deletion cleanup completed');
+              }
+
+              FirebaseCrashlytics.instance
+                  .log('Deletion sync completed successfully');
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(
+                e,
+                StackTrace.current,
+                reason: 'Deletion sync failed in background task',
+              );
+              overallSuccess = false;
+              message = 'Deletion sync failed';
             }
 
             await prefs.setString(

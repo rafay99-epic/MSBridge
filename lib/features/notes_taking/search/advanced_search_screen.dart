@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/core/services/advanced_note_search_service.dart';
+import 'package:msbridge/core/services/advance_search/advanced_note_search_service.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:page_transition/page_transition.dart';
 import 'dart:async';
