@@ -172,14 +172,15 @@ class DeletionMigrationService {
       final deletedBox = Hive.box<NoteTakingModel>(_deletedBoxName);
 
       // Remove any notes that are in both boxes (shouldn't happen)
-      final duplicateNotes = <String>[];
-
-      for (final note in notesBox.values) {
-        if (note.isDeleted &&
-            deletedBox.values.any((d) => d.noteId == note.noteId)) {
-          duplicateNotes.add(note.noteId!);
-        }
-      }
+      final deletedIds = deletedBox.values
+          .map((d) => d.noteId)
+          .whereType<String>()
+          .toSet();
+      final duplicateNotes = <String>[
+        for (final note in notesBox.values)
+          if (note.isDeleted && note.noteId != null && deletedIds.contains(note.noteId))
+            note.noteId!
+      ];
 
       // Remove duplicates from main box
       for (final noteId in duplicateNotes) {
