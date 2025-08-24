@@ -61,9 +61,19 @@ class DeletionMigrationService {
         e,
         StackTrace.current,
         reason:
-            'Error ensuring deleted notes box exists and the expection is $e',
+            'Error ensuring deleted notes box exists and the exception is $e',
       );
     }
+  }
+
+  static Future<void> migrateExistingData() async {
+    // Ensure both boxes exist/open
+    await _ensureDeletedNotesBoxExists();
+    if (!Hive.isBoxOpen(_boxName)) {
+      await Hive.openBox<NoteTakingModel>(_boxName);
+    }
+
+    // ... rest of migration logic
   }
 
   /// Migrate existing deleted notes to the new system
