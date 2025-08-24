@@ -272,7 +272,13 @@ class NoteTakingActions {
                 batch.delete(v.reference);
               }
               await batch.commit();
-            } catch (_) {}
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(
+                e,
+                StackTrace.current,
+                reason: 'Failed to delete versions for note ${noteToDelete.noteId}',
+              );
+            }
 
             await firestore
                 .collection('users')
