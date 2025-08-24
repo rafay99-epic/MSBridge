@@ -138,9 +138,10 @@ Key features:
 
 ### API Keys
 - AI features require Google AI Studio API key
-- Keys are stored in `lib/config/config.dart`
-- **Security Note**: API keys are currently hardcoded and should be moved to environment variables
-
+- Keys should NOT be stored in source. Provide them via --dart-define (Flutter) or CI env.
+- Example:
+    flutter run --dart-define=AI_STUDIO_API_KEY=${AI_STUDIO_API_KEY}
+- And read with const String.fromEnvironment('AI_STUDIO_API_KEY').
 ### Build Configuration
 - Android: `android/app/build.gradle`
 - iOS: `ios/Runner.xcodeproj`
