@@ -42,7 +42,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   bool includeDeleted = false;
 
   // Available tags from all notes
-  late List<String> _availableTags;
+  List<String> _availableTags = const [];
 
   Timer? _debounceTimer;
 
