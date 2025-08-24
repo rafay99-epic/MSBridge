@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/features/setting/pages/setting.dart';
+import 'package:msbridge/features/setting/section/search/search_setting.dart';
 
 class SearchResultsWidget extends StatelessWidget {
   final List<SearchableSetting> searchResults;

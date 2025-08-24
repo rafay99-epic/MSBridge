@@ -2,77 +2,47 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/features/setting/pages/app_info_page.dart';
+import 'package:msbridge/features/setting/section/app_info/app_info_page.dart';
 import 'package:msbridge/features/setting/section/streak_section/streak_settings_page.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
 
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/backup_service.dart';
+import 'package:msbridge/core/services/backup/backup_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/features/setting/widgets/bottom_sheet_widgets.dart';
+import 'package:msbridge/features/setting/bottom_sheets/bottom_sheet_manager.dart';
 import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 
 class NavigationMethods {
   static void navigateToProfile(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) =>
-          BottomSheetWidgets.buildProfileManagementBottomSheet(context),
-    );
+    BottomSheetManager.showProfileManagementBottomSheet(context);
   }
 
   static void navigateToSecurity(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) =>
-          BottomSheetWidgets.buildSecurityBottomSheet(context),
-    );
+    BottomSheetManager.showSecurityBottomSheet(context);
   }
 
   static void navigateToAppearance(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) =>
-          BottomSheetWidgets.buildAppearanceBottomSheet(context),
-    );
+    BottomSheetManager.showAppearanceBottomSheet(context);
   }
 
   static void navigateToNotesSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BottomSheetWidgets.buildNotesBottomSheet(context),
-    );
+    BottomSheetManager.showNotesBottomSheet(context);
   }
 
   static void navigateToSyncSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BottomSheetWidgets.buildSyncBottomSheet(context),
-    );
+    BottomSheetManager.showSyncBottomSheet(context);
+  }
+
+  static void navigateToTemplatesSettings(BuildContext context) {
+    BottomSheetManager.showTemplatesBottomSheet(context);
   }
 
   static void navigateToDataManagement(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) =>
-          BottomSheetWidgets.buildDataManagementBottomSheet(context),
-    );
+    BottomSheetManager.showDataManagementBottomSheet(context);
   }
 
   static void navigateToStreakSettings(BuildContext context) {
@@ -116,13 +86,7 @@ class NavigationMethods {
   }
 
   static void navigateToAISmartFeatures(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) =>
-          BottomSheetWidgets.buildAISmartFeaturesBottomSheet(context),
-    );
+    BottomSheetManager.showAIFeaturesBottomSheet(context);
   }
 
   static Future<void> syncNow(BuildContext context) async {
@@ -136,6 +100,11 @@ class NavigationMethods {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to sync notes: $e',
+      );
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -143,7 +112,7 @@ class NavigationMethods {
           isSuccess: false,
         );
       }
-      rethrow; // Re-throw to let the UI handle the error
+      rethrow;
     }
   }
 
@@ -174,6 +143,11 @@ class NavigationMethods {
         }
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Failed to pull from cloud: $e',
+      );
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -181,7 +155,7 @@ class NavigationMethods {
           isSuccess: false,
         );
       }
-      rethrow; // Re-throw to let the UI handle the error
+      rethrow;
     }
   }
 
@@ -198,9 +172,12 @@ class NavigationMethods {
         );
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Backup failed: $e',
+      );
       if (context.mounted) {
-        FirebaseCrashlytics.instance
-            .recordError(e, StackTrace.current, reason: "Backup failed");
         CustomSnackBar.show(
           context,
           'Backup failed: $e',
@@ -245,6 +222,11 @@ class NavigationMethods {
           Navigator.of(context).pushReplacementNamed('/login');
         }
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to delete account: $e',
+        );
         if (context.mounted) {
           CustomSnackBar.show(
             context,
@@ -291,6 +273,11 @@ class NavigationMethods {
           );
         }
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to reset theme: $e',
+        );
         if (context.mounted) {
           CustomSnackBar.show(
             context,
@@ -319,5 +306,9 @@ class NavigationMethods {
 
   static void logoutUser(BuildContext context) {
     showLogoutDialog(context);
+  }
+
+  static void navigateToBackgroundSync(BuildContext context) {
+    BottomSheetManager.showBackgroundSyncBottomSheet(context);
   }
 }

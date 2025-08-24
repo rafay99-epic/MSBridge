@@ -42,6 +42,19 @@ class SyncService {
     }
   }
 
+  /// Stops any background sync/listeners.
+  /// Currently a safe no-op as we don't keep long-lived subscriptions here,
+  /// but we keep the API to allow rollback/cleanup from UI flows.
+  Future<void> stopListening() async {
+    try {
+      // If you add stream subscriptions in the future, cancel them here.
+      await Future<void>.value();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Error stopping sync service");
+    }
+  }
+
   Future<void> _refreshHiveBoxState() async {
     try {
       final box = await HiveNoteTakingRepo.getBox();

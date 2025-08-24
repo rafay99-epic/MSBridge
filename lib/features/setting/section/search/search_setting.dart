@@ -96,6 +96,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         onTap: () => NavigationMethods.navigateToAISmartFeatures(context),
       ),
       SearchableSetting(
+        title: "Templates",
+        subtitle: "Enable, sync, and pull templates from cloud",
+        icon: LineIcons.clone,
+        section: "Notes & Sharing",
+        onTap: () => NavigationMethods.navigateToTemplatesSettings(context),
+      ),
+      SearchableSetting(
         title: "Notes & Sharing",
         subtitle: "Chat history and shareable links",
         icon: LineIcons.comments,
@@ -138,6 +145,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         icon: LineIcons.info,
         section: "System",
         onTap: () => NavigationMethods.navigateToAppInfo(context),
+      ),
+      SearchableSetting(
+        title: "Background Sync",
+        subtitle: "Cadence, constraints, and kill switch",
+        icon: LineIcons.history,
+        section: "System",
+        onTap: () => NavigationMethods.navigateToBackgroundSync(context),
       ),
 
       // Danger Zone
@@ -363,6 +377,14 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                                 context),
                       ),
                       SettingsTile(
+                        title: "Templates",
+                        subtitle: "Enable, sync, and pull templates from cloud",
+                        icon: LineIcons.clone,
+                        onTap: () =>
+                            NavigationMethods.navigateToTemplatesSettings(
+                                context),
+                      ),
+                      SettingsTile(
                         title: "Notes & Sharing",
                         subtitle: "Chat history and shareable links",
                         icon: LineIcons.comments,
@@ -421,6 +443,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         icon: LineIcons.info,
                         onTap: () =>
                             NavigationMethods.navigateToAppInfo(context),
+                      ),
+                      SettingsTile(
+                        title: "Background Sync",
+                        subtitle: "Cadence, constraints, and kill switch",
+                        icon: LineIcons.history,
+                        onTap: () =>
+                            NavigationMethods.navigateToBackgroundSync(context),
                       ),
                     ],
                   ),

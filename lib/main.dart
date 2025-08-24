@@ -5,12 +5,15 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
+import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/connectivity_provider.dart';
@@ -24,7 +27,9 @@ import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/provider/user_settings_provider.dart';
 import 'package:msbridge/core/provider/font_provider.dart';
+import 'package:msbridge/core/provider/template_settings_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
@@ -35,6 +40,9 @@ import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
 import 'package:msbridge/theme/colors.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
+import 'package:msbridge/core/services/background/scheduler_registration.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -55,7 +63,7 @@ void main() async {
     Hive.registerAdapter(MSNoteAdapter());
     await Hive.openBox<MSNote>('notesBox');
     Hive.registerAdapter(NoteTakingModelAdapter());
-    await Hive.openBox<NoteTakingModel>('notes_taking');
+    await Hive.openBox<NoteTakingModel>('notes');
     await Hive.openBox<NoteTakingModel>('deleted_notes');
 
     // Register note version adapter
@@ -66,6 +74,28 @@ void main() async {
     Hive.registerAdapter(ChatHistoryAdapter());
     Hive.registerAdapter(ChatHistoryMessageAdapter());
     await Hive.openBox<ChatHistory>('chat_history');
+
+    // Register templates adapter
+    Hive.registerAdapter(NoteTemplateAdapter());
+    await Hive.openBox<NoteTemplate>('note_templates');
+
+    // Initialize Workmanager for background tasks
+    try {
+      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+      await SchedulerRegistration.registerAdaptive();
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'Workmanager init failed');
+    }
+
+    // Initialize deletion sync system (will be fully initialized when user logs in)
+    try {
+      // Import the deletion sync helper
+      debugPrint('✅ Deletion sync system ready for initialization');
+    } catch (e, st) {
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'Deletion sync system init failed');
+    }
 
     runApp(
       MultiProvider(
@@ -80,6 +110,7 @@ void main() async {
             create: (_) => NoteSummaryProvider(apiKey: NoteSummaryAPI.apiKey),
           ),
           ChangeNotifierProvider(create: (_) => NoteVersionProvider()),
+          ChangeNotifierProvider(create: (_) => UserSettingsProvider()),
           ChangeNotifierProvider(create: (_) => FontProvider()),
           if (FeatureFlag.enableFingerprintLock)
             ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
@@ -87,6 +118,7 @@ void main() async {
             ChangeNotifierProvider(create: (_) => AutoSaveProvider()),
           ChangeNotifierProvider(create: (_) => ShareLinkProvider()),
           ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),
+          ChangeNotifierProvider(create: (_) => TemplateSettingsProvider()),
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
@@ -141,6 +173,16 @@ class MyApp extends StatelessWidget {
           ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
           : const AppPinLockWrapper(child: AuthGate()),
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        FlutterQuillLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('en'),
+      ],
       navigatorObservers: [
         _DynamicLinkObserver(),
       ],

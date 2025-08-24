@@ -5,7 +5,9 @@ import 'package:msbridge/features/msnotes/msnotes.dart';
 import 'package:msbridge/features/search/search.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
-import 'package:msbridge/features/setting/pages/setting.dart';
+import 'package:msbridge/features/setting/section/search/search_setting.dart';
+import 'package:msbridge/core/services/delete/deletion_sync_helper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -33,7 +35,21 @@ class _HomeState extends State<Home> {
     // Pre-load adjacent pages for smoother navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAdjacentPages();
+      _initializeDeletionSync();
     });
+  }
+
+  /// Initialize deletion sync system for the current user
+  Future<void> _initializeDeletionSync() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await DeletionSyncHelper.initializeForUser(user.uid);
+      }
+    } catch (e) {
+      // Log error but don't block app initialization
+      debugPrint('Error initializing deletion sync: $e');
+    }
   }
 
   void _preloadAdjacentPages() {
@@ -151,6 +167,15 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final media = MediaQuery.of(context);
+    final width = media.size.width;
+    final bottomInset = media.padding.bottom;
+    final bool isCompact = width < 360;
+    final bool isSmall = width < 400;
+    final double horizontalPad = isCompact ? 12 : (isSmall ? 14 : 18);
+    final double verticalPad = isCompact ? 8 : 12;
+    final double iconSz = isCompact ? 18 : 20;
+    final double labelSz = isCompact ? 12 : 13;
 
     return Scaffold(
       body: PageView(
@@ -166,49 +191,78 @@ class _HomeState extends State<Home> {
                   child: _getPage(index),
                 )),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: EdgeInsets.only(
+          left: 12,
+          right: 12,
+          bottom: bottomInset > 0 ? 0 : 8,
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: GNav(
-            selectedIndex: _selectedIndex,
-            onTabChange: _onItemTapped,
-            backgroundColor: colorScheme.surface,
-            color: colorScheme.onSurface,
-            activeColor: colorScheme.primary,
-            tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            gap: 5,
-            duration: const Duration(milliseconds: 150),
-            tabs: [
-              GButton(
-                icon: LineIcons.book,
-                text: 'Reading',
-                iconColor: colorScheme.primary,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: colorScheme.shadow.withOpacity(0.08),
+            //     blurRadius: 12,
+            //     offset: const Offset(0, 4),
+            //   ),
+            // ],
+            // border: Border.all(
+            //   color: colorScheme.outline.withOpacity(0.06),
+            //   width: 1,
+            // ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: horizontalPad, vertical: verticalPad),
+            child: GNav(
+              selectedIndex: _selectedIndex,
+              onTabChange: _onItemTapped,
+              backgroundColor: colorScheme.surface,
+              color: colorScheme.onSurface,
+              activeColor: colorScheme.primary,
+              tabBackgroundColor: colorScheme.primary.withOpacity(0.08),
+              padding:
+                  EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 10),
+              gap: 5,
+              duration: const Duration(milliseconds: 150),
+              iconSize: iconSz,
+              tabBorderRadius: 12,
+              textStyle: theme.textTheme.labelMedium?.copyWith(
+                fontSize: labelSz,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
               ),
-              GButton(
-                icon: LineIcons.search,
-                text: 'Search',
-                iconColor: colorScheme.primary,
-              ),
-              GButton(
-                icon: LineIcons.robot,
-                text: 'AI Chat',
-                iconColor: colorScheme.primary,
-              ),
-              GButton(
-                icon: LineIcons.edit,
-                text: 'Notes',
-                iconColor: colorScheme.primary,
-              ),
-              GButton(
-                icon: LineIcons.cog,
-                text: 'Settings',
-                iconColor: colorScheme.primary,
-              ),
-            ],
+              tabs: [
+                GButton(
+                  icon: LineIcons.book,
+                  text: 'Reading',
+                  iconColor: colorScheme.primary,
+                ),
+                GButton(
+                  icon: LineIcons.search,
+                  text: 'Search',
+                  iconColor: colorScheme.primary,
+                ),
+                GButton(
+                  icon: LineIcons.robot,
+                  text: 'AI Chat',
+                  iconColor: colorScheme.primary,
+                ),
+                GButton(
+                  icon: LineIcons.edit,
+                  text: 'Notes',
+                  iconColor: colorScheme.primary,
+                ),
+                GButton(
+                  icon: LineIcons.cog,
+                  text: 'Settings',
+                  iconColor: colorScheme.primary,
+                ),
+              ],
+            ),
           ),
         ),
       ),

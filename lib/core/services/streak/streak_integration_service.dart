@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -182,7 +184,15 @@ class StreakIntegrationService {
               onPressed: () {
                 Navigator.pop(context);
                 // Navigate to note creation
-                // This would be implemented based on your app's navigation
+                // Navigate to note creation (align with app-wide pattern)
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const CreateNote(),
+                    duration: const Duration(milliseconds: 300),
+                  ),
+                );
               },
               child: const Text('Create Note'),
             ),

@@ -4,12 +4,14 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
+import 'package:msbridge/core/repo/user_settings_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ReverseSyncService {
   final AuthRepo _authRepo = AuthRepo();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final HiveNoteTakingRepo hiveNoteTakingRepo = HiveNoteTakingRepo();
+  final UserSettingsRepo _settingsRepo = UserSettingsRepo();
 
   Future<void> syncDataFromFirebaseToHive() async {
     try {
@@ -79,10 +81,7 @@ class ReverseSyncService {
             for (final doc in batch) {
               final data = doc.data() as Map<String, dynamic>;
 
-              // Skip deleted notes
-              if (data['isDeleted'] == true) {
-                continue;
-              }
+              // Do not skip deleted notes here; we handle deletion later
 
               // Handle date parsing more safely
               String updatedAtString;
@@ -100,28 +99,40 @@ class ReverseSyncService {
                 updatedAtString = DateTime.now().toIso8601String();
               }
 
-              final noteMap = {
-                'noteId': doc.id,
-                'noteTitle': data['noteTitle'] ?? '',
-                'noteContent': data['noteContent'] ?? '',
-                'isSynced': true, // Mark as synced since it came from cloud
-                'isDeleted': false,
-                'updatedAt': updatedAtString,
-                'userId': userId,
-                'tags': (data['tags'] as List?)
+              try {
+                final DateTime parsedUpdatedAt =
+                    DateTime.tryParse(updatedAtString) ?? DateTime.now();
+                final List<String> parsedTags = (data['tags'] as List?)
                         ?.map((e) => e.toString())
                         .toList() ??
-                    [],
-                'versionNumber': data['versionNumber'] ?? 1,
-                'createdAt': data['createdAt'] ?? updatedAtString,
-              };
+                    [];
+                final int parsedVersionNumber = () {
+                  final dynamic v = data['versionNumber'];
+                  if (v is int) return v;
+                  if (v is String) return int.tryParse(v) ?? 1;
+                  return 1;
+                }();
+                final String createdAtSource =
+                    (data['createdAt']?.toString()) ?? updatedAtString;
+                final DateTime parsedCreatedAt =
+                    DateTime.tryParse(createdAtSource) ?? DateTime.now();
 
-              try {
-                final note = NoteTakingModel.fromMap(noteMap);
+                final note = NoteTakingModel(
+                  noteId: doc.id,
+                  noteTitle: data['noteTitle'] ?? '',
+                  noteContent: data['noteContent'] ?? '',
+                  isSynced: true,
+                  isDeleted: data['isDeleted'] == true,
+                  updatedAt: parsedUpdatedAt,
+                  userId: userId,
+                  tags: parsedTags,
+                  versionNumber: parsedVersionNumber,
+                  createdAt: parsedCreatedAt,
+                );
                 notesToAdd[doc.id] = note;
               } catch (e) {
                 FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                    reason: "Failed to create note from map");
+                    reason: "Failed to create note from cloud data");
                 continue;
               }
             }
@@ -194,6 +205,15 @@ class ReverseSyncService {
               reason: "Failed to sync versions from Firebase");
         }
 
+        // Sync settings from Firebase
+        try {
+          await _syncSettingsFromFirebase(userId);
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to sync settings from Firebase");
+          // Don't fail the entire sync if settings sync fails
+        }
+
         // Force refresh the Hive box
         try {
           await box.flush();
@@ -257,6 +277,40 @@ class ReverseSyncService {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Failed to sync versions from Firebase");
       throw Exception("Failed to sync versions from Firebase: $e");
+    }
+  }
+
+  /// Sync settings from Firebase
+  Future<void> _syncSettingsFromFirebase(String userId) async {
+    try {
+      // Check if cloud sync is enabled before syncing settings
+      final isCloudSyncEnabled = await _isCloudSyncEnabled();
+      if (!isCloudSyncEnabled) {
+        return; // Don't sync settings if cloud sync is disabled
+      }
+
+      // Try to load settings from Firebase
+      final cloudSettings = await _settingsRepo.loadFromFirebase();
+      if (cloudSettings != null) {
+        // Save to local storage
+        await _settingsRepo.saveLocalSettings(cloudSettings);
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to sync settings from Firebase");
+      // Don't throw - settings sync failure shouldn't break the entire operation
+    }
+  }
+
+  /// Check if cloud sync is enabled
+  Future<bool> isCloudSyncEnabled() async {
+    try {
+      // Import SharedPreferences to check the cloud sync setting
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('cloud_sync_enabled') ?? true;
+    } catch (e) {
+      // Default to enabled if we can't check
+      return true;
     }
   }
 

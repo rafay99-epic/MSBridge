@@ -18,8 +18,10 @@ import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
 enum NoteLayoutMode { grid, list }
 
@@ -42,11 +44,6 @@ class _NotetakingState extends State<Notetaking>
 
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
-  bool _isSearching = false;
-
-  String _lowerCaseSearchQuery = '';
-
-  final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
   ValueListenable<Box<NoteTakingModel>>? notesListenable;
   static const String _layoutPrefKey = 'note_layout_mode';
@@ -175,7 +172,6 @@ class _NotetakingState extends State<Notetaking>
 
   @override
   void dispose() {
-    _searchController.dispose();
     _debounceTimer?.cancel();
     super.dispose();
   }
@@ -268,6 +264,7 @@ class _NotetakingState extends State<Notetaking>
         ),
       ),
       body: ChangeNotifierProvider(
+        key: ValueKey(_layoutMode),
         create: (context) {
           final noteProvider = NoteePinProvider();
           noteProvider.initialize();
@@ -322,12 +319,10 @@ class _NotetakingState extends State<Notetaking>
                       final pinnedNotes = notes
                           .where((note) =>
                               noteProvider.isNotePinned(note.noteId.toString()))
-                          .where((note) => _matchesSearchQuery(note))
                           .toList();
                       final unpinnedNotes = notes
                           .where((note) => !noteProvider
                               .isNotePinned(note.noteId.toString()))
-                          .where((note) => _matchesSearchQuery(note))
                           .toList();
 
                       return SingleChildScrollView(
@@ -350,20 +345,37 @@ class _NotetakingState extends State<Notetaking>
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: MasonryGridView.count(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount:
-                                      _layoutMode == NoteLayoutMode.grid
-                                          ? 2
-                                          : 1,
-                                  mainAxisSpacing: 10,
-                                  crossAxisSpacing: 10,
-                                  itemCount: pinnedNotes.length,
-                                  itemBuilder: (context, index) {
-                                    final note = pinnedNotes[index];
-                                    return _buildNoteItem(note, context);
-                                  },
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 250),
+                                  switchInCurve: Curves.easeOutCubic,
+                                  switchOutCurve: Curves.easeInCubic,
+                                  transitionBuilder: (child, anim) =>
+                                      FadeTransition(
+                                    opacity: anim,
+                                    child: ScaleTransition(
+                                      scale:
+                                          Tween<double>(begin: 0.98, end: 1.0)
+                                              .animate(anim),
+                                      child: child,
+                                    ),
+                                  ),
+                                  child: MasonryGridView.count(
+                                    key: ValueKey(_layoutMode),
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    crossAxisCount:
+                                        _layoutMode == NoteLayoutMode.grid
+                                            ? 2
+                                            : 1,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    itemCount: pinnedNotes.length,
+                                    itemBuilder: (context, index) {
+                                      final note = pinnedNotes[index];
+                                      return _buildNoteItem(note, context);
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
@@ -381,18 +393,35 @@ class _NotetakingState extends State<Notetaking>
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: MasonryGridView.count(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount:
-                                    _layoutMode == NoteLayoutMode.grid ? 2 : 1,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10,
-                                itemCount: unpinnedNotes.length,
-                                itemBuilder: (context, index) {
-                                  final note = unpinnedNotes[index];
-                                  return _buildNoteItem(note, context);
-                                },
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                transitionBuilder: (child, anim) =>
+                                    FadeTransition(
+                                  opacity: anim,
+                                  child: ScaleTransition(
+                                    scale: Tween<double>(begin: 0.98, end: 1.0)
+                                        .animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                child: MasonryGridView.count(
+                                  key: ValueKey(_layoutMode),
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisCount:
+                                      _layoutMode == NoteLayoutMode.grid
+                                          ? 2
+                                          : 1,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  itemCount: unpinnedNotes.length,
+                                  itemBuilder: (context, index) {
+                                    final note = unpinnedNotes[index];
+                                    return _buildNoteItem(note, context);
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -443,6 +472,28 @@ class _NotetakingState extends State<Notetaking>
                 ),
                 buildExpandableButton(
                   context: context,
+                  heroTag: "Templates",
+                  icon: Icons.description,
+                  text: "Templates",
+                  theme: theme,
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const TemplatesHubPage(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
+                  },
+                ),
+                buildExpandableButton(
+                  context: context,
                   heroTag: "To-Do List",
                   icon: Icons.check,
                   text: "New To-Do",
@@ -470,22 +521,7 @@ class _NotetakingState extends State<Notetaking>
   }
 
   Widget _buildAppBarTitle(ThemeData theme) {
-    return _isSearching
-        ? TextField(
-            controller: _searchController,
-            autofocus: true,
-            style: TextStyle(color: theme.colorScheme.primary),
-            decoration: InputDecoration(
-              hintText: 'Search notes...',
-              hintStyle:
-                  TextStyle(color: theme.colorScheme.primary.withOpacity(0.6)),
-              border: InputBorder.none,
-            ),
-            onChanged: (query) {
-              _onSearchChanged(query);
-            },
-          )
-        : const Text("Note Taking");
+    return const Text("Note Taking");
   }
 
   IconButton? _buildAppBarLeading() {
@@ -495,14 +531,7 @@ class _NotetakingState extends State<Notetaking>
         onPressed: _exitSelectionMode,
         tooltip: 'Exit selection mode',
       );
-    } else if (_isSearching) {
-      return IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: _exitSearch,
-        tooltip: 'Exit search',
-      );
     } else {
-      // Show folders icon on the left when not in special modes
       return IconButton(
         icon: const Icon(LineIcons.folder),
         onPressed: () {
@@ -548,32 +577,17 @@ class _NotetakingState extends State<Notetaking>
   }
 
   void _enterSearch() {
-    setState(() {
-      _isSearching = true;
-    });
-  }
+    // Get current notes from the state
+    final currentNotes = notesListenable?.value.values.toList() ?? [];
 
-  void _exitSearch() {
-    setState(() {
-      _isSearching = false;
-      _searchController.clear();
-      _lowerCaseSearchQuery = '';
-    });
-  }
-
-  void _onSearchChanged(String query) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      final lowerCaseQuery = query.toLowerCase();
-      setState(() {
-        _lowerCaseSearchQuery = lowerCaseQuery;
-      });
-    });
-  }
-
-  bool _matchesSearchQuery(NoteTakingModel note) {
-    return note.noteTitle.toLowerCase().contains(_lowerCaseSearchQuery) ||
-        note.noteContent.toLowerCase().contains(_lowerCaseSearchQuery);
+    Navigator.push(
+      context,
+      PageTransition(
+        child: AdvancedSearchScreen(allNotes: currentNotes),
+        type: PageTransitionType.bottomToTop,
+        duration: const Duration(milliseconds: 300),
+      ),
+    );
   }
 
   Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
@@ -607,6 +621,7 @@ class _NotetakingState extends State<Notetaking>
         note: note,
         isSelected: _selectedNoteIds.contains(note.noteId.toString()),
         isSelectionMode: _isSelectionMode,
+        isGridLayout: _layoutMode == NoteLayoutMode.grid,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
@@ -13,6 +14,10 @@ import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/core/database/templates/note_template.dart';
+import 'package:msbridge/core/repo/template_repo.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/edge_autoscroll_wrapper.dart';
 import 'package:provider/provider.dart';
@@ -20,13 +25,14 @@ import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
-import 'package:msbridge/core/services/streak_integration_service.dart';
+import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
 
 class CreateNote extends StatefulWidget {
-  const CreateNote({super.key, this.note});
+  const CreateNote({super.key, this.note, this.initialTemplate});
 
   final NoteTakingModel? note;
+  final NoteTemplate? initialTemplate;
 
   @override
   State<CreateNote> createState() => _CreateNoteState();
@@ -56,6 +62,7 @@ class _CreateNoteState extends State<CreateNote>
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
   bool _hasSelection = false;
+  StreamSubscription? _docChangesSub;
 
   void _addTag(String rawTag) {
     final tag = rawTag.trim();
@@ -85,26 +92,58 @@ class _CreateNoteState extends State<CreateNote>
 
     if (widget.note != null) {
       _titleController.text = widget.note!.noteTitle;
-      _controller = QuillController(
-        document: Document.fromJson(jsonDecode(widget.note!.noteContent)),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
+      final String raw = (widget.note!.noteContent).trim();
+      if (raw.startsWith('[')) {
+        try {
+          final dynamic decoded = jsonDecode(raw);
+          if (decoded is List) {
+            _controller = QuillController(
+              document: Document.fromJson(decoded),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+          } else {
+            _controller = QuillController(
+              document: Document()..insert(0, widget.note!.noteContent),
+              selection: const TextSelection.collapsed(offset: 0),
+            );
+          }
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(
+              Exception("Error loading note"), StackTrace.current,
+              reason: "Error loading note: $e");
+          _controller = QuillController(
+            document: Document()..insert(0, widget.note!.noteContent),
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+        }
+      } else {
+        _controller = QuillController(
+          document: Document()..insert(0, widget.note!.noteContent),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      }
       _currentNote = widget.note;
       _tagsNotifier.value = List<String>.from(widget.note!.tags);
+    } else if (widget.initialTemplate != null) {
+      try {
+        _controller = QuillController(
+          document: Document.fromJson(
+              jsonDecode(widget.initialTemplate!.contentJson)),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        _titleController.text = widget.initialTemplate!.title;
+        _tagsNotifier.value = List<String>.from(widget.initialTemplate!.tags);
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+            Exception("Error loading template"), StackTrace.current,
+            reason: "Error loading template: $e");
+        _controller = QuillController.basic();
+      }
     } else {
       _controller = QuillController.basic();
     }
 
-    // Track selection to provide an explicit copy/paste fallback
-    _controller.addListener(() {
-      final selection = _controller.selection;
-      final bool hasSelection = selection.isValid && !selection.isCollapsed;
-      if (_hasSelection != hasSelection && mounted) {
-        setState(() {
-          _hasSelection = hasSelection;
-        });
-      }
-    });
+    _attachControllerListeners();
 
     // Add lightweight focus tracking
     _titleController.addListener(() {
@@ -139,14 +178,6 @@ class _CreateNoteState extends State<CreateNote>
     });
 
     if (FeatureFlag.enableAutoSave) {
-      _controller.document.changes.listen((event) {
-        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-        _debounceTimer = Timer(const Duration(seconds: 3), () {
-          _currentFocusArea.value = 'editor';
-          _saveNote();
-        });
-      });
-
       // Auto-save when tags change
       _tagsNotifier.addListener(() {
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
@@ -166,6 +197,7 @@ class _CreateNoteState extends State<CreateNote>
 
   @override
   void dispose() {
+    _docChangesSub?.cancel();
     _controller.dispose();
     _titleController.dispose();
     _tagInputController.dispose();
@@ -203,6 +235,42 @@ class _CreateNoteState extends State<CreateNote>
     });
   }
 
+  void _attachControllerListeners() {
+    // Selection tracking
+    _controller.addListener(() {
+      final selection = _controller.selection;
+      final bool hasSelection = selection.isValid && !selection.isCollapsed;
+      if (_hasSelection != hasSelection && mounted) {
+        setState(() {
+          _hasSelection = hasSelection;
+        });
+      }
+    });
+
+    // Debounced document changes for auto-save
+    if (FeatureFlag.enableAutoSave) {
+      _docChangesSub?.cancel();
+      _docChangesSub = _controller.document.changes.listen((event) {
+        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 3), () {
+          _currentFocusArea.value = 'editor';
+          _saveNote();
+        });
+      });
+    }
+  }
+
+  void _reinitializeController(Document newDoc) {
+    // Dispose old controller to avoid leaks
+    _docChangesSub?.cancel();
+    _controller.dispose();
+    _controller = QuillController(
+      document: newDoc,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    _attachControllerListeners();
+  }
+
   Future<void> loadQuillContent(String noteContent) async {
     try {
       final jsonResult = jsonDecode(noteContent);
@@ -217,6 +285,11 @@ class _CreateNoteState extends State<CreateNote>
             selection: const TextSelection.collapsed(offset: 0));
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Failed to load Quill content'),
+        StackTrace.current,
+        reason: 'Failed to load Quill content: $e',
+      );
       _controller = QuillController(
           document: Document()..insert(0, noteContent),
           selection: const TextSelection.collapsed(offset: 0));
@@ -243,6 +316,11 @@ class _CreateNoteState extends State<CreateNote>
       try {
         content = await encodeContent(_controller.document.toDelta());
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          Exception('Failed to encode content'),
+          StackTrace.current,
+          reason: 'Failed to encode content: $e',
+        );
         content = _controller.document.toPlainText().trim();
       }
       if (title.isEmpty && content.isEmpty) {
@@ -272,7 +350,7 @@ class _CreateNoteState extends State<CreateNote>
             await _updateStreakOnNoteCreation();
           } catch (e) {
             FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                reason: "Streak update failed on note creation");
+                reason: "Streak update failed on note creation: $e");
           }
         }
       }
@@ -297,6 +375,11 @@ class _CreateNoteState extends State<CreateNote>
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
+        FirebaseCrashlytics.instance.recordError(
+          Exception('Failed to save note'),
+          StackTrace.current,
+          reason: 'Failed to save note: $e',
+        );
         CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
       }
     }
@@ -350,6 +433,11 @@ class _CreateNoteState extends State<CreateNote>
         }
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        Exception('Failed to save note'),
+        StackTrace.current,
+        reason: 'Failed to save note: $e',
+      );
       CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }
@@ -601,6 +689,11 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
+          IconButton(
+            tooltip: 'Templates',
+            icon: const Icon(LineIcons.clone, size: 22),
+            onPressed: _openTemplatesPicker,
+          ),
           Consumer<ShareLinkProvider>(
             builder: (context, shareProvider, _) {
               if (!shareProvider.shareLinksEnabled || _currentNote == null) {
@@ -652,8 +745,8 @@ class _CreateNoteState extends State<CreateNote>
               ),
             ),
             // Compact Tags Section (Space Optimized)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8.0),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -678,7 +771,8 @@ class _CreateNoteState extends State<CreateNote>
                                   tag,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: theme.colorScheme.primary,
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.85),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -687,7 +781,14 @@ class _CreateNoteState extends State<CreateNote>
                                 deleteIcon: Icon(
                                   Icons.close,
                                   size: 18,
-                                  color: theme.colorScheme.primary,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.75),
+                                ),
+                                shape: StadiumBorder(
+                                  side: BorderSide(
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15),
+                                  ),
                                 ),
                                 onDeleted: () {
                                   final next = List<String>.from(tags)
@@ -729,7 +830,13 @@ class _CreateNoteState extends State<CreateNote>
                             controller: _tagInputController,
                             focusNode: _tagFocusNode,
                             textInputAction: TextInputAction.done,
-                            onSubmitted: _addTag,
+                            onSubmitted: (raw) {
+                              final v = raw.trim();
+                              if (v.isEmpty) return;
+                              _addTag(v);
+                              _tagInputController.clear();
+                              FocusScope.of(context).unfocus();
+                            },
                             contextMenuBuilder: (BuildContext context,
                                 EditableTextState editableTextState) {
                               return AdaptiveTextSelectionToolbar.editableText(
@@ -739,33 +846,50 @@ class _CreateNoteState extends State<CreateNote>
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'Add tag...',
-                              hintStyle: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                              prefixIcon: const Icon(Icons.tag, size: 16),
+                              hintStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.5)),
+                              prefixIcon: Icon(Icons.tag,
+                                  size: 16,
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.7)),
                               suffixIcon: IconButton(
-                                icon: const Icon(Icons.add, size: 18),
+                                icon: Icon(Icons.add,
+                                    size: 18,
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.8)),
                                 tooltip: 'Add tag',
-                                onPressed: () =>
-                                    _addTag(_tagInputController.text),
+                                onPressed: () {
+                                  final v = _tagInputController.text.trim();
+                                  if (v.isEmpty) return;
+                                  _addTag(v);
+                                  _tagInputController.clear();
+                                  FocusScope.of(context).unfocus();
+                                },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
                                     minWidth: 32, minHeight: 32),
                               ),
+                              filled: true,
+                              fillColor: theme.colorScheme.surface,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
-                                    color: theme.colorScheme.outlineVariant),
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15)),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
-                                    color: theme.colorScheme.outlineVariant),
+                                    color: theme.colorScheme.outlineVariant
+                                        .withOpacity(0.15)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(18),
                                 borderSide: BorderSide(
                                     color: theme.colorScheme.primary,
-                                    width: 1.5),
+                                    width: 1.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
@@ -781,29 +905,21 @@ class _CreateNoteState extends State<CreateNote>
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: EdgeAutoScrollWrapper(
-                activationPadding: 48,
-                maxPixelsPerTick: 6,
-                child: Builder(
-                  builder: (context) => QuillEditor.basic(
-                    configurations: QuillEditorConfigurations(
-                      controller: _controller,
-                      sharedConfigurations:
-                          const QuillSharedConfigurations(locale: Locale('en')),
-                      placeholder: 'Note...',
-                      expands: true,
-                      customStyles: DefaultStyles(
-                        paragraph: DefaultTextBlockStyle(
-                            TextStyle(
-                              fontSize: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const VerticalSpacing(5, 0),
-                            const VerticalSpacing(0, 0),
-                            null),
-                      ),
-                    ),
-                    focusNode: _quillFocusNode,
+              child: SafeArea(
+                child: QuillEditor.basic(
+                  controller: _controller,
+                  focusNode: _quillFocusNode,
+                  config: QuillEditorConfig(
+                    disableClipboard: false,
+                    autoFocus: true,
+                    placeholder: 'Note...',
+                    expands: true,
+                    onTapUp: (_, __) {
+                      if (!_quillFocusNode.hasFocus) {
+                        FocusScope.of(context).requestFocus(_quillFocusNode);
+                      }
+                      return false;
+                    },
                   ),
                 ),
               ),
@@ -897,47 +1013,225 @@ class _CreateNoteState extends State<CreateNote>
               ),
             ],
 
-            QuillToolbar.simple(
-              configurations: QuillSimpleToolbarConfigurations(
-                controller: _controller,
-                sharedConfigurations: const QuillSharedConfigurations(
-                  locale: Locale('en'),
+            Listener(
+              onPointerDown: (_) {
+                if (!_quillFocusNode.hasFocus) {
+                  FocusScope.of(context).requestFocus(_quillFocusNode);
+                }
+              },
+              child: SafeArea(
+                child: QuillSimpleToolbar(
+                  controller: _controller,
+                  config: const QuillSimpleToolbarConfig(
+                    multiRowsDisplay: false,
+                    toolbarSize: 40,
+                    showCodeBlock: true,
+                    showQuote: true,
+                    showLink: true,
+                    showFontSize: true,
+                    showFontFamily: true,
+                    showIndent: true,
+                    showDividers: true,
+                    showUnderLineButton: true,
+                    showLeftAlignment: true,
+                    showCenterAlignment: true,
+                    showRightAlignment: true,
+                    showJustifyAlignment: true,
+                    showHeaderStyle: true,
+                    showListNumbers: true,
+                    showListBullets: true,
+                    showListCheck: true,
+                    showStrikeThrough: true,
+                    showInlineCode: true,
+                    showColorButton: true,
+                    showBackgroundColorButton: true,
+                    showClearFormat: true,
+                    showAlignmentButtons: true,
+                    showUndo: true,
+                    showRedo: true,
+                    showDirection: false,
+                    showSearchButton: true,
+                    headerStyleType: HeaderStyleType.buttons,
+                  ),
                 ),
-                multiRowsDisplay: false,
-                toolbarSize: 40,
-                showCodeBlock: true,
-                showQuote: true,
-                showLink: true,
-                showFontSize: true,
-                showFontFamily: true,
-                showIndent: true,
-                showDividers: true,
-                showUnderLineButton: true,
-                showLeftAlignment: true,
-                showCenterAlignment: true,
-                showRightAlignment: true,
-                showJustifyAlignment: true,
-                showHeaderStyle: true,
-                showListNumbers: true,
-                showListBullets: true,
-                showListCheck: true,
-                showStrikeThrough: true,
-                showInlineCode: true,
-                showColorButton: true,
-                showBackgroundColorButton: true,
-                showClearFormat: true,
-                showAlignmentButtons: true,
-                showUndo: true,
-                showRedo: true,
-                showDirection: false,
-                showSearchButton: true,
-                headerStyleType: HeaderStyleType.buttons,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _openTemplatesPicker() async {
+    final theme = Theme.of(context);
+    final listenable = await TemplateRepo.getTemplatesListenable();
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.6,
+            child: ValueListenableBuilder(
+              valueListenable: listenable,
+              builder: (context, Box<NoteTemplate> box, _) {
+                final items = box.values.toList()
+                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                if (items.isEmpty) {
+                  return Center(
+                    child: Text('No templates yet',
+                        style: TextStyle(color: theme.colorScheme.primary)),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final t = items[index];
+                    return ListTile(
+                      title: Text(t.title,
+                          style: TextStyle(color: theme.colorScheme.primary)),
+                      subtitle: t.tags.isEmpty
+                          ? null
+                          : Text(t.tags.join(' · '),
+                              style: TextStyle(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.7))),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await _applyTemplateInEditor(t);
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      const TemplatesHubPage(),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return FadeTransition(
+                                    opacity: animation, child: child);
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 300),
+                            ),
+                          );
+                        },
+                        tooltip: 'Manage templates',
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _applyTemplateInEditor(NoteTemplate t) async {
+    try {
+      final templateDoc = Document.fromJson(jsonDecode(t.contentJson));
+      // If editor empty, replace; else confirm replace vs insert
+      final isEmpty = _controller.document.isEmpty();
+      if (isEmpty) {
+        _reinitializeController(templateDoc);
+        setState(() {
+          _titleController.text = t.title;
+          _tagsNotifier.value = List<String>.from(t.tags);
+        });
+      } else {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (dctx) {
+            final theme = Theme.of(dctx);
+            return AlertDialog(
+              backgroundColor: theme.colorScheme.surface,
+              title: Text('Apply template?',
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              content: Text('Replace current content or insert at cursor?',
+                  style: TextStyle(color: theme.colorScheme.primary)),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'insert'),
+                    child: const Text('Insert')),
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'replace'),
+                    child: const Text('Replace')),
+                TextButton(
+                    onPressed: () => Navigator.pop(dctx, 'cancel'),
+                    child: const Text('Cancel')),
+              ],
+            );
+          },
+        );
+        if (action == 'replace') {
+          _reinitializeController(templateDoc);
+          setState(() {
+            _titleController.text = t.title;
+            _tagsNotifier.value = List<String>.from(t.tags);
+          });
+        } else if (action == 'insert') {
+          final selection = _controller.selection;
+          final templateDelta = templateDoc.toDelta();
+          try {
+            final insertDelta = Delta()..retain(selection.start);
+            for (final op in templateDelta.toList()) {
+              if (op.isInsert) {
+                insertDelta.insert(op.data, op.attributes);
+              }
+            }
+            // Use controller-level compose to keep history/selection mapping
+            _controller.compose(
+              insertDelta,
+              _controller.selection,
+              ChangeSource.local,
+            );
+            final insertedLen = templateDelta.length;
+            _controller.updateSelection(
+              TextSelection.collapsed(offset: selection.start + insertedLen),
+              ChangeSource.local,
+            );
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(
+              Exception('Failed to apply template'),
+              StackTrace.current,
+              reason: 'Failed to apply template: $e',
+            );
+            // Fallback to plain text insert
+            _controller.replaceText(
+              selection.start,
+              0,
+              templateDoc.toPlainText(),
+              selection,
+            );
+          }
+        }
+      }
+      // Trigger save so it lands in Hive via existing flow
+      await _saveNote();
+      if (mounted) CustomSnackBar.show(context, 'Template applied');
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(context, 'Failed to apply template',
+            isSuccess: false);
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to apply template',
+        );
+      }
+    }
   }
 
   Future<void> _openShareSheet() async {
@@ -1006,6 +1300,11 @@ class _CreateNoteState extends State<CreateNote>
                             }
                           }
                         } catch (e) {
+                          FirebaseCrashlytics.instance.recordError(
+                            e,
+                            StackTrace.current,
+                            reason: 'Failed to enable/disable share',
+                          );
                           if (mounted) {
                             CustomSnackBar.show(context, e.toString(),
                                 isSuccess: false);

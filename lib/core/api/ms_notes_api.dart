@@ -53,7 +53,8 @@ class ApiService {
         }
 
         for (var item in jsonData) {
-          String bodyText = (item['rendered']?['html'] as String?) ?? '';
+          // Get markdown content from the 'body' field instead of rendered HTML
+          String bodyText = (item['body'] as String?) ?? '';
 
           MSNote note = MSNote(
             id: item['id'] ?? 0,

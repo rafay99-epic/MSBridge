@@ -18,22 +18,27 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
     };
     return NoteTakingModel(
       noteId: fields[0] as String?,
-      noteTitle: fields[1] as String,
-      noteContent: fields[2] as String,
-      isSynced: fields[3] as bool,
-      isDeleted: fields[4] as bool,
+      noteTitle: (fields[1] as String?) ?? '',
+      noteContent: (fields[2] as String?) ?? '',
+      isSynced: (fields[3] as bool?) ?? false,
+      isDeleted: (fields[4] as bool?) ?? false,
       updatedAt: fields[5] as DateTime?,
-      userId: fields[6] as String,
-      tags: (fields[7] as List?)?.cast<String>(),
-      versionNumber: fields[8] as int,
-      createdAt: fields[9] as DateTime?,
+      userId: (fields[6] as String?) ?? '',
+      tags: (fields[7] as List?)?.cast<String>() ?? const [],
+      versionNumber: (fields[8] as int?) ?? 1,
+      createdAt: (fields[9] as DateTime?) ?? DateTime.now(),
+      deletedAt: fields[10] as DateTime?,
+      deletedBy: fields[11] as String?,
+      deviceId: fields[12] as String?,
+      isDeletionSynced: (fields[13] as bool?) ?? false,
+      lastSyncAt: fields[14] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteTakingModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.noteId)
       ..writeByte(1)
@@ -53,7 +58,17 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       ..writeByte(8)
       ..write(obj.versionNumber)
       ..writeByte(9)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(10)
+      ..write(obj.deletedAt)
+      ..writeByte(11)
+      ..write(obj.deletedBy)
+      ..writeByte(12)
+      ..write(obj.deviceId)
+      ..writeByte(13)
+      ..write(obj.isDeletionSynced)
+      ..writeByte(14)
+      ..write(obj.lastSyncAt);
   }
 
   @override

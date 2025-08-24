@@ -159,8 +159,6 @@ class StreakNotificationService {
           tz.TZDateTime.from(scheduledDate, tz.local),
           notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: DateTimeComponents.time,
         );
         debugPrint(
@@ -175,8 +173,6 @@ class StreakNotificationService {
             tz.TZDateTime.from(scheduledDate, tz.local),
             notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexact,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
             matchDateTimeComponents: DateTimeComponents.time,
           );
           debugPrint(
@@ -253,8 +249,7 @@ class StreakNotificationService {
           tz.TZDateTime.from(scheduledDate, tz.local),
           notificationDetails,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
         );
         debugPrint('Streak ending reminder scheduled for 8 PM');
       } catch (exactError) {
@@ -267,8 +262,7 @@ class StreakNotificationService {
             tz.TZDateTime.from(scheduledDate, tz.local),
             notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexact,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
           );
           debugPrint('Streak ending reminder scheduled (inexact) for 8 PM');
         } else {

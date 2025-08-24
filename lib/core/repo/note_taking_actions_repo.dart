@@ -258,6 +258,28 @@ class NoteTakingActions {
             noteToDelete.noteId != null &&
             noteToDelete.noteId!.isNotEmpty) {
           try {
+            // Delete all versions under this note in Firestore first
+            try {
+              final versionsRef = firestore
+                  .collection('users')
+                  .doc(user.uid)
+                  .collection('notes')
+                  .doc(noteToDelete.noteId)
+                  .collection('versions');
+              final versionsSnap = await versionsRef.get();
+              final batch = firestore.batch();
+              for (final v in versionsSnap.docs) {
+                batch.delete(v.reference);
+              }
+              await batch.commit();
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(
+                e,
+                StackTrace.current,
+                reason: 'Failed to delete versions for note ${noteToDelete.noteId}',
+              );
+            }
+
             await firestore
                 .collection('users')
                 .doc(user.uid)

@@ -5,6 +5,7 @@ import 'package:msbridge/core/repo/webview_repo.dart';
 import 'package:msbridge/widgets/buildSettingsTile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:msbridge/features/setting/section/admin_section/deletion_sync_debug_page.dart';
 
 class AdminSettingsSection extends StatefulWidget {
   const AdminSettingsSection({super.key});
@@ -92,6 +93,25 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
         ),
 
         const SizedBox(height: 24),
+
+        // Background/Sync Tools
+        _buildSubsectionHeader(context, "Background Sync", LineIcons.sun),
+        const SizedBox(height: 12),
+        buildSettingsTile(
+          context,
+          title: "Deletion Sync Debug",
+          subtitle: "Run Workmanager sync and view last status",
+          icon: LineIcons.trash,
+          onTap: () {
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const DeletionSyncDebugPage(),
+              ),
+            );
+          },
+        ),
 
         // User Management
         _buildSubsectionHeader(context, "User Management", LineIcons.users),

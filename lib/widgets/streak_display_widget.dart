@@ -1,4 +1,6 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:line_icons/line_icons.dart';
@@ -286,18 +288,27 @@ class StreakDisplayWidget extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: () async {
               try {
+                // Pull latest from cloud then update local view
+                await StreakSyncService().syncNow();
                 await streakProvider.refreshStreak();
                 if (context.mounted) {
                   CustomSnackBar.show(
                     context,
-                    "Streak data refreshed!",
+                    "Streak synced",
+                    isSuccess: true,
                   );
                 }
               } catch (e) {
+                FirebaseCrashlytics.instance.recordError(
+                  e,
+                  StackTrace.current,
+                  reason: 'Failed to sync streak: $e',
+                );
                 if (context.mounted) {
                   CustomSnackBar.show(
                     context,
-                    "Failed to refresh streak: $e",
+                    "Sync failed: $e",
+                    isSuccess: false,
                   );
                 }
               }
@@ -316,71 +327,7 @@ class StreakDisplayWidget extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        // Reset Button
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _showResetDialog(context, streakProvider),
-            icon: const Icon(LineIcons.trash, size: 18),
-            label: const Text("Reset"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.withOpacity(0.1),
-              foregroundColor: Colors.red,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
       ],
-    );
-  }
-
-  void _showResetDialog(BuildContext context, StreakProvider streakProvider) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Reset Streak"),
-          content: const Text(
-            "Are you sure you want to reset your streak? This action cannot be undone.",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                try {
-                  await streakProvider.resetStreak();
-                  if (context.mounted) {
-                    CustomSnackBar.show(
-                      context,
-                      "Streak reset successfully!",
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    CustomSnackBar.show(
-                      context,
-                      "Failed to reset streak: $e",
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text("Reset"),
-            ),
-          ],
-        );
-      },
     );
   }
 

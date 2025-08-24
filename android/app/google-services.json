@@ -9,6 +9,7 @@
             "mobilesdk_app_id": "1:",
             "android_client_info": {
                 "package_name": ""
+                "package_name": "com.syntaxlab.msbridge"
             }
         },
         "oauth_client": [],

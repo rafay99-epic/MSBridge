@@ -1,6 +1,8 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:flutter/foundation.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class HiveNoteTakingRepo {
   static const String _boxName = 'notes';
@@ -30,6 +32,11 @@ class HiveNoteTakingRepo {
       try {
         _deletedBox = await Hive.openBox<NoteTakingModel>(_deletedBoxName);
       } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Error opening Hive box "$_deletedBoxName": $e',
+        );
         throw Exception('Error opening Hive box "$_deletedBoxName": $e');
       }
     }
@@ -50,6 +57,11 @@ class HiveNoteTakingRepo {
       );
       await deletedBox.put(deletedNote.noteId!, deletedNote);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Error adding note to deleted box and the expection is $e',
+      );
       throw Exception('Error adding note to deleted box: $e');
     }
   }
@@ -69,6 +81,11 @@ class HiveNoteTakingRepo {
 
       await box.put(restoredNote.noteId!, restoredNote);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Error adding note to main box and the expection is $e',
+      );
       throw Exception('Error occured while restoring note: $e');
     }
   }
@@ -78,6 +95,12 @@ class HiveNoteTakingRepo {
       final box = await getBox();
       await box.add(note);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error adding note to Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error adding note to Hive box "$_boxName": $e');
     }
   }
@@ -92,9 +115,20 @@ class HiveNoteTakingRepo {
 
   static Future<void> permantentlyDeleteNote(NoteTakingModel note) async {
     try {
+      // Also delete all versions for this note
+      if (note.noteId != null && note.noteId!.isNotEmpty) {
+        await NoteVersionRepo.clearVersionsForNote(note.noteId!);
+      }
+
       final deletedBox = await getDeletedBox();
       await deletedBox.delete(note.noteId!);
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error deleting note from Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error deleting note from Hive box "$_boxName": $e');
     }
   }
@@ -111,6 +145,12 @@ class HiveNoteTakingRepo {
         }
       }
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error deleting note from Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error deleting note from Hive box "$_boxName": $e');
     }
   }
@@ -121,6 +161,12 @@ class HiveNoteTakingRepo {
       final box = await getBox();
       return box.listenable();
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error getting notes from Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error getting notes from Hive box "$_boxName": $e');
     }
   }
@@ -130,6 +176,12 @@ class HiveNoteTakingRepo {
       final box = await getBox();
       return box.values.toList();
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error getting notes from Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error getting notes from Hive box "$_boxName": $e');
     }
   }
@@ -139,6 +191,12 @@ class HiveNoteTakingRepo {
       final box = await getBox();
       return box.isEmpty;
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error checking if Hive box "$_boxName" is empty and the expection is $e',
+      );
       throw Exception('Error checking if Hive box "$_boxName" is empty: $e');
     }
   }
@@ -148,6 +206,12 @@ class HiveNoteTakingRepo {
     try {
       return await getNotesListenable();
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason:
+            'Error getting ValueListenable for Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception(
           'Error getting ValueListenable for Hive box "$_boxName": $e');
     }
@@ -160,6 +224,11 @@ class HiveNoteTakingRepo {
 
       return await isBoxEmpty();
     } catch (e) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        StackTrace.current,
+        reason: 'Error clearing Hive box "$_boxName" and the expection is $e',
+      );
       throw Exception('Error clearing Hive box "$_boxName": $e');
     }
   }
