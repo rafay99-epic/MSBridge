@@ -184,9 +184,15 @@ class StreakIntegrationService {
               onPressed: () {
                 Navigator.pop(context);
                 // Navigate to note creation
-                PageTransition(
-                    type: PageTransitionType.leftToRight,
-                    child: const CreateNote());
+                // Navigate to note creation (align with app-wide pattern)
+                Navigator.push(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.rightToLeft,
+                    child: const CreateNote(),
+                    duration: const Duration(milliseconds: 300),
+                  ),
+                );
               },
               child: const Text('Create Note'),
             ),
