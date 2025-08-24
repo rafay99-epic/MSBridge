@@ -39,59 +39,23 @@ Future<void> callbackDispatcher() async {
       try {
         final Directory dir = await getApplicationDocumentsDirectory();
         Hive.init(dir.path);
-        try {
+        if (!Hive.isAdapterRegistered(MSNoteAdapter().typeId)) {
           Hive.registerAdapter(MSNoteAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register MSNoteAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register MSNoteAdapter: $e',
-          );
         }
-        try {
+        if (!Hive.isAdapterRegistered(NoteTakingModelAdapter().typeId)) {
           Hive.registerAdapter(NoteTakingModelAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register NoteTakingModelAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register NoteTakingModelAdapter: $e',
-          );
         }
-        try {
+        if (!Hive.isAdapterRegistered(NoteVersionAdapter().typeId)) {
           Hive.registerAdapter(NoteVersionAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register NoteVersionAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register NoteVersionAdapter: $e',
-          );
         }
-        try {
+        if (!Hive.isAdapterRegistered(ChatHistoryAdapter().typeId)) {
           Hive.registerAdapter(ChatHistoryAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register ChatHistoryAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register ChatHistoryAdapter: $e',
-          );
         }
-        try {
+        if (!Hive.isAdapterRegistered(ChatHistoryMessageAdapter().typeId)) {
           Hive.registerAdapter(ChatHistoryMessageAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register ChatHistoryMessageAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register ChatHistoryMessageAdapter: $e',
-          );
         }
-        try {
+        if (!Hive.isAdapterRegistered(NoteTemplateAdapter().typeId)) {
           Hive.registerAdapter(NoteTemplateAdapter());
-        } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-            Exception('Failed to register NoteTemplateAdapter'),
-            StackTrace.current,
-            reason: 'Failed to register NoteTemplateAdapter: $e',
-          );
         }
         // Open commonly used boxes if needed by repos
         try {
