@@ -75,7 +75,7 @@ class NoteTakingModel extends HiveObject {
     isDeleted = true;
     deletedAt = DateTime.now();
     deletedBy = userId;
-    deviceId = deviceId;
+    this.deviceId = deviceId;
     isDeletionSynced = false;
     updatedAt = DateTime.now();
   }
