@@ -125,11 +125,11 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Status: ${_lastStatus}',
+              'Status: $_lastStatus',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: _lastStatus == 'success'
                     ? Colors.green
-                    : (_lastStatus == 'failed'
+                    : (_lastStatus == 'error'
                         ? Colors.red
                         : cs.primary.withOpacity(0.7)),
               ),
@@ -184,7 +184,7 @@ class WorkSchedulerUI {
       frequency: frequency,
       initialDelay: const Duration(minutes: 15),
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
       backoffPolicy: BackoffPolicy.exponential,
       backoffPolicyDelay: const Duration(minutes: 10),
     );

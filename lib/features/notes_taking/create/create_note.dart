@@ -905,36 +905,21 @@ class _CreateNoteState extends State<CreateNote>
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: EdgeAutoScrollWrapper(
-                activationPadding: 48,
-                maxPixelsPerTick: 6,
-                child: Builder(
-                  builder: (context) => QuillEditor.basic(
-                    configurations: QuillEditorConfigurations(
-                      controller: _controller,
-                      sharedConfigurations:
-                          const QuillSharedConfigurations(locale: Locale('en')),
-                      placeholder: 'Note...',
-                      expands: true,
-                      onTapUp: (_, __) {
-                        // Steal focus from tag input if needed
-                        if (!_quillFocusNode.hasFocus) {
-                          FocusScope.of(context).requestFocus(_quillFocusNode);
-                        }
-                        return false;
-                      },
-                      customStyles: DefaultStyles(
-                        paragraph: DefaultTextBlockStyle(
-                            TextStyle(
-                              fontSize: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const VerticalSpacing(5, 0),
-                            const VerticalSpacing(0, 0),
-                            null),
-                      ),
-                    ),
-                    focusNode: _quillFocusNode,
+              child: SafeArea(
+                child: QuillEditor.basic(
+                  controller: _controller,
+                  focusNode: _quillFocusNode,
+                  config: QuillEditorConfig(
+                    disableClipboard: false,
+                    autoFocus: true,
+                    placeholder: 'Note...',
+                    expands: true,
+                    onTapUp: (_, __) {
+                      if (!_quillFocusNode.hasFocus) {
+                        FocusScope.of(context).requestFocus(_quillFocusNode);
+                      }
+                      return false;
+                    },
                   ),
                 ),
               ),
@@ -1034,41 +1019,40 @@ class _CreateNoteState extends State<CreateNote>
                   FocusScope.of(context).requestFocus(_quillFocusNode);
                 }
               },
-              child: QuillToolbar.simple(
-                configurations: QuillSimpleToolbarConfigurations(
+              child: SafeArea(
+                child: QuillSimpleToolbar(
                   controller: _controller,
-                  sharedConfigurations: const QuillSharedConfigurations(
-                    locale: Locale('en'),
+                  config: const QuillSimpleToolbarConfig(
+                    multiRowsDisplay: false,
+                    toolbarSize: 40,
+                    showCodeBlock: true,
+                    showQuote: true,
+                    showLink: true,
+                    showFontSize: true,
+                    showFontFamily: true,
+                    showIndent: true,
+                    showDividers: true,
+                    showUnderLineButton: true,
+                    showLeftAlignment: true,
+                    showCenterAlignment: true,
+                    showRightAlignment: true,
+                    showJustifyAlignment: true,
+                    showHeaderStyle: true,
+                    showListNumbers: true,
+                    showListBullets: true,
+                    showListCheck: true,
+                    showStrikeThrough: true,
+                    showInlineCode: true,
+                    showColorButton: true,
+                    showBackgroundColorButton: true,
+                    showClearFormat: true,
+                    showAlignmentButtons: true,
+                    showUndo: true,
+                    showRedo: true,
+                    showDirection: false,
+                    showSearchButton: true,
+                    headerStyleType: HeaderStyleType.buttons,
                   ),
-                  multiRowsDisplay: false,
-                  toolbarSize: 40,
-                  showCodeBlock: true,
-                  showQuote: true,
-                  showLink: true,
-                  showFontSize: true,
-                  showFontFamily: true,
-                  showIndent: true,
-                  showDividers: true,
-                  showUnderLineButton: true,
-                  showLeftAlignment: true,
-                  showCenterAlignment: true,
-                  showRightAlignment: true,
-                  showJustifyAlignment: true,
-                  showHeaderStyle: true,
-                  showListNumbers: true,
-                  showListBullets: true,
-                  showListCheck: true,
-                  showStrikeThrough: true,
-                  showInlineCode: true,
-                  showColorButton: true,
-                  showBackgroundColorButton: true,
-                  showClearFormat: true,
-                  showAlignmentButtons: true,
-                  showUndo: true,
-                  showRedo: true,
-                  showDirection: false,
-                  showSearchButton: true,
-                  headerStyleType: HeaderStyleType.buttons,
                 ),
               ),
             ),

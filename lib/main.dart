@@ -5,6 +5,8 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
@@ -162,6 +164,16 @@ class MyApp extends StatelessWidget {
           ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
           : const AppPinLockWrapper(child: AuthGate()),
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        FlutterQuillLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('en'),
+      ],
       navigatorObservers: [
         _DynamicLinkObserver(),
       ],

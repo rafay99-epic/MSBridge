@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
@@ -9,12 +10,9 @@ Widget buildContent(String content, ThemeData theme) {
       final document = Document.fromJson(jsonResult);
       return AbsorbPointer(
         child: QuillEditor.basic(
-          configurations: QuillEditorConfigurations(
-            controller: QuillController(
-              document: document,
-              selection: const TextSelection.collapsed(offset: 0),
-            ),
-            sharedConfigurations: const QuillSharedConfigurations(),
+          controller: QuillController(
+            document: document,
+            selection: const TextSelection.collapsed(offset: 0),
           ),
         ),
       );
@@ -29,6 +27,9 @@ Widget buildContent(String content, ThemeData theme) {
       );
     }
   } catch (e) {
+    FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+        reason:
+            'Error building content $content , with $theme and expection is $e');
     return Text(
       content,
       maxLines: 4,

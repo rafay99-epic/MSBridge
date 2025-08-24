@@ -325,21 +325,24 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
               child: Column(
                 children: [
                   Expanded(
-                    child: QuillEditor.basic(
-                      configurations: QuillEditorConfigurations(
+                    child: SafeArea(
+                      child: QuillEditor.basic(
                         controller: _controller,
-                        sharedConfigurations: const QuillSharedConfigurations(),
-                        placeholder: 'Start composing your template...',
-                        expands: true,
-                        onTapUp: (_, __) {
-                          if (!_quillFocusNode.hasFocus) {
-                            FocusScope.of(context)
-                                .requestFocus(_quillFocusNode);
-                          }
-                          return false;
-                        },
+                        focusNode: _quillFocusNode,
+                        config: QuillEditorConfig(
+                          disableClipboard: false,
+                          autoFocus: true,
+                          placeholder: 'Start composing your template...',
+                          expands: true,
+                          onTapUp: (_, __) {
+                            if (!_quillFocusNode.hasFocus) {
+                              FocusScope.of(context)
+                                  .requestFocus(_quillFocusNode);
+                            }
+                            return false;
+                          },
+                        ),
                       ),
-                      focusNode: _quillFocusNode,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -374,40 +377,40 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: QuillToolbar.simple(
-                              configurations: QuillSimpleToolbarConfigurations(
+                            child: SafeArea(
+                              child: QuillSimpleToolbar(
                                 controller: _controller,
-                                sharedConfigurations:
-                                    const QuillSharedConfigurations(),
-                                multiRowsDisplay: false,
-                                toolbarSize: 44,
-                                showCodeBlock: true,
-                                showQuote: true,
-                                showLink: true,
-                                showFontSize: true,
-                                showFontFamily: true,
-                                showIndent: true,
-                                showDividers: true,
-                                showUnderLineButton: true,
-                                showLeftAlignment: true,
-                                showCenterAlignment: true,
-                                showRightAlignment: true,
-                                showJustifyAlignment: true,
-                                showHeaderStyle: true,
-                                showListNumbers: true,
-                                showListBullets: true,
-                                showListCheck: true,
-                                showStrikeThrough: true,
-                                showInlineCode: true,
-                                showColorButton: true,
-                                showBackgroundColorButton: true,
-                                showClearFormat: true,
-                                showAlignmentButtons: true,
-                                showUndo: true,
-                                showRedo: true,
-                                showDirection: false,
-                                showSearchButton: true,
-                                headerStyleType: HeaderStyleType.buttons,
+                                config: const QuillSimpleToolbarConfig(
+                                  multiRowsDisplay: false,
+                                  toolbarSize: 44,
+                                  showCodeBlock: true,
+                                  showQuote: true,
+                                  showLink: true,
+                                  showFontSize: true,
+                                  showFontFamily: true,
+                                  showIndent: true,
+                                  showDividers: true,
+                                  showUnderLineButton: true,
+                                  showLeftAlignment: true,
+                                  showCenterAlignment: true,
+                                  showRightAlignment: true,
+                                  showJustifyAlignment: true,
+                                  showHeaderStyle: true,
+                                  showListNumbers: true,
+                                  showListBullets: true,
+                                  showListCheck: true,
+                                  showStrikeThrough: true,
+                                  showInlineCode: true,
+                                  showColorButton: true,
+                                  showBackgroundColorButton: true,
+                                  showClearFormat: true,
+                                  showAlignmentButtons: true,
+                                  showUndo: true,
+                                  showRedo: true,
+                                  showDirection: false,
+                                  showSearchButton: true,
+                                  headerStyleType: HeaderStyleType.buttons,
+                                ),
                               ),
                             ),
                           ),
@@ -417,7 +420,7 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                   ),
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),

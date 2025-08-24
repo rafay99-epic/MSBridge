@@ -17,7 +17,7 @@ class SchedulerRegistration {
         requiresBatteryNotLow: true,
         requiresCharging: false,
       ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
       backoffPolicy: BackoffPolicy.exponential,
       backoffPolicyDelay: const Duration(minutes: 15),
     );
