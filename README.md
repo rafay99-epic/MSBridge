@@ -158,16 +158,17 @@ Use the following command to start the application on a connected device or emul
 flutter run
 ```
 
-## APK Files
+## APK Files  
 
-You can easily test the application by downloading the official APK files from the links below:
+All **MS Bridge APK files** are now available on the official website:  
+[https://msbridge.rafay99.com/versions](https://msbridge.rafay99.com/versions)  
 
--   🔹 **Stable Release (v7.5):** [Download from rafay99.com](https://rafay99.com/MSBridge-APK)
--   🔸 **Beta Version:** [Try the beta build](https://rafay99.com/MSBridge-beta)
+You can download any version from there and use MS Bridge for note‑taking, journaling, and task management.  
 
-### Previous Releases
+### Previous Releases  
 
-For old versions of the apk file, you can find them in the release section of the githb page. 
+Older versions of the APK files are still available in the **GitHub Releases** section of this repository.  
+
 
 ## Contributing
 
