@@ -84,6 +84,7 @@ class UserSettingsRepo {
       vibrationEnabled: true,
       autoSaveEnabled: true,
       fingerprintEnabled: false,
+      pinLockEnabled: false, // Added PIN lock enabled field
       cloudSyncEnabled: true,
       versionHistoryEnabled: true,
       selectedAIModel: 'gpt-3.5-turbo',
@@ -254,6 +255,9 @@ class UserSettingsRepo {
         return settings.copyWith(autoSaveEnabled: value as bool);
       case 'fingerprintEnabled':
         return settings.copyWith(fingerprintEnabled: value as bool);
+      case 'pinLockEnabled':
+        return settings.copyWith(
+            pinLockEnabled: value as bool); // Added PIN lock case
       case 'cloudSyncEnabled':
         return settings.copyWith(cloudSyncEnabled: value as bool);
       case 'versionHistoryEnabled':

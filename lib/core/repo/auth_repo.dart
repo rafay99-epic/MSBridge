@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/models/user_model.dart';
+import 'package:msbridge/core/utils/rate_limiter.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
 
@@ -18,6 +19,7 @@ class AuthResult {
 class AuthRepo {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final RateLimiter _rateLimiter = RateLimiter();
 
   Future<AuthResult> login(String email, String password) async {
     try {
@@ -65,7 +67,18 @@ class AuthRepo {
 
       await user.updateDisplayName(fullName);
 
-      await user.sendEmailVerification();
+      // Send email verification (temporarily using default settings)
+      try {
+        await user.sendEmailVerification();
+      } catch (verificationError) {
+        FirebaseCrashlytics.instance.recordError(
+          verificationError,
+          StackTrace.current,
+          reason:
+              'Email verification failed during registration: $verificationError',
+        );
+      }
+
       const String defaultRole = 'user';
 
       final userModel = UserModel(
@@ -85,13 +98,33 @@ class AuthRepo {
         StackTrace.current,
         reason: 'Registration failed: $e',
       );
-      return AuthResult(error: "Registration failed: $e");
+
+      // Provide more specific error messages
+      String errorMessage = "Registration failed";
+
+      if (e.toString().contains('email-already-in-use')) {
+        errorMessage =
+            "An account with this email already exists. Please try logging in instead.";
+      } else if (e.toString().contains('weak-password')) {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      } else if (e.toString().contains('invalid-email')) {
+        errorMessage = "Please enter a valid email address.";
+      } else if (e.toString().contains('too-many-requests')) {
+        errorMessage =
+            "Too many registration attempts. Please wait 24 hours before trying again.";
+      } else if (e.toString().contains('network')) {
+        errorMessage =
+            "Network error. Please check your connection and try again.";
+      } else {
+        errorMessage = "Registration failed: $e";
+      }
+
+      return AuthResult(error: errorMessage);
     }
   }
 
   Future<String?> logout() async {
     try {
-      // Cancel background sync jobs immediately on logout
       try {
         await Workmanager().cancelByUniqueName('msbridge.periodic.all.id');
         await Workmanager().cancelByUniqueName('msbridge.oneoff.sync.id');
@@ -202,15 +235,82 @@ class AuthRepo {
         return AuthResult(error: "Your email is already verified.");
       }
 
-      await user.sendEmailVerification();
-      return AuthResult(error: "Verification email sent successfully!");
+      // Check rate limiting
+      final rateLimitKey = 'verification_email_${user.uid}';
+      if (!_rateLimiter.canMakeRequest(rateLimitKey)) {
+        final remainingCooldown = _rateLimiter.getRemainingCooldown(
+            rateLimitKey, const Duration(minutes: 1));
+        if (remainingCooldown != null && remainingCooldown > Duration.zero) {
+          final minutes = remainingCooldown.inMinutes;
+          final seconds = remainingCooldown.inSeconds % 60;
+          return AuthResult(
+              error:
+                  "Please wait ${minutes}m ${seconds}s before requesting another email.");
+        }
+
+        final remainingRequests =
+            _rateLimiter.getRemainingRequests(rateLimitKey, 5);
+        if (remainingRequests <= 0) {
+          return AuthResult(
+              error:
+                  "Maximum attempts reached. Please wait 24 hours before trying again.");
+        }
+      }
+
+      // Send email verification (temporarily using default settings)
+      try {
+        await user.sendEmailVerification();
+
+        // Only record successful requests
+        _rateLimiter.recordRequest(rateLimitKey);
+
+        return AuthResult(user: user);
+      } catch (e) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Failed to send verification email: $e',
+        );
+        // If Firebase blocks the request, don't record it as a successful attempt
+        if (e.toString().contains('too-many-requests')) {
+          return AuthResult(
+              error:
+                  "Firebase has blocked this device. Please wait 24 hours or try from a different network.");
+        }
+
+        // For other errors, still record the attempt
+        _rateLimiter.recordRequest(rateLimitKey);
+        rethrow; // Re-throw to be caught by outer catch block
+      }
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(
         e,
         StackTrace.current,
         reason: 'Failed to send verification email: $e',
       );
-      return AuthResult(error: "Failed to send verification email: $e");
+
+      // Provide more user-friendly error messages
+      String errorMessage = "Failed to send verification email";
+
+      if (e.toString().contains('too-many-requests')) {
+        errorMessage =
+            "Too many requests. Please wait 24 hours before trying again.";
+        // Reset rate limiter for this user when Firebase blocks them
+        final user = _auth.currentUser;
+        if (user != null) {
+          _rateLimiter.reset('verification_email_${user.uid}');
+        }
+      } else if (e.toString().contains('network')) {
+        errorMessage =
+            "Network error. Please check your connection and try again.";
+      } else if (e.toString().contains('user-not-found')) {
+        errorMessage = "User account not found. Please log in again.";
+      } else {
+        errorMessage =
+            "Failed to send verification email. Please try again later.";
+      }
+
+      return AuthResult(error: errorMessage);
     }
   }
 

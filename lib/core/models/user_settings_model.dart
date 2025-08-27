@@ -21,6 +21,7 @@ class UserSettingsModel {
   // App settings
   final bool autoSaveEnabled;
   final bool fingerprintEnabled;
+  final bool pinLockEnabled; // Added PIN lock enabled field
   final bool cloudSyncEnabled;
   final bool versionHistoryEnabled;
   final String selectedAIModel;
@@ -49,6 +50,7 @@ class UserSettingsModel {
     required this.vibrationEnabled,
     required this.autoSaveEnabled,
     required this.fingerprintEnabled,
+    required this.pinLockEnabled, // Added to constructor
     required this.cloudSyncEnabled,
     required this.versionHistoryEnabled,
     required this.selectedAIModel,
@@ -75,6 +77,7 @@ class UserSettingsModel {
       'vibrationEnabled': vibrationEnabled,
       'autoSaveEnabled': autoSaveEnabled,
       'fingerprintEnabled': fingerprintEnabled,
+      'pinLockEnabled': pinLockEnabled, // Added to map
       'cloudSyncEnabled': cloudSyncEnabled,
       'versionHistoryEnabled': versionHistoryEnabled,
       'selectedAIModel': selectedAIModel,
@@ -103,6 +106,7 @@ class UserSettingsModel {
       vibrationEnabled: map['vibrationEnabled'] ?? true,
       autoSaveEnabled: map['autoSaveEnabled'] ?? true,
       fingerprintEnabled: map['fingerprintEnabled'] ?? false,
+      pinLockEnabled: map['pinLockEnabled'] ?? false, // Added to fromMap
       cloudSyncEnabled: map['cloudSyncEnabled'] ?? true,
       versionHistoryEnabled: map['versionHistoryEnabled'] ?? true,
       selectedAIModel: map['selectedAIModel'] ?? 'gpt-3.5-turbo',
@@ -136,6 +140,7 @@ class UserSettingsModel {
     bool? vibrationEnabled,
     bool? autoSaveEnabled,
     bool? fingerprintEnabled,
+    bool? pinLockEnabled, // Added to copyWith
     bool? cloudSyncEnabled,
     bool? versionHistoryEnabled,
     String? selectedAIModel,
@@ -161,6 +166,8 @@ class UserSettingsModel {
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       autoSaveEnabled: autoSaveEnabled ?? this.autoSaveEnabled,
       fingerprintEnabled: fingerprintEnabled ?? this.fingerprintEnabled,
+      pinLockEnabled:
+          pinLockEnabled ?? this.pinLockEnabled, // Added to copyWith
       cloudSyncEnabled: cloudSyncEnabled ?? this.cloudSyncEnabled,
       versionHistoryEnabled:
           versionHistoryEnabled ?? this.versionHistoryEnabled,

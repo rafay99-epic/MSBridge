@@ -4,6 +4,7 @@ import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/config/config.dart';
 
 class UpdateApp extends StatefulWidget {
   const UpdateApp({super.key});
@@ -18,8 +19,8 @@ enum ReleaseType {
 }
 
 class _UpdateAppState extends State<UpdateApp> {
-  String mainApkUrl = 'https://rafay99.com/MSBridge-APK';
-  String betaApkUrl = 'https://rafay99.com/MSBridge-beta';
+  String mainApkUrl = APKFile.apkFile;
+  String betaApkUrl = APKFile.betaApkFile;
   late UpdateAppRepo _updateAppRepo;
   bool _isDownloading = false;
   double _downloadProgress = 0.0;

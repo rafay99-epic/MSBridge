@@ -5,6 +5,7 @@ import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
+import 'package:msbridge/core/models/user_settings_model.dart'; // Added import for UserSettingsModel
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ReverseSyncService {
@@ -292,13 +293,56 @@ class ReverseSyncService {
       // Try to load settings from Firebase
       final cloudSettings = await _settingsRepo.loadFromFirebase();
       if (cloudSettings != null) {
-        // Save to local storage
-        await _settingsRepo.saveLocalSettings(cloudSettings);
+        // Load current local settings
+        final localSettings = await _settingsRepo.loadLocalSettings();
+
+        if (localSettings != null) {
+          // Merge cloud and local settings instead of overwriting
+          final mergedSettings = _mergeSettings(localSettings, cloudSettings);
+
+          // Save merged settings
+          await _settingsRepo.saveLocalSettings(mergedSettings);
+        } else {
+          // No local settings, save cloud settings directly
+          await _settingsRepo.saveLocalSettings(cloudSettings);
+        }
       }
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Failed to sync settings from Firebase");
       // Don't throw - settings sync failure shouldn't break the entire operation
+    }
+  }
+
+  /// Merge local and cloud settings intelligently
+  UserSettingsModel _mergeSettings(
+      UserSettingsModel local, UserSettingsModel cloud) {
+    // For PIN lock settings, prioritize local settings to prevent overwriting user's choice
+    final pinLockEnabled = local.pinLockEnabled;
+
+    // For other settings, use the newer timestamp
+    final useCloudSettings = cloud.lastUpdated.isAfter(local.lastUpdated);
+
+    if (useCloudSettings) {
+      // Use cloud settings but preserve local PIN lock setting
+      return cloud.copyWith(
+        pinLockEnabled: pinLockEnabled,
+        lastUpdated: DateTime.now(),
+        isSynced: true,
+        lastSyncedAt: DateTime.now(),
+      );
+    } else {
+      // Use local settings but preserve cloud PIN lock if it's newer
+      final finalPinLockEnabled = cloud.lastUpdated.isAfter(local.lastUpdated)
+          ? cloud.pinLockEnabled
+          : pinLockEnabled;
+
+      return local.copyWith(
+        pinLockEnabled: finalPinLockEnabled,
+        lastUpdated: DateTime.now(),
+        isSynced: true,
+        lastSyncedAt: DateTime.now(),
+      );
     }
   }
 

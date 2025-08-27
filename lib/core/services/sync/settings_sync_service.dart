@@ -1,6 +1,7 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
+import 'package:msbridge/core/provider/app_pin_lock_provider.dart'; // Added import for PIN lock provider
 
 class SettingsSyncService {
   final AuthRepo _authRepo = AuthRepo();
@@ -10,10 +11,42 @@ class SettingsSyncService {
   Future<bool> syncSettingsToFirebase() async {
     try {
       final settings = await _settingsRepo.getOrCreateSettings();
-      return await _settingsRepo.syncToFirebase(settings);
+
+      // Update PIN lock setting from the provider before syncing
+      final pinProvider = AppPinLockProvider();
+      final updatedSettings = settings.copyWith(
+        pinLockEnabled: pinProvider.enabled,
+        lastUpdated: DateTime.now(),
+      );
+
+      return await _settingsRepo.syncToFirebase(updatedSettings);
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: 'Failed to sync settings to Firebase');
+      return false;
+    }
+  }
+
+  // Sync PIN lock settings specifically
+  Future<bool> syncPinLockSettings() async {
+    try {
+      final pinProvider = AppPinLockProvider();
+      final currentSettings = await _settingsRepo.getOrCreateSettings();
+
+      // Update the PIN lock enabled state
+      final updatedSettings = currentSettings.copyWith(
+        pinLockEnabled: pinProvider.enabled,
+        lastUpdated: DateTime.now(),
+      );
+
+      // Save locally first
+      await _settingsRepo.saveLocalSettings(updatedSettings);
+
+      // Then sync to Firebase
+      return await _settingsRepo.syncToFirebase(updatedSettings);
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'Failed to sync PIN lock settings');
       return false;
     }
   }
@@ -58,13 +91,16 @@ class SettingsSyncService {
         // Local is newer, sync to cloud
         return await _settingsRepo.syncToFirebase(localSettings);
       } else if (cloudNewer) {
-        // Cloud is newer, sync to local
-        await _settingsRepo.saveLocalSettings(
-          cloudSettings.copyWith(
-            isSynced: true,
-            lastSyncedAt: DateTime.now(),
-          ),
+        // Cloud is newer, sync to local but preserve PIN lock setting
+        final pinProvider = AppPinLockProvider();
+        final mergedSettings = cloudSettings.copyWith(
+          pinLockEnabled:
+              pinProvider.enabled, // Preserve local PIN lock setting
+          isSynced: true,
+          lastSyncedAt: DateTime.now(),
         );
+
+        await _settingsRepo.saveLocalSettings(mergedSettings);
         return true;
       } else {
         return true;
