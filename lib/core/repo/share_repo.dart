@@ -4,14 +4,16 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/utils/uuid.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class ShareRepository {
   static const String _shareCollection = 'shared_notes';
   static const String _shareMetaBoxName = 'note_share_meta';
+  static bool _isOperationInProgress =
+      false; // Added to prevent multiple simultaneous operations
 
   static Future<Box> _getShareMetaBox() async {
     return await Hive.openBox(_shareMetaBoxName);
-    
   }
 
   static String _buildDefaultShareUrl(String shareId) {
@@ -23,7 +25,8 @@ class ShareRepository {
     try {
       final DynamicLinkParameters params = DynamicLinkParameters(
         link: Uri.parse(_buildDefaultShareUrl(shareId)),
-        uriPrefix: 'https://msbridge.page.link', // TODO: set your dynamic link domain
+        uriPrefix:
+            'https://msbridge.page.link', // TODO: set your dynamic link domain
         androidParameters: const AndroidParameters(
           packageName: 'com.syntaxlab.msbridge',
           minimumVersion: 1,
@@ -33,7 +36,8 @@ class ShareRepository {
           minimumVersion: '1.0.0',
         ),
       );
-      final ShortDynamicLink short = await FirebaseDynamicLinks.instance.buildShortLink(params);
+      final ShortDynamicLink short =
+          await FirebaseDynamicLinks.instance.buildShortLink(params);
       return short.shortUrl.toString();
     } catch (_) {
       // Fallback to default hosting URL
@@ -42,6 +46,12 @@ class ShareRepository {
   }
 
   static Future<String> enableShare(NoteTakingModel note) async {
+    if (_isOperationInProgress) {
+      FirebaseCrashlytics.instance
+          .log('Share operation already in progress. Please wait.');
+      throw Exception('Share operation already in progress. Please wait.');
+    }
+
     if (note.noteId == null || note.noteId!.isEmpty) {
       throw Exception('Note must be saved before sharing.');
     }
@@ -51,61 +61,87 @@ class ShareRepository {
       throw Exception('You must be logged in to enable sharing.');
     }
 
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final Box meta = await _getShareMetaBox();
+    _isOperationInProgress = true;
 
-    // Reuse existing shareId if present
-    final Map? existing = meta.get(note.noteId) as Map?;
-    final String shareId = existing != null && existing['shareId'] is String && (existing['shareId'] as String).isNotEmpty
-        ? existing['shareId'] as String
-        : generateUuid();
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final Box meta = await _getShareMetaBox();
 
-    final String shareUrl = await _buildDynamicLink(shareId);
+      // Reuse existing shareId if present
+      final Map? existing = meta.get(note.noteId) as Map?;
+      final String shareId = existing != null &&
+              existing['shareId'] is String &&
+              (existing['shareId'] as String).isNotEmpty
+          ? existing['shareId'] as String
+          : generateUuid();
 
-    final Map<String, dynamic> payload = {
-      'shareId': shareId,
-      'noteId': note.noteId,
-      'title': note.noteTitle,
-      'content': note.noteContent,
-      'ownerUid': user.uid,
-      'updatedAt': DateTime.now().toIso8601String(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'viewOnly': true,
-      'shareUrl': shareUrl,
-    };
+      final String shareUrl = await _buildDynamicLink(shareId);
 
-    await firestore.collection(_shareCollection).doc(shareId).set(payload, SetOptions(merge: true));
+      final Map<String, dynamic> payload = {
+        'shareId': shareId,
+        'noteId': note.noteId,
+        'title': note.noteTitle,
+        'content': note.noteContent,
+        'ownerUid': user.uid,
+        'updatedAt': DateTime.now().toIso8601String(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'viewOnly': true,
+        'shareUrl': shareUrl,
+      };
 
-    await meta.put(note.noteId, {
-      'shareId': shareId,
-      'enabled': true,
-      'shareUrl': shareUrl,
-      'title': note.noteTitle,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+      await firestore
+          .collection(_shareCollection)
+          .doc(shareId)
+          .set(payload, SetOptions(merge: true));
 
-    return shareUrl;
+      await meta.put(note.noteId, {
+        'shareId': shareId,
+        'enabled': true,
+        'shareUrl': shareUrl,
+        'title': note.noteTitle,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      return shareUrl;
+    } finally {
+      _isOperationInProgress = false;
+    }
   }
 
   static Future<void> disableShare(NoteTakingModel note) async {
-    if (note.noteId == null || note.noteId!.isEmpty) return;
-
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final Box meta = await _getShareMetaBox();
-    final Map? existing = meta.get(note.noteId) as Map?;
-    final String? shareId = existing != null ? existing['shareId'] as String? : null;
-
-    if (shareId != null && shareId.isNotEmpty) {
-      await firestore.collection(_shareCollection).doc(shareId).delete().catchError((_) {});
+    if (_isOperationInProgress) {
+      throw Exception('Share operation already in progress. Please wait.');
     }
 
-    await meta.put(note.noteId, {
-      'shareId': shareId ?? '',
-      'enabled': false,
-      'shareUrl': '',
-      'title': note.noteTitle,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+    if (note.noteId == null || note.noteId!.isEmpty) return;
+
+    _isOperationInProgress = true;
+
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final Box meta = await _getShareMetaBox();
+      final Map? existing = meta.get(note.noteId) as Map?;
+      final String? shareId =
+          existing != null ? existing['shareId'] as String? : null;
+
+      if (shareId != null && shareId.isNotEmpty) {
+        await firestore
+            .collection(_shareCollection)
+            .doc(shareId)
+            .delete()
+            .catchError((_) {});
+      }
+
+      await meta.put(note.noteId, {
+        'shareId': shareId ?? '',
+        'enabled': false,
+        'shareUrl': '',
+        'title': note.noteTitle,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    } finally {
+      _isOperationInProgress = false;
+    }
   }
 
   static Future<List<SharedNoteMeta>> getSharedNotes() async {
@@ -126,14 +162,17 @@ class ShareRepository {
       );
     }
     // Sort by title for stable UX
-    result.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    result
+        .sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     return result;
   }
 
   static Future<SharedStatus> getShareStatus(String noteId) async {
     final Box meta = await _getShareMetaBox();
     final Map? data = meta.get(noteId) as Map?;
-    if (data == null) return const SharedStatus(enabled: false, shareUrl: '', shareId: '');
+    if (data == null) {
+      return const SharedStatus(enabled: false, shareUrl: '', shareId: '');
+    }
     return SharedStatus(
       enabled: (data['enabled'] as bool?) ?? false,
       shareUrl: (data['shareUrl'] as String?) ?? '',
@@ -188,5 +227,6 @@ class SharedStatus {
   final String shareUrl;
   final String shareId;
 
-  const SharedStatus({required this.enabled, required this.shareUrl, required this.shareId});
+  const SharedStatus(
+      {required this.enabled, required this.shareUrl, required this.shareId});
 }

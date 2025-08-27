@@ -290,4 +290,33 @@ class VersionSyncService {
       };
     }
   }
+
+  Future<void> pruneCloudVersions({
+    required String userId,
+    required String noteId,
+    required int keepLatest,
+  }) async {
+    try {
+      final versionsRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(noteId)
+          .collection('versions');
+
+      final snapshot =
+          await versionsRef.orderBy('versionNumber', descending: true).get();
+
+      if (snapshot.docs.length <= keepLatest) return;
+      final toDelete = snapshot.docs.skip(keepLatest);
+      final batch = _firestore.batch();
+      for (final doc in toDelete) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(e, st,
+          reason: 'Failed pruning cloud versions for noteId=$noteId');
+    }
+  }
 }

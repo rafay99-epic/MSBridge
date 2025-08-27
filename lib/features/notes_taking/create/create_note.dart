@@ -19,7 +19,6 @@ import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/widgets/edge_autoscroll_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:share_plus/share_plus.dart';
@@ -62,6 +61,8 @@ class _CreateNoteState extends State<CreateNote>
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
   bool _hasSelection = false;
+  bool _isShareOperationInProgress =
+      false; // Added to prevent multiple share operations
   StreamSubscription? _docChangesSub;
 
   void _addTag(String rawTag) {
@@ -1273,45 +1274,91 @@ class _CreateNoteState extends State<CreateNote>
                     Text('Share via link',
                         style: theme.textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700)),
-                    Switch(
-                      value: enabled,
-                      onChanged: (value) async {
-                        try {
-                          if (value) {
-                            final url = await ShareRepository.enableShare(note);
-                            setStateSheet(() {
-                              enabled = true;
-                              currentUrl = url;
-                            });
-                            if (mounted) {
-                              CustomSnackBar.show(context, 'Share link enabled',
-                                  isSuccess: true);
-                            }
-                          } else {
-                            await ShareRepository.disableShare(note);
-                            setStateSheet(() {
-                              enabled = false;
-                              currentUrl = null;
-                            });
-                            if (mounted) {
-                              CustomSnackBar.show(
-                                  context, 'Share link disabled',
-                                  isSuccess: false);
-                            }
-                          }
-                        } catch (e) {
-                          FirebaseCrashlytics.instance.recordError(
-                            e,
-                            StackTrace.current,
-                            reason: 'Failed to enable/disable share',
-                          );
-                          if (mounted) {
-                            CustomSnackBar.show(context, e.toString(),
-                                isSuccess: false);
-                          }
-                        }
-                      },
-                    )
+                    Row(
+                      children: [
+                        if (_isShareOperationInProgress) ...[
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondary
+                                    .withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    theme.colorScheme.secondary,
+                                  ),
+                                  backgroundColor: theme.colorScheme.secondary
+                                      .withOpacity(0.20),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                        Switch(
+                          value: enabled,
+                          onChanged: _isShareOperationInProgress
+                              ? null
+                              : (value) async {
+                                  // Prevent multiple taps while operation is in progress
+                                  if (_isShareOperationInProgress) return;
+
+                                  setStateSheet(() {
+                                    _isShareOperationInProgress = true;
+                                  });
+
+                                  try {
+                                    if (value) {
+                                      final url =
+                                          await ShareRepository.enableShare(
+                                              note);
+                                      setStateSheet(() {
+                                        enabled = true;
+                                        currentUrl = url;
+                                      });
+                                      if (mounted) {
+                                        CustomSnackBar.show(
+                                            context, 'Share link enabled',
+                                            isSuccess: true);
+                                      }
+                                    } else {
+                                      await ShareRepository.disableShare(note);
+                                      setStateSheet(() {
+                                        enabled = false;
+                                        currentUrl = null;
+                                      });
+                                      if (mounted) {
+                                        CustomSnackBar.show(
+                                            context, 'Share link disabled',
+                                            isSuccess: false);
+                                      }
+                                    }
+                                  } catch (e) {
+                                    FirebaseCrashlytics.instance.recordError(
+                                      e,
+                                      StackTrace.current,
+                                      reason: 'Failed to enable/disable share',
+                                    );
+                                    if (mounted) {
+                                      CustomSnackBar.show(context, e.toString(),
+                                          isSuccess: false);
+                                    }
+                                  } finally {
+                                    // Reset loading state
+                                    setStateSheet(() {
+                                      _isShareOperationInProgress = false;
+                                    });
+                                  }
+                                },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

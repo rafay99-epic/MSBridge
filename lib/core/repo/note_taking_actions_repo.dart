@@ -81,23 +81,7 @@ class NoteTakingActions {
             previousVersionId = existingVersions.first.versionId;
           }
 
-          // Create new version locally first
-          final versionId = generateUuid();
-          final newVersion = NoteVersion(
-            versionId: versionId,
-            noteId: note.noteId!,
-            noteTitle: note.noteTitle,
-            noteContent: note.noteContent,
-            tags: note.tags,
-            createdAt: DateTime.now(),
-            userId: note.userId,
-            changeDescription: changeDescription,
-            versionNumber: note.versionNumber,
-            changes: changeDescription.isNotEmpty
-                ? [changeDescription]
-                : ['Content updated'],
-            previousVersionId: previousVersionId ?? '',
-          );
+          // Create new version locally first (ID generated inside repo)
 
           // Save version to local storage
           await NoteVersionRepo.createVersion(
@@ -110,77 +94,23 @@ class NoteTakingActions {
             changeDescription: changeDescription,
             previousVersionId: previousVersionId,
           );
-
-          // Enforce local cap immediately after creating version
           try {
             final prefs = await SharedPreferences.getInstance();
             final int keepCount = prefs.getInt('max_versions_to_keep') ?? 3;
             await NoteVersionRepo.deleteOldVersions(note.noteId!, keepCount);
-          } catch (_) {}
-
-          // Increment version number
-          note.versionNumber++;
-
-          // Sync the created version to Firebase
-          if (true) {
-            try {
-              final FirebaseFirestore firestore = FirebaseFirestore.instance;
-              final User? user = FirebaseAuth.instance.currentUser;
-              if (user != null &&
-                  note.noteId != null &&
-                  note.noteId!.isNotEmpty) {
-                // Add version to Firebase with all required fields
-                await firestore
-                    .collection('users')
-                    .doc(user.uid)
-                    .collection('notes')
-                    .doc(note.noteId)
-                    .collection('versions')
-                    .doc(newVersion.versionId)
-                    .set({
-                  'versionId': newVersion.versionId,
-                  'noteId': newVersion.noteId,
-                  'noteTitle': newVersion.noteTitle,
-                  'noteContent': newVersion.noteContent,
-                  'tags': newVersion.tags,
-                  'userId': newVersion.userId,
-                  'versionNumber': newVersion.versionNumber,
-                  'changeDescription': newVersion.changeDescription,
-                  'previousVersionId': newVersion.previousVersionId,
-                  'changes': newVersion.changes,
-                  'createdAt': newVersion.createdAt.toIso8601String(),
-                  'syncedAt': DateTime.now().toIso8601String(),
-                });
-
-                // Enforce per-note max versions in cloud
-                try {
-                  final prefs = await SharedPreferences.getInstance();
-                  final int keepCount =
-                      prefs.getInt('max_versions_to_keep') ?? 3;
-                  await _pruneCloudVersions(
-                    firestore: firestore,
-                    userId: user.uid,
-                    noteId: note.noteId!,
-                    keepLatest: keepCount,
-                  );
-                } catch (_) {}
-              }
-            } catch (e) {
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
-              // Don't fail the note update if Firebase sync fails
-              print('Failed to sync version to Firebase: $e');
-            }
+          } catch (e) {
+            FirebaseCrashlytics.instance.recordError(
+              Exception('Error deleting old versions'),
+              StackTrace.current,
+              reason: 'Error deleting old versions: $e',
+            );
           }
+          note.versionNumber++;
         } catch (e) {
           FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
-          print('Failed to create version: $e');
           throw Exception("Error creating version: $e");
-
-          // Don't fail the note update if version creation fails
         }
       }
-
-      // Update note
       note.noteTitle = title;
       note.noteContent = content;
       note.updatedAt = DateTime.now();
@@ -276,7 +206,8 @@ class NoteTakingActions {
               FirebaseCrashlytics.instance.recordError(
                 e,
                 StackTrace.current,
-                reason: 'Failed to delete versions for note ${noteToDelete.noteId}',
+                reason:
+                    'Failed to delete versions for note ${noteToDelete.noteId}',
               );
             }
 
@@ -466,38 +397,6 @@ class NoteTakingActions {
     } catch (e) {
       return true; // Default to enabled if there's an error
     }
-  }
-}
-
-/// Helper to prune cloud versions to keep only the latest N per note
-Future<void> _pruneCloudVersions({
-  required FirebaseFirestore firestore,
-  required String userId,
-  required String noteId,
-  required int keepLatest,
-}) async {
-  try {
-    final versionsRef = firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notes')
-        .doc(noteId)
-        .collection('versions');
-
-    // Order by versionNumber descending, skip first keepLatest, delete the rest
-    final snapshot =
-        await versionsRef.orderBy('versionNumber', descending: true).get();
-
-    if (snapshot.docs.length <= keepLatest) return;
-    final toDelete = snapshot.docs.skip(keepLatest);
-    final batch = firestore.batch();
-    for (final doc in toDelete) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
-  } catch (e, st) {
-    FirebaseCrashlytics.instance.recordError(e, st,
-        reason: 'Failed pruning cloud versions for noteId=$noteId');
   }
 }
 
