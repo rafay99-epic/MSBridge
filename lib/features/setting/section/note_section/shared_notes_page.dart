@@ -16,8 +16,6 @@ class SharedNotesPage extends StatefulWidget {
 }
 
 class _SharedNotesPageState extends State<SharedNotesPage> {
-  List<SharedNoteMeta> _sharedNotes = [];
-  bool _isLoading = true;
   bool _isDisableOperationInProgress =
       false; // Added to prevent multiple operations
 
@@ -359,8 +357,10 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   colorScheme.primary,
                   () async {
                     await Clipboard.setData(ClipboardData(text: item.shareUrl));
-                    if (mounted)
-                      CustomSnackBar.show(context, 'Link copied to clipboard');
+                    if (mounted) {
+                      CustomSnackBar.show(context, 'Link copied to clipboard',
+                          isSuccess: true);
+                    }
                   },
                 ),
                 _buildActionButton(

@@ -16,7 +16,6 @@ import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
-import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
@@ -101,9 +100,6 @@ void main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => ThemeProvider()),
-          ChangeNotifierProvider(
-              create: (context) =>
-                  ConnectivityProvider(navigatorKey: navigatorKey)),
           ChangeNotifierProvider(
               create: (context) => TodoProvider()..initialize()),
           ChangeNotifierProvider(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
+import 'package:page_transition/page_transition.dart';
 
 class QuickActionsWidget extends StatefulWidget {
   final ThemeData theme;
@@ -51,70 +53,126 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: QuickActionTile(
-              title: "Logout",
-              icon: LineIcons.alternateSignOut,
-              color: Colors.red,
-              onTap: widget.onLogout,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _isSyncing
-                ? _buildSyncingTile()
-                : QuickActionTile(
-                    title: "Sync Now",
-                    icon: LineIcons.syncIcon,
-                    color: _cloudSyncEnabled
-                        ? widget.colorScheme.secondary
-                        : Colors.grey,
-                    onTap: _cloudSyncEnabled
-                        ? _handleSync
-                        : _showEnableCloudSyncMessage,
-                    disabled: !_cloudSyncEnabled,
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _isPulling
-                ? _buildPullingTile()
-                : QuickActionTile(
-                    title: "Pull Cloud",
-                    icon: LineIcons.cloud,
-                    color: _cloudSyncEnabled
-                        ? widget.colorScheme.tertiary
-                        : Colors.grey,
-                    onTap: _cloudSyncEnabled
-                        ? _handlePullFromCloud
-                        : _showEnableCloudSyncMessage,
-                    disabled: !_cloudSyncEnabled,
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: QuickActionTile(
-              title: "Backup",
-              icon: LineIcons.download,
-              color: widget.colorScheme.primary,
-              onTap: widget.onBackup,
-            ),
-          ),
-        ],
-      ),
+      child: _buildDynamicGrid(),
     );
   }
 
-  Widget _buildSyncingTile() {
+  Widget _buildDynamicGrid() {
+    // Define all quick actions in a list for easy management
+    final List<QuickActionItem> actions = [
+      QuickActionItem(
+        title: "Logout",
+        icon: LineIcons.alternateSignOut,
+        color: Colors.red,
+        onTap: widget.onLogout,
+        isDisabled: false,
+      ),
+      QuickActionItem(
+        title: "Sync Now",
+        icon: LineIcons.syncIcon,
+        color: _cloudSyncEnabled ? widget.colorScheme.secondary : Colors.grey,
+        onTap: _cloudSyncEnabled ? _handleSync : _showEnableCloudSyncMessage,
+        isDisabled: !_cloudSyncEnabled,
+        isLoading: _isSyncing,
+      ),
+      QuickActionItem(
+        title: "Pull Cloud",
+        icon: LineIcons.cloud,
+        color: _cloudSyncEnabled ? widget.colorScheme.tertiary : Colors.grey,
+        onTap: _cloudSyncEnabled
+            ? _handlePullFromCloud
+            : _showEnableCloudSyncMessage,
+        isDisabled: !_cloudSyncEnabled,
+        isLoading: _isPulling,
+      ),
+      QuickActionItem(
+        title: "Backup",
+        icon: LineIcons.download,
+        color: widget.colorScheme.primary,
+        onTap: widget.onBackup,
+        isDisabled: false,
+      ),
+      QuickActionItem(
+        title: "Recycle Bin",
+        icon: LineIcons.trash,
+        color: Colors.orange,
+        onTap: _navigateToRecycleBin,
+        isDisabled: false,
+      ),
+      // Add more actions here easily - they'll automatically flow to new rows
+    ];
+
+    return Column(
+      children: _buildRows(actions),
+    );
+  }
+
+  List<Widget> _buildRows(List<QuickActionItem> actions) {
+    final List<Widget> rows = [];
+    const int itemsPerRow = 4;
+
+    for (int i = 0; i < actions.length; i += itemsPerRow) {
+      final endIndex =
+          (i + itemsPerRow < actions.length) ? i + itemsPerRow : actions.length;
+      final rowActions = actions.sublist(i, endIndex);
+
+      rows.add(
+        Row(
+          children: _buildRowItems(rowActions, itemsPerRow),
+        ),
+      );
+
+      // Add spacing between rows (except after the last row)
+      if (endIndex < actions.length) {
+        rows.add(const SizedBox(height: 12));
+      }
+    }
+
+    return rows;
+  }
+
+  List<Widget> _buildRowItems(
+      List<QuickActionItem> rowActions, int maxItemsPerRow) {
+    final List<Widget> items = [];
+
+    for (int i = 0; i < maxItemsPerRow; i++) {
+      if (i < rowActions.length) {
+        // Add the action
+        items.add(
+          Expanded(
+            child: rowActions[i].isLoading
+                ? _buildLoadingTile(rowActions[i])
+                : QuickActionTile(
+                    title: rowActions[i].title,
+                    icon: rowActions[i].icon,
+                    color: rowActions[i].color,
+                    onTap: rowActions[i].onTap,
+                    disabled: rowActions[i].isDisabled,
+                  ),
+          ),
+        );
+      } else {
+        // Add empty space to maintain grid alignment
+        items.add(const Expanded(child: SizedBox()));
+      }
+
+      // Add spacing between items (except after the last item)
+      if (i < maxItemsPerRow - 1) {
+        items.add(const SizedBox(width: 12));
+      }
+    }
+
+    return items;
+  }
+
+  Widget _buildLoadingTile(QuickActionItem action) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: widget.colorScheme.secondary.withOpacity(0.1),
+        color: action.color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: widget.colorScheme.secondary.withOpacity(0.2),
+          color: action.color.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -130,10 +188,10 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Syncing...",
+            action.title == "Sync Now" ? "Syncing..." : "Pulling...",
             style: widget.theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: widget.colorScheme.secondary,
+              color: action.color,
             ),
             textAlign: TextAlign.center,
           ),
@@ -142,37 +200,11 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
     );
   }
 
-  Widget _buildPullingTile() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: widget.colorScheme.tertiary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.colorScheme.tertiary.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Pulling...",
-            style: widget.theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: widget.colorScheme.tertiary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+  void _navigateToRecycleBin() {
+    Navigator.of(context).push(
+      PageTransition(
+        type: PageTransitionType.rightToLeft,
+        child: const DeletedNotes(),
       ),
     );
   }
@@ -238,6 +270,24 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
       isSuccess: false,
     );
   }
+}
+
+class QuickActionItem {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final bool isDisabled;
+  final bool isLoading;
+
+  const QuickActionItem({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    this.isDisabled = false,
+    this.isLoading = false,
+  });
 }
 
 class QuickActionTile extends StatelessWidget {
