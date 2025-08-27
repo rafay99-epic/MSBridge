@@ -21,6 +21,9 @@ import 'dart:io';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
 import 'package:msbridge/core/services/device_ID/device_id_service.dart';
+import 'package:msbridge/core/repo/streak_repo.dart';
+import 'package:msbridge/core/repo/streak_settings_repo.dart';
+import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
 
 class BgTasks {
   static const String taskPeriodicAll = 'msbridge.periodic.all';
@@ -347,6 +350,30 @@ Future<void> callbackDispatcher() async {
               await StreakSyncService().pushTodayIfDue();
               FirebaseCrashlytics.instance
                   .log('Streak sync completed successfully');
+
+              // After streak sync, reschedule local notifications
+              try {
+                final settings = await StreakSettingsRepo.getStreakSettings();
+                final streak = await StreakRepo.getStreakData();
+                await StreakNotificationService.evaluateAndScheduleAll(
+                  notificationsEnabled: settings.notificationsEnabled &&
+                      settings.hasAnyNotificationsEnabled,
+                  dailyReminders: settings.dailyReminders,
+                  urgentReminders: settings.urgentReminders,
+                  dailyTime: settings.notificationTime,
+                  soundEnabled: settings.soundEnabled,
+                  vibrationEnabled: settings.vibrationEnabled,
+                  isStreakAboutToEnd: streak.isStreakAboutToEnd,
+                );
+                FirebaseCrashlytics.instance.log(
+                    'Streak notifications scheduled from background worker');
+              } catch (e, st) {
+                await FirebaseCrashlytics.instance.recordError(
+                  e,
+                  st,
+                  reason: 'Failed scheduling streak notifications in worker',
+                );
+              }
             } catch (e) {
               FirebaseCrashlytics.instance.recordError(
                 e,

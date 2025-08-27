@@ -97,6 +97,53 @@ class StreakNotificationService {
     }
   }
 
+  // Evaluate current settings/state and schedule the right notifications.
+  // This runs safely in foreground or background isolates.
+  static Future<void> evaluateAndScheduleAll({
+    required bool notificationsEnabled,
+    required bool dailyReminders,
+    required bool urgentReminders,
+    required TimeOfDay dailyTime,
+    required bool soundEnabled,
+    required bool vibrationEnabled,
+    required bool isStreakAboutToEnd,
+  }) async {
+    try {
+      await initialize();
+
+      if (!notificationsEnabled) {
+        await cancelAllNotifications();
+        return;
+      }
+
+      if (dailyReminders) {
+        await scheduleDailyReminder(
+          time: dailyTime,
+          enabled: true,
+          soundEnabled: soundEnabled,
+          vibrationEnabled: vibrationEnabled,
+        );
+      } else {
+        await cancelDailyReminder();
+      }
+
+      if (urgentReminders && isStreakAboutToEnd) {
+        await scheduleStreakEndingReminder(
+          soundEnabled: soundEnabled,
+          vibrationEnabled: vibrationEnabled,
+        );
+      } else {
+        await cancelStreakEndingReminder();
+      }
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'Failed to evaluate/schedule streak notifications',
+      );
+    }
+  }
+
   // Schedule daily reminder notification
   static Future<void> scheduleDailyReminder({
     required TimeOfDay time,
