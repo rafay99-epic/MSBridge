@@ -258,7 +258,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
   void _loadChat(BuildContext context, ChatHistory history) {
     final chat = Provider.of<ChatProvider>(context, listen: false);
     chat.loadChatFromHistory(history);
-    Navigator.pop(context);
+    // Show feedback, then close only the history sheet
     CustomSnackBar.show(context, 'Chat loaded from history', isSuccess: true);
     Navigator.pop(context);
   }
