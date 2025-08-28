@@ -436,17 +436,41 @@ USER_QUESTION: $question'''),
         ));
       }
 
-      // Update context based on history settings
+      // Update context based on history settings in the background to avoid UI jank
       if (chatHistory.includePersonal || chatHistory.includeMsNotes) {
-        _contextJson = await NotesContextBuilder.buildJson(
-          includePersonal: chatHistory.includePersonal,
-          includeMsNotes: chatHistory.includeMsNotes,
-        );
+        Future.microtask(() async {
+          try {
+            _contextJson = await NotesContextBuilder.buildJson(
+              includePersonal: chatHistory.includePersonal,
+              includeMsNotes: chatHistory.includeMsNotes,
+            );
+            notifyListeners();
+          } catch (e, stack) {
+            await FirebaseCrashlytics.instance.recordError(
+              e,
+              stack,
+              reason: 'Failed to build context after loading history',
+              information: ['Chat ID: ${chatHistory.id}'],
+            );
+          }
+        });
       }
 
-      // Initialize model if needed
+      // Initialize model if needed without blocking the UI
       if (_model == null) {
-        await _initializeModel();
+        Future.microtask(() async {
+          try {
+            await _initializeModel();
+            notifyListeners();
+          } catch (e, stackTrace) {
+            await FirebaseCrashlytics.instance.recordError(
+              e,
+              stackTrace,
+              reason: 'Failed to initialize model after loading history',
+              information: ['Chat ID: ${chatHistory.id}'],
+            );
+          }
+        });
       }
 
       _clearError();
