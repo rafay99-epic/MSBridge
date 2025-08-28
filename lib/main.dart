@@ -9,6 +9,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
+import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
@@ -118,6 +119,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
           ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),

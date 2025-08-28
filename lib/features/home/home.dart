@@ -202,17 +202,6 @@ class _HomeState extends State<Home> {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: colorScheme.shadow.withOpacity(0.08),
-            //     blurRadius: 12,
-            //     offset: const Offset(0, 4),
-            //   ),
-            // ],
-            // border: Border.all(
-            //   color: colorScheme.outline.withOpacity(0.06),
-            //   width: 1,
-            // ),
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(
