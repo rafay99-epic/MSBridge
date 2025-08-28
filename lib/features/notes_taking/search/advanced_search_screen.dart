@@ -189,7 +189,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                 'noteTitle': note.noteTitle,
                 'noteContent': note.noteContent,
                 'tags': note.tags,
-                'createdAt': note.createdAt?.toIso8601String(),
+                'createdAt': note.createdAt.toIso8601String(),
                 'updatedAt': note.updatedAt.toIso8601String(),
                 'isDeleted': note.isDeleted,
                 'isSynced': note.isSynced,

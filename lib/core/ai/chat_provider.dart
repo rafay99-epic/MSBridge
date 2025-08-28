@@ -9,18 +9,26 @@ import 'package:msbridge/config/config.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/repo/chat_history_repo.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
 
 class ChatMessage {
   final bool fromUser;
   final String text;
   final bool isError;
   final String? errorDetails;
+  final List<String> imageUrls; // optional attachments to render with message
 
-  ChatMessage(this.fromUser, this.text,
-      {this.isError = false, this.errorDetails});
+  ChatMessage(
+    this.fromUser,
+    this.text, {
+    this.isError = false,
+    this.errorDetails,
+    List<String>? imageUrls,
+  }) : imageUrls = imageUrls ?? const [];
 
   ChatMessage.error(this.fromUser, this.text, {this.errorDetails})
-      : isError = true;
+      : isError = true,
+        imageUrls = const [];
 }
 
 class ChatProvider extends ChangeNotifier {
@@ -28,6 +36,9 @@ class ChatProvider extends ChangeNotifier {
   GenerativeModel? _model;
   String? _contextJson;
   String _modelName = AIModelsConfig.models.first.modelName;
+
+  // Pending attachments to be included with the next ask() call
+  final List<String> _pendingImageUrls = [];
 
   // Chat history properties
   String? _currentChatId;
@@ -48,6 +59,18 @@ class ChatProvider extends ChangeNotifier {
   // Chat history getters
   String? get currentChatId => _currentChatId;
   bool get isHistoryEnabled => _isHistoryEnabled;
+  List<String> get pendingImageUrls => List.unmodifiable(_pendingImageUrls);
+
+  void addPendingImageUrl(String url) {
+    if (url.trim().isEmpty) return;
+    _pendingImageUrls.add(url.trim());
+    notifyListeners();
+  }
+
+  void clearPendingImages() {
+    _pendingImageUrls.clear();
+    notifyListeners();
+  }
 
   // Initialize the chat model
   Future<void> _initializeModel() async {
@@ -165,18 +188,23 @@ class ChatProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Ensure session is initialized
-      if (_model == null || _contextJson == null) {
-        await startSession(includePersonal: true, includeMsNotes: true);
-
-        // Check if session initialization failed
-        if (_hasError) {
-          return null;
+      // Ensure session/model based on toggles
+      if (includePersonal || includeMsNotes) {
+        if (_model == null || _contextJson == null) {
+          await startSession(
+              includePersonal: includePersonal, includeMsNotes: includeMsNotes);
+          if (_hasError) return null;
+        }
+      } else {
+        if (_model == null) {
+          await _initializeModel();
+          if (_hasError) return null;
         }
       }
 
-      // Add user message
-      messages.add(ChatMessage(true, question));
+      // Add user message merged with any pending images
+      final List<String> attachments = List<String>.from(_pendingImageUrls);
+      messages.add(ChatMessage(true, question, imageUrls: attachments));
       notifyListeners();
 
       // Save to chat history if enabled
@@ -187,7 +215,7 @@ class ChatProvider extends ChangeNotifier {
         );
       }
 
-      // Prepare content for AI with context from notes
+      // Prepare content for AI (with or without notes context)
       await FirebaseCrashlytics.instance.log(
         'Preparing AI content. Context length: ${_contextJson?.length ?? 0}',
       );
@@ -197,17 +225,9 @@ class ChatProvider extends ChangeNotifier {
         );
       }
 
-      final content = [
-        Content.text(
-            '''You are a helpful AI assistant that has access to the user's personal notes and MS Notes. Answer questions based on the provided context. If the answer is not in the notes, say you don't know. Cite note titles in parentheses when referencing specific notes.
-
-NOTES_CONTEXT:
-```json
-$_contextJson
-```
-
-USER_QUESTION: $question'''),
-      ];
+      // Build content including any pending image attachments
+      final content = await _buildGeminiContent(question,
+          includePersonal: includePersonal, includeMsNotes: includeMsNotes);
 
       // Generate AI response with timeout
       final response = await _model!.generateContent(content).timeout(
@@ -234,6 +254,16 @@ USER_QUESTION: $question'''),
         'modelUsed': _modelName,
       });
 
+      // Persist history again to include the AI response
+      if (_isHistoryEnabled) {
+        await saveChatToHistory(
+          includePersonal: includePersonal,
+          includeMsNotes: includeMsNotes,
+        );
+      }
+
+      // After a successful response, clear any pending attachments
+      _pendingImageUrls.clear();
       return text;
     } catch (e, stackTrace) {
       _setError(
@@ -245,9 +275,70 @@ USER_QUESTION: $question'''),
       messages.add(
           ChatMessage.error(false, errorMessage, errorDetails: e.toString()));
 
+      // Persist history with the error message so restores match the UI state
+      if (_isHistoryEnabled) {
+        await saveChatToHistory(
+          includePersonal: includePersonal,
+          includeMsNotes: includeMsNotes,
+        );
+      }
+
       notifyListeners();
       return null;
     }
+  }
+
+  // Removed unused text-only URL collector; image bytes are now attached via _buildGeminiContent.
+
+  Future<List<Content>> _buildGeminiContent(String question,
+      {required bool includePersonal, required bool includeMsNotes}) async {
+    final List<Part> parts = [];
+    if (includePersonal || includeMsNotes) {
+      parts.add(TextPart(
+          '''You are a helpful AI assistant that has access to the user's personal notes and MS Notes. Answer questions based on the provided context. If the answer is not in the notes, say you don't know. Cite note titles in parentheses when referencing specific notes.'''));
+    } else {
+      parts.add(TextPart(
+          'You are a helpful AI assistant having a general conversation.'));
+    }
+
+    // Attach up to 2 pending image URLs as image bytes using the SDK
+    final RegExp img = RegExp(
+        r'^(http|https)://.*\.(png|jpg|jpeg|webp)(\?.*)?$',
+        caseSensitive: false);
+    final List<String> urls =
+        _pendingImageUrls.where((u) => img.hasMatch(u)).take(2).toList();
+
+    for (final url in urls) {
+      try {
+        final resp = await http.get(Uri.parse(url));
+        if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
+          final String mime = _inferMimeFromUrl(url);
+          parts.add(DataPart(mime, resp.bodyBytes));
+        }
+      } catch (e, stack) {
+        await FirebaseCrashlytics.instance.recordError(
+          e,
+          stack,
+          reason: 'Failed to fetch image bytes for Gemini',
+          information: ['url: $url'],
+        );
+      }
+    }
+
+    // Include notes context only if enabled
+    if (includePersonal || includeMsNotes) {
+      parts.add(TextPart(
+          '''\nNOTES_CONTEXT:\n```json\n${_contextJson ?? ''}\n```\n'''));
+    }
+    parts.add(TextPart('USER_QUESTION: $question'));
+    return [Content.multi(parts)];
+  }
+
+  String _inferMimeFromUrl(String url) {
+    final lower = url.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 
   // Retry the last question
@@ -387,6 +478,7 @@ USER_QUESTION: $question'''),
                 timestamp: DateTime.now(),
                 isError: msg.isError,
                 errorDetails: msg.errorDetails,
+                imageUrls: msg.imageUrls.isEmpty ? null : msg.imageUrls,
               ))
           .toList();
 
@@ -433,6 +525,7 @@ USER_QUESTION: $question'''),
           historyMsg.text,
           isError: historyMsg.isError,
           errorDetails: historyMsg.errorDetails,
+          imageUrls: historyMsg.imageUrls ?? const [],
         ));
       }
 

@@ -77,13 +77,14 @@ class ChatHistoryMessageAdapter extends TypeAdapter<ChatHistoryMessage> {
       timestamp: fields[2] as DateTime,
       isError: fields[3] as bool,
       errorDetails: fields[4] as String?,
+      imageUrls: (fields[5] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatHistoryMessage obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.text)
       ..writeByte(1)
@@ -93,7 +94,9 @@ class ChatHistoryMessageAdapter extends TypeAdapter<ChatHistoryMessage> {
       ..writeByte(3)
       ..write(obj.isError)
       ..writeByte(4)
-      ..write(obj.errorDetails);
+      ..write(obj.errorDetails)
+      ..writeByte(5)
+      ..write(obj.imageUrls);
   }
 
   @override

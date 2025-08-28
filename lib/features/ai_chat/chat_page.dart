@@ -7,6 +7,10 @@ import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:msbridge/features/ai_chat/uploadthing_test_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
 class ChatSettingsBottomSheet extends StatelessWidget {
   const ChatSettingsBottomSheet({
@@ -503,10 +507,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // REMOVED MultiProvider from here as per your request.
-    // Assuming ChatProvider, ChatHistoryProvider, and AiConsentProvider
-    // are initialized higher up (e.g., in main.dart) and are accessible
-    // via the current build context.
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: CustomAppBar(
@@ -531,9 +531,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           position: _slideAnimation,
           child: Column(
             children: [
-              // The header section (settings) is now in the bottom sheet.
-              // The main body will just contain chat messages and the composer.
-
               // Chat Messages
               Expanded(
                 child: Consumer<ChatProvider>(
@@ -552,7 +549,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 ),
               ),
 
-              // Typing Indicator
               if (_isTyping) _buildTypingIndicator(context, colorScheme),
 
               // Message Composer
@@ -691,6 +687,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         final message = chat.messages[index];
         final isUser = message.fromUser;
 
+        // kept for legacy rendering; not used when message.imageUrls is present
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           child: Row(
@@ -776,6 +773,26 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (isUser && message.imageUrls.isNotEmpty) ...[
+                        for (final imgUrl in message.imageUrls)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imgUrl,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Text(
+                                  'Image preview unavailable',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                       if (isUser)
                         SelectableText(
                           message.text,
@@ -1013,6 +1030,11 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         ),
         child: Row(
           children: [
+            IconButton(
+              onPressed: () => _attachImage(context),
+              icon: Icon(LineIcons.image, color: colorScheme.primary),
+              tooltip: 'Attach Image',
+            ),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -1086,6 +1108,38 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       ),
     );
   }
+
+  Future<void> _attachImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final x =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (x == null) return;
+    final prov = Provider.of<UploadThingProvider>(context, listen: false);
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+    // Informative placeholder
+    chat.messages.add(ChatMessage(true, 'Uploading image...'));
+    setState(() {});
+    final url = await prov.uploadImage(File(x.path));
+    if (!mounted) return;
+    // Replace placeholder and do not show URL bubble
+    if (chat.messages.isNotEmpty &&
+        chat.messages.last.text == 'Uploading image...') {
+      chat.messages.removeLast();
+    }
+    if (url != null) {
+      chat.addPendingImageUrl(url); // queue for next AI call only
+      // Also remember it locally to merge with the next user message bubble
+      // We don't render it now to keep a single combined bubble when user sends text.
+      CustomSnackBar.show(
+          context, 'Image attached. Type your question and send.',
+          isSuccess: true);
+    } else {
+      CustomSnackBar.show(context, 'Image upload failed');
+    }
+    setState(() {});
+  }
+
+  // Legacy helper removed; image rendering now uses message.imageUrls
 
   void _sendMessage(BuildContext context) async {
     final question = _controller.text.trim();

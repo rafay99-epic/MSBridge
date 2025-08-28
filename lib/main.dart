@@ -43,6 +43,7 @@ import 'package:msbridge/theme/colors.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -120,6 +121,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => UploadThingProvider()),
           ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),
