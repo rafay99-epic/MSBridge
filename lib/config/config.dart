@@ -19,7 +19,6 @@ class NoteSummaryAPI {
 }
 
 class ChatAPI {
-  // Add your new Gemini API key here for chat functionality
   static const String apiKey = "";
 }
 
@@ -33,4 +32,8 @@ class APKFile {
       'https://msbridge.rafay99.com/downloads/ms-bridge-stable.apk';
   static const String betaApkFile =
       'https://msbridge.rafay99.com/downloads/ms-bridge-beta.apk';
+}
+
+class UploadThingConfig {
+  static const String apiKey = '';
 }
