@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/ai/notes_context_builder.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,7 +163,7 @@ class ChatProvider extends ChangeNotifier {
       });
 
       return true;
-    } catch (e, stackTrace) {
+    } catch (e) {
       _setError('Failed to start chat session: ${e.toString()}', e);
       _isLoading = false;
       notifyListeners();

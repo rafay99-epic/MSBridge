@@ -5,7 +5,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/utils/uuid.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class ShareRepository {
   static const String _shareCollection = 'shared_notes';
