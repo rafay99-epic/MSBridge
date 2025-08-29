@@ -37,10 +37,6 @@ class _FoldersPageState extends State<FoldersPage> {
 
   // Memoized computation - only recalculates when notes actually change
   void _computeTagData(List<NoteTakingModel> notes) {
-    if (_lastProcessedNotes != null &&
-        listEquals(_lastProcessedNotes!, notes)) {
-      return; // No change, use cached values
-    }
 
     final Map<String, int> tagCounts = {};
     int untagged = 0;
