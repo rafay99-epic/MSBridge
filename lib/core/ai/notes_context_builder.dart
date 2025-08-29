@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
@@ -25,7 +25,7 @@ class NotesContextBuilder {
         final box = await Hive.openBox<NoteTakingModel>('notes');
 
         if (!box.isOpen) {
-          await FirebaseCrashlytics.instance.log(
+          await FlutterBugfender.error(
             'Personal notes box is not open. This may cause issues.',
           );
         }
@@ -34,11 +34,11 @@ class NotesContextBuilder {
           ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
         if (items.isEmpty) {
-          await FirebaseCrashlytics.instance.log(
+          await FlutterBugfender.error(
             'Personal notes box is empty. No notes found for AI context.',
           );
         } else {
-          await FirebaseCrashlytics.instance.log(
+          await FlutterBugfender.error(
             'Found ${items.length} personal notes for AI context. Budget: $budget characters',
           );
         }
@@ -62,18 +62,12 @@ class NotesContextBuilder {
           (root['personal'] as List).add(obj);
         }
 
-        await FirebaseCrashlytics.instance.log(
+        await FlutterBugfender.log(
           'Added ${(root['personal'] as List).length} personal notes to context. Remaining budget: $budget characters',
         );
-      } catch (e, st) {
-        await FirebaseCrashlytics.instance.recordError(
-          e,
-          st,
-          reason: 'Failed to load personal notes for AI context',
-          information: [
-            'Box name: notes',
-            'Include personal: $includePersonal'
-          ],
+      } catch (e) {
+        await FlutterBugfender.error(
+          'Failed to load personal notes for AI context: $e',
         );
         rethrow;
       }
@@ -85,11 +79,11 @@ class NotesContextBuilder {
         final items = box.values.toList();
 
         if (items.isEmpty) {
-          await FirebaseCrashlytics.instance.log(
+          await FlutterBugfender.log(
             'MS Notes box is empty. No MS notes found for AI context.',
           );
         } else {
-          await FirebaseCrashlytics.instance.log(
+          await FlutterBugfender.log(
             'Found ${items.length} MS notes for AI context. Budget: $budget characters',
           );
         }
@@ -113,18 +107,12 @@ class NotesContextBuilder {
           (root['msNotes'] as List).add(obj);
         }
 
-        await FirebaseCrashlytics.instance.log(
+        await FlutterBugfender.log(
           'Added ${(root['msNotes'] as List).length} MS notes to context. Remaining budget: $budget characters',
         );
-      } catch (e, st) {
-        await FirebaseCrashlytics.instance.recordError(
-          e,
-          st,
-          reason: 'Failed to load MS notes for AI context',
-          information: [
-            'Box name: notesBox',
-            'Include MS notes: $includeMsNotes'
-          ],
+      } catch (e) {
+        await FlutterBugfender.error(
+          'Failed to load MS notes for AI context: $e',
         );
         rethrow;
       }
@@ -152,7 +140,11 @@ class NotesContextBuilder {
                 : '')
             .join('');
       }
-    } catch (_) {}
+    } catch (e) {
+      FlutterBugfender.error(
+        'Failed to parse Quill delta: $e',
+      );
+    }
     return content;
   }
 }

@@ -89,10 +89,10 @@ class ChatProvider extends ChangeNotifier {
           maxOutputTokens: 2048,
         ),
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Try fallback to a stable model
       try {
-        _modelName = 'gemini-1.5-pro';
+        _modelName = 'gemini-2.5-pro';
         _model = GenerativeModel(
           model: _modelName,
           apiKey: ChatAPI.apiKey,
@@ -103,9 +103,8 @@ class ChatProvider extends ChangeNotifier {
             maxOutputTokens: 2048,
           ),
         );
-      } catch (fallbackError, _) {
-        _setError(
-            'Failed to initialize AI model: ${e.toString()}', e, stackTrace);
+      } catch (fallbackError) {
+        _setError('Failed to initialize AI model: ${e.toString()}', e);
       }
     }
   }
@@ -143,14 +142,14 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Build context from notes
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Building AI context: includePersonal=$includePersonal, includeMsNotes=$includeMsNotes',
       );
       _contextJson = await NotesContextBuilder.buildJson(
         includePersonal: includePersonal,
         includeMsNotes: includeMsNotes,
       );
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'AI context built successfully. Length: ${_contextJson?.length ?? 0} characters',
       );
 
@@ -166,7 +165,7 @@ class ChatProvider extends ChangeNotifier {
 
       return true;
     } catch (e, stackTrace) {
-      _setError('Failed to start chat session: ${e.toString()}', e, stackTrace);
+      _setError('Failed to start chat session: ${e.toString()}', e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -180,7 +179,7 @@ class ChatProvider extends ChangeNotifier {
     bool includeMsNotes = true,
   }) async {
     if (question.trim().isEmpty) {
-      _setError('Question cannot be empty', null, null);
+      _setError('Question cannot be empty', null);
       return null;
     }
 
@@ -217,11 +216,11 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Prepare content for AI (with or without notes context)
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Preparing AI content. Context length: ${_contextJson?.length ?? 0}',
       );
       if (_contextJson != null && _contextJson!.isNotEmpty) {
-        await FirebaseCrashlytics.instance.log(
+        await FlutterBugfender.log(
           'Context preview: ${_contextJson!.substring(0, _contextJson!.length > 200 ? 200 : _contextJson!.length)}...',
         );
       }
@@ -266,9 +265,8 @@ class ChatProvider extends ChangeNotifier {
       // After a successful response, clear any pending attachments
       _pendingImageUrls.clear();
       return text;
-    } catch (e, stackTrace) {
-      _setError(
-          'Failed to generate AI response: ${e.toString()}', e, stackTrace);
+    } catch (e) {
+      _setError('Failed to generate AI response: ${e.toString()}', e);
       _isLoading = false;
 
       // Add error message to chat
@@ -322,19 +320,13 @@ class ChatProvider extends ChangeNotifier {
           final String mime = _inferMimeFromUrl(url);
           parts.add(DataPart(mime, resp.bodyBytes));
         }
-      } on TimeoutException catch (e, stack) {
-        await FirebaseCrashlytics.instance.recordError(
-          e,
-          stack,
-          reason: 'Image fetch timed out',
-          information: ['url: $url'],
+      } on TimeoutException catch (e) {
+        await FlutterBugfender.error(
+          'Image fetch timed out +  $e',
         );
-      } catch (e, stack) {
-        await FirebaseCrashlytics.instance.recordError(
-          e,
-          stack,
-          reason: 'Failed to fetch image bytes for Gemini',
-          information: ['url: $url'],
+      } catch (e) {
+        await FlutterBugfender.error(
+          'Failed to fetch image bytes for Gemini: $e',
         );
       }
     }
@@ -388,15 +380,15 @@ class ChatProvider extends ChangeNotifier {
   }
 
   // Set error state
-  void _setError(String message, dynamic error, StackTrace? stackTrace) {
+  void _setError(String message, dynamic error) {
     _hasError = true;
     _lastErrorMessage = message;
 
     // Log to Firebase Crashlytics
     if (error != null) {
-      FirebaseCrashlytics.instance.recordError(error, stackTrace);
+      FlutterBugfender.error('Chat Provider Error: $message');
     }
-    FirebaseCrashlytics.instance.log('Chat Provider Error: $message');
+    FlutterBugfender.log('Chat Provider Error: $message');
 
     notifyListeners();
   }
@@ -421,12 +413,9 @@ class ChatProvider extends ChangeNotifier {
   Future<void> _logCustomEvent(
       String eventName, Map<String, dynamic> parameters) async {
     try {
-      FirebaseCrashlytics.instance.log('Chat Provider Event: $eventName');
-      FirebaseCrashlytics.instance
-          .setCustomKey('event_$eventName', parameters.toString());
+      FlutterBugfender.log('Chat Provider Event: $eventName');
     } catch (e) {
-      // Fallback if Crashlytics fails
-      debugPrint('Failed to log to Crashlytics: $e');
+      FlutterBugfender.error('Failed to log to Crashlytics: $e');
     }
   }
 
@@ -468,9 +457,7 @@ class ChatProvider extends ChangeNotifier {
 
     try {
       // Generate chat ID if not exists
-      if (_currentChatId == null) {
-        _currentChatId = const Uuid().v4();
-      }
+      _currentChatId ??= const Uuid().v4();
 
       // Create chat title from first user message
       String title = 'AI Chat';
@@ -511,16 +498,11 @@ class ChatProvider extends ChangeNotifier {
       // Save to Hive
       await ChatHistoryRepo.saveChatHistory(chatHistory);
 
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Chat history saved: ${chatHistory.id} with ${historyMessages.length} messages',
       );
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to save chat history',
-        information: ['Messages count: ${messages.length}'],
-      );
+    } catch (e) {
+      await FlutterBugfender.error('Failed to save chat history: $e');
     }
   }
 
@@ -539,7 +521,7 @@ class ChatProvider extends ChangeNotifier {
           historyMsg.text,
           isError: historyMsg.isError,
           errorDetails: historyMsg.errorDetails,
-          imageUrls: historyMsg.imageUrls ?? const [],
+          imageUrls: historyMsg.imageUrls,
         ));
       }
 
@@ -552,12 +534,9 @@ class ChatProvider extends ChangeNotifier {
               includeMsNotes: chatHistory.includeMsNotes,
             );
             notifyListeners();
-          } catch (e, stack) {
-            await FirebaseCrashlytics.instance.recordError(
-              e,
-              stack,
-              reason: 'Failed to build context after loading history',
-              information: ['Chat ID: ${chatHistory.id}'],
+          } catch (e) {
+            await FlutterBugfender.error(
+              'Failed to build context after loading history: $e',
             );
           }
         });
@@ -569,12 +548,9 @@ class ChatProvider extends ChangeNotifier {
           try {
             await _initializeModel();
             notifyListeners();
-          } catch (e, stackTrace) {
-            await FirebaseCrashlytics.instance.recordError(
-              e,
-              stackTrace,
-              reason: 'Failed to initialize model after loading history',
-              information: ['Chat ID: ${chatHistory.id}'],
+          } catch (e) {
+            await FlutterBugfender.error(
+              'Failed to initialize model after loading history: $e',
             );
           }
         });
@@ -583,17 +559,14 @@ class ChatProvider extends ChangeNotifier {
       _clearError();
       notifyListeners();
 
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Chat loaded from history: ${chatHistory.id}',
       );
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to load chat from history',
-        information: ['Chat ID: ${chatHistory.id}'],
+    } catch (e) {
+      await FlutterBugfender.error(
+        'Failed to load chat from history: $e',
       );
-      _setError('Failed to load chat history', e, stackTrace);
+      _setError('Failed to load chat history', e);
     }
   }
 

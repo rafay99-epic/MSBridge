@@ -26,8 +26,7 @@ class ShareRepository {
     try {
       final DynamicLinkParameters params = DynamicLinkParameters(
         link: Uri.parse(_buildDefaultShareUrl(shareId)),
-        uriPrefix:
-            'https://msbridge.rafay99.com', // Use custom domain for dynamic links
+        uriPrefix: 'https://msbridge.rafay99.com',
         androidParameters: const AndroidParameters(
           packageName: 'com.syntaxlab.msbridge',
           minimumVersion: 1,
@@ -40,7 +39,8 @@ class ShareRepository {
       final ShortDynamicLink short =
           await FirebaseDynamicLinks.instance.buildShortLink(params);
       return short.shortUrl.toString();
-    } catch (_) {
+    } catch (e) {
+      FlutterBugfender.error('Failed to build dynamic link: $e');
       // Fallback to default hosting URL
       return _buildDefaultShareUrl(shareId);
     }
@@ -48,8 +48,8 @@ class ShareRepository {
 
   static Future<String> enableShare(NoteTakingModel note) async {
     if (_isOperationInProgress) {
-      FirebaseCrashlytics.instance
-          .log('Share operation already in progress. Please wait.');
+      FlutterBugfender.error(
+          'Share operation already in progress. Please wait.');
       throw Exception('Share operation already in progress. Please wait.');
     }
 
