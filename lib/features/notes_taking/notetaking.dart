@@ -160,13 +160,15 @@ class _NotetakingState extends State<Notetaking>
     final notes = box.values.toList();
 
     // Split into pinned and unpinned notes
-    final pinnedNotes = notes
-        .where((note) => _pinProvider!.isNotePinned(note.noteId.toString()))
-        .toList();
-    final unpinnedNotes = notes
-        .where((note) => !_pinProvider!.isNotePinned(note.noteId.toString()))
-        .toList();
+    final pinnedNotes = notes.where((note) {
+      final id = note.noteId;
+      return id != null && _pinProvider!.isNotePinned(id);
+    }).toList();
 
+    final unpinnedNotes = notes.where((note) {
+      final id = note.noteId;
+      return id == null || !_pinProvider!.isNotePinned(id);
+    }).toList();
     _cachedNotes = notes;
     _cachedPinnedNotes = pinnedNotes;
     _cachedUnpinnedNotes = unpinnedNotes;
