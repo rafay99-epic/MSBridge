@@ -15,7 +15,8 @@ class EmptyNotesMessage extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final imagePath = themeProvider.currentImagePath;
-    return Center(
+    return SingleChildScrollView(
+        child: Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: ConstrainedBox(
@@ -108,21 +109,18 @@ class EmptyNotesMessage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
--                     decoration: BoxDecoration(
-                     decoration: BoxDecoration(
-                       color: colorScheme.secondaryContainer,
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                         color: colorScheme.outlineVariant.withOpacity(0.40),
+                          color: colorScheme.outlineVariant.withOpacity(0.40),
                           width: 1,
                         ),
                       ),
                       child: Text(
--                       "Nothing here yet",
--                       style: theme.textTheme.labelMedium?.copyWith(
-                       AppLocalizations.of(context)!.emptyStateNothingHereYet,
-                       style: theme.textTheme.labelMedium?.copyWith(
-                         color: colorScheme.onSecondaryContainer,
+                        "Nothing here yet",
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSecondaryContainer,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -134,6 +132,6 @@ class EmptyNotesMessage extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

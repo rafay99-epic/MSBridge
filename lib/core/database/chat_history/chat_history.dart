@@ -79,7 +79,6 @@ class ChatHistoryMessage {
   @HiveField(4)
   final String? errorDetails;
 
-  // New: optional image attachments for this message (persisted for history restore)
   @HiveField(5)
   final List<String> imageUrls;
 

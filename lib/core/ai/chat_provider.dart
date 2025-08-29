@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/ai/notes_context_builder.dart';
@@ -301,7 +302,6 @@ class ChatProvider extends ChangeNotifier {
           'You are a helpful AI assistant having a general conversation.'));
     }
 
-    // Attach up to 2 pending image URLs as image bytes using the SDK
     final RegExp img = RegExp(
         r'^(http|https)://.*\.(png|jpg|jpeg|webp)(\?.*)?$',
         caseSensitive: false);
@@ -310,11 +310,25 @@ class ChatProvider extends ChangeNotifier {
 
     for (final url in urls) {
       try {
-        final resp = await http.get(Uri.parse(url));
+        final resp = await http.get(Uri.parse(url)).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            FlutterBugfender.error('Image fetch timed out');
+            throw TimeoutException(
+                'Image fetch timed out', const Duration(seconds: 30));
+          },
+        );
         if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
           final String mime = _inferMimeFromUrl(url);
           parts.add(DataPart(mime, resp.bodyBytes));
         }
+      } on TimeoutException catch (e, stack) {
+        await FirebaseCrashlytics.instance.recordError(
+          e,
+          stack,
+          reason: 'Image fetch timed out',
+          information: ['url: $url'],
+        );
       } catch (e, stack) {
         await FirebaseCrashlytics.instance.recordError(
           e,

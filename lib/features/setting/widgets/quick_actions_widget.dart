@@ -74,6 +74,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
         onTap: _cloudSyncEnabled ? _handleSync : _showEnableCloudSyncMessage,
         isDisabled: !_cloudSyncEnabled,
         isLoading: _isSyncing,
+        loadingText: "Syncing...",
       ),
       QuickActionItem(
         title: "Pull Cloud",
@@ -84,6 +85,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
             : _showEnableCloudSyncMessage,
         isDisabled: !_cloudSyncEnabled,
         isLoading: _isPulling,
+        loadingText: "Pulling...",
       ),
       QuickActionItem(
         title: "Backup",
@@ -178,17 +180,17 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
       ),
       child: Column(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 24,
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              valueColor: AlwaysStoppedAnimation<Color>(action.color),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            action.title == "Sync Now" ? "Syncing..." : "Pulling...",
+            action.loadingText ?? 'Loading...',
             style: widget.theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: action.color,
@@ -279,6 +281,7 @@ class QuickActionItem {
   final VoidCallback onTap;
   final bool isDisabled;
   final bool isLoading;
+  final String? loadingText;
 
   const QuickActionItem({
     required this.title,
@@ -287,6 +290,7 @@ class QuickActionItem {
     required this.onTap,
     this.isDisabled = false,
     this.isLoading = false,
+    this.loadingText,
   });
 }
 

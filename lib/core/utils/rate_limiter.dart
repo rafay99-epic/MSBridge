@@ -20,6 +20,7 @@ class RateLimiter {
     // Reset counter if 24 hours have passed
     if (lastRequest != null && now.difference(lastRequest) > _resetPeriod) {
       _requestCount[key] = 0;
+      _lastRequestTime.remove(key);
       return true;
     }
 
@@ -61,7 +62,8 @@ class RateLimiter {
   /// Get remaining requests allowed
   int getRemainingRequests(String key, int maxRequests) {
     final requestCount = _requestCount[key] ?? 0;
-    return maxRequests - requestCount;
+    final remaining = maxRequests - requestCount;
+    return remaining > 0 ? remaining : 0;
   }
 
   /// Reset the rate limiter for a specific key

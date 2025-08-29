@@ -434,11 +434,6 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                 final isInRange = _isDateInRange(date);
                 final isSelected = _isDateSelected(date);
                 final isToday = _isSameDay(date, DateTime.now());
-                final isStartDate = _selectedFromDate != null &&
-                    _isSameDay(date, _selectedFromDate!);
-                final isEndDate = _selectedToDate != null &&
-                    _isSameDay(date, _selectedToDate!);
-
                 return GestureDetector(
                   onTap: () => _selectDate(date),
                   child: AnimatedContainer(

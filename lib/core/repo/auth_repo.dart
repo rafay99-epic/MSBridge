@@ -19,7 +19,7 @@ class AuthResult {
 class AuthRepo {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final RateLimiter _rateLimiter = RateLimiter();
+  static final RateLimiter _rateLimiter = RateLimiter();
 
   Future<AuthResult> login(String email, String password) async {
     try {

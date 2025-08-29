@@ -60,12 +60,10 @@ void main() async {
   }
 
   try {
-    FlutterBugfender.handleUncaughtErrors(() async {
-      await FlutterBugfender.init(BugfenderConfig.apiKey,
-          enableCrashReporting: true,
-          enableUIEventLogging: true,
-          enableAndroidLogcatLogging: true);
-    });
+    await FlutterBugfender.init(BugfenderConfig.apiKey,
+        enableCrashReporting: false,
+        enableUIEventLogging: true,
+        enableAndroidLogcatLogging: true);
     await Firebase.initializeApp();
     await Hive.initFlutter();
     Hive.registerAdapter(MSNoteAdapter());
@@ -141,24 +139,32 @@ void main() async {
 
     await AutoSyncScheduler.initialize();
 
-    bool weWantFatalErrorRecording = true;
+    // Unified error handling for both Crashlytics and Bugfender
     FlutterError.onError = (errorDetails) {
-      if (weWantFatalErrorRecording) {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-      }
+      // Forward to Crashlytics
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      // Forward to Bugfender
+      FlutterBugfender.error('Flutter Error: ${errorDetails.exception}');
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
+      // Forward to Crashlytics
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      // Forward to Bugfender
+      FlutterBugfender.error('Platform Error: $error');
       return true;
     };
+
     Isolate.current.addErrorListener(RawReceivePort((pair) async {
       final List<dynamic> errorAndStacktrace = pair;
+      // Forward to Crashlytics
       await FirebaseCrashlytics.instance.recordError(
         errorAndStacktrace.first,
         errorAndStacktrace.last,
         fatal: true,
       );
+      // Forward to Bugfender
+      FlutterBugfender.error('Isolate Error: ${errorAndStacktrace.first}');
     }).sendPort);
   } catch (e) {
     FirebaseCrashlytics.instance
@@ -253,8 +259,10 @@ class _DynamicLinkObserver extends NavigatorObserver {
         );
       }
     } catch (e, st) {
+      // Forward to both Crashlytics and Bugfender
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'DynamicLink handling failed');
+      FlutterBugfender.error('DynamicLink handling failed: $e');
     }
   }
 

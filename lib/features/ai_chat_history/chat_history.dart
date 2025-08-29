@@ -1,5 +1,6 @@
 // Chat History Bottom Sheet
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
@@ -189,7 +190,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Model: ${history.modelName.split('-').first}',
+              'Model: ${history.modelName}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.primary.withOpacity(0.5),
                 fontFamily: 'monospace',
@@ -209,10 +210,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             Icons.more_vert,
             color: colorScheme.primary.withOpacity(0.6),
           ),
-          onSelected: (value) {
+          onSelected: (value) async {
             switch (value) {
               case 'load':
-                _loadChat(context, history);
+                await _loadChat(context, history);
                 break;
               case 'delete':
                 _deleteChat(context, history);
@@ -250,17 +251,30 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => _loadChat(context, history),
+        onTap: () async => await _loadChat(context, history),
       ),
     );
   }
 
-  void _loadChat(BuildContext context, ChatHistory history) {
+  Future<void> _loadChat(BuildContext context, ChatHistory history) async {
     final chat = Provider.of<ChatProvider>(context, listen: false);
-    chat.loadChatFromHistory(history);
-    // Show feedback, then close only the history sheet
-    CustomSnackBar.show(context, 'Chat loaded from history', isSuccess: true);
-    Navigator.pop(context);
+
+    try {
+      await chat.loadChatFromHistory(history);
+
+      if (context.mounted) {
+        CustomSnackBar.show(context, 'Chat loaded from history',
+            isSuccess: true);
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      FlutterBugfender.error('Failed to load chat from history: $e');
+
+      if (context.mounted) {
+        CustomSnackBar.show(context, 'Failed to load chat: $e',
+            isSuccess: false);
+      }
+    }
   }
 
   void _deleteChat(BuildContext context, ChatHistory history) {
@@ -287,8 +301,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                   CustomSnackBar.show(context, 'Chat deleted', isSuccess: true);
                 }
               } catch (e) {
+                FlutterBugfender.error('Failed to delete chat: $e');
                 if (context.mounted) {
-                  CustomSnackBar.show(context, 'Failed to delete: $e', isSuccess: false);
+                  CustomSnackBar.show(context, 'Failed to delete: $e',
+                      isSuccess: false);
                 }
               }
             },
@@ -317,11 +333,23 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              historyProvider.clearAllChatHistories();
-              CustomSnackBar.show(context, 'All history cleared',
-                  isSuccess: true);
+              try {
+                await historyProvider.clearAllChatHistories();
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'All history cleared',
+                      isSuccess: true);
+                }
+              } catch (e) {
+                FlutterBugfender.error(
+                    'Failed to clear all chat histories: $e');
+                if (context.mounted) {
+                  CustomSnackBar.show(
+                      context, 'Failed to clear all history: $e',
+                      isSuccess: false);
+                }
+              }
             },
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,

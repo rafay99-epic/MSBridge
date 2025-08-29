@@ -70,7 +70,6 @@ class UserSettingsRepo {
       cloudSyncEnabled: true,
       versionHistoryEnabled: true,
       selectedAIModel: 'gpt-3.5-turbo',
-      pinLockEnabled: false,
     );
 
     await saveLocalSettings(defaultSettings);

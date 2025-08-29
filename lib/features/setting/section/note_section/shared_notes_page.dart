@@ -16,8 +16,7 @@ class SharedNotesPage extends StatefulWidget {
 }
 
 class _SharedNotesPageState extends State<SharedNotesPage> {
-  bool _isDisableOperationInProgress =
-      false; // Added to prevent multiple operations
+  final Set<String> _disableInProgressNoteIds = <String>{};
 
   Future<List<SharedNoteMeta>> _loadSharedNotes() async {
     return await ShareRepository.getSharedNotes();
@@ -372,38 +371,39 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                 ),
                 _buildActionButton(
                   context,
-                  _isDisableOperationInProgress ? 'Disabling...' : 'Disable',
-                  _isDisableOperationInProgress
+                  _disableInProgressNoteIds.contains(item.noteId)
+                      ? 'Disabling...'
+                      : 'Disable',
+                  _disableInProgressNoteIds.contains(item.noteId)
                       ? Icons.hourglass_empty
                       : LineIcons.eyeSlash,
-                  _isDisableOperationInProgress
+                  _disableInProgressNoteIds.contains(item.noteId)
                       ? Colors.grey
                       : Colors.redAccent,
-                  _isDisableOperationInProgress
-                      ? () {} // Empty callback when disabled
-                      : () {
-                          if (_isDisableOperationInProgress) return;
+                  () async {
+                    if (_disableInProgressNoteIds.contains(item.noteId)) return;
 
-                          setState(() {
-                            _isDisableOperationInProgress = true;
-                          });
+                    if (mounted) {
+                      setState(() {
+                        _disableInProgressNoteIds.add(item.noteId);
+                      });
+                    }
 
-                          _disableSharing(item.noteId, note).then((_) {
-                            if (mounted) {
-                              setState(() {
-                                _isDisableOperationInProgress = false;
-                              });
-                            }
-                          }).catchError((e) {
-                            if (mounted) {
-                              setState(() {
-                                _isDisableOperationInProgress = false;
-                              });
-                              CustomSnackBar.show(
-                                  context, 'Failed to disable sharing: $e');
-                            }
-                          });
-                        },
+                    try {
+                      await _disableSharing(item.noteId, note);
+                    } catch (e) {
+                      if (mounted) {
+                        CustomSnackBar.show(
+                            context, 'Failed to disable sharing: $e');
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _disableInProgressNoteIds.remove(item.noteId);
+                        });
+                      }
+                    }
+                  },
                 ),
               ],
             ),

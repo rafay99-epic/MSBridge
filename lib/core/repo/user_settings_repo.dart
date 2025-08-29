@@ -84,7 +84,6 @@ class UserSettingsRepo {
       vibrationEnabled: true,
       autoSaveEnabled: true,
       fingerprintEnabled: false,
-      pinLockEnabled: false, // Added PIN lock enabled field
       cloudSyncEnabled: true,
       versionHistoryEnabled: true,
       selectedAIModel: 'gpt-3.5-turbo',

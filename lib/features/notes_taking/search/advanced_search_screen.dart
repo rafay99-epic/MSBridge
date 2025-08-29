@@ -11,7 +11,6 @@ import 'package:page_transition/page_transition.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
-// Define a base class for search results to handle both note types
 class UnifiedSearchResult {
   final dynamic note; // Can be NoteTakingModel or MSNote
   final double relevanceScore;
@@ -261,7 +260,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
 
   void _searchInReadingNotes() {
     // Prepare minimal data for search
-    final simpleNotes = widget.readingNotes
+    widget.readingNotes
         .map((note) => {
               'id': note.id,
               'lectureTitle': note.lectureTitle,
@@ -271,24 +270,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
               'body': note.body ?? '',
             })
         .toList();
-
-    // Process search in background
-    compute(_processReadingNotesSearch, {
-      'notes': simpleNotes,
-      'query': _searchQuery,
-      'fromDate': _fromDate?.toIso8601String(),
-      'toDate': _toDate?.toIso8601String(),
-    }).then((results) {
-      if (mounted) {
-        setState(() {
-          _searchResults = results;
-          _isLoadingResults = false;
-        });
-      }
-    }).catchError((error) {
-      // Fallback to main thread
-      _searchInReadingNotesMainThread();
-    });
+    Future.microtask(_searchInReadingNotesMainThread);
   }
 
   void _searchInReadingNotesMainThread() {
@@ -360,89 +342,8 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     }
   }
 
-  static List<UnifiedSearchResult> _processReadingNotesSearch(
-      Map<String, dynamic> params) {
-    final simpleNotes = params['notes'] as List<Map<String, dynamic>>;
-    final query = (params['query'] as String).toLowerCase();
-    final fromDateStr = params['fromDate'] as String?;
-    final toDateStr = params['toDate'] as String?;
-
-    final results = <UnifiedSearchResult>[];
-
-    // Parse dates if provided
-    final fromDate = fromDateStr != null ? DateTime.parse(fromDateStr) : null;
-    final toDate = toDateStr != null ? DateTime.parse(toDateStr) : null;
-
-    for (final simpleNote in simpleNotes) {
-      double score = 0;
-
-      // Check title match (highest weight)
-      if ((simpleNote['lectureTitle'] as String)
-          .toLowerCase()
-          .contains(query)) {
-        score += 3.0;
-      }
-
-      // Check subject match
-      if ((simpleNote['subject'] as String).toLowerCase().contains(query)) {
-        score += 2.0;
-      }
-
-      // Check description match
-      if ((simpleNote['lectureDescription'] as String)
-          .toLowerCase()
-          .contains(query)) {
-        score += 1.5;
-      }
-
-      // Check body match
-      if ((simpleNote['body'] as String).toLowerCase().contains(query)) {
-        score += 1.0;
-      }
-
-      // Date filtering
-      if (fromDate != null && toDate != null) {
-        try {
-          final noteDate = DateTime.parse(simpleNote['pubDate'] as String);
-          if (noteDate.isBefore(fromDate) || noteDate.isAfter(toDate)) {
-            continue; // Skip this note if outside date range
-          }
-        } catch (e) {
-          // If date parsing fails, include the note anyway
-        }
-      }
-
-      // Add to results if there's any match
-      if (score > 0) {
-        // Convert back to MSNote
-        final note = MSNote(
-          id: simpleNote['id'] as String,
-          lectureTitle: simpleNote['lectureTitle'] as String,
-          lectureDescription: simpleNote['lectureDescription'] as String,
-          pubDate: simpleNote['pubDate'] as String,
-          lectureDraft: false, // Default value
-          lectureNumber: '0', // Default value
-          subject: simpleNote['subject'] as String,
-          body: simpleNote['body'] as String,
-        );
-
-        results.add(UnifiedSearchResult(
-          note: note,
-          relevanceScore: score,
-          isReadingNote: true,
-        ));
-      }
-    }
-
-    // Sort by relevance score
-    results.sort((a, b) => b.relevanceScore.compareTo(a.relevanceScore));
-
-    return results;
-  }
-
   void _searchInTakingNotes() {
-    // Prepare minimal data for search
-    final simpleNotes = widget.takingNotes
+    widget.takingNotes
         .map((note) => {
               'noteId': note.noteId,
               'noteTitle': note.noteTitle,
@@ -456,26 +357,8 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
               'versionNumber': note.versionNumber,
             })
         .toList();
-
-    // Process search in background
-    compute(_processTakingNotesSearch, {
-      'notes': simpleNotes,
-      'query': _searchQuery,
-      'fromDate': _fromDate?.toIso8601String(),
-      'toDate': _toDate?.toIso8601String(),
-      'tags': _selectedTags,
-      'includeDeleted': includeDeleted,
-    }).then((results) {
-      if (mounted) {
-        setState(() {
-          _searchResults = results;
-          _isLoadingResults = false;
-        });
-      }
-    }).catchError((error) {
-      // Fallback to main thread
-      _searchInTakingNotesMainThread();
-    });
+    // Temporarily avoid compute: return to main-thread implementation
+    Future.microtask(_searchInTakingNotesMainThread);
   }
 
   void _searchInTakingNotesMainThread() {
@@ -512,57 +395,6 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         });
       }
     }
-  }
-
-  static List<UnifiedSearchResult> _processTakingNotesSearch(
-      Map<String, dynamic> params) {
-    final simpleNotes = params['notes'] as List<Map<String, dynamic>>;
-    final query = params['query'] as String;
-    final fromDateStr = params['fromDate'] as String?;
-    final toDateStr = params['toDate'] as String?;
-    final tags = params['tags'] as List<String>?;
-    final includeDeleted = params['includeDeleted'] as bool;
-
-    // Convert simple data back to NoteTakingModel for search
-    final notes = simpleNotes
-        .map((simpleNote) => NoteTakingModel(
-              noteId: simpleNote['noteId'] as String?,
-              noteTitle: simpleNote['noteTitle'] as String,
-              noteContent: simpleNote['noteContent'] as String,
-              tags: (simpleNote['tags'] as List<dynamic>).cast<String>(),
-              createdAt: simpleNote['createdAt'] != null
-                  ? DateTime.parse(simpleNote['createdAt'] as String)
-                  : null,
-              updatedAt: DateTime.parse(simpleNote['updatedAt'] as String),
-              isDeleted: simpleNote['isDeleted'] as bool,
-              isSynced: simpleNote['isSynced'] as bool,
-              userId: simpleNote['userId'] as String,
-              versionNumber: simpleNote['versionNumber'] as int,
-            ))
-        .toList();
-
-    // Parse dates
-    final fromDate = fromDateStr != null ? DateTime.parse(fromDateStr) : null;
-    final toDate = toDateStr != null ? DateTime.parse(toDateStr) : null;
-
-    // Use existing search service
-    final noteResults = AdvancedNoteSearchService.searchNotes(
-      notes: notes,
-      query: query,
-      fromDate: fromDate,
-      toDate: toDate,
-      tags: tags,
-      includeDeleted: includeDeleted,
-    );
-
-    // Convert to unified results
-    return noteResults
-        .map((result) => UnifiedSearchResult(
-              note: result.note,
-              relevanceScore: result.relevanceScore,
-              isReadingNote: false,
-            ))
-        .toList();
   }
 
   void _performSearch() {

@@ -78,15 +78,13 @@ class _NotetakingState extends State<Notetaking>
   }
 
   @override
-   @override
-   void dispose() {
-     _pinProvider?.dispose();
-     _pinProvider = null;
-     _cachedNotes = null;
-     _cachedPinnedNotes = null;
-     _cachedUnpinnedNotes = null;
-     super.dispose();
-   }
+  void dispose() {
+    _pinProvider?.dispose();
+    _pinProvider = null;
+    _cachedNotes = null;
+    _cachedPinnedNotes = null;
+    _cachedUnpinnedNotes = null;
+    super.dispose();
   }
 
   Future<void> _loadLayoutPreference() async {
@@ -98,8 +96,9 @@ class _NotetakingState extends State<Notetaking>
           _layoutMode = NoteLayoutMode.list;
         });
       }
-    } catch (_) {
-      // Fallback to default grid layout
+    } catch (e) {
+      FlutterBugfender.error("Failed to load layout preference: $e");
+      if (!mounted) return;
       setState(() {
         _layoutMode = NoteLayoutMode.grid;
       });
@@ -142,14 +141,11 @@ class _NotetakingState extends State<Notetaking>
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      if (kDebugMode) {
-        print("Failed to load notes: $e");
-      }
+      FlutterBugfender.error("Failed to load notes: $e");
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -276,24 +272,26 @@ class _NotetakingState extends State<Notetaking>
       return _buildLoadingState(theme);
     }
 
-    // Provide pin provider to descendants
+    // Provide pin provider to descendants and ensure reactivity
     return ChangeNotifierProvider.value(
-      value: _pinProvider,
-      child: ValueListenableBuilder<Box<NoteTakingModel>>(
-        valueListenable: _notesListenable!,
-        builder: (context, box, _) {
-          // Update cached notes when box changes
-          _updateCachedNotes(box);
+      value: _pinProvider!,
+      child: Consumer<NoteePinProvider>(
+        builder: (context, _, __) =>
+            ValueListenableBuilder<Box<NoteTakingModel>>(
+          valueListenable: _notesListenable!,
+          builder: (context, box, _) {
+            // Update cached notes when box changes
+            _updateCachedNotes(box);
 
-          if (box.values.isEmpty) {
-            return const EmptyNotesMessage(
-              message: 'Sorry Notes ',
-              description: 'Tap + to create a new note',
-            );
-          }
-
-          return _buildNotesList(theme);
-        },
+            if (box.values.isEmpty) {
+              return const EmptyNotesMessage(
+                message: 'No notes yet',
+                description: 'Tap + to create a new note',
+              );
+            }
+            return _buildNotesList(theme);
+          },
+        ),
       ),
     );
   }
@@ -392,7 +390,9 @@ class _NotetakingState extends State<Notetaking>
       child: GestureDetector(
         onTap: () async {
           if (_isSelectionMode) {
-            _toggleNoteSelection(note.noteId.toString());
+            if (note.noteId != null) {
+              _toggleNoteSelection(note.noteId!);
+            }
           } else {
             await Navigator.push(
               context,
@@ -409,13 +409,14 @@ class _NotetakingState extends State<Notetaking>
           }
         },
         onLongPress: () {
-          if (!_isSelectionMode) {
-            _enterSelectionMode(note.noteId.toString());
+          if (!_isSelectionMode && note.noteId != null) {
+            _enterSelectionMode(note.noteId!);
           }
         },
         child: NoteCard(
           note: note,
-          isSelected: _selectedNoteIds.contains(note.noteId.toString()),
+          isSelected:
+              note.noteId != null && _selectedNoteIds.contains(note.noteId!),
           isSelectionMode: _isSelectionMode,
           isGridLayout: _layoutMode == NoteLayoutMode.grid,
         ),

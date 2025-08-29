@@ -37,9 +37,14 @@ class _MSNotesScreenState extends State<Msnotes>
   void fetchNotes() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
+        // Check if connectivity subject has a value before accessing it
+        if (!_internetHelper.connectivitySubject.hasValue) {
+          FlutterBugfender.log("Connectivity subject not initialized yet");
+          return;
+        }
+
         final connected = _internetHelper.connectivitySubject.value;
         if (connected) {
-          await ApiService.fetchAndSaveNotes();
           await _refreshData();
         } else {
           if (mounted) {
@@ -77,7 +82,6 @@ class _MSNotesScreenState extends State<Msnotes>
   void dispose() {
     _internetHelper.dispose();
     _notesBox?.close();
-    _internetHelper.connectivitySubject.close();
     super.dispose();
   }
 
@@ -96,6 +100,13 @@ class _MSNotesScreenState extends State<Msnotes>
   }
 
   Future<void> _refreshData() async {
+    // Check if connectivity subject has a value before accessing it
+    if (!_internetHelper.connectivitySubject.hasValue) {
+      FlutterBugfender.log(
+          "Connectivity subject not initialized yet in refresh");
+      return;
+    }
+
     if (_internetHelper.connectivitySubject.value) {
       await ApiService.fetchAndSaveNotes();
       await Future.delayed(const Duration(seconds: 2));

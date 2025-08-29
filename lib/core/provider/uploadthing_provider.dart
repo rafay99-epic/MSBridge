@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/services/upload/uploadthing_service.dart';
 import 'package:msbridge/config/config.dart';
 
@@ -26,30 +26,51 @@ class UploadThingProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+
+    // Validate config/API key before starting upload
+    if (UploadThingConfig.apiKey.isEmpty) {
+      _error = 'Upload configuration is invalid';
+      FlutterBugfender.error('Upload configuration is invalid');
+      notifyListeners();
+      return null;
+    }
+
+    // Clear stale URL and set upload state
+    _lastUrl = null;
     _isUploading = true;
     _error = null;
     _progress = 0.1; // Start indicator
     notifyListeners();
+
     try {
       final url = await _service.uploadImageFile(file);
+
+      // Validate that the returned URL is non-empty
+      if (url.isEmpty) {
+        _progress = 0.0;
+        _error = 'Upload failed: Empty URL returned from service';
+        _lastUrl = null;
+        FlutterBugfender.error(
+            'UploadThingProvider.uploadImage failed: Empty URL returned');
+        return null;
+      }
+
       _lastUrl = url;
       _progress = 1.0;
       notifyListeners();
       return url;
-    } catch (e, stackTrace) {
+    } catch (e) {
       _progress = 0.0;
       _error = e.toString();
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'UploadThingProvider.uploadImage failed',
+      _lastUrl = null;
+      FlutterBugfender.error(
+        'UploadThingProvider.uploadImage failed: $e',
       );
       return null;
     } finally {
       _isUploading = false;
       notifyListeners();
     }
-  }
   }
 
   void clear() {

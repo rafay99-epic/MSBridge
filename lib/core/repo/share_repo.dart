@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/utils/uuid.dart';
@@ -17,8 +18,8 @@ class ShareRepository {
   }
 
   static String _buildDefaultShareUrl(String shareId) {
-    // Default to Firebase Hosting-like URL path; replace with your custom domain if available
-    return 'https://msbridge-9a2c7.web.app/s/$shareId';
+    // Use custom domain for sharing
+    return 'https://msbridge.rafay99.com/s/$shareId';
   }
 
   static Future<String> _buildDynamicLink(String shareId) async {
@@ -26,7 +27,7 @@ class ShareRepository {
       final DynamicLinkParameters params = DynamicLinkParameters(
         link: Uri.parse(_buildDefaultShareUrl(shareId)),
         uriPrefix:
-            'https://msbridge.page.link', // TODO: set your dynamic link domain
+            'https://msbridge.rafay99.com', // Use custom domain for dynamic links
         androidParameters: const AndroidParameters(
           packageName: 'com.syntaxlab.msbridge',
           minimumVersion: 1,
@@ -88,8 +89,8 @@ class ShareRepository {
         'shareUrl': shareUrl,
       };
       // Set createdAt only for first-time shares to preserve original creation time.
-      final bool isNewShare =
-          existing == null || ((existing['shareId'] as String?)?.isEmpty ?? true);
+      final bool isNewShare = existing == null ||
+          ((existing['shareId'] as String?)?.isEmpty ?? true);
       if (isNewShare) {
         payload['createdAt'] = FieldValue.serverTimestamp();
       }
@@ -134,7 +135,11 @@ class ShareRepository {
             .collection(_shareCollection)
             .doc(shareId)
             .delete()
-            .catchError((_) {});
+            .catchError((error, stack) {
+          FlutterBugfender.error(
+            'Failed to delete share $shareId and error: $error',
+          );
+        });
       }
 
       await meta.put(note.noteId, {

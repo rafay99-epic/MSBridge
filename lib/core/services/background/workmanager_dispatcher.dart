@@ -179,9 +179,13 @@ Future<void> callbackDispatcher() async {
               (now - lastSyncTimestamp) / (1000 * 60 * 60);
           final isOverdue = hoursSinceLastSync > 6;
 
-          if (isOverdue) {
+          // Capture the overdue values before any timestamp updates
+          final capturedHoursSinceLastSync = hoursSinceLastSync;
+          final capturedIsOverdue = isOverdue;
+
+          if (capturedIsOverdue) {
             FirebaseCrashlytics.instance.log(
-                'Background sync overdue by ${hoursSinceLastSync.toStringAsFixed(1)} hours, forcing sync');
+                'Background sync overdue by ${capturedHoursSinceLastSync.toStringAsFixed(1)} hours, forcing sync');
             await prefs.setString(
                 'bg_sync_last_message', 'Forced sync due to being overdue');
           }
@@ -391,15 +395,10 @@ Future<void> callbackDispatcher() async {
                 DateTime.now().millisecondsSinceEpoch);
 
             // Check if this was a forced sync due to being overdue
-            final lastSyncTimestamp =
-                prefs.getInt('bg_sync_last_completed_timestamp') ?? 0;
-            final now = DateTime.now().millisecondsSinceEpoch;
-            final hoursSinceLastSync =
-                (now - lastSyncTimestamp) / (1000 * 60 * 60);
-
-            if (hoursSinceLastSync > 24) {
+            // Use the captured values from the beginning to avoid timestamp overwrite issues
+            if (capturedIsOverdue) {
               FirebaseCrashlytics.instance.log(
-                  'Background sync was overdue by ${hoursSinceLastSync.toStringAsFixed(1)} hours');
+                  'Background sync was overdue by ${capturedHoursSinceLastSync.toStringAsFixed(1)} hours');
               await prefs.setString(
                   'bg_sync_last_message', 'Forced sync due to being overdue');
             }

@@ -318,7 +318,6 @@ class ReverseSyncService {
   UserSettingsModel _mergeSettings(
       UserSettingsModel local, UserSettingsModel cloud) {
     // For PIN lock settings, prioritize local settings to prevent overwriting user's choice
-    final pinLockEnabled = local.pinLockEnabled;
 
     // For other settings, use the newer timestamp
     final useCloudSettings = cloud.lastUpdated.isAfter(local.lastUpdated);
@@ -326,19 +325,14 @@ class ReverseSyncService {
     if (useCloudSettings) {
       // Use cloud settings but preserve local PIN lock setting
       return cloud.copyWith(
-        pinLockEnabled: pinLockEnabled,
         lastUpdated: DateTime.now(),
         isSynced: true,
         lastSyncedAt: DateTime.now(),
       );
     } else {
       // Use local settings but preserve cloud PIN lock if it's newer
-      final finalPinLockEnabled = cloud.lastUpdated.isAfter(local.lastUpdated)
-          ? cloud.pinLockEnabled
-          : pinLockEnabled;
 
       return local.copyWith(
-        pinLockEnabled: finalPinLockEnabled,
         lastUpdated: DateTime.now(),
         isSynced: true,
         lastSyncedAt: DateTime.now(),

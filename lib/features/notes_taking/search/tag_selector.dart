@@ -23,6 +23,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late List<String> _selectedTags;
 
   @override
   void initState() {
@@ -51,6 +52,9 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
+
+    // Initialize local selected tags from widget
+    _selectedTags = List<String>.from(widget.selectedTags);
   }
 
   @override
@@ -60,13 +64,14 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
   }
 
   void _toggleTag(String tag) {
-    final newSelectedTags = List<String>.from(widget.selectedTags);
-    if (newSelectedTags.contains(tag)) {
-      newSelectedTags.remove(tag);
-    } else {
-      newSelectedTags.add(tag);
-    }
-    widget.onTagsChanged(newSelectedTags);
+    setState(() {
+      if (_selectedTags.contains(tag)) {
+        _selectedTags.remove(tag);
+      } else {
+        _selectedTags.add(tag);
+      }
+    });
+    widget.onTagsChanged(_selectedTags);
   }
 
   @override
@@ -153,7 +158,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
   }
 
   Widget _buildSelectedTagsPreview() {
-    if (widget.selectedTags.isEmpty) {
+    if (_selectedTags.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: Text(
@@ -172,10 +177,10 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: widget.selectedTags.length,
+        itemCount: _selectedTags.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final tag = widget.selectedTags[index];
+          final tag = _selectedTags[index];
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -235,7 +240,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
             itemCount: widget.availableTags.length,
             itemBuilder: (context, index) {
               final tag = widget.availableTags[index];
-              final isSelected = widget.selectedTags.contains(tag);
+              final isSelected = _selectedTags.contains(tag);
 
               return _buildTagChip(tag, isSelected);
             },

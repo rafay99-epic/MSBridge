@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:uploadthing/uploadthing.dart';
 
 class UploadThingService {
@@ -23,12 +24,9 @@ class UploadThingService {
         throw Exception('Upload returned empty URL');
       }
       return url;
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'UploadThing uploadImageFile failed',
-      );
+    } catch (e) {
+      FlutterBugfender.error('UploadThing uploadImageFile failed: $e');
+
       rethrow;
     }
   }

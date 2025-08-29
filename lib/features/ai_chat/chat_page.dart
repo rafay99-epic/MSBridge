@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
+import 'package:msbridge/features/ai_chat/optimzed_markdown.dart';
 import 'package:msbridge/features/ai_chat_history/chat_history.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -427,6 +429,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   bool _includePersonal = false;
   bool _includeMsNotes = false;
   bool _isTyping = false;
+  bool _isSending = false; // New state variable for sending status
 
   @override
   void initState() {
@@ -631,288 +634,19 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     );
   }
 
-  // Widget _buildChatMessages(BuildContext context, ChatProvider chat,
-  //     ColorScheme colorScheme, ThemeData theme) {
-  //   return ListView.builder(
-  //     controller: _scrollController,
-  //     padding: const EdgeInsets.all(16),
-  //     itemCount: chat.messages.length,
-  //     itemBuilder: (context, index) {
-  //       final message = chat.messages[index];
-  //       final isUser = message.fromUser;
-
-  //       // kept for legacy rendering; not used when message.imageUrls is present
-  //       return Container(
-  //         margin: const EdgeInsets.only(bottom: 16),
-  //         child: Row(
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           mainAxisAlignment:
-  //               isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-  //           children: [
-  //             if (!isUser) ...[
-  //               Container(
-  //                 padding: const EdgeInsets.all(8),
-  //                 decoration: BoxDecoration(
-  //                   color: message.isError
-  //                       ? colorScheme.error.withOpacity(0.15)
-  //                       : colorScheme.primary.withOpacity(0.15),
-  //                   borderRadius: BorderRadius.circular(20),
-  //                   border: Border.all(
-  //                     color: message.isError
-  //                         ? colorScheme.error.withOpacity(0.3)
-  //                         : colorScheme.primary.withOpacity(0.3),
-  //                     width: 1.5,
-  //                   ),
-  //                   boxShadow: [
-  //                     BoxShadow(
-  //                       color: (message.isError
-  //                               ? colorScheme.error
-  //                               : colorScheme.primary)
-  //                           .withOpacity(0.1),
-  //                       blurRadius: 8,
-  //                       offset: const Offset(0, 2),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 child: Icon(
-  //                   message.isError
-  //                       ? LineIcons.exclamationTriangle
-  //                       : LineIcons.robot,
-  //                   color: message.isError
-  //                       ? colorScheme.error
-  //                       : colorScheme.primary,
-  //                   size: 16,
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 8),
-  //             ],
-  //             Flexible(
-  //               child: Container(
-  //                 constraints: BoxConstraints(
-  //                   maxWidth: MediaQuery.of(context).size.width * 0.75,
-  //                 ),
-  //                 padding: const EdgeInsets.all(16),
-  //                 decoration: BoxDecoration(
-  //                   color: isUser
-  //                       ? colorScheme.primary
-  //                       : message.isError
-  //                           ? colorScheme.errorContainer
-  //                           : colorScheme.surfaceContainerHighest,
-  //                   borderRadius: BorderRadius.circular(16).copyWith(
-  //                     bottomLeft: isUser
-  //                         ? const Radius.circular(16)
-  //                         : const Radius.circular(4),
-  //                     bottomRight: isUser
-  //                         ? const Radius.circular(4)
-  //                         : const Radius.circular(16),
-  //                   ),
-  //                   border: Border.all(
-  //                     color: isUser
-  //                         ? colorScheme.primary
-  //                         : message.isError
-  //                             ? colorScheme.error
-  //                             : colorScheme.primary.withOpacity(0.4),
-  //                     width: message.isError ? 2 : 2.0,
-  //                   ),
-  //                   boxShadow: [
-  //                     BoxShadow(
-  //                       color: isUser
-  //                           ? colorScheme.primary.withOpacity(0.3)
-  //                           : colorScheme.primary.withOpacity(0.15),
-  //                       blurRadius: isUser ? 8 : 12,
-  //                       offset: const Offset(0, 4),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     if (isUser && message.imageUrls.isNotEmpty) ...[
-  //                       for (final imgUrl in message.imageUrls)
-  //                         Padding(
-  //                           padding: const EdgeInsets.only(bottom: 8),
-  //                           child: ClipRRect(
-  //                             borderRadius: BorderRadius.circular(8),
-  //                             child: Image.network(
-  //                               imgUrl,
-  //                               height: 180,
-  //                               fit: BoxFit.cover,
-  //                               errorBuilder: (_, __, ___) => Text(
-  //                                 'Image preview unavailable',
-  //                                 style: theme.textTheme.bodyMedium?.copyWith(
-  //                                   color: colorScheme.onPrimary,
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                     ],
-  //                     if (isUser)
-  //                       SelectableText(
-  //                         message.text,
-  //                         style: theme.textTheme.bodyMedium?.copyWith(
-  //                           color: colorScheme.onPrimary,
-  //                           fontWeight: FontWeight.w500,
-  //                         ),
-  //                       )
-  //                     else if (message.isError)
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             message.text,
-  //                             style: theme.textTheme.bodyMedium?.copyWith(
-  //                               color: colorScheme.onErrorContainer,
-  //                               fontWeight: FontWeight.w500,
-  //                             ),
-  //                           ),
-  //                           const SizedBox(height: 12),
-  //                           Row(
-  //                             children: [
-  //                               OutlinedButton.icon(
-  //                                 onPressed: () => _retryLastQuestion(context),
-  //                                 icon: Icon(
-  //                                   LineIcons.redo,
-  //                                   size: 16,
-  //                                   color: colorScheme.error,
-  //                                 ),
-  //                                 label: Text(
-  //                                   'Retry',
-  //                                   style: TextStyle(
-  //                                     color: colorScheme.error,
-  //                                     fontWeight: FontWeight.w600,
-  //                                   ),
-  //                                 ),
-  //                                 style: OutlinedButton.styleFrom(
-  //                                   side: BorderSide(color: colorScheme.error),
-  //                                   padding: const EdgeInsets.symmetric(
-  //                                     horizontal: 12,
-  //                                     vertical: 8,
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                               const SizedBox(width: 8),
-  //                               if (message.errorDetails != null)
-  //                                 IconButton(
-  //                                   onPressed: () {
-  //                                     showDialog(
-  //                                       context: context,
-  //                                       builder: (context) => AlertDialog(
-  //                                         title: const Text('Error Details'),
-  //                                         content: SelectableText(
-  //                                             message.errorDetails!),
-  //                                         actions: [
-  //                                           TextButton(
-  //                                             onPressed: () =>
-  //                                                 Navigator.pop(context),
-  //                                             child: const Text('Close'),
-  //                                           ),
-  //                                         ],
-  //                                       ),
-  //                                     );
-  //                                   },
-  //                                   icon: Icon(
-  //                                     LineIcons.infoCircle,
-  //                                     size: 16,
-  //                                     color: colorScheme.error,
-  //                                   ),
-  //                                   tooltip: 'View Error Details',
-  //                                 ),
-  //                             ],
-  //                           ),
-  //                         ],
-  //                       )
-  //                     else
-  //                       MarkdownBody(
-  //                         data: message.text,
-  //                         styleSheet: MarkdownStyleSheet(
-  //                           p: theme.textTheme.bodyMedium?.copyWith(
-  //                             color: colorScheme.onSurface,
-  //                             height: 1.5,
-  //                             fontWeight: FontWeight.w500,
-  //                           ),
-  //                           h1: theme.textTheme.headlineSmall?.copyWith(
-  //                             color: colorScheme.onSurface,
-  //                             fontWeight: FontWeight.w700,
-  //                           ),
-  //                           h2: theme.textTheme.titleLarge?.copyWith(
-  //                             color: colorScheme.onSurface,
-  //                             fontWeight: FontWeight.w600,
-  //                           ),
-  //                           h3: theme.textTheme.titleMedium?.copyWith(
-  //                             color: colorScheme.onSurface,
-  //                             fontWeight: FontWeight.w600,
-  //                           ),
-  //                           code: theme.textTheme.bodyMedium?.copyWith(
-  //                             backgroundColor:
-  //                                 colorScheme.primary.withOpacity(0.15),
-  //                             color: colorScheme.onSurface,
-  //                             fontFamily: 'monospace',
-  //                             fontWeight: FontWeight.w600,
-  //                           ),
-  //                           codeblockDecoration: BoxDecoration(
-  //                             color: colorScheme.primary.withOpacity(0.15),
-  //                             borderRadius: BorderRadius.circular(8),
-  //                             border: Border.all(
-  //                               color: colorScheme.primary.withOpacity(0.3),
-  //                               width: 1,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         selectable: true,
-  //                       ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             if (isUser) ...[
-  //               const SizedBox(width: 8),
-  //               Container(
-  //                 padding: const EdgeInsets.all(8),
-  //                 decoration: BoxDecoration(
-  //                   color: colorScheme.primary.withOpacity(0.15),
-  //                   borderRadius: BorderRadius.circular(20),
-  //                   border: Border.all(
-  //                     color: colorScheme.primary.withOpacity(0.3),
-  //                     width: 1.5,
-  //                   ),
-  //                   boxShadow: [
-  //                     BoxShadow(
-  //                       color: colorScheme.primary.withOpacity(0.1),
-  //                       blurRadius: 8,
-  //                       offset: const Offset(0, 2),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 child: Icon(
-  //                   LineIcons.user,
-  //                   color: colorScheme.primary,
-  //                   size: 16,
-  //                 ),
-  //               ),
-  //             ],
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
   Widget _buildChatMessages(BuildContext context, ChatProvider chat,
       ColorScheme colorScheme, ThemeData theme) {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: chat.messages.length,
-      // Add caching for better performance
-      cacheExtent: 1000, // Cache more items
+      cacheExtent: 1000,
       itemBuilder: (context, index) {
         final message = chat.messages[index];
         final isUser = message.fromUser;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          // Use RepaintBoundary to isolate painting operations
           child: RepaintBoundary(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1032,7 +766,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                     imgUrl,
                     height: 180,
                     fit: BoxFit.cover,
-                    // Add loading placeholder for better UX
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
@@ -1133,8 +866,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         ],
       );
     } else {
-      // Use a more efficient approach for markdown rendering
-      return _OptimizedMarkdownBody(
+      return OptimizedMarkdownBody(
         data: message.text,
         styleSheet: MarkdownStyleSheet(
           p: theme.textTheme.bodyMedium?.copyWith(
@@ -1260,7 +992,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         child: Row(
           children: [
             IconButton(
-              onPressed: () => _attachImage(context),
+              onPressed: _isSending ? null : () => _attachImage(context),
               icon: Icon(LineIcons.image, color: colorScheme.primary),
               tooltip: 'Attach Image',
             ),
@@ -1284,9 +1016,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 child: TextField(
                   controller: _controller,
                   maxLines: null,
+                  enabled: !_isSending, // Disable text field when sending
                   textInputAction: TextInputAction.send,
                   decoration: InputDecoration(
-                    hintText: 'Ask AI anything...',
+                    hintText: _isSending
+                        ? 'Sending message...'
+                        : 'Ask AI anything...',
                     hintStyle: TextStyle(
                       color: colorScheme.primary.withOpacity(0.7),
                       fontSize: 16,
@@ -1302,15 +1037,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                     color: colorScheme.primary,
                     fontSize: 16,
                   ),
-                  onSubmitted: (_) => _sendMessage(context),
+                  onSubmitted: _isSending ? null : (_) => _sendMessage(context),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            // Reverted to simply an IconButton as Consumer2 was not strictly necessary here
             Container(
               decoration: BoxDecoration(
-                color: colorScheme.primary,
+                color: _isSending
+                    ? colorScheme.primary.withOpacity(0.5)
+                    : colorScheme.primary,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -1321,12 +1057,22 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 ],
               ),
               child: IconButton(
-                icon: Icon(
-                  LineIcons.paperPlane,
-                  color: colorScheme.onPrimary,
-                  size: 20,
-                ),
-                onPressed: () => _sendMessage(context),
+                icon: _isSending
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary),
+                        ),
+                      )
+                    : Icon(
+                        LineIcons.paperPlane,
+                        color: colorScheme.onPrimary,
+                        size: 20,
+                      ),
+                onPressed: _isSending ? null : () => _sendMessage(context),
                 style: IconButton.styleFrom(
                   padding: const EdgeInsets.all(16),
                 ),
@@ -1343,85 +1089,99 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final x =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (x == null) return;
+
     final prov = Provider.of<UploadThingProvider>(context, listen: false);
     final chat = Provider.of<ChatProvider>(context, listen: false);
-    // Informative placeholder
-    chat.messages.add(ChatMessage(true, 'Uploading image...'));
-    setState(() {});
-    final url = await prov.uploadImage(File(x.path));
-    if (!mounted) return;
-    // Replace placeholder and do not show URL bubble
-    if (chat.messages.isNotEmpty &&
-        chat.messages.last.text == 'Uploading image...') {
-      chat.messages.removeLast();
-    }
-    if (url != null) {
-      chat.addPendingImageUrl(url); // queue for next AI call only
-      // Also remember it locally to merge with the next user message bubble
-      // We don't render it now to keep a single combined bubble when user sends text.
-      CustomSnackBar.show(
-          context, 'Image attached. Type your question and send.',
-          isSuccess: true);
-    } else {
-      CustomSnackBar.show(context, 'Image upload failed');
-    }
-    setState(() {});
-  }
 
-  // Legacy helper removed; image rendering now uses message.imageUrls
+    final placeholder = ChatMessage(true, 'Uploading image...');
+
+    chat.messages.add(placeholder);
+    if (mounted) {
+      setState(() {
+        _isTyping = true;
+      });
+    }
+
+    try {
+      final url = await prov.uploadImage(File(x.path));
+
+      if (url != null) {
+        chat.addPendingImageUrl(url);
+        if (mounted) {
+          CustomSnackBar.show(
+              context, 'Image attached. Type your question and send.',
+              isSuccess: true);
+        }
+      } else {
+        if (mounted) {
+          CustomSnackBar.show(context, 'Image upload failed', isSuccess: false);
+        }
+      }
+    } catch (e) {
+      FlutterBugfender.error('Image upload failed: $e');
+      if (mounted) {
+        CustomSnackBar.show(context, 'Image upload failed: $e',
+            isSuccess: false);
+      }
+    } finally {
+      if (chat.messages.isNotEmpty &&
+          identical(chat.messages.last, placeholder)) {
+        chat.messages.removeLast();
+      }
+
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+        });
+      }
+    }
+  }
 
   void _sendMessage(BuildContext context) async {
     final question = _controller.text.trim();
     if (question.isEmpty) return;
 
+    // Early return if already sending to prevent parallel sends
+    if (_isSending) return;
+
     final consent = Provider.of<AiConsentProvider>(context, listen: false);
     final chat = Provider.of<ChatProvider>(context, listen: false);
 
-    // Both inclusion flags now directly depend on consent.enabled and the chip's state.
     final canIncludePersonal = consent.enabled && _includePersonal;
-    final shouldIncludeMsNotes = consent.enabled &&
-        _includeMsNotes; // MS notes also subject to global consent
+    final shouldIncludeMsNotes = consent.enabled && _includeMsNotes;
 
-    // Inform user if notes access is restricted but they ask about notes.
     if (!consent.enabled && (question.toLowerCase().contains('note'))) {
       CustomSnackBar.show(context,
           'AI access to notes is disabled. Notes cannot be included in this response.',
-          isSuccess: false); // Warning color
+          isSuccess: false);
     }
 
-    if (!chat.isReady) {
-      setState(() {
-        _isTyping = true;
-      });
-
-      try {
-        await chat.startSession(
-          includePersonal: canIncludePersonal,
-          includeMsNotes: shouldIncludeMsNotes,
-        );
-
-        if (chat.hasError) {
-          CustomSnackBar.show(
-              context, chat.lastErrorMessage ?? 'Failed to start chat session');
-          setState(() {
-            _isTyping = false;
-          });
-          return;
-        }
-      } catch (e) {
-        CustomSnackBar.show(context, 'Error starting session: $e');
-        setState(() {
-          _isTyping = false;
-        });
-        return;
-      }
-    }
-
+    // Set sending flag immediately to prevent parallel sends
     setState(() {
+      _isSending = true;
       _isTyping = true;
     });
 
     try {
+      if (!chat.isReady) {
+        try {
+          await chat.startSession(
+            includePersonal: canIncludePersonal,
+            includeMsNotes: shouldIncludeMsNotes,
+          );
+
+          if (chat.hasError) {
+            CustomSnackBar.show(context,
+                chat.lastErrorMessage ?? 'Failed to start chat session');
+            return;
+          }
+        } catch (e) {
+          FlutterBugfender.error('Error starting session: $e');
+          CustomSnackBar.show(context, 'Error starting session: $e');
+          return;
+        }
+      }
+
       final response = await chat.ask(
         question,
         includePersonal: canIncludePersonal,
@@ -1435,11 +1195,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             'Failed to get AI response. You can retry using the retry button.');
       }
     } catch (e) {
+      FlutterBugfender.error('Unexpected error: $e');
       CustomSnackBar.show(context, 'Unexpected error: $e');
     } finally {
-      setState(() {
-        _isTyping = false;
-      });
+      // Always reset both flags in finally block
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _isTyping = false;
+        });
+      }
     }
   }
 
@@ -1460,6 +1225,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         CustomSnackBar.show(context, 'Retry failed: ${chat.lastErrorMessage}');
       }
     } catch (e) {
+      FlutterBugfender.error('Error during retry: $e');
       CustomSnackBar.show(context, 'Error during retry: $e');
     } finally {
       setState(() {
@@ -1480,44 +1246,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const ChatHistoryBottomSheet(),
-    );
-  }
-}
-
-class _OptimizedMarkdownBody extends StatelessWidget {
-  final String data;
-  final MarkdownStyleSheet styleSheet;
-
-  const _OptimizedMarkdownBody({
-    required this.data,
-    required this.styleSheet,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return MarkdownBody(
-      data: data,
-      styleSheet: styleSheet,
-      selectable: true,
-      // Optimize markdown rendering
-      imageBuilder: (uri, title, alt) {
-        return ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 200),
-          child: Image.network(
-            uri.toString(),
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded) return child;
-              return AnimatedOpacity(
-                opacity: frame == null ? 0 : 1,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-                child: child,
-              );
-            },
-          ),
-        );
-      },
-      // Removed invalid builders override that instantiated an abstract class
     );
   }
 }

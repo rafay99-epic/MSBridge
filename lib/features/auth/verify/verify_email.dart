@@ -1,10 +1,12 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'dart:async';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/appbar.dart';
+import 'package:provider/provider.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
@@ -113,7 +115,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     });
 
     try {
-      final result = await AuthRepo().resendVerificationEmail();
+      final result = await context.read<AuthRepo>().resendVerificationEmail();
 
       if (result.isSuccess) {
         CustomSnackBar.show(context, "Verification email sent!",
@@ -135,9 +137,31 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           errorMessage =
               "Too many requests. Please wait 24 hours before trying again.";
           _resendCount = _maxResendAttempts;
+          if (mounted) {
+            setState(() {
+              _isResending = false;
+              _canResend = false;
+            });
+          }
+          _startCooldownTimer();
         } else if (errorMessage.contains('network')) {
           errorMessage =
               "Network error. Please check your connection and try again.";
+          // For network errors, re-enable immediately for retry
+          if (mounted) {
+            setState(() {
+              _isResending = false;
+              _canResend = true;
+            });
+          }
+        } else {
+          // For other errors, re-enable immediately for retry
+          if (mounted) {
+            setState(() {
+              _isResending = false;
+              _canResend = true;
+            });
+          }
         }
 
         CustomSnackBar.show(context, errorMessage, isSuccess: false);
@@ -145,10 +169,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     } catch (e) {
       CustomSnackBar.show(
           context, "An unexpected error occurred. Please try again later.");
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: "Error in resend verification email $e");
-    } finally {
+      FlutterBugfender.error("Error in resend verification email $e");
+
+      // For unexpected errors, re-enable immediately for retry
       if (mounted) {
+        setState(() {
+          _isResending = false;
+          _canResend = true;
+        });
+      }
+    } finally {
+      // Ensure _isResending is always reset, regardless of the path taken
+      if (mounted && _isResending) {
         setState(() {
           _isResending = false;
         });
