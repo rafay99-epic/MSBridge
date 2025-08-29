@@ -46,3 +46,5 @@ app.*.map.json
 /lib/config/config.dart
 /firebase.json
 /android/app/google-services.json
+
+/README_REPORT.md
