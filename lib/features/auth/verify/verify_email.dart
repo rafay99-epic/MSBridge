@@ -121,14 +121,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         CustomSnackBar.show(context, "Verification email sent!",
             isSuccess: true);
 
-        _startCooldownTimer(_resendCooldown);
-
+        // Check if max attempts reached after successful send
         if (_resendCount >= _maxResendAttempts) {
+          // Start 24-hour cooldown for max attempts reached
+          _startCooldownTimer(const Duration(hours: 24));
           CustomSnackBar.show(
             context,
             "Maximum resend attempts reached. Please wait 24 hours or contact support.",
             isSuccess: false,
           );
+        } else {
+          // Start normal short cooldown for successful sends
+          _startCooldownTimer(_resendCooldown);
         }
       } else {
         String errorMessage = result.error ?? "Something went wrong";

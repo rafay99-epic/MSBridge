@@ -115,7 +115,12 @@ jobs:
           mkdir -p android/app
           printf '%s\n' "${{ secrets.GOOGLE_SERVICES_JSON }}" \
             > android/app/google-services.json
-
+      
+      - name: Show google-services.json head
+        if: ${{ always() }}
+        run: |
+             head -n5 android/app/google-services.json
+            
       # 10) write key.properties for signing
       - name: Generate android/app/key.properties
         shell: bash
