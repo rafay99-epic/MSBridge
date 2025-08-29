@@ -275,14 +275,22 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               final historyProvider = Provider.of<ChatHistoryProvider>(
                 context,
                 listen: false,
               );
-              historyProvider.deleteChatHistory(history.id);
-              CustomSnackBar.show(context, 'Chat deleted', isSuccess: true);
+              try {
+                await historyProvider.deleteChatHistory(history.id);
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'Chat deleted', isSuccess: true);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'Failed to delete: $e', isSuccess: false);
+                }
+              }
             },
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
