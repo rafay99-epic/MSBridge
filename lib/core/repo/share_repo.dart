@@ -95,23 +95,15 @@ class ShareRepository {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      // Try update first, fall back to set if document doesn't exist
+      // Try update first; on not-found create with createdAt.
+      final docRef = firestore.collection(_shareCollection).doc(shareId);
       try {
-        await firestore
-            .collection(_shareCollection)
-            .doc(shareId)
-            .update(payloadWithoutCreatedAt);
-      } catch (e, stack) {
-        FlutterBugfender.error('Failed to update share: $e');
-        FlutterBugfender.sendCrash(
-            'Failed to update share: $e', stack.toString());
-        // If update fails because document doesn't exist, create it with createdAt
-        if (e.toString().contains('not found') ||
-            e.toString().contains('No document to update')) {
-          await firestore
-              .collection(_shareCollection)
-              .doc(shareId)
-              .set(payloadWithCreatedAt);
+        await docRef.update(payloadWithoutCreatedAt);
+      } on FirebaseException catch (e, s) {
+        FlutterBugfender.error('Failed to update share: ${e.code} ${e.message}');
+        FlutterBugfender.sendCrash('enableShare update failed', s.toString());
+        if (e.code == 'not-found') {
+          await docRef.set(payloadWithCreatedAt, SetOptions(merge: true));
         } else {
           rethrow;
         }
