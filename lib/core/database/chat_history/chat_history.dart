@@ -81,7 +81,7 @@ class ChatHistoryMessage {
 
   // New: optional image attachments for this message (persisted for history restore)
   @HiveField(5)
-  final List<String>? imageUrls;
+  final List<String> imageUrls;
 
   ChatHistoryMessage({
     required this.text,
@@ -89,6 +89,6 @@ class ChatHistoryMessage {
     required this.timestamp,
     this.isError = false,
     this.errorDetails,
-    this.imageUrls,
-  });
+    List<String>? imageUrls,
+  }) : imageUrls = imageUrls ?? const [];
 }
