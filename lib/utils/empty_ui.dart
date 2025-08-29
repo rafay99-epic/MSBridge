@@ -108,18 +108,21 @@ class EmptyNotesMessage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondary.withOpacity(0.10),
+-                     decoration: BoxDecoration(
+                     decoration: BoxDecoration(
+                       color: colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: colorScheme.secondary.withOpacity(0.18),
+                         color: colorScheme.outlineVariant.withOpacity(0.40),
                           width: 1,
                         ),
                       ),
                       child: Text(
-                        "Nothing here yet",
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.secondary,
+-                       "Nothing here yet",
+-                       style: theme.textTheme.labelMedium?.copyWith(
+                       AppLocalizations.of(context)!.emptyStateNothingHereYet,
+                       style: theme.textTheme.labelMedium?.copyWith(
+                         color: colorScheme.onSecondaryContainer,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
