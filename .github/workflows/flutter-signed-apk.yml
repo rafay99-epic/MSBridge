@@ -21,7 +21,19 @@ jobs:
         with:
           flutter-version: '3.35.1'
 
-      # 3) cache pub packages
+      # 3) Set up JDK 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+            distribution: 'temurin'
+            java-version: '17'
+
+      # 4) remove the macOS-only java.home override
+      - name: Clean macOS JAVA_HOME override
+        run: |
+          sed -i '/^org\.gradle\.java\.home=/d' android/gradle.properties
+
+      # 5) cache pub packages
       - name: Cache pub packages
         uses: actions/cache@v3
         with:
@@ -30,11 +42,11 @@ jobs:
             ~/.pub-cache/bin
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
 
-      # 4) get dependencies
+      # 6) get dependencies
       - name: pub get
         run: flutter pub get
 
-      # 5) generate lib/config/config.dart from individual secrets
+      # 7) generate lib/config/config.dart from individual secrets
       - name: Generate secret-backed Dart config
         run: |
           cat <<EOF > lib/config/config.dart
@@ -75,13 +87,13 @@ jobs:
           }
           EOF
 
-      # 6) write full-file firebase.json
+      # 8) write full-file firebase.json
       - name: Generate firebase.json
         shell: bash
         run: |
           printf '%s\n' "${{ secrets.FIREBASE_JSON }}" > firebase.json
 
-      # 7) write full-file android/app/google-services.json
+      # 9) write full-file android/app/google-services.json
       - name: Generate google-services.json
         shell: bash
         run: |
@@ -89,7 +101,7 @@ jobs:
           printf '%s\n' "${{ secrets.GOOGLE_SERVICES_JSON }}" \
             > android/app/google-services.json
 
-      # 8) write key.properties for signing
+      # 10) write key.properties for signing
       - name: Generate android/app/key.properties
         shell: bash
         run: |
@@ -100,11 +112,11 @@ jobs:
           storeFile=../../keys/upload-keystore.jks
           EOF
 
-      # 9) build the signed APK
+      # 11) build the signed APK
       - name: Build APK (release)
         run: flutter build apk --release
 
-      # 10) upload the APK as an artifact
+      # 12) upload the APK as an artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

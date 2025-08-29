@@ -22,7 +22,6 @@ class _FoldersPageState extends State<FoldersPage> {
   Map<String, int>? _cachedTagCounts;
   int? _cachedUntagged;
   List<String>? _cachedSortedTags;
-  List<NoteTakingModel>? _lastProcessedNotes;
 
   @override
   void initState() {
@@ -37,7 +36,6 @@ class _FoldersPageState extends State<FoldersPage> {
 
   // Memoized computation - only recalculates when notes actually change
   void _computeTagData(List<NoteTakingModel> notes) {
-
     final Map<String, int> tagCounts = {};
     int untagged = 0;
 
@@ -55,7 +53,6 @@ class _FoldersPageState extends State<FoldersPage> {
     _cachedUntagged = untagged;
     _cachedSortedTags = tagCounts.keys.toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    _lastProcessedNotes = List.from(notes);
   }
 
   @override

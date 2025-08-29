@@ -36,7 +36,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _startCooldownTimer();
+    _startCooldownTimer(_resendCooldown);
   }
 
   void _initializeAnimations() {
@@ -77,10 +77,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     super.dispose();
   }
 
-  void _startCooldownTimer() {
+  void _startCooldownTimer([Duration? cooldownDuration]) {
     if (_canResend) return;
 
-    _remaining = _resendCooldown;
+    final duration = cooldownDuration ?? _resendCooldown;
+    _remaining = duration;
     _cooldownTimer?.cancel();
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
@@ -120,7 +121,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         CustomSnackBar.show(context, "Verification email sent!",
             isSuccess: true);
 
-        _startCooldownTimer();
+        _startCooldownTimer(_resendCooldown);
 
         if (_resendCount >= _maxResendAttempts) {
           CustomSnackBar.show(
@@ -142,7 +143,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
               _canResend = false;
             });
           }
-          _startCooldownTimer();
+          _startCooldownTimer(const Duration(hours: 24));
         } else if (errorMessage.contains('network')) {
           errorMessage =
               "Network error. Please check your connection and try again.";
