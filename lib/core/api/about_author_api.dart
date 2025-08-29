@@ -101,7 +101,7 @@ class AboutAuthorApiService {
           details: 'Missing or null author data in response',
         );
       }
-    } on FormatException catch (e, stackTrace) {
+    } on FormatException catch (e) {
       // Log JSON parsing errors
       FlutterBugfender.log('AboutAuthor: JSON parsing failed - ${e.message}');
       FlutterBugfender.error(

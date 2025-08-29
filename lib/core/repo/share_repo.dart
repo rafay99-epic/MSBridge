@@ -77,7 +77,8 @@ class ShareRepository {
 
       final String shareUrl = await _buildDynamicLink(shareId);
 
-      final Map<String, dynamic> payload = {
+      // Create payload without createdAt for updates
+      final Map<String, dynamic> payloadWithoutCreatedAt = {
         'shareId': shareId,
         'noteId': note.noteId,
         'title': note.noteTitle,
@@ -87,17 +88,34 @@ class ShareRepository {
         'viewOnly': true,
         'shareUrl': shareUrl,
       };
-      // Set createdAt only for first-time shares to preserve original creation time.
-      final bool isNewShare = existing == null ||
-          ((existing['shareId'] as String?)?.isEmpty ?? true);
-      if (isNewShare) {
-        payload['createdAt'] = FieldValue.serverTimestamp();
-      }
 
-      await firestore
-          .collection(_shareCollection)
-          .doc(shareId)
-          .set(payload, SetOptions(merge: true));
+      // Create payload with createdAt for new documents
+      final Map<String, dynamic> payloadWithCreatedAt = {
+        ...payloadWithoutCreatedAt,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // Try update first, fall back to set if document doesn't exist
+      try {
+        await firestore
+            .collection(_shareCollection)
+            .doc(shareId)
+            .update(payloadWithoutCreatedAt);
+      } catch (e, stack) {
+        FlutterBugfender.error('Failed to update share: $e');
+        FlutterBugfender.sendCrash(
+            'Failed to update share: $e', stack.toString());
+        // If update fails because document doesn't exist, create it with createdAt
+        if (e.toString().contains('not found') ||
+            e.toString().contains('No document to update')) {
+          await firestore
+              .collection(_shareCollection)
+              .doc(shareId)
+              .set(payloadWithCreatedAt);
+        } else {
+          rethrow;
+        }
+      }
 
       await meta.put(note.noteId, {
         'shareId': shareId,
@@ -130,15 +148,17 @@ class ShareRepository {
           existing != null ? existing['shareId'] as String? : null;
 
       if (shareId != null && shareId.isNotEmpty) {
-        await firestore
-            .collection(_shareCollection)
-            .doc(shareId)
-            .delete()
-            .catchError((error, stack) {
+        try {
+          await firestore.collection(_shareCollection).doc(shareId).delete();
+        } catch (error) {
           FlutterBugfender.error(
             'Failed to delete share $shareId and error: $error',
           );
-        });
+          FlutterBugfender.sendCrash(
+              'Failed to delete share $shareId and error: $error',
+              error.toString());
+          rethrow;
+        }
       }
 
       await meta.put(note.noteId, {
@@ -202,8 +222,14 @@ class ShareRepository {
       if (shareId != null && shareId.isNotEmpty) {
         try {
           await firestore.collection(_shareCollection).doc(shareId).delete();
-        } catch (_) {
-          // ignore and continue to update local state
+        } catch (error) {
+          FlutterBugfender.error(
+            'Failed to delete share $shareId and error: $error',
+          );
+          FlutterBugfender.sendCrash(
+              'Failed to delete share $shareId and error: $error',
+              error.toString());
+          rethrow;
         }
       }
       await meta.put(key, {

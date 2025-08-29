@@ -1,0 +1,116 @@
+name: Flutter CI → Signed APK
+
+on:
+    push:
+      branches:
+        - main
+    pull_request:
+      branches:
+        - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) checkout
+      - uses: actions/checkout@v3
+
+      # 2) install Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.25.2'
+
+      # 3) cache pub packages
+      - name: Cache pub packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.pub-cache/bin
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+
+      # 4) get dependencies
+      - name: pub get
+        run: flutter pub get
+
+      # 5) generate lib/config/config.dart from individual secrets
+      - name: Generate secret-backed Dart config
+        run: |
+          cat <<EOF > lib/config/config.dart
+          // GENERATED — do NOT commit!
+          class FirebaseConfig {
+            static const String apiKey            =
+              '${{ secrets.FIREBASE_API_KEY }}';
+            static const String appId             =
+              '${{ secrets.FIREBASE_APP_ID }}';
+            static const String messagingSenderId =
+              '${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}';
+            static const String projectId         =
+              '${{ secrets.FIREBASE_PROJECT_ID }}';
+            static const String storageBucket     =
+              '${{ secrets.FIREBASE_STORAGE_BUCKET }}';
+            static const String iosBundleId       =
+              '${{ secrets.FIREBASE_IOS_BUNDLE_ID }}';
+          }
+
+          class NoteSummaryAPI {
+            static const String apiKey =
+              '${{ secrets.NOTE_SUMMARY_API_KEY }}';
+          }
+
+          class ChatAPI {
+            static const String apiKey =
+              '${{ secrets.CHAT_API_KEY }}';
+          }
+
+          class UploadThingConfig {
+            static const String apiKey =
+              '${{ secrets.UPLOADTHING_API_KEY }}';
+          }
+
+          class BugfenderConfig {
+            static const String apiKey =
+              '${{ secrets.BUGFENDER_API_KEY }}';
+          }
+          EOF
+
+      # 6) write full-file firebase.json
+      - name: Generate firebase.json
+        shell: bash
+        run: |
+          printf '%s\n' "${{ secrets.FIREBASE_JSON }}" > firebase.json
+
+      # 7) write full-file android/app/google-services.json
+      - name: Generate google-services.json
+        shell: bash
+        run: |
+          mkdir -p android/app
+          printf '%s\n' "${{ secrets.GOOGLE_SERVICES_JSON }}" \
+            > android/app/google-services.json
+
+      # 8) write key.properties for signing
+      - name: Generate android/app/key.properties
+        shell: bash
+        run: |
+          cat <<EOF > android/app/key.properties
+          storePassword=${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=upload
+          storeFile=../../keys/upload-keystore.jks
+          EOF
+
+      # 9) static analysis & lint
+      - name: Analyze
+        run: flutter analyze
+
+      # 10) build the signed APK
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      # 11) upload the APK as an artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk

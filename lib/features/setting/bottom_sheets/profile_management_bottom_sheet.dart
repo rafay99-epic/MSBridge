@@ -9,7 +9,7 @@ import 'package:msbridge/features/setting/section/user_section/logout/logout_dia
 import 'package:page_transition/page_transition.dart';
 
 class ProfileManagementBottomSheet extends StatelessWidget {
-  const ProfileManagementBottomSheet({Key? key}) : super(key: key);
+  const ProfileManagementBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

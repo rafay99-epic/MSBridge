@@ -86,103 +86,112 @@ class PinSettingsBottomSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Consumer<AppPinLockProvider>(
                     builder: (context, pinProvider, _) {
-                      return Column(
-                        children: [
-                          // PIN Lock Toggle
-                          _buildSettingsTile(
-                            context,
-                            "PIN Lock",
-                            "Secure your app with a PIN code",
-                            LineIcons.lock,
-                            Switch(
-                              value: pinProvider.enabled,
-                              onChanged: (value) {
-                                if (value) {
-                                  _showCreatePinDialog(context);
-                                } else {
-                                  _showDisablePinDialog(context, pinProvider);
-                                }
-                              },
-                              activeColor: colorScheme.primary,
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Change PIN
-                          if (pinProvider.hasPin() == true) ...[
-                            _buildSettingsTile(
-                              context,
-                              "Change PIN",
-                              "Update your existing PIN code",
-                              LineIcons.edit,
-                              Icon(Icons.chevron_right),
-                              onTap: () => _navigateToChangePin(context),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // Reset PIN
-                          if (pinProvider.hasPin() == true) ...[
-                            _buildSettingsTile(
-                              context,
-                              "Reset PIN",
-                              "Remove PIN and disable lock",
-                              LineIcons.trash,
-                              Icon(Icons.chevron_right),
-                              onTap: () =>
-                                  _showResetPinDialog(context, pinProvider),
-                              isDestructive: true,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // PIN Status
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: pinProvider.enabled
-                                  ? colorScheme.primary.withOpacity(0.1)
-                                  : colorScheme.outline.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: pinProvider.enabled
-                                    ? colorScheme.primary.withOpacity(0.3)
-                                    : colorScheme.outline.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  pinProvider.enabled
-                                      ? LineIcons.checkCircle
-                                      : LineIcons.infoCircle,
-                                  color: pinProvider.enabled
-                                      ? colorScheme.primary
-                                      : colorScheme.outline,
-                                  size: 20,
+                      return FutureBuilder<bool>(
+                        future: pinProvider.hasPin(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          final hasPin = snapshot.data ?? false;
+                          return Column(
+                            children: [
+                              // PIN Lock Toggle
+                              _buildSettingsTile(
+                                context,
+                                "PIN Lock",
+                                "Secure your app with a PIN code",
+                                LineIcons.lock,
+                                Switch(
+                                  value: pinProvider.enabled,
+                                  onChanged: (value) {
+                                    if (value) {
+                                      _showCreatePinDialog(context);
+                                    } else {
+                                      _showDisablePinDialog(context, pinProvider);
+                                    }
+                                  },
+                                  activeColor: colorScheme.primary,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    pinProvider.enabled
-                                        ? "PIN Lock is enabled"
-                                        : "PIN Lock is disabled",
-                                    style: theme.textTheme.bodyMedium?.copyWith(
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Change PIN
+                              if (hasPin) ...[
+                                _buildSettingsTile(
+                                  context,
+                                  "Change PIN",
+                                  "Update your existing PIN code",
+                                  LineIcons.edit,
+                                  Icon(Icons.chevron_right),
+                                  onTap: () => _navigateToChangePin(context),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              // Reset PIN
+                              if (hasPin) ...[
+                                _buildSettingsTile(
+                                  context,
+                                  "Reset PIN",
+                                  "Remove PIN and disable lock",
+                                  LineIcons.trash,
+                                  Icon(Icons.chevron_right),
+                                  onTap: () =>
+                                      _showResetPinDialog(context, pinProvider),
+                                  isDestructive: true,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+
+                              // PIN Status
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: pinProvider.enabled
+                                      ? colorScheme.primary.withOpacity(0.1)
+                                      : colorScheme.outline.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: pinProvider.enabled
+                                        ? colorScheme.primary.withOpacity(0.3)
+                                        : colorScheme.outline.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      pinProvider.enabled
+                                          ? LineIcons.checkCircle
+                                          : LineIcons.infoCircle,
                                       color: pinProvider.enabled
                                           ? colorScheme.primary
                                           : colorScheme.outline,
-                                      fontWeight: FontWeight.w500,
+                                      size: 20,
                                     ),
-                                  ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        pinProvider.enabled
+                                            ? "PIN Lock is enabled"
+                                            : "PIN Lock is disabled",
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: pinProvider.enabled
+                                              ? colorScheme.primary
+                                              : colorScheme.outline,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
 
-                          const SizedBox(height: 20),
-                        ],
+                              const SizedBox(height: 20),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),

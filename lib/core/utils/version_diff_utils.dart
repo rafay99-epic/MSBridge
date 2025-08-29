@@ -31,9 +31,9 @@ class VersionDiffUtils {
           newContent.split('\n').where((line) => line.trim().isNotEmpty).length;
 
       if (oldContent.isEmpty && newContent.isNotEmpty) {
-        changes.add('Added content (${newLines} lines)');
+        changes.add('Added content ($newLines lines)');
       } else if (newContent.isEmpty && oldContent.isNotEmpty) {
-        changes.add('Removed all content (${oldLines} lines)');
+        changes.add('Removed all content ($oldLines lines)');
       } else if (newLines > oldLines) {
         changes.add('Added ${newLines - oldLines} lines of content');
       } else if (newLines < oldLines) {

@@ -10,7 +10,7 @@ import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/sync_interval_dialog.dart';
-import 'package:msbridge/widgets/buildSubsectionHeader.dart';
+import 'package:msbridge/widgets/build_subsection_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/features/setting/pages/settings_sync_page.dart';

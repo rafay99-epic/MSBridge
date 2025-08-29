@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
@@ -190,11 +189,8 @@ class MyApp extends StatelessWidget {
           ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
           : const AppPinLockWrapper(child: AuthGate()),
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
+      localizationsDelegates: [
         FlutterQuillLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en', 'US'),

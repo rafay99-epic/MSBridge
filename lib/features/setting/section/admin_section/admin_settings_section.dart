@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/webview_repo.dart';
-import 'package:msbridge/widgets/buildSettingsTile.dart';
+import 'package:msbridge/widgets/build_settings_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/setting/section/admin_section/deletion_sync_debug_page.dart';

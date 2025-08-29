@@ -33,7 +33,9 @@ class StreakSyncService {
   Future<void> pushLocalToCloud() async {
     try {
       if (!await _isGlobalCloudSyncEnabled() ||
-          !await _isStreakCloudSyncEnabled()) return;
+          !await _isStreakCloudSyncEnabled()) {
+        return;
+      }
       final user = await _getUser();
       if (user == null) return;
 
@@ -60,7 +62,9 @@ class StreakSyncService {
 
   Future<bool> pushTodayIfDue() async {
     if (!await _isGlobalCloudSyncEnabled() ||
-        !await _isStreakCloudSyncEnabled()) return false;
+        !await _isStreakCloudSyncEnabled()) {
+      return false;
+    }
     final prefs = await SharedPreferences.getInstance();
     final last = prefs.getString(lastSyncYmdKey);
     final today = _todayYmd();
@@ -72,7 +76,9 @@ class StreakSyncService {
   Future<void> pullCloudToLocal() async {
     try {
       if (!await _isGlobalCloudSyncEnabled() ||
-          !await _isStreakCloudSyncEnabled()) return;
+          !await _isStreakCloudSyncEnabled()) {
+        return;
+      }
       final user = await _getUser();
       if (user == null) return;
 

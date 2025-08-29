@@ -120,15 +120,13 @@ class _TagFolderPageState extends State<TagFolderPage> {
 
   Widget _buildNotesList(Box<NoteTakingModel> box, ColorScheme colorScheme,
       ThemeData theme, String title) {
-    // Cache filtered notes to avoid recalculation
-    if (_filteredNotes.isEmpty) {
-      final all = box.values.toList();
-      final byTag = widget.tag == null
-          ? all.where((n) => n.tags.isEmpty).toList()
-          : all.where((n) => n.tags.contains(widget.tag)).toList();
-      _filteredNotes = applyDateFilter(byTag, _selection);
-      _hasMoreData = _filteredNotes.length > _pageSize;
-    }
+    // Always recompute filtered notes to reflect latest changes
+    final all = box.values.toList();
+    final byTag = widget.tag == null
+        ? all.where((n) => n.tags.isEmpty).toList()
+        : all.where((n) => n.tags.contains(widget.tag)).toList();
+    _filteredNotes = applyDateFilter(byTag, _selection);
+    _hasMoreData = _filteredNotes.length > _pageSize;
 
     final visibleNotes =
         _filteredNotes.take((_currentPage + 1) * _pageSize).toList();

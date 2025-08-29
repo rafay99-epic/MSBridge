@@ -72,7 +72,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
         icon: LineIcons.syncIcon,
         color: _cloudSyncEnabled ? widget.colorScheme.secondary : Colors.grey,
         onTap: _cloudSyncEnabled ? _handleSync : _showEnableCloudSyncMessage,
-        isDisabled: !_cloudSyncEnabled,
+        isDisabled: false,
         isLoading: _isSyncing,
         loadingText: "Syncing...",
       ),
@@ -83,7 +83,7 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
         onTap: _cloudSyncEnabled
             ? _handlePullFromCloud
             : _showEnableCloudSyncMessage,
-        isDisabled: !_cloudSyncEnabled,
+        isDisabled: false,
         isLoading: _isPulling,
         loadingText: "Pulling...",
       ),

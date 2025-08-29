@@ -269,22 +269,3 @@ Widget buildNoteCard(
     preview: preview,
   );
 }
-
-Widget _chip(ThemeData theme, ColorScheme colorScheme, String text) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: colorScheme.secondary.withOpacity(0.16),
-      borderRadius: BorderRadius.circular(12),
-      border:
-          Border.all(color: colorScheme.secondary.withOpacity(0.35), width: 1),
-    ),
-    child: Text(
-      text,
-      style: theme.textTheme.labelSmall?.copyWith(
-        color: colorScheme.secondary,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
-}

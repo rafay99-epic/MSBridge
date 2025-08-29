@@ -39,7 +39,7 @@ class DeletionSyncService {
     String userId,
   ) async {
     try {
-      final deviceId = await DeviceIdService.getDeviceId();
+      await DeviceIdService.getDeviceId();
 
       // Restore note locally
       note.restore();
