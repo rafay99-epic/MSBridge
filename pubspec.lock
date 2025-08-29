@@ -606,6 +606,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_bugfender:
+    dependency: "direct main"
+    description:
+      name: flutter_bugfender
+      sha256: e4122e194d76fb5eb05b5b5df86cbcba1c749d5f22b5da1254d81b76c2d87816
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0+1"
   flutter_cache_manager:
     dependency: "direct main"
     description:

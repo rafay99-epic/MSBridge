@@ -69,6 +69,7 @@ dependencies:
   workmanager: ^0.9.0+2
   voice_note_kit: ^1.3.3
   uploadthing: ^1.0.4
+  flutter_bugfender: ^3.0.0+1
 
 dev_dependencies:
   flutter_test:

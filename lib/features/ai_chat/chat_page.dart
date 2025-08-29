@@ -8,7 +8,6 @@ import 'package:msbridge/widgets/snakbar.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
-import 'package:msbridge/features/ai_chat/uploadthing_test_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
@@ -425,56 +424,19 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _includePersonal =
-      false; // Default to false, controlled by global toggle
-  bool _includeMsNotes = false; // Default to false, controlled by global toggle
+  bool _includePersonal = false;
+  bool _includeMsNotes = false;
   bool _isTyping = false;
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize animations with optimized durations for better performance
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
-
-    // Start animations
-    _fadeController.forward();
-    _slideController.forward();
 
     // IMPORTANT: Set initial state of include flags based on consent when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final aiConsentProvider =
           Provider.of<AiConsentProvider>(context, listen: false);
       if (aiConsentProvider.enabled) {
-        // If consent is already enabled (e.g., from previous session), activate chips
         setState(() {
           _includePersonal = true;
           _includeMsNotes = true;
@@ -485,8 +447,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -496,8 +456,8 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 200), // Faster animation
+        curve: Curves.easeOut,
       );
     }
   }
@@ -525,37 +485,31 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           const SizedBox(width: 8),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Column(
-            children: [
-              // Chat Messages
-              Expanded(
-                child: Consumer<ChatProvider>(
-                  builder: (context, chat, _) {
-                    // Auto-scroll to bottom when new messages arrive
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (chat.messages.isNotEmpty) {
-                        _scrollToBottom();
-                      }
-                    });
+      body: Column(
+        children: [
+          // Chat Messages
+          Expanded(
+            child: Consumer<ChatProvider>(
+              builder: (context, chat, _) {
+                // Auto-scroll to bottom when new messages arrive
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (chat.messages.isNotEmpty) {
+                    _scrollToBottom();
+                  }
+                });
 
-                    return chat.messages.isEmpty
-                        ? _buildEmptyState(context, colorScheme, theme)
-                        : _buildChatMessages(context, chat, colorScheme, theme);
-                  },
-                ),
-              ),
-
-              if (_isTyping) _buildTypingIndicator(context, colorScheme),
-
-              // Message Composer
-              _buildComposer(context, colorScheme, theme),
-            ],
+                return chat.messages.isEmpty
+                    ? _buildEmptyState(context, colorScheme, theme)
+                    : _buildChatMessages(context, chat, colorScheme, theme);
+              },
+            ),
           ),
-        ),
+
+          if (_isTyping) _buildTypingIndicator(context, colorScheme),
+
+          // Message Composer
+          _buildComposer(context, colorScheme, theme),
+        ],
       ),
     );
   }
@@ -677,271 +631,546 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     );
   }
 
+  // Widget _buildChatMessages(BuildContext context, ChatProvider chat,
+  //     ColorScheme colorScheme, ThemeData theme) {
+  //   return ListView.builder(
+  //     controller: _scrollController,
+  //     padding: const EdgeInsets.all(16),
+  //     itemCount: chat.messages.length,
+  //     itemBuilder: (context, index) {
+  //       final message = chat.messages[index];
+  //       final isUser = message.fromUser;
+
+  //       // kept for legacy rendering; not used when message.imageUrls is present
+  //       return Container(
+  //         margin: const EdgeInsets.only(bottom: 16),
+  //         child: Row(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           mainAxisAlignment:
+  //               isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+  //           children: [
+  //             if (!isUser) ...[
+  //               Container(
+  //                 padding: const EdgeInsets.all(8),
+  //                 decoration: BoxDecoration(
+  //                   color: message.isError
+  //                       ? colorScheme.error.withOpacity(0.15)
+  //                       : colorScheme.primary.withOpacity(0.15),
+  //                   borderRadius: BorderRadius.circular(20),
+  //                   border: Border.all(
+  //                     color: message.isError
+  //                         ? colorScheme.error.withOpacity(0.3)
+  //                         : colorScheme.primary.withOpacity(0.3),
+  //                     width: 1.5,
+  //                   ),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: (message.isError
+  //                               ? colorScheme.error
+  //                               : colorScheme.primary)
+  //                           .withOpacity(0.1),
+  //                       blurRadius: 8,
+  //                       offset: const Offset(0, 2),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Icon(
+  //                   message.isError
+  //                       ? LineIcons.exclamationTriangle
+  //                       : LineIcons.robot,
+  //                   color: message.isError
+  //                       ? colorScheme.error
+  //                       : colorScheme.primary,
+  //                   size: 16,
+  //                 ),
+  //               ),
+  //               const SizedBox(width: 8),
+  //             ],
+  //             Flexible(
+  //               child: Container(
+  //                 constraints: BoxConstraints(
+  //                   maxWidth: MediaQuery.of(context).size.width * 0.75,
+  //                 ),
+  //                 padding: const EdgeInsets.all(16),
+  //                 decoration: BoxDecoration(
+  //                   color: isUser
+  //                       ? colorScheme.primary
+  //                       : message.isError
+  //                           ? colorScheme.errorContainer
+  //                           : colorScheme.surfaceContainerHighest,
+  //                   borderRadius: BorderRadius.circular(16).copyWith(
+  //                     bottomLeft: isUser
+  //                         ? const Radius.circular(16)
+  //                         : const Radius.circular(4),
+  //                     bottomRight: isUser
+  //                         ? const Radius.circular(4)
+  //                         : const Radius.circular(16),
+  //                   ),
+  //                   border: Border.all(
+  //                     color: isUser
+  //                         ? colorScheme.primary
+  //                         : message.isError
+  //                             ? colorScheme.error
+  //                             : colorScheme.primary.withOpacity(0.4),
+  //                     width: message.isError ? 2 : 2.0,
+  //                   ),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: isUser
+  //                           ? colorScheme.primary.withOpacity(0.3)
+  //                           : colorScheme.primary.withOpacity(0.15),
+  //                       blurRadius: isUser ? 8 : 12,
+  //                       offset: const Offset(0, 4),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     if (isUser && message.imageUrls.isNotEmpty) ...[
+  //                       for (final imgUrl in message.imageUrls)
+  //                         Padding(
+  //                           padding: const EdgeInsets.only(bottom: 8),
+  //                           child: ClipRRect(
+  //                             borderRadius: BorderRadius.circular(8),
+  //                             child: Image.network(
+  //                               imgUrl,
+  //                               height: 180,
+  //                               fit: BoxFit.cover,
+  //                               errorBuilder: (_, __, ___) => Text(
+  //                                 'Image preview unavailable',
+  //                                 style: theme.textTheme.bodyMedium?.copyWith(
+  //                                   color: colorScheme.onPrimary,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                     ],
+  //                     if (isUser)
+  //                       SelectableText(
+  //                         message.text,
+  //                         style: theme.textTheme.bodyMedium?.copyWith(
+  //                           color: colorScheme.onPrimary,
+  //                           fontWeight: FontWeight.w500,
+  //                         ),
+  //                       )
+  //                     else if (message.isError)
+  //                       Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             message.text,
+  //                             style: theme.textTheme.bodyMedium?.copyWith(
+  //                               color: colorScheme.onErrorContainer,
+  //                               fontWeight: FontWeight.w500,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 12),
+  //                           Row(
+  //                             children: [
+  //                               OutlinedButton.icon(
+  //                                 onPressed: () => _retryLastQuestion(context),
+  //                                 icon: Icon(
+  //                                   LineIcons.redo,
+  //                                   size: 16,
+  //                                   color: colorScheme.error,
+  //                                 ),
+  //                                 label: Text(
+  //                                   'Retry',
+  //                                   style: TextStyle(
+  //                                     color: colorScheme.error,
+  //                                     fontWeight: FontWeight.w600,
+  //                                   ),
+  //                                 ),
+  //                                 style: OutlinedButton.styleFrom(
+  //                                   side: BorderSide(color: colorScheme.error),
+  //                                   padding: const EdgeInsets.symmetric(
+  //                                     horizontal: 12,
+  //                                     vertical: 8,
+  //                                   ),
+  //                                 ),
+  //                               ),
+  //                               const SizedBox(width: 8),
+  //                               if (message.errorDetails != null)
+  //                                 IconButton(
+  //                                   onPressed: () {
+  //                                     showDialog(
+  //                                       context: context,
+  //                                       builder: (context) => AlertDialog(
+  //                                         title: const Text('Error Details'),
+  //                                         content: SelectableText(
+  //                                             message.errorDetails!),
+  //                                         actions: [
+  //                                           TextButton(
+  //                                             onPressed: () =>
+  //                                                 Navigator.pop(context),
+  //                                             child: const Text('Close'),
+  //                                           ),
+  //                                         ],
+  //                                       ),
+  //                                     );
+  //                                   },
+  //                                   icon: Icon(
+  //                                     LineIcons.infoCircle,
+  //                                     size: 16,
+  //                                     color: colorScheme.error,
+  //                                   ),
+  //                                   tooltip: 'View Error Details',
+  //                                 ),
+  //                             ],
+  //                           ),
+  //                         ],
+  //                       )
+  //                     else
+  //                       MarkdownBody(
+  //                         data: message.text,
+  //                         styleSheet: MarkdownStyleSheet(
+  //                           p: theme.textTheme.bodyMedium?.copyWith(
+  //                             color: colorScheme.onSurface,
+  //                             height: 1.5,
+  //                             fontWeight: FontWeight.w500,
+  //                           ),
+  //                           h1: theme.textTheme.headlineSmall?.copyWith(
+  //                             color: colorScheme.onSurface,
+  //                             fontWeight: FontWeight.w700,
+  //                           ),
+  //                           h2: theme.textTheme.titleLarge?.copyWith(
+  //                             color: colorScheme.onSurface,
+  //                             fontWeight: FontWeight.w600,
+  //                           ),
+  //                           h3: theme.textTheme.titleMedium?.copyWith(
+  //                             color: colorScheme.onSurface,
+  //                             fontWeight: FontWeight.w600,
+  //                           ),
+  //                           code: theme.textTheme.bodyMedium?.copyWith(
+  //                             backgroundColor:
+  //                                 colorScheme.primary.withOpacity(0.15),
+  //                             color: colorScheme.onSurface,
+  //                             fontFamily: 'monospace',
+  //                             fontWeight: FontWeight.w600,
+  //                           ),
+  //                           codeblockDecoration: BoxDecoration(
+  //                             color: colorScheme.primary.withOpacity(0.15),
+  //                             borderRadius: BorderRadius.circular(8),
+  //                             border: Border.all(
+  //                               color: colorScheme.primary.withOpacity(0.3),
+  //                               width: 1,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         selectable: true,
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //             if (isUser) ...[
+  //               const SizedBox(width: 8),
+  //               Container(
+  //                 padding: const EdgeInsets.all(8),
+  //                 decoration: BoxDecoration(
+  //                   color: colorScheme.primary.withOpacity(0.15),
+  //                   borderRadius: BorderRadius.circular(20),
+  //                   border: Border.all(
+  //                     color: colorScheme.primary.withOpacity(0.3),
+  //                     width: 1.5,
+  //                   ),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: colorScheme.primary.withOpacity(0.1),
+  //                       blurRadius: 8,
+  //                       offset: const Offset(0, 2),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Icon(
+  //                   LineIcons.user,
+  //                   color: colorScheme.primary,
+  //                   size: 16,
+  //                 ),
+  //               ),
+  //             ],
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
   Widget _buildChatMessages(BuildContext context, ChatProvider chat,
       ColorScheme colorScheme, ThemeData theme) {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: chat.messages.length,
+      // Add caching for better performance
+      cacheExtent: 1000, // Cache more items
       itemBuilder: (context, index) {
         final message = chat.messages[index];
         final isUser = message.fromUser;
 
-        // kept for legacy rendering; not used when message.imageUrls is present
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment:
-                isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              if (!isUser) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: message.isError
-                        ? colorScheme.error.withOpacity(0.15)
-                        : colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          // Use RepaintBoundary to isolate painting operations
+          child: RepaintBoundary(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+              children: [
+                if (!isUser) ...[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
                       color: message.isError
-                          ? colorScheme.error.withOpacity(0.3)
-                          : colorScheme.primary.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (message.isError
-                                ? colorScheme.error
-                                : colorScheme.primary)
-                            .withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                          ? colorScheme.error.withOpacity(0.15)
+                          : colorScheme.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: message.isError
+                            ? colorScheme.error.withOpacity(0.3)
+                            : colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    message.isError
-                        ? LineIcons.exclamationTriangle
-                        : LineIcons.robot,
-                    color: message.isError
-                        ? colorScheme.error
-                        : colorScheme.primary,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.75,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isUser
-                        ? colorScheme.primary
-                        : message.isError
-                            ? colorScheme.errorContainer
-                            : colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16).copyWith(
-                      bottomLeft: isUser
-                          ? const Radius.circular(16)
-                          : const Radius.circular(4),
-                      bottomRight: isUser
-                          ? const Radius.circular(4)
-                          : const Radius.circular(16),
                     ),
-                    border: Border.all(
+                    child: Icon(
+                      message.isError
+                          ? LineIcons.exclamationTriangle
+                          : LineIcons.robot,
+                      color: message.isError
+                          ? colorScheme.error
+                          : colorScheme.primary,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Flexible(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
                       color: isUser
                           ? colorScheme.primary
                           : message.isError
-                              ? colorScheme.error
-                              : colorScheme.primary.withOpacity(0.4),
-                      width: message.isError ? 2 : 2.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
+                              ? colorScheme.errorContainer
+                              : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16).copyWith(
+                        bottomLeft: isUser
+                            ? const Radius.circular(16)
+                            : const Radius.circular(4),
+                        bottomRight: isUser
+                            ? const Radius.circular(4)
+                            : const Radius.circular(16),
+                      ),
+                      border: Border.all(
                         color: isUser
-                            ? colorScheme.primary.withOpacity(0.3)
-                            : colorScheme.primary.withOpacity(0.15),
-                        blurRadius: isUser ? 8 : 12,
-                        offset: const Offset(0, 4),
+                            ? colorScheme.primary
+                            : message.isError
+                                ? colorScheme.error
+                                : colorScheme.primary.withOpacity(0.4),
+                        width: message.isError ? 2 : 2.0,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isUser && message.imageUrls.isNotEmpty) ...[
-                        for (final imgUrl in message.imageUrls)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                imgUrl,
-                                height: 180,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Text(
-                                  'Image preview unavailable',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                      if (isUser)
-                        SelectableText(
-                          message.text,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )
-                      else if (message.isError)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message.text,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: () => _retryLastQuestion(context),
-                                  icon: Icon(
-                                    LineIcons.redo,
-                                    size: 16,
-                                    color: colorScheme.error,
-                                  ),
-                                  label: Text(
-                                    'Retry',
-                                    style: TextStyle(
-                                      color: colorScheme.error,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: colorScheme.error),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (message.errorDetails != null)
-                                  IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Error Details'),
-                                          content: SelectableText(
-                                              message.errorDetails!),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              child: const Text('Close'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(
-                                      LineIcons.infoCircle,
-                                      size: 16,
-                                      color: colorScheme.error,
-                                    ),
-                                    tooltip: 'View Error Details',
-                                  ),
-                              ],
-                            ),
-                          ],
-                        )
-                      else
-                        MarkdownBody(
-                          data: message.text,
-                          styleSheet: MarkdownStyleSheet(
-                            p: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                              height: 1.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            h1: theme.textTheme.headlineSmall?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            h2: theme.textTheme.titleLarge?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            h3: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            code: theme.textTheme.bodyMedium?.copyWith(
-                              backgroundColor:
-                                  colorScheme.primary.withOpacity(0.15),
-                              color: colorScheme.onSurface,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w600,
-                            ),
-                            codeblockDecoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: colorScheme.primary.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          selectable: true,
+                      // Simplify shadow for better performance
+                      boxShadow: [
+                        BoxShadow(
+                          color: isUser
+                              ? colorScheme.primary.withOpacity(0.2)
+                              : colorScheme.primary.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-              if (isUser) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.3),
-                      width: 1.5,
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    LineIcons.user,
-                    color: colorScheme.primary,
-                    size: 16,
+                    child: _buildMessageContent(
+                        context, message, isUser, theme, colorScheme),
                   ),
                 ),
+                if (isUser) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      LineIcons.user,
+                      color: colorScheme.primary,
+                      size: 16,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
     );
+  }
+
+  Widget _buildMessageContent(BuildContext context, ChatMessage message,
+      bool isUser, ThemeData theme, ColorScheme colorScheme) {
+    if (isUser) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.imageUrls.isNotEmpty) ...[
+            for (final imgUrl in message.imageUrls)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imgUrl,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    // Add loading placeholder for better UX
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 180,
+                        color: colorScheme.primary.withOpacity(0.1),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Text(
+                      'Image preview unavailable',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+          SelectableText(
+            message.text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          )
+        ],
+      );
+    } else if (message.isError) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message.text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onErrorContainer,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _retryLastQuestion(context),
+                icon: Icon(
+                  LineIcons.redo,
+                  size: 16,
+                  color: colorScheme.error,
+                ),
+                label: Text(
+                  'Retry',
+                  style: TextStyle(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colorScheme.error),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (message.errorDetails != null)
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Error Details'),
+                        content: SelectableText(message.errorDetails!),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    LineIcons.infoCircle,
+                    size: 16,
+                    color: colorScheme.error,
+                  ),
+                  tooltip: 'View Error Details',
+                ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      // Use a more efficient approach for markdown rendering
+      return _OptimizedMarkdownBody(
+        data: message.text,
+        styleSheet: MarkdownStyleSheet(
+          p: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+            height: 1.5,
+            fontWeight: FontWeight.w500,
+          ),
+          h1: theme.textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+          h2: theme.textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          h3: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          code: theme.textTheme.bodyMedium?.copyWith(
+            backgroundColor: colorScheme.primary.withOpacity(0.15),
+            color: colorScheme.onSurface,
+            fontFamily: 'monospace',
+            fontWeight: FontWeight.w600,
+          ),
+          codeblockDecoration: BoxDecoration(
+            color: colorScheme.primary.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildTypingIndicator(BuildContext context, ColorScheme colorScheme) {
@@ -1251,6 +1480,44 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const ChatHistoryBottomSheet(),
+    );
+  }
+}
+
+class _OptimizedMarkdownBody extends StatelessWidget {
+  final String data;
+  final MarkdownStyleSheet styleSheet;
+
+  const _OptimizedMarkdownBody({
+    required this.data,
+    required this.styleSheet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MarkdownBody(
+      data: data,
+      styleSheet: styleSheet,
+      selectable: true,
+      // Optimize markdown rendering
+      imageBuilder: (uri, title, alt) {
+        return ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 200),
+          child: Image.network(
+            uri.toString(),
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded) return child;
+              return AnimatedOpacity(
+                opacity: frame == null ? 0 : 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                child: child,
+              );
+            },
+          ),
+        );
+      },
+      // Removed invalid builders override that instantiated an abstract class
     );
   }
 }

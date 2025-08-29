@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:line_icons/line_icons.dart';
@@ -13,7 +15,6 @@ import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/folders/folders_page.dart';
 import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
-import 'package:msbridge/utils/error.dart';
 import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -35,73 +36,83 @@ class Notetaking extends StatefulWidget {
 class _NotetakingState extends State<Notetaking>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true; // Keep page alive for better performance
+  bool get wantKeepAlive => true;
 
   // Performance optimization flags
   bool _isDataLoaded = false;
   bool _isLoading = false;
-  bool _showFab = false; // Control when FAB becomes visible
+  final bool _showFab = true;
 
+  // Selection state
   bool _isSelectionMode = false;
   final List<String> _selectedNoteIds = [];
-  Timer? _debounceTimer;
-  ValueListenable<Box<NoteTakingModel>>? notesListenable;
+
+  // Cached data
+  ValueListenable<Box<NoteTakingModel>>? _notesListenable;
+  List<NoteTakingModel>? _cachedNotes;
+  List<NoteTakingModel>? _cachedPinnedNotes;
+  List<NoteTakingModel>? _cachedUnpinnedNotes;
+
+  // Layout preferences
   static const String _layoutPrefKey = 'note_layout_mode';
   NoteLayoutMode _layoutMode = NoteLayoutMode.grid;
+
+  // Providers
+  NoteePinProvider? _pinProvider;
 
   @override
   void initState() {
     super.initState();
-    // Defer heavy operations to prevent lag during tab switching
+
+    // Initialize pin provider early
+    _pinProvider = NoteePinProvider();
+    _pinProvider!.initialize();
+
+    // Load layout preference immediately
+    _loadLayoutPreference();
+
+    // Defer data loading to prevent jank during initial render
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLayoutPreference();
+      _loadNotes();
     });
-    // Don't load notes immediately - wait for page to become visible
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Load notes when page becomes visible for the first time
-    if (!_isDataLoaded && !_isLoading) {
-      // Use a small delay to ensure smooth navigation
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted && !_isDataLoaded && !_isLoading) {
-          _loadNotes();
-        }
+  void dispose() {
+    _pinProvider = null;
+    _cachedNotes = null;
+    _cachedPinnedNotes = null;
+    _cachedUnpinnedNotes = null;
+    super.dispose();
+  }
+
+  Future<void> _loadLayoutPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_layoutPrefKey);
+      if (saved == 'list' && mounted) {
+        setState(() {
+          _layoutMode = NoteLayoutMode.list;
+        });
+      }
+    } catch (_) {
+      // Fallback to default grid layout
+      setState(() {
+        _layoutMode = NoteLayoutMode.grid;
       });
     }
-
-    // Show FAB after a delay to prevent lag during tab switching
-    if (!_showFab) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          setState(() {
-            _showFab = true;
-          });
-        }
-      });
-    }
   }
 
-  // Method to preload notes when page is about to become visible
-  void preloadNotes() {
-    if (!_isDataLoaded && !_isLoading) {
-      _loadNotes();
-    }
-  }
-
-  // Start loading notes when page becomes visible
-  void startLoadingNotes() {
-    if (!_isDataLoaded && !_isLoading) {
-      _loadNotes();
-    }
-  }
-
-  // Public method to trigger notes loading (called from home page)
-  void triggerNotesLoading() {
-    if (!_isDataLoaded && !_isLoading) {
-      _loadNotes();
+  Future<void> _saveLayoutPreference(NoteLayoutMode mode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _layoutPrefKey, mode == NoteLayoutMode.grid ? 'grid' : 'list');
+    } catch (e) {
+      // Silently fail if preferences can't be saved
+      FlutterBugfender.log("Failed to save layout preference: $e");
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'Failed to save layout preference');
     }
   }
 
@@ -113,7 +124,14 @@ class _NotetakingState extends State<Notetaking>
     });
 
     try {
-      notesListenable = await HiveNoteTakingRepo.getNotesListenable();
+      // Get notes listenable
+      _notesListenable = await HiveNoteTakingRepo.getNotesListenable();
+
+      // Pre-cache notes for faster initial render
+      if (_notesListenable != null) {
+        _updateCachedNotes(_notesListenable!.value);
+      }
+
       if (mounted) {
         setState(() {
           _isDataLoaded = true;
@@ -127,38 +145,28 @@ class _NotetakingState extends State<Notetaking>
         });
       }
       if (kDebugMode) {
-        print("Failed to cache: $e");
+        print("Failed to load notes: $e");
       }
     }
   }
 
-  Future<void> _loadLayoutPreference() async {
-    try {
-      // Add a small delay to prevent blocking during tab switching
-      await Future.delayed(const Duration(milliseconds: 50));
+  // Update cached notes when data changes
+  void _updateCachedNotes(Box<NoteTakingModel> box) {
+    if (_pinProvider == null) return;
 
-      final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getString(_layoutPrefKey);
-      if (mounted) {
-        if (saved == 'list') {
-          setState(() {
-            _layoutMode = NoteLayoutMode.list;
-          });
-        } else if (saved == 'grid') {
-          setState(() {
-            _layoutMode = NoteLayoutMode.grid;
-          });
-        }
-      }
-    } catch (_) {}
-  }
+    final notes = box.values.toList();
 
-  Future<void> _saveLayoutPreference(NoteLayoutMode mode) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-          _layoutPrefKey, mode == NoteLayoutMode.grid ? 'grid' : 'list');
-    } catch (_) {}
+    // Split into pinned and unpinned notes
+    final pinnedNotes = notes
+        .where((note) => _pinProvider!.isNotePinned(note.noteId.toString()))
+        .toList();
+    final unpinnedNotes = notes
+        .where((note) => !_pinProvider!.isNotePinned(note.noteId.toString()))
+        .toList();
+
+    _cachedNotes = notes;
+    _cachedPinnedNotes = pinnedNotes;
+    _cachedUnpinnedNotes = unpinnedNotes;
   }
 
   void _toggleLayoutMode() {
@@ -168,12 +176,6 @@ class _NotetakingState extends State<Notetaking>
           : NoteLayoutMode.grid;
     });
     _saveLayoutPreference(_layoutMode);
-  }
-
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
   }
 
   void _enterSelectionMode(String noteId) {
@@ -205,19 +207,33 @@ class _NotetakingState extends State<Notetaking>
   }
 
   Future<void> _deleteSelectedNotes() async {
-    if (_selectedNoteIds.isNotEmpty) {
-      final result =
-          await NoteTakingActions.deleteSelectedNotes(_selectedNoteIds);
+    if (_selectedNoteIds.isEmpty) return;
 
-      if (result.success) {
-        CustomSnackBar.show(context, result.message);
-      } else {
-        CustomSnackBar.show(context, result.message);
-      }
+    final result =
+        await NoteTakingActions.deleteSelectedNotes(_selectedNoteIds);
+
+    if (mounted) {
+      CustomSnackBar.show(context, result.message, isSuccess: result.success);
 
       _exitSelectionMode();
-      setState(() {});
     }
+  }
+
+  void _enterSearch() {
+    final currentNotes = _cachedNotes ?? [];
+    FlutterBugfender.log("Entering search with ${currentNotes.length} notes");
+    Navigator.push(
+      context,
+      PageTransition(
+        child: AdvancedSearchScreen(
+          takingNotes: currentNotes,
+          readingNotes: [],
+          searchReadingNotes: false,
+        ),
+        type: PageTransitionType.bottomToTop,
+        duration: const Duration(milliseconds: 300),
+      ),
+    );
   }
 
   @override
@@ -226,30 +242,10 @@ class _NotetakingState extends State<Notetaking>
 
     final theme = Theme.of(context);
 
-    // Show loading state while heavy operations are deferred
-    if (!_showFab) {
-      return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        appBar: AppBar(
-          title: const Text("Note Taking"),
-          automaticallyImplyLeading: false,
-          backgroundColor: theme.colorScheme.surface,
-          foregroundColor: theme.colorScheme.primary,
-        ),
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary.withOpacity(0.5),
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: _buildAppBarTitle(theme),
+        title: const Text("Note Taking"),
         automaticallyImplyLeading: false,
         backgroundColor: theme.colorScheme.surface,
         foregroundColor: theme.colorScheme.primary,
@@ -263,290 +259,182 @@ class _NotetakingState extends State<Notetaking>
           color: theme.colorScheme.primary,
         ),
       ),
-      body: ChangeNotifierProvider(
-        key: ValueKey(_layoutMode),
-        create: (context) {
-          final noteProvider = NoteePinProvider();
-          noteProvider.initialize();
-          return noteProvider;
-        },
-        child: Consumer<NoteePinProvider>(
-          builder: (context, noteProvider, _) {
-            return FutureBuilder<ValueListenable<Box<NoteTakingModel>>>(
-              future: HiveNoteTakingRepo.getNotesListenable(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return ErrorApp(
-                    errorMessage: 'Error: ${snapshot.error}',
-                  );
-                } else if (!snapshot.hasData || _isLoading) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Loading notes...',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  final notesListenable = snapshot.data!;
-
-                  return ValueListenableBuilder<Box<NoteTakingModel>>(
-                    valueListenable: notesListenable,
-                    builder: (context, box, _) {
-                      if (box.values.isEmpty) {
-                        return const EmptyNotesMessage(
-                          message: 'Sorry Notes ',
-                          description: 'Tap + to create a new note',
-                        );
-                      }
-
-                      // Cache processed notes to prevent recalculation on every rebuild
-                      final notes = box.values.toList();
-
-                      // Only process notes if search query changed or notes changed
-                      final pinnedNotes = notes
-                          .where((note) =>
-                              noteProvider.isNotePinned(note.noteId.toString()))
-                          .toList();
-                      final unpinnedNotes = notes
-                          .where((note) => !noteProvider
-                              .isNotePinned(note.noteId.toString()))
-                          .toList();
-
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (pinnedNotes.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                    16.0, 16.0, 16.0, 8.0),
-                                child: Text(
-                                  "Pinned Notes",
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 250),
-                                  switchInCurve: Curves.easeOutCubic,
-                                  switchOutCurve: Curves.easeInCubic,
-                                  transitionBuilder: (child, anim) =>
-                                      FadeTransition(
-                                    opacity: anim,
-                                    child: ScaleTransition(
-                                      scale:
-                                          Tween<double>(begin: 0.98, end: 1.0)
-                                              .animate(anim),
-                                      child: child,
-                                    ),
-                                  ),
-                                  child: MasonryGridView.count(
-                                    key: ValueKey(_layoutMode),
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    crossAxisCount:
-                                        _layoutMode == NoteLayoutMode.grid
-                                            ? 2
-                                            : 1,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    itemCount: pinnedNotes.length,
-                                    itemBuilder: (context, index) {
-                                      final note = pinnedNotes[index];
-                                      return _buildNoteItem(note, context);
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                  16.0, 16.0, 16.0, 8.0),
-                              child: Text(
-                                " Notes",
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 250),
-                                switchInCurve: Curves.easeOutCubic,
-                                switchOutCurve: Curves.easeInCubic,
-                                transitionBuilder: (child, anim) =>
-                                    FadeTransition(
-                                  opacity: anim,
-                                  child: ScaleTransition(
-                                    scale: Tween<double>(begin: 0.98, end: 1.0)
-                                        .animate(anim),
-                                    child: child,
-                                  ),
-                                ),
-                                child: MasonryGridView.count(
-                                  key: ValueKey(_layoutMode),
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount:
-                                      _layoutMode == NoteLayoutMode.grid
-                                          ? 2
-                                          : 1,
-                                  mainAxisSpacing: 16,
-                                  crossAxisSpacing: 16,
-                                  itemCount: unpinnedNotes.length,
-                                  itemBuilder: (context, index) {
-                                    final note = unpinnedNotes[index];
-                                    return _buildNoteItem(note, context);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }
-              },
-            );
-          },
-        ),
-      ),
+      body: _buildBody(theme),
       floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: _showFab
-          ? ExpandableFab(
-              type: ExpandableFabType.up,
-              childrenAnimation: ExpandableFabAnimation
-                  .rotate, // Keep original for compatibility
-              distance: 80, // Reduced distance for better performance
-              overlayStyle: ExpandableFabOverlayStyle(
-                color: theme.colorScheme.surface
-                    .withOpacity(0.5), // Reduced opacity for better performance
-                blur: 1, // Reduced blur for better performance
-              ),
-              children: [
-                buildExpandableButton(
-                  context: context,
-                  heroTag: "Add New Note",
-                  icon: Icons.note,
-                  text: "New Note",
-                  theme: theme,
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const CreateNote(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 300),
-                      ),
-                    );
-                  },
-                ),
-                buildExpandableButton(
-                  context: context,
-                  heroTag: "Templates",
-                  icon: Icons.description,
-                  text: "Templates",
-                  theme: theme,
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const TemplatesHubPage(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 300),
-                      ),
-                    );
-                  },
-                ),
-                buildExpandableButton(
-                  context: context,
-                  heroTag: "To-Do List",
-                  icon: Icons.check,
-                  text: "New To-Do",
-                  theme: theme,
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const ToDO(), // or TaskEntryScreen, whichever is correct
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 300),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            )
-          : null,
+      floatingActionButton: _showFab ? _buildExpandableFab(theme) : null,
     );
   }
 
-  Widget _buildAppBarTitle(ThemeData theme) {
-    return const Text("Note Taking");
+  Widget _buildBody(ThemeData theme) {
+    // Show optimized loading state
+    if (_isLoading || !_isDataLoaded || _notesListenable == null) {
+      return _buildLoadingState(theme);
+    }
+
+    // Provide pin provider to descendants
+    return ChangeNotifierProvider.value(
+      value: _pinProvider,
+      child: ValueListenableBuilder<Box<NoteTakingModel>>(
+        valueListenable: _notesListenable!,
+        builder: (context, box, _) {
+          // Update cached notes when box changes
+          _updateCachedNotes(box);
+
+          if (box.values.isEmpty) {
+            return const EmptyNotesMessage(
+              message: 'Sorry Notes ',
+              description: 'Tap + to create a new note',
+            );
+          }
+
+          return _buildNotesList(theme);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Loading notes...',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesList(ThemeData theme) {
+    final pinnedNotes = _cachedPinnedNotes ?? [];
+    final unpinnedNotes = _cachedUnpinnedNotes ?? [];
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // Pinned notes section
+        if (pinnedNotes.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Text(
+                "Pinned Notes",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            sliver: SliverMasonryGrid.count(
+              crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childCount: pinnedNotes.length,
+              itemBuilder: (context, index) {
+                final note = pinnedNotes[index];
+                return _buildNoteItem(note, context);
+              },
+            ),
+          ),
+        ],
+
+        // Unpinned notes section
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: Text(
+              " Notes",
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 28.0),
+          sliver: SliverMasonryGrid.count(
+            crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childCount: unpinnedNotes.length,
+            itemBuilder: (context, index) {
+              final note = unpinnedNotes[index];
+              return _buildNoteItem(note, context);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
+    // Use RepaintBoundary to isolate painting operations
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: () async {
+          if (_isSelectionMode) {
+            _toggleNoteSelection(note.noteId.toString());
+          } else {
+            await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    CreateNote(note: note),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+          }
+        },
+        onLongPress: () {
+          if (!_isSelectionMode) {
+            _enterSelectionMode(note.noteId.toString());
+          }
+        },
+        child: NoteCard(
+          note: note,
+          isSelected: _selectedNoteIds.contains(note.noteId.toString()),
+          isSelectionMode: _isSelectionMode,
+          isGridLayout: _layoutMode == NoteLayoutMode.grid,
+        ),
+      ),
+    );
   }
 
   IconButton? _buildAppBarLeading() {
-    if (_isSelectionMode) {
-      return IconButton(
-        icon: const Icon(LineIcons.check),
-        onPressed: _exitSelectionMode,
-        tooltip: 'Exit selection mode',
-      );
-    } else {
-      return IconButton(
-        icon: const Icon(LineIcons.folder),
-        onPressed: () {
-          Navigator.push(
-            context,
-            PageTransition(
-              child: const FoldersPage(),
-              type: PageTransitionType.rightToLeft,
-              duration: const Duration(milliseconds: 300),
-            ),
-          );
-        },
-        tooltip: 'Folders',
-      );
-    }
+    return IconButton(
+      icon: Icon(_isSelectionMode ? LineIcons.check : LineIcons.folder),
+      onPressed: _isSelectionMode
+          ? _exitSelectionMode
+          : () {
+              Navigator.push(
+                context,
+                PageTransition(
+                  child: const FoldersPage(),
+                  type: PageTransitionType.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                ),
+              );
+            },
+      tooltip: _isSelectionMode ? 'Exit selection mode' : 'Folders',
+    );
   }
 
   List<Widget> _buildAppBarActions() {
@@ -576,53 +464,80 @@ class _NotetakingState extends State<Notetaking>
           ];
   }
 
-  void _enterSearch() {
-    // Get current notes from the state
-    final currentNotes = notesListenable?.value.values.toList() ?? [];
-
-    Navigator.push(
-      context,
-      PageTransition(
-        child: AdvancedSearchScreen(allNotes: currentNotes),
-        type: PageTransitionType.bottomToTop,
-        duration: const Duration(milliseconds: 300),
+  Widget _buildExpandableFab(ThemeData theme) {
+    return ExpandableFab(
+      type: ExpandableFabType.up,
+      childrenAnimation: ExpandableFabAnimation.rotate,
+      distance: 80,
+      overlayStyle: ExpandableFabOverlayStyle(
+        color: theme.colorScheme.surface.withOpacity(0.5),
+        blur: 1,
       ),
-    );
-  }
-
-  Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        if (_isSelectionMode) {
-          _toggleNoteSelection(note.noteId.toString());
-        } else {
-          await Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  CreateNote(
-                note: note,
+      children: [
+        buildExpandableButton(
+          context: context,
+          heroTag: "Add New Note",
+          icon: Icons.note,
+          text: "New Note",
+          theme: theme,
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const CreateNote(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 300),
               ),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        }
-      },
-      onLongPress: () {
-        if (!_isSelectionMode) {
-          _enterSelectionMode(note.noteId.toString());
-        }
-      },
-      child: NoteCard(
-        note: note,
-        isSelected: _selectedNoteIds.contains(note.noteId.toString()),
-        isSelectionMode: _isSelectionMode,
-        isGridLayout: _layoutMode == NoteLayoutMode.grid,
-      ),
+            );
+          },
+        ),
+        buildExpandableButton(
+          context: context,
+          heroTag: "Templates",
+          icon: Icons.description,
+          text: "Templates",
+          theme: theme,
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const TemplatesHubPage(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+          },
+        ),
+        buildExpandableButton(
+          context: context,
+          heroTag: "To-Do List",
+          icon: Icons.check,
+          text: "New To-Do",
+          theme: theme,
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const ToDO(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

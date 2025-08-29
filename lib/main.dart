@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -59,6 +60,12 @@ void main() async {
   }
 
   try {
+    FlutterBugfender.handleUncaughtErrors(() async {
+      await FlutterBugfender.init(BugfenderConfig.apiKey,
+          enableCrashReporting: true,
+          enableUIEventLogging: true,
+          enableAndroidLogcatLogging: true);
+    });
     await Firebase.initializeApp();
     await Hive.initFlutter();
     Hive.registerAdapter(MSNoteAdapter());
@@ -85,6 +92,8 @@ void main() async {
       await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
       await SchedulerRegistration.registerAdaptive();
     } catch (e, st) {
+      FlutterBugfender.log('Workmanager init failed: $e');
+      FlutterBugfender.error(e.toString());
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'Workmanager init failed');
     }
@@ -92,8 +101,10 @@ void main() async {
     // Initialize deletion sync system (will be fully initialized when user logs in)
     try {
       // Import the deletion sync helper
-      debugPrint('✅ Deletion sync system ready for initialization');
+      FlutterBugfender.log('✅ Deletion sync system ready for initialization');
     } catch (e, st) {
+      FlutterBugfender.log('Deletion sync system init failed: $e');
+      FlutterBugfender.error(e.toString());
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'Deletion sync system init failed');
     }
