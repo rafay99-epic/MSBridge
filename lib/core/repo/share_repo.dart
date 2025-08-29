@@ -83,11 +83,16 @@ class ShareRepository {
         'title': note.noteTitle,
         'content': note.noteContent,
         'ownerUid': user.uid,
-        'updatedAt': DateTime.now().toIso8601String(),
-        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
         'viewOnly': true,
         'shareUrl': shareUrl,
       };
+      // Set createdAt only for first-time shares to preserve original creation time.
+      final bool isNewShare =
+          existing == null || ((existing['shareId'] as String?)?.isEmpty ?? true);
+      if (isNewShare) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
 
       await firestore
           .collection(_shareCollection)
