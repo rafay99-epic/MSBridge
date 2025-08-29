@@ -68,25 +68,27 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
   }
 
   void _selectDate(DateTime date) {
-    if (_selectedFromDate == null || _isSelectingEndDate) {
-      // Selecting end date
-      if (_selectedFromDate != null && date.isBefore(_selectedFromDate!)) {
-        // If end date is before start date, swap them
-        setState(() {
-          _selectedFromDate = date;
-          _selectedToDate = _selectedFromDate;
-        });
-      } else {
-        setState(() {
-          _selectedToDate = date;
-        });
-      }
-      _isSelectingEndDate = false;
-    } else {
-      // Selecting start date
+    // Selecting start date (no start yet or previous range completed)
+    if (_selectedFromDate == null || _selectedToDate != null || !_isSelectingEndDate) {
       setState(() {
         _selectedFromDate = date;
+        _selectedToDate = null;
         _isSelectingEndDate = true;
+      });
+      return;
+    }
+    // Selecting end date
+    if (date.isBefore(_selectedFromDate!)) {
+      final prevStart = _selectedFromDate!;
+      setState(() {
+        _selectedFromDate = date;
+        _selectedToDate = prevStart;
+        _isSelectingEndDate = false;
+      });
+    } else {
+      setState(() {
+        _selectedToDate = date;
+        _isSelectingEndDate = false;
       });
     }
   }
