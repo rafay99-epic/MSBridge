@@ -78,12 +78,15 @@ class _NotetakingState extends State<Notetaking>
   }
 
   @override
-  void dispose() {
-    _pinProvider = null;
-    _cachedNotes = null;
-    _cachedPinnedNotes = null;
-    _cachedUnpinnedNotes = null;
-    super.dispose();
+   @override
+   void dispose() {
+     _pinProvider?.dispose();
+     _pinProvider = null;
+     _cachedNotes = null;
+     _cachedPinnedNotes = null;
+     _cachedUnpinnedNotes = null;
+     super.dispose();
+   }
   }
 
   Future<void> _loadLayoutPreference() async {
