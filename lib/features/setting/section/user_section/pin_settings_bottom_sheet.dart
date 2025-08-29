@@ -96,23 +96,27 @@ class PinSettingsBottomSheet extends StatelessWidget {
                           return Column(
                             children: [
                               // PIN Lock Toggle
-                              _buildSettingsTile(
-                                context,
-                                "PIN Lock",
-                                "Secure your app with a PIN code",
-                                LineIcons.lock,
-                                Switch(
-                                  value: pinProvider.enabled,
-                                  onChanged: (value) {
-                                    if (value) {
-                                      _showCreatePinDialog(context);
-                                    } else {
-                                      _showDisablePinDialog(context, pinProvider);
-                                    }
-                                  },
-                                  activeColor: colorScheme.primary,
-                                ),
-                              ),
+_buildSettingsTile(
+  context,
+  "PIN Lock",
+  "Secure your app with a PIN code",
+  LineIcons.lock,
+  Switch(
+    value: pinProvider.enabled,
+    onChanged: (value) {
+      if (value) {
+        if (hasPin) {
+          pinProvider.setEnabled(true);
+        } else {
+          _showCreatePinDialog(context);
+        }
+      } else {
+        _showDisablePinDialog(context, pinProvider);
+      }
+    },
+    activeColor: colorScheme.primary,
+  ),
+),
 
                               const SizedBox(height: 16),
 
