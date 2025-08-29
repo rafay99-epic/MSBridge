@@ -187,16 +187,14 @@ class OptimizedNoteCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              Expanded(
-                child: Text(
-                  preview(note.noteContent),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.85),
-                    height: 1.45,
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                preview(note.noteContent),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.85),
+                  height: 1.45,
                 ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 14),
               if (note.tags.isNotEmpty) ...[
