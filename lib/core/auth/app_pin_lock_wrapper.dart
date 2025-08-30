@@ -80,13 +80,18 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
   void _onPinProviderChanged() {
     if (!mounted) return;
 
-    final pinProvider = Provider.of<AppPinLockProvider>(context, listen: false);
+    final pinProvider = _pinProvider;
 
     // Check if PIN lock state changed and we need to show lock screen
     if (pinProvider.enabled && pinProvider.wasRecentlyInBackground) {
       setState(() {
         _shouldShowPinLock = true;
         _pinVerified = false;
+      });
+    } else if (!pinProvider.enabled) {
+      setState(() {
+        _shouldShowPinLock = false;
+        _pinVerified = true;
       });
     }
   }
