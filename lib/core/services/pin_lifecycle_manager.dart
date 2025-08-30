@@ -1,20 +1,16 @@
 import 'package:flutter/widgets.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 
-/// Manages PIN lock lifecycle and ensures PIN lock is always active when needed
 class PinLifecycleManager with WidgetsBindingObserver {
   final AppPinLockProvider _pinProvider;
   DateTime? _lastBackgroundTime;
   bool _isAppInBackground = false;
 
   PinLifecycleManager(this._pinProvider) {
-    // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
   }
 
-  @override
   void dispose() {
-    // Remove observer when manager is disposed
     WidgetsBinding.instance.removeObserver(this);
   }
 
