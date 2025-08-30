@@ -143,6 +143,9 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
         // Start success animation
         _successController.forward();
 
+        // Clear background time to prevent "incorrect password" bug
+        pinProvider.onPinVerificationSuccess();
+
         // Show success message (non-blocking)
         if (mounted) {
           CustomSnackBar.show(
