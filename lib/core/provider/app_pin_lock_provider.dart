@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:msbridge/core/services/sync/settings_sync_service.dart'; // Added import for settings sync
 
 class AppPinLockProvider extends ChangeNotifier {
   static const _storage = FlutterSecureStorage();
@@ -44,35 +43,12 @@ class AppPinLockProvider extends ChangeNotifier {
       logCustomEvent('pin_lock_enabled_changed',
           parameters: {'enabled': value});
       setCrashlyticsUserProperties();
-
-      // Sync PIN lock settings to Firebase
-      try {
-        await _syncPinLockSettings();
-      } catch (e) {
-        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-            reason: 'Failed to sync PIN lock settings after state change');
-      }
-
       notifyListeners();
     } catch (e) {
       _setError('Failed to update PIN lock status: ${e.toString()}');
       logNonFatalError('Failed to update PIN lock status',
           context: e.toString());
       notifyListeners();
-    }
-  }
-
-  // Sync PIN lock settings to Firebase
-  Future<void> _syncPinLockSettings() async {
-    try {
-      final settingsSyncService = SettingsSyncService();
-      await settingsSyncService.syncPinLockSettings();
-      logCustomEvent('pin_lock_settings_synced',
-          parameters: {'enabled': _enabled});
-    } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to sync PIN lock settings');
-      rethrow;
     }
   }
 
