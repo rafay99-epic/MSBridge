@@ -416,6 +416,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
         // Save the PIN using the provider
         pinProvider.savePin(pin).then((_) {
+          if (!mounted) return;
           if (pinProvider.hasError) {
             CustomSnackBar.show(
               context,
@@ -444,11 +445,13 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
           // Use a small delay to ensure the snackbar is shown
           Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
+            if (!mounted) return;
+            if (Navigator.canPop(context)) {
               Navigator.pop(context);
             }
           });
         }).catchError((e) {
+          if (!mounted) return;
           FlutterBugfender.sendCrash(
               "Failed to save PIN. Please try again.", e.toString());
           CustomSnackBar.show(
