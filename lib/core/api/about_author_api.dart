@@ -1,3 +1,4 @@
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:convert';
@@ -34,8 +35,8 @@ class AboutAuthorApiService {
   static Future<Map<String, dynamic>> fetchAuthorData() async {
     try {
       // Log API call attempt
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: Starting API call to $_baseUrl$_authorEndpoint');
+      FlutterBugfender.log(
+          'AboutAuthor: Starting API call to $_baseUrl$_authorEndpoint');
 
       final response = await http.get(
         Uri.parse('$_baseUrl$_authorEndpoint'),
@@ -46,7 +47,7 @@ class AboutAuthorApiService {
       ).timeout(
         _timeout,
         onTimeout: () {
-          FirebaseCrashlytics.instance.log(
+          FlutterBugfender.log(
               'AboutAuthor: API request timed out after ${_timeout.inSeconds} seconds');
           throw AboutAuthorApiException(
             'Request timed out',
@@ -56,7 +57,7 @@ class AboutAuthorApiService {
       );
 
       // Log response details
-      FirebaseCrashlytics.instance.log(
+      FlutterBugfender.log(
           'AboutAuthor: API response received - Status: ${response.statusCode}, Content-Length: ${response.contentLength}');
 
       if (response.statusCode == 200) {
@@ -81,7 +82,7 @@ class AboutAuthorApiService {
       final data = json.decode(response.body);
       if (data != null && data['author'] != null) {
         // Log successful data parsing
-        FirebaseCrashlytics.instance.log(
+        FlutterBugfender.log(
             'AboutAuthor: Data parsed successfully - Author name: ${data['author']['name'] ?? 'Unknown'}');
 
         // Validate and log any potential issues with avatar URLs
@@ -90,31 +91,21 @@ class AboutAuthorApiService {
         return data['author'];
       } else {
         // Log invalid data structure
-        FirebaseCrashlytics.instance
-            .log('AboutAuthor: Invalid data structure - data: $data');
-        FirebaseCrashlytics.instance.recordError(
-          'Invalid API response structure',
-          StackTrace.current,
-          reason: 'API returned null or missing author data',
-          information: ['Response body: ${response.body}'],
+        FlutterBugfender.log(
+            'AboutAuthor: Invalid data structure - data: $data');
+        FlutterBugfender.error(
+          'Invalid API response structure: $data, response: ${response.body}, status: ${response.statusCode}, error: ${response.reasonPhrase}',
         );
         throw AboutAuthorApiException(
           'Invalid data format received from server',
           details: 'Missing or null author data in response',
         );
       }
-    } on FormatException catch (e, stackTrace) {
+    } on FormatException catch (e) {
       // Log JSON parsing errors
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: JSON parsing failed - ${e.message}');
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to parse JSON response from author API',
-        information: [
-          'Response body: ${response.body}',
-          'Response headers: ${response.headers}',
-        ],
+      FlutterBugfender.log('AboutAuthor: JSON parsing failed - ${e.message}');
+      FlutterBugfender.error(
+        'Failed to parse JSON response from author API: $e',
       );
       throw AboutAuthorApiException(
         'Invalid response format from server',
@@ -136,7 +127,7 @@ class AboutAuthorApiService {
           if (avatar.isNotEmpty &&
               !avatar.startsWith('http://') &&
               !avatar.startsWith('https://')) {
-            FirebaseCrashlytics.instance.log(
+            FlutterBugfender.log(
                 'AboutAuthor: Invalid avatar URL detected in testimonial $i: $avatar - This will cause image loading errors');
           }
         }
@@ -147,37 +138,25 @@ class AboutAuthorApiService {
       if (authorAvatar.isNotEmpty &&
           !authorAvatar.startsWith('http://') &&
           !authorAvatar.startsWith('https://')) {
-        FirebaseCrashlytics.instance.log(
+        FlutterBugfender.log(
             'AboutAuthor: Invalid author avatar URL detected: $authorAvatar - This will cause image loading errors');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Log any errors during validation without failing the main request
-      FirebaseCrashlytics.instance.log(
+      FlutterBugfender.log(
           'AboutAuthor: Error during avatar URL validation: ${e.toString()}');
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Error validating avatar URLs in author data',
-        information: ['Error: ${e.toString()}'],
+      FlutterBugfender.error(
+        'Error during avatar URL validation: $e',
       );
     }
   }
 
   /// Handles HTTP error responses
   static Map<String, dynamic> _handleHttpError(http.Response response) {
-    // Log HTTP error responses
-    FirebaseCrashlytics.instance
-        .log('AboutAuthor: HTTP error - Status: ${response.statusCode}');
-    FirebaseCrashlytics.instance.recordError(
-      'HTTP Error ${response.statusCode}',
-      StackTrace.current,
-      reason: 'Author API returned non-200 status code',
-      information: [
-        'Status code: ${response.statusCode}',
-        'Response body: ${response.body}',
-        'Response headers: ${response.headers}',
-      ],
-    );
+    FlutterBugfender.log(
+        'AboutAuthor: HTTP error - Status: ${response.statusCode}');
+    FlutterBugfender.error(
+        'HTTP Error ${response.statusCode}, response: ${response.body}, status: ${response.statusCode}, error: ${response.reasonPhrase}');
 
     final errorMessage = _getHttpErrorMessage(response.statusCode);
     throw AboutAuthorApiException(

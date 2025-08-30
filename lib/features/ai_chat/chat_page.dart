@@ -1,14 +1,420 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
-import 'package:msbridge/core/provider/chat_history_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:msbridge/features/ai_chat/optimzed_markdown.dart';
+import 'package:msbridge/features/ai_chat_history/chat_history.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:msbridge/core/database/chat_history/chat_history.dart';
+import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
+class ChatSettingsBottomSheet extends StatelessWidget {
+  const ChatSettingsBottomSheet({
+    super.key,
+    required this.includePersonal,
+    required this.onIncludePersonalChanged,
+    required this.includeMsNotes,
+    required this.onIncludeMsNotesChanged,
+    required this.onShowChatHistory,
+    required this.onClearChat,
+    required this.chatProvider, // Passed directly
+    required this.aiConsentProvider, // Passed directly
+    required this.onConsentToggleChanged, // Callback for global consent toggle
+  });
+
+  final bool includePersonal;
+  final ValueChanged<bool> onIncludePersonalChanged;
+  final bool includeMsNotes;
+  final ValueChanged<bool> onIncludeMsNotesChanged;
+  final VoidCallback onShowChatHistory;
+  final VoidCallback onClearChat;
+  final ChatProvider chatProvider;
+  final AiConsentProvider aiConsentProvider;
+  final ValueChanged<bool> onConsentToggleChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (BuildContext context, ScrollController scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Draggable handle
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.outline.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      'AI Chat Settings',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Consent Card (Global Toggle)
+                    ChangeNotifierProvider.value(
+                      value:
+                          aiConsentProvider, // Provide locally for the Switch to rebuild
+                      child: Consumer<AiConsentProvider>(
+                        builder: (context, consent, _) {
+                          return Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  LineIcons.userShield,
+                                  color: colorScheme.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'AI can access your notes for better answers',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Switch(
+                                value: consent.enabled,
+                                onChanged:
+                                    onConsentToggleChanged, // Use the callback from parent
+                                activeColor: colorScheme.primary,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Filter Chips (Individual Toggles)
+                    // Listen to aiConsentProvider directly to disable/enable chips
+                    ListenableBuilder(
+                      listenable: aiConsentProvider,
+                      builder: (context, _) {
+                        final bool isGlobalConsentEnabled =
+                            aiConsentProvider.enabled;
+
+                        // Helper function to get label color based on enablement and selection
+                        Color getChipLabelColor(
+                            bool chipSelected, bool isEnabled) {
+                          if (isEnabled) {
+                            return chipSelected
+                                ? colorScheme.primary // Active and selected
+                                : colorScheme.onSurface
+                                    .withOpacity(0.7); // Active but unselected
+                          } else {
+                            return colorScheme.onSurface
+                                .withOpacity(0.4); // Disabled
+                          }
+                        }
+
+                        // Helper function for border color based on enablement and selection
+                        Color getChipBorderColor(
+                            bool chipSelected, bool isEnabled) {
+                          if (isEnabled) {
+                            return chipSelected
+                                ? colorScheme.primary // Active and selected
+                                : colorScheme.outline
+                                    .withOpacity(0.3); // Active but unselected
+                          } else {
+                            return colorScheme.onSurface
+                                .withOpacity(0.2); // Disabled
+                          }
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Include in AI responses:',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilterChip(
+                                  label: const Text('Personal Notes'),
+                                  // 'selected' reflects local state (_includePersonal)
+                                  selected: includePersonal,
+                                  onSelected: isGlobalConsentEnabled
+                                      ? onIncludePersonalChanged
+                                      : null, // Disable interaction if global consent is off
+                                  selectedColor: isGlobalConsentEnabled &&
+                                          includePersonal
+                                      ? colorScheme.primary.withOpacity(0.1)
+                                      : Colors
+                                          .transparent, // Muted/transparent when unselected or disabled
+                                  checkmarkColor: isGlobalConsentEnabled &&
+                                          includePersonal
+                                      ? colorScheme.primary
+                                      : Colors
+                                          .transparent, // Muted/transparent when unselected or disabled
+                                  labelStyle: TextStyle(
+                                    color: getChipLabelColor(includePersonal,
+                                        isGlobalConsentEnabled),
+                                    fontWeight: includePersonal &&
+                                            isGlobalConsentEnabled
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color: getChipBorderColor(includePersonal,
+                                          isGlobalConsentEnabled),
+                                    ),
+                                  ),
+                                ),
+                                FilterChip(
+                                  label: const Text('MS Notes'),
+                                  selected: includeMsNotes,
+                                  onSelected: isGlobalConsentEnabled
+                                      ? onIncludeMsNotesChanged
+                                      : null, // Disable interaction if global consent is off
+                                  selectedColor: isGlobalConsentEnabled &&
+                                          includeMsNotes
+                                      ? colorScheme.primary.withOpacity(0.1)
+                                      : Colors
+                                          .transparent, // Muted/transparent when unselected or disabled
+                                  checkmarkColor: isGlobalConsentEnabled &&
+                                          includeMsNotes
+                                      ? colorScheme.primary
+                                      : Colors
+                                          .transparent, // Muted/transparent when unselected or disabled
+                                  labelStyle: TextStyle(
+                                    color: getChipLabelColor(
+                                        includeMsNotes, isGlobalConsentEnabled),
+                                    fontWeight:
+                                        includeMsNotes && isGlobalConsentEnabled
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color: getChipBorderColor(includeMsNotes,
+                                          isGlobalConsentEnabled),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Status and Actions Section
+                    // Listen to chatProvider directly to update status and enable/disable clear chat
+                    ListenableBuilder(
+                      listenable: chatProvider,
+                      builder: (context, _) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Session Status:',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.7),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: chatProvider.hasError
+                                    ? colorScheme.error.withOpacity(0.1)
+                                    : chatProvider.isLoading
+                                        ? colorScheme.primary.withOpacity(0.1)
+                                        : colorScheme.secondary
+                                            .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: chatProvider.hasError
+                                      ? colorScheme.error
+                                      : chatProvider.isLoading
+                                          ? colorScheme.primary
+                                          : colorScheme.secondary,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    chatProvider.hasError
+                                        ? LineIcons.exclamationTriangle
+                                        : chatProvider.isLoading
+                                            ? LineIcons.clock
+                                            : LineIcons.checkCircle,
+                                    size: 14,
+                                    color: chatProvider.hasError
+                                        ? colorScheme.error
+                                        : chatProvider.isLoading
+                                            ? colorScheme.primary
+                                            : colorScheme.secondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      chatProvider.sessionStatus,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: chatProvider.hasError
+                                            ? colorScheme.error
+                                            : chatProvider.isLoading
+                                                ? colorScheme.primary
+                                                : colorScheme.secondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: onShowChatHistory,
+                                    icon: Icon(
+                                      LineIcons.history,
+                                      size: 16,
+                                      color: colorScheme.primary,
+                                    ),
+                                    label: Text(
+                                      'View History',
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                          color: colorScheme.primary),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: chatProvider.messages.isNotEmpty
+                                        ? onClearChat
+                                        : null,
+                                    icon: Icon(
+                                      LineIcons.trash,
+                                      size: 16,
+                                      color: chatProvider.messages.isNotEmpty
+                                          ? colorScheme.error
+                                          : colorScheme.onSurface
+                                              .withOpacity(0.3),
+                                    ),
+                                    label: Text(
+                                      'Clear Chat',
+                                      style: TextStyle(
+                                        color: chatProvider.messages.isNotEmpty
+                                            ? colorScheme.error
+                                            : colorScheme.onSurface
+                                                .withOpacity(0.3),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: chatProvider.messages.isNotEmpty
+                                            ? colorScheme.error
+                                            : colorScheme.outline
+                                                .withOpacity(0.3),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// --- MAIN CHAT ASSISTANT PAGE ---
 class ChatAssistantPage extends StatefulWidget {
   const ChatAssistantPage({super.key});
 
@@ -20,54 +426,30 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _includePersonal = true;
-  bool _includeMsNotes = true;
+  bool _includePersonal = false;
+  bool _includeMsNotes = false;
   bool _isTyping = false;
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  bool _isSending = false; // New state variable for sending status
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animations with optimized durations for better performance
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 400), // Reduced from 800ms
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300), // Reduced from 600ms
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2), // Reduced from 0.3 for better performance
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
-    ));
-
-    // Start animations
-    _fadeController.forward();
-    _slideController.forward();
+    // IMPORTANT: Set initial state of include flags based on consent when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final aiConsentProvider =
+          Provider.of<AiConsentProvider>(context, listen: false);
+      if (aiConsentProvider.enabled) {
+        setState(() {
+          _includePersonal = true;
+          _includeMsNotes = true;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -77,8 +459,8 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 200), // Faster animation
+        curve: Curves.easeOut,
       );
     }
   }
@@ -88,296 +470,113 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
-      ],
-      child: Scaffold(
-        backgroundColor: colorScheme.surface,
-        appBar: const CustomAppBar(
-          title: "Ask AI",
-          backbutton: false,
-        ),
-        body: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: Column(
-              children: [
-                // Header Section with Consent and Filters
-                _buildHeaderSection(context, colorScheme, theme),
-
-                // Chat Messages
-                Expanded(
-                  child: Consumer<ChatProvider>(
-                    builder: (context, chat, _) {
-                      // Auto-scroll to bottom when new messages arrive
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (chat.messages.isNotEmpty) {
-                          _scrollToBottom();
-                        }
-                      });
-
-                      return chat.messages.isEmpty
-                          ? _buildEmptyState(context, colorScheme, theme)
-                          : _buildChatMessages(
-                              context, chat, colorScheme, theme);
-                    },
-                  ),
-                ),
-
-                // Typing Indicator
-                if (_isTyping) _buildTypingIndicator(context, colorScheme),
-
-                // Message Composer
-                _buildComposer(context, colorScheme, theme),
-              ],
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: CustomAppBar(
+        title: "Ask AI",
+        backbutton: false,
+        actions: [
+          IconButton(
+            icon: Icon(
+              LineIcons.cog,
+              color: colorScheme.onSurface,
+              size: 24,
             ),
+            onPressed: () => _showChatSettingsBottomSheet(context),
+            tooltip: 'AI Chat Settings',
           ),
-        ),
+          const SizedBox(width: 8),
+        ],
       ),
-    );
-  }
-
-  Widget _buildHeaderSection(
-      BuildContext context, ColorScheme colorScheme, ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary.withOpacity(0.05),
-            colorScheme.secondary.withOpacity(0.02),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
         children: [
-          // Consent Card
-          Consumer<AiConsentProvider>(
-            builder: (context, consent, _) {
-              return Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      LineIcons.userShield,
-                      color: colorScheme.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'AI can access your notes for better answers',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Switch(
-                    value: consent.enabled,
-                    onChanged: (v) async {
-                      await consent.setEnabled(v);
-                      if (!v) {
-                        CustomSnackBar.show(
-                            context, 'AI access to notes disabled');
-                      }
-                    },
-                    activeColor: colorScheme.primary,
-                  ),
-                ],
-              );
-            },
-          ),
+          // Chat Messages
+          Expanded(
+            child: Consumer<ChatProvider>(
+              builder: (context, chat, _) {
+                // Auto-scroll to bottom when new messages arrive
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (chat.messages.isNotEmpty) {
+                    _scrollToBottom();
+                  }
+                });
 
-          const SizedBox(height: 16),
-
-          // Filter Chips
-          Text(
-            'Include in AI responses:',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
-              fontWeight: FontWeight.w500,
+                return chat.messages.isEmpty
+                    ? _buildEmptyState(context, colorScheme, theme)
+                    : _buildChatMessages(context, chat, colorScheme, theme);
+              },
             ),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilterChip(
-                label: const Text('Personal Notes'),
-                selected: _includePersonal,
-                onSelected: (v) => setState(() => _includePersonal = v),
-                selectedColor: colorScheme.primary.withOpacity(0.1),
-                checkmarkColor: colorScheme.primary,
-                labelStyle: TextStyle(
-                  color: _includePersonal
-                      ? colorScheme.primary
-                      : colorScheme.primary.withOpacity(0.7),
-                  fontWeight:
-                      _includePersonal ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-              FilterChip(
-                label: const Text('MS Notes'),
-                selected: _includeMsNotes,
-                onSelected: (v) => setState(() => _includeMsNotes = v),
-                selectedColor: colorScheme.primary.withOpacity(0.1),
-                checkmarkColor: colorScheme.primary,
-                labelStyle: TextStyle(
-                  color: _includeMsNotes
-                      ? colorScheme.primary
-                      : colorScheme.primary.withOpacity(0.7),
-                  fontWeight:
-                      _includeMsNotes ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+          if (_isTyping) _buildTypingIndicator(context, colorScheme),
 
-          // Status and Actions Section
-          Consumer<ChatProvider>(
-            builder: (context, chat, _) {
-              return Row(
-                children: [
-                  // Status indicator with flexible width
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: chat.hasError
-                            ? colorScheme.error.withOpacity(0.1)
-                            : chat.isLoading
-                                ? colorScheme.primary.withOpacity(0.1)
-                                : colorScheme.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: chat.hasError
-                              ? colorScheme.error
-                              : chat.isLoading
-                                  ? colorScheme.primary
-                                  : colorScheme.secondary,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            chat.hasError
-                                ? LineIcons.exclamationTriangle
-                                : chat.isLoading
-                                    ? LineIcons.clock
-                                    : LineIcons.checkCircle,
-                            size: 14,
-                            color: chat.hasError
-                                ? colorScheme.error
-                                : chat.isLoading
-                                    ? colorScheme.primary
-                                    : colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              chat.sessionStatus,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: chat.hasError
-                                    ? colorScheme.error
-                                    : chat.isLoading
-                                        ? colorScheme.primary
-                                        : colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  // History button
-                  OutlinedButton.icon(
-                    onPressed: () => _showChatHistory(context),
-                    icon: Icon(
-                      LineIcons.history,
-                      size: 16,
-                      color: colorScheme.primary,
-                    ),
-                    label: Text(
-                      'History',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: colorScheme.primary),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  // Clear chat button
-                  if (chat.messages.isNotEmpty)
-                    OutlinedButton.icon(
-                      onPressed: () => _clearChat(context),
-                      icon: Icon(
-                        LineIcons.trash,
-                        size: 16,
-                        color: colorScheme.error,
-                      ),
-                      label: Text(
-                        'Clear Chat',
-                        style: TextStyle(
-                          color: colorScheme.error,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: colorScheme.error),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
+          // Message Composer
+          _buildComposer(context, colorScheme, theme),
         ],
       ),
     );
   }
 
+  // Method to show the settings bottom sheet
+  void _showChatSettingsBottomSheet(BuildContext context) {
+    // Retrieve Provider instances from this context (which should have access from main.dart)
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final aiConsentProvider =
+        Provider.of<AiConsentProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor:
+          Colors.transparent, // Important for custom rounded corners
+      builder: (ctx) {
+        return ChatSettingsBottomSheet(
+          includePersonal: _includePersonal,
+          onIncludePersonalChanged: (v) {
+            setState(() => _includePersonal = v);
+          },
+          includeMsNotes: _includeMsNotes,
+          onIncludeMsNotesChanged: (v) {
+            setState(() => _includeMsNotes = v);
+          },
+          onShowChatHistory: () {
+            Navigator.pop(ctx); // Close settings sheet
+            _showChatHistory(context); // Open history sheet
+          },
+          onClearChat: () {
+            Navigator.pop(ctx); // Close settings sheet
+            _clearChat(context); // Clear chat
+          },
+          chatProvider: chatProvider, // Pass the instance
+          aiConsentProvider: aiConsentProvider, // Pass the instance
+          onConsentToggleChanged: (newValue) async {
+            // Update the actual provider's state
+            await aiConsentProvider.setEnabled(newValue);
+
+            // Update the local include flags and trigger rebuild of the main page if needed
+            setState(() {
+              if (newValue) {
+                // If consent is enabled, default both individual options to true
+                _includePersonal = true;
+                _includeMsNotes = true;
+                CustomSnackBar.show(context,
+                    'AI access to notes enabled. You can now select specific notes.');
+              } else {
+                // If consent is disabled, explicitly disable both individual options
+                _includePersonal = false;
+                _includeMsNotes = false;
+                CustomSnackBar.show(context,
+                    'AI access to notes disabled. No notes will be included.');
+              }
+            });
+            // No need to pop ctx here, as the sheet remains open for further interaction.
+          },
+        );
+      },
+    );
+  }
+
+  // --- REST OF CHAT ASSISTANT PAGE WIDGETS ---
   Widget _buildEmptyState(
       BuildContext context, ColorScheme colorScheme, ThemeData theme) {
     return Center(
@@ -441,249 +640,276 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: chat.messages.length,
+      cacheExtent: 1000,
       itemBuilder: (context, index) {
         final message = chat.messages[index];
         final isUser = message.fromUser;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment:
-                isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              if (!isUser) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: message.isError
-                        ? colorScheme.error.withOpacity(0.15)
-                        : colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: RepaintBoundary(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+              children: [
+                if (!isUser) ...[
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
                       color: message.isError
-                          ? colorScheme.error.withOpacity(0.3)
-                          : colorScheme.primary.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (message.isError
-                                ? colorScheme.error
-                                : colorScheme.primary)
-                            .withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                          ? colorScheme.error.withOpacity(0.15)
+                          : colorScheme.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: message.isError
+                            ? colorScheme.error.withOpacity(0.3)
+                            : colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    message.isError
-                        ? LineIcons.exclamationTriangle
-                        : LineIcons.robot,
-                    color: message.isError
-                        ? colorScheme.error
-                        : colorScheme.primary,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.75,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isUser
-                        ? colorScheme.primary
-                        : message.isError
-                            ? colorScheme.errorContainer
-                            : colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16).copyWith(
-                      bottomLeft: isUser
-                          ? const Radius.circular(16)
-                          : const Radius.circular(4),
-                      bottomRight: isUser
-                          ? const Radius.circular(4)
-                          : const Radius.circular(16),
                     ),
-                    border: Border.all(
+                    child: Icon(
+                      message.isError
+                          ? LineIcons.exclamationTriangle
+                          : LineIcons.robot,
+                      color: message.isError
+                          ? colorScheme.error
+                          : colorScheme.primary,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Flexible(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.75,
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
                       color: isUser
                           ? colorScheme.primary
                           : message.isError
-                              ? colorScheme.error
-                              : colorScheme.primary.withOpacity(0.4),
-                      width: message.isError ? 2 : 2.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
+                              ? colorScheme.errorContainer
+                              : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16).copyWith(
+                        bottomLeft: isUser
+                            ? const Radius.circular(16)
+                            : const Radius.circular(4),
+                        bottomRight: isUser
+                            ? const Radius.circular(4)
+                            : const Radius.circular(16),
+                      ),
+                      border: Border.all(
                         color: isUser
-                            ? colorScheme.primary.withOpacity(0.3)
-                            : colorScheme.primary.withOpacity(0.15),
-                        blurRadius: isUser ? 8 : 12,
-                        offset: const Offset(0, 4),
+                            ? colorScheme.primary
+                            : message.isError
+                                ? colorScheme.error
+                                : colorScheme.primary.withOpacity(0.4),
+                        width: message.isError ? 2 : 2.0,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isUser)
-                        SelectableText(
-                          message.text,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )
-                      else if (message.isError)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message.text,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: () => _retryLastQuestion(context),
-                                  icon: Icon(
-                                    LineIcons.redo,
-                                    size: 16,
-                                    color: colorScheme.error,
-                                  ),
-                                  label: Text(
-                                    'Retry',
-                                    style: TextStyle(
-                                      color: colorScheme.error,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: colorScheme.error),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (message.errorDetails != null)
-                                  IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Error Details'),
-                                          content: SelectableText(
-                                              message.errorDetails!),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              child: const Text('Close'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(
-                                      LineIcons.infoCircle,
-                                      size: 16,
-                                      color: colorScheme.error,
-                                    ),
-                                    tooltip: 'View Error Details',
-                                  ),
-                              ],
-                            ),
-                          ],
-                        )
-                      else
-                        MarkdownBody(
-                          data: message.text,
-                          styleSheet: MarkdownStyleSheet(
-                            p: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                              height: 1.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            h1: theme.textTheme.headlineSmall?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            h2: theme.textTheme.titleLarge?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            h3: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            code: theme.textTheme.bodyMedium?.copyWith(
-                              backgroundColor:
-                                  colorScheme.primary.withOpacity(0.15),
-                              color: colorScheme.onSurface,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w600,
-                            ),
-                            codeblockDecoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: colorScheme.primary.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          selectable: true,
+                      // Simplify shadow for better performance
+                      boxShadow: [
+                        BoxShadow(
+                          color: isUser
+                              ? colorScheme.primary.withOpacity(0.2)
+                              : colorScheme.primary.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-              if (isUser) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.3),
-                      width: 1.5,
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    LineIcons.user,
-                    color: colorScheme.primary,
-                    size: 16,
+                    child: _buildMessageContent(
+                        context, message, isUser, theme, colorScheme),
                   ),
                 ),
+                if (isUser) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      LineIcons.user,
+                      color: colorScheme.primary,
+                      size: 16,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
     );
   }
 
+  Widget _buildMessageContent(BuildContext context, ChatMessage message,
+      bool isUser, ThemeData theme, ColorScheme colorScheme) {
+    if (isUser) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.imageUrls.isNotEmpty) ...[
+            for (final imgUrl in message.imageUrls)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imgUrl,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 180,
+                        color: colorScheme.primary.withOpacity(0.1),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Text(
+                      'Image preview unavailable',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+          SelectableText(
+            message.text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          )
+        ],
+      );
+    } else if (message.isError) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message.text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onErrorContainer,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => _retryLastQuestion(context),
+                icon: Icon(
+                  LineIcons.redo,
+                  size: 16,
+                  color: colorScheme.error,
+                ),
+                label: Text(
+                  'Retry',
+                  style: TextStyle(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colorScheme.error),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (message.errorDetails != null)
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Error Details'),
+                        content: SelectableText(message.errorDetails!),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    LineIcons.infoCircle,
+                    size: 16,
+                    color: colorScheme.error,
+                  ),
+                  tooltip: 'View Error Details',
+                ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      return OptimizedMarkdownBody(
+        data: message.text,
+        styleSheet: MarkdownStyleSheet(
+          p: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+            height: 1.5,
+            fontWeight: FontWeight.w500,
+          ),
+          h1: theme.textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+          h2: theme.textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          h3: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+          code: theme.textTheme.bodyMedium?.copyWith(
+            backgroundColor: colorScheme.primary.withOpacity(0.15),
+            color: colorScheme.onSurface,
+            fontFamily: 'monospace',
+            fontWeight: FontWeight.w600,
+          ),
+          codeblockDecoration: BoxDecoration(
+            color: colorScheme.primary.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildTypingIndicator(BuildContext context, ColorScheme colorScheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16), // Align with messages
       child: Row(
         children: [
           Container(
@@ -734,16 +960,18 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       builder: (context, value, child) {
         return Transform.scale(
           scale: 0.5 + (0.5 * value),
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.6),
-              shape: BoxShape.circle,
-            ),
-          ),
+          child: child!,
         );
       },
+      curve: Curves.easeInOutSine,
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: colorScheme.primary.withOpacity(0.6),
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 
@@ -763,6 +991,11 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         ),
         child: Row(
           children: [
+            IconButton(
+              onPressed: _isSending ? null : () => _attachImage(context),
+              icon: Icon(LineIcons.image, color: colorScheme.primary),
+              tooltip: 'Attach Image',
+            ),
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -783,9 +1016,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 child: TextField(
                   controller: _controller,
                   maxLines: null,
+                  enabled: !_isSending, // Disable text field when sending
                   textInputAction: TextInputAction.send,
                   decoration: InputDecoration(
-                    hintText: 'Ask AI anything...',
+                    hintText: _isSending
+                        ? 'Sending message...'
+                        : 'Ask AI anything...',
                     hintStyle: TextStyle(
                       color: colorScheme.primary.withOpacity(0.7),
                       fontSize: 16,
@@ -801,38 +1037,46 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                     color: colorScheme.primary,
                     fontSize: 16,
                   ),
-                  onSubmitted: (_) => _sendMessage(context),
+                  onSubmitted: _isSending ? null : (_) => _sendMessage(context),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            Consumer2<ChatProvider, AiConsentProvider>(
-              builder: (context, chat, consent, _) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+            Container(
+              decoration: BoxDecoration(
+                color: _isSending
+                    ? colorScheme.primary.withOpacity(0.5)
+                    : colorScheme.primary,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: _isSending
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary),
+                        ),
+                      )
+                    : Icon(
+                        LineIcons.paperPlane,
+                        color: colorScheme.onPrimary,
+                        size: 20,
                       ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      LineIcons.paperPlane,
-                      color: colorScheme.onPrimary,
-                      size: 20,
-                    ),
-                    onPressed: () => _sendMessage(context),
-                    style: IconButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                );
-              },
+                onPressed: _isSending ? null : () => _sendMessage(context),
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
             ),
           ],
         ),
@@ -840,52 +1084,104 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     );
   }
 
+  Future<void> _attachImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final x =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (x == null) return;
+
+    final prov = Provider.of<UploadThingProvider>(context, listen: false);
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+
+    final placeholder = ChatMessage(true, 'Uploading image...');
+
+    chat.messages.add(placeholder);
+    if (mounted) {
+      setState(() {
+        _isTyping = true;
+      });
+    }
+
+    try {
+      final url = await prov.uploadImage(File(x.path));
+
+      if (url != null) {
+        chat.addPendingImageUrl(url);
+        if (mounted) {
+          CustomSnackBar.show(
+              context, 'Image attached. Type your question and send.',
+              isSuccess: true);
+        }
+      } else {
+        if (mounted) {
+          CustomSnackBar.show(context, 'Image upload failed', isSuccess: false);
+        }
+      }
+    } catch (e) {
+      FlutterBugfender.error('Image upload failed: $e');
+      if (mounted) {
+        CustomSnackBar.show(context, 'Image upload failed: $e',
+            isSuccess: false);
+      }
+    } finally {
+      if (chat.messages.isNotEmpty &&
+          identical(chat.messages.last, placeholder)) {
+        chat.messages.removeLast();
+      }
+
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+        });
+      }
+    }
+  }
+
   void _sendMessage(BuildContext context) async {
     final question = _controller.text.trim();
     if (question.isEmpty) return;
 
-    final consent = Provider.of<AiConsentProvider>(context, listen: false);
+    // Early return if already sending to prevent parallel sends
+    if (_isSending) return;
 
-    // Handle consent logic: Personal notes require consent, MS Notes don't
-    if (!consent.enabled && _includePersonal) {
-      CustomSnackBar.show(
-          context, 'Personal notes disabled. AI will only access MS Notes.');
-      // Continue with MS Notes only
+    final consent = Provider.of<AiConsentProvider>(context, listen: false);
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+
+    final canIncludePersonal = consent.enabled && _includePersonal;
+    final shouldIncludeMsNotes = consent.enabled && _includeMsNotes;
+
+    if (!consent.enabled && (question.toLowerCase().contains('note'))) {
+      CustomSnackBar.show(context,
+          'AI access to notes is disabled. Notes cannot be included in this response.',
+          isSuccess: false);
     }
 
+    // Set sending flag immediately to prevent parallel sends
     setState(() {
+      _isSending = true;
       _isTyping = true;
     });
 
     try {
-      final chat = Provider.of<ChatProvider>(context, listen: false);
-
-      // Define note inclusion flags
-      final canIncludePersonal = consent.enabled && _includePersonal;
-      final shouldIncludeMsNotes = _includeMsNotes;
-
-      // Start session if needed
       if (!chat.isReady) {
-        // If personal notes are blocked but user wants them, show info message
-        if (_includePersonal && !consent.enabled) {
-          CustomSnackBar.show(context,
-              'Personal notes disabled. AI will only access MS Notes.');
-        }
+        try {
+          await chat.startSession(
+            includePersonal: canIncludePersonal,
+            includeMsNotes: shouldIncludeMsNotes,
+          );
 
-        await chat.startSession(
-          includePersonal: canIncludePersonal,
-          includeMsNotes: shouldIncludeMsNotes,
-        );
-
-        // Check if session failed
-        if (chat.hasError) {
-          CustomSnackBar.show(
-              context, chat.lastErrorMessage ?? 'Failed to start chat session');
+          if (chat.hasError) {
+            CustomSnackBar.show(context,
+                chat.lastErrorMessage ?? 'Failed to start chat session');
+            return;
+          }
+        } catch (e) {
+          FlutterBugfender.error('Error starting session: $e');
+          CustomSnackBar.show(context, 'Error starting session: $e');
           return;
         }
       }
 
-      // Send the question
       final response = await chat.ask(
         question,
         includePersonal: canIncludePersonal,
@@ -895,12 +1191,42 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       if (response != null) {
         _controller.clear();
       } else if (chat.hasError) {
-        // Error is already handled by the provider and shown in chat
         CustomSnackBar.show(context,
             'Failed to get AI response. You can retry using the retry button.');
       }
     } catch (e) {
+      FlutterBugfender.error('Unexpected error: $e');
       CustomSnackBar.show(context, 'Unexpected error: $e');
+    } finally {
+      // Always reset both flags in finally block
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _isTyping = false;
+        });
+      }
+    }
+  }
+
+  void _retryLastQuestion(BuildContext context) async {
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+    if (chat.isLoading) return;
+
+    setState(() {
+      _isTyping = true;
+    });
+
+    try {
+      final response = await chat.retryLastQuestion();
+
+      if (response != null) {
+        CustomSnackBar.show(context, 'Retry successful!', isSuccess: true);
+      } else if (chat.hasError) {
+        CustomSnackBar.show(context, 'Retry failed: ${chat.lastErrorMessage}');
+      }
+    } catch (e) {
+      FlutterBugfender.error('Error during retry: $e');
+      CustomSnackBar.show(context, 'Error during retry: $e');
     } finally {
       setState(() {
         _isTyping = false;
@@ -908,26 +1234,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     }
   }
 
-  // Add retry functionality
-  void _retryLastQuestion(BuildContext context) async {
-    final chat = Provider.of<ChatProvider>(context, listen: false);
-    final response = await chat.retryLastQuestion();
-
-    if (response != null) {
-      CustomSnackBar.show(context, 'Retry successful!', isSuccess: true);
-    } else if (chat.hasError) {
-      CustomSnackBar.show(context, 'Retry failed: ${chat.lastErrorMessage}');
-    }
-  }
-
-  // Add clear chat functionality
   void _clearChat(BuildContext context) {
     final chat = Provider.of<ChatProvider>(context, listen: false);
     chat.clearChat();
     CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
   }
 
-  // Show chat history
   void _showChatHistory(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -935,340 +1247,5 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
       backgroundColor: Colors.transparent,
       builder: (context) => const ChatHistoryBottomSheet(),
     );
-  }
-}
-
-// Chat History Bottom Sheet
-class ChatHistoryBottomSheet extends StatelessWidget {
-  const ChatHistoryBottomSheet({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colorScheme.outline.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Icon(
-                  LineIcons.history,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Chat History',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Consumer<ChatHistoryProvider>(
-                  builder: (context, historyProvider, _) {
-                    return TextButton.icon(
-                      onPressed: historyProvider.chatHistories.isNotEmpty
-                          ? () => _clearAllHistory(context, historyProvider)
-                          : null,
-                      icon: Icon(
-                        LineIcons.trash,
-                        size: 16,
-                        color: colorScheme.error,
-                      ),
-                      label: Text(
-                        'Clear All',
-                        style: TextStyle(
-                          color: colorScheme.error,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // History List
-          Expanded(
-            child: Consumer<ChatHistoryProvider>(
-              builder: (context, historyProvider, _) {
-                if (historyProvider.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (historyProvider.chatHistories.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LineIcons.history,
-                          size: 64,
-                          color: colorScheme.primary.withOpacity(0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No chat history yet',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Your conversations will appear here',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: historyProvider.chatHistories.length,
-                  itemBuilder: (context, index) {
-                    final history = historyProvider.chatHistories[index];
-                    return _buildHistoryItem(
-                        context, history, colorScheme, theme);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHistoryItem(
-    BuildContext context,
-    ChatHistory history,
-    ColorScheme colorScheme,
-    ThemeData theme,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: colorScheme.primary.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Icon(
-            LineIcons.robot,
-            color: colorScheme.primary,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          history.title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              '${history.messages.length} messages',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.6),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Model: ${history.modelName.split('-').first}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.5),
-                fontFamily: 'monospace',
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatDate(history.lastUpdated),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.4),
-              ),
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(
-            Icons.more_vert,
-            color: colorScheme.primary.withOpacity(0.6),
-          ),
-          onSelected: (value) {
-            switch (value) {
-              case 'load':
-                _loadChat(context, history);
-                break;
-              case 'delete':
-                _deleteChat(context, history);
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'load',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.refresh,
-                    size: 16,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Load Chat'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(
-                    LineIcons.trash,
-                    size: 16,
-                    color: colorScheme.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Delete'),
-                ],
-              ),
-            ),
-          ],
-        ),
-        onTap: () => _loadChat(context, history),
-      ),
-    );
-  }
-
-  void _loadChat(BuildContext context, ChatHistory history) {
-    final chat = Provider.of<ChatProvider>(context, listen: false);
-    chat.loadChatFromHistory(history);
-    Navigator.pop(context);
-    CustomSnackBar.show(context, 'Chat loaded from history', isSuccess: true);
-    Navigator.pop(context);
-  }
-
-  void _deleteChat(BuildContext context, ChatHistory history) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: Text('Are you sure you want to delete "${history.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final historyProvider = Provider.of<ChatHistoryProvider>(
-                context,
-                listen: false,
-              );
-              historyProvider.deleteChatHistory(history.id);
-              CustomSnackBar.show(context, 'Chat deleted', isSuccess: true);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _clearAllHistory(
-      BuildContext context, ChatHistoryProvider historyProvider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All History'),
-        content: const Text(
-          'Are you sure you want to delete all chat history? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              historyProvider.clearAllChatHistories();
-              CustomSnackBar.show(context, 'All history cleared',
-                  isSuccess: true);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Clear All'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-    } else {
-      return 'Just now';
-    }
   }
 }

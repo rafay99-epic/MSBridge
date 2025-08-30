@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
@@ -18,6 +19,53 @@ class TagFolderPage extends StatefulWidget {
 
 class _TagFolderPageState extends State<TagFolderPage> {
   DateFilterSelection _selection = DateFilterSelection();
+  final ScrollController _scrollController = ScrollController();
+  static const int _pageSize = 20;
+  int _currentPage = 0;
+  List<NoteTakingModel> _filteredNotes = [];
+  bool _isLoading = false;
+  bool _hasMoreData = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (!_isLoading && _hasMoreData) {
+      setState(() => _isLoading = true);
+      Future.microtask(() {
+        if (mounted) {
+          setState(() {
+            _currentPage++;
+            _isLoading = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _refreshData() {
+    setState(() {
+      _currentPage = 0;
+      _filteredNotes = [];
+      _hasMoreData = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +85,10 @@ class _TagFolderPageState extends State<TagFolderPage> {
             onPressed: () async {
               final updated = await showDateFilterSheet(context, _selection);
               if (updated != null && mounted) {
-                setState(() => _selection = updated);
+                setState(() {
+                  _selection = updated;
+                  _refreshData();
+                });
               }
             },
           ),
@@ -59,57 +110,84 @@ class _TagFolderPageState extends State<TagFolderPage> {
           return ValueListenableBuilder<Box<NoteTakingModel>>(
             valueListenable: snap.data!,
             builder: (context, box, _) {
-              final all = box.values.toList();
-              final byTag = widget.tag == null
-                  ? all.where((n) => n.tags.isEmpty).toList()
-                  : all.where((n) => n.tags.contains(widget.tag)).toList();
-              final filtered = applyDateFilter(byTag, _selection);
-
-              if (filtered.isEmpty) {
-                return buildEmptyState(context, colorScheme, theme, title);
-              }
-
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: buildFolderHeader(
-                      context,
-                      colorScheme,
-                      theme,
-                      title,
-                      filtered.length,
-                      showFolderOpen: widget.tag == null,
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.all(20),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.85,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => buildNoteCard(
-                          context,
-                          filtered[index],
-                          colorScheme,
-                          theme,
-                          _preview,
-                        ),
-                        childCount: filtered.length,
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                ],
-              );
+              return _buildNotesList(box, colorScheme, theme, title);
             },
           );
         },
       ),
+    );
+  }
+
+  Widget _buildNotesList(Box<NoteTakingModel> box, ColorScheme colorScheme,
+      ThemeData theme, String title) {
+    // Always recompute filtered notes to reflect latest changes
+    final all = box.values.toList();
+    final byTag = widget.tag == null
+        ? all.where((n) => n.tags.isEmpty).toList()
+        : all.where((n) => n.tags.contains(widget.tag)).toList();
+    _filteredNotes = applyDateFilter(byTag, _selection);
+    _hasMoreData = _filteredNotes.length > _pageSize;
+
+    final visibleNotes =
+        _filteredNotes.take((_currentPage + 1) * _pageSize).toList();
+
+    if (visibleNotes.isEmpty) {
+      return buildEmptyState(context, colorScheme, theme, title);
+    }
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverToBoxAdapter(
+          child: buildFolderHeader(
+            context,
+            colorScheme,
+            theme,
+            title,
+            _filteredNotes.length,
+            showFolderOpen: widget.tag == null,
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.85,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index >= visibleNotes.length) {
+                  return null;
+                }
+                return buildNoteCard(
+                  context,
+                  visibleNotes[index],
+                  colorScheme,
+                  theme,
+                  _preview,
+                );
+              },
+              childCount: visibleNotes.length,
+            ),
+          ),
+        ),
+        if (_hasMoreData && visibleNotes.length < _filteredNotes.length)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                ),
+              ),
+            ),
+          ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+      ],
     );
   }
 
@@ -140,7 +218,8 @@ class _TagFolderPageState extends State<TagFolderPage> {
   dynamic _tryJson(String s) {
     try {
       return jsonDecode(s);
-    } catch (_) {
+    } catch (e) {
+      FlutterBugfender.error('Error parsing JSON: $e');
       return null;
     }
   }

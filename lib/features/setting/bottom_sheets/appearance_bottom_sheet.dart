@@ -8,7 +8,7 @@ import 'package:msbridge/features/setting/section/appearance_section/font_select
 import 'package:page_transition/page_transition.dart';
 
 class AppearanceBottomSheet extends StatelessWidget {
-  const AppearanceBottomSheet({Key? key}) : super(key: key);
+  const AppearanceBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

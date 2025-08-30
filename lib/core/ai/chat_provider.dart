@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/ai/notes_context_builder.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,18 +9,26 @@ import 'package:msbridge/config/config.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/repo/chat_history_repo.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
 
 class ChatMessage {
   final bool fromUser;
   final String text;
   final bool isError;
   final String? errorDetails;
+  final List<String> imageUrls; // optional attachments to render with message
 
-  ChatMessage(this.fromUser, this.text,
-      {this.isError = false, this.errorDetails});
+  ChatMessage(
+    this.fromUser,
+    this.text, {
+    this.isError = false,
+    this.errorDetails,
+    List<String>? imageUrls,
+  }) : imageUrls = imageUrls ?? const [];
 
   ChatMessage.error(this.fromUser, this.text, {this.errorDetails})
-      : isError = true;
+      : isError = true,
+        imageUrls = const [];
 }
 
 class ChatProvider extends ChangeNotifier {
@@ -28,6 +36,9 @@ class ChatProvider extends ChangeNotifier {
   GenerativeModel? _model;
   String? _contextJson;
   String _modelName = AIModelsConfig.models.first.modelName;
+
+  // Pending attachments to be included with the next ask() call
+  final List<String> _pendingImageUrls = [];
 
   // Chat history properties
   String? _currentChatId;
@@ -48,6 +59,18 @@ class ChatProvider extends ChangeNotifier {
   // Chat history getters
   String? get currentChatId => _currentChatId;
   bool get isHistoryEnabled => _isHistoryEnabled;
+  List<String> get pendingImageUrls => List.unmodifiable(_pendingImageUrls);
+
+  void addPendingImageUrl(String url) {
+    if (url.trim().isEmpty) return;
+    _pendingImageUrls.add(url.trim());
+    notifyListeners();
+  }
+
+  void clearPendingImages() {
+    _pendingImageUrls.clear();
+    notifyListeners();
+  }
 
   // Initialize the chat model
   Future<void> _initializeModel() async {
@@ -65,10 +88,10 @@ class ChatProvider extends ChangeNotifier {
           maxOutputTokens: 2048,
         ),
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Try fallback to a stable model
       try {
-        _modelName = 'gemini-1.5-pro';
+        _modelName = 'gemini-2.5-pro';
         _model = GenerativeModel(
           model: _modelName,
           apiKey: ChatAPI.apiKey,
@@ -79,9 +102,8 @@ class ChatProvider extends ChangeNotifier {
             maxOutputTokens: 2048,
           ),
         );
-      } catch (fallbackError, _) {
-        _setError(
-            'Failed to initialize AI model: ${e.toString()}', e, stackTrace);
+      } catch (fallbackError) {
+        _setError('Failed to initialize AI model: ${e.toString()}', e);
       }
     }
   }
@@ -119,14 +141,14 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Build context from notes
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Building AI context: includePersonal=$includePersonal, includeMsNotes=$includeMsNotes',
       );
       _contextJson = await NotesContextBuilder.buildJson(
         includePersonal: includePersonal,
         includeMsNotes: includeMsNotes,
       );
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'AI context built successfully. Length: ${_contextJson?.length ?? 0} characters',
       );
 
@@ -141,8 +163,8 @@ class ChatProvider extends ChangeNotifier {
       });
 
       return true;
-    } catch (e, stackTrace) {
-      _setError('Failed to start chat session: ${e.toString()}', e, stackTrace);
+    } catch (e) {
+      _setError('Failed to start chat session: ${e.toString()}', e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -156,7 +178,7 @@ class ChatProvider extends ChangeNotifier {
     bool includeMsNotes = true,
   }) async {
     if (question.trim().isEmpty) {
-      _setError('Question cannot be empty', null, null);
+      _setError('Question cannot be empty', null);
       return null;
     }
 
@@ -165,18 +187,23 @@ class ChatProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      // Ensure session is initialized
-      if (_model == null || _contextJson == null) {
-        await startSession(includePersonal: true, includeMsNotes: true);
-
-        // Check if session initialization failed
-        if (_hasError) {
-          return null;
+      // Ensure session/model based on toggles
+      if (includePersonal || includeMsNotes) {
+        if (_model == null || _contextJson == null) {
+          await startSession(
+              includePersonal: includePersonal, includeMsNotes: includeMsNotes);
+          if (_hasError) return null;
+        }
+      } else {
+        if (_model == null) {
+          await _initializeModel();
+          if (_hasError) return null;
         }
       }
 
-      // Add user message
-      messages.add(ChatMessage(true, question));
+      // Add user message merged with any pending images
+      final List<String> attachments = List<String>.from(_pendingImageUrls);
+      messages.add(ChatMessage(true, question, imageUrls: attachments));
       notifyListeners();
 
       // Save to chat history if enabled
@@ -187,27 +214,19 @@ class ChatProvider extends ChangeNotifier {
         );
       }
 
-      // Prepare content for AI with context from notes
-      await FirebaseCrashlytics.instance.log(
+      // Prepare content for AI (with or without notes context)
+      await FlutterBugfender.log(
         'Preparing AI content. Context length: ${_contextJson?.length ?? 0}',
       );
       if (_contextJson != null && _contextJson!.isNotEmpty) {
-        await FirebaseCrashlytics.instance.log(
+        await FlutterBugfender.log(
           'Context preview: ${_contextJson!.substring(0, _contextJson!.length > 200 ? 200 : _contextJson!.length)}...',
         );
       }
 
-      final content = [
-        Content.text(
-            '''You are a helpful AI assistant that has access to the user's personal notes and MS Notes. Answer questions based on the provided context. If the answer is not in the notes, say you don't know. Cite note titles in parentheses when referencing specific notes.
-
-NOTES_CONTEXT:
-```json
-$_contextJson
-```
-
-USER_QUESTION: $question'''),
-      ];
+      // Build content including any pending image attachments
+      final content = await _buildGeminiContent(question,
+          includePersonal: includePersonal, includeMsNotes: includeMsNotes);
 
       // Generate AI response with timeout
       final response = await _model!.generateContent(content).timeout(
@@ -234,10 +253,19 @@ USER_QUESTION: $question'''),
         'modelUsed': _modelName,
       });
 
+      // Persist history again to include the AI response
+      if (_isHistoryEnabled) {
+        await saveChatToHistory(
+          includePersonal: includePersonal,
+          includeMsNotes: includeMsNotes,
+        );
+      }
+
+      // After a successful response, clear any pending attachments
+      _pendingImageUrls.clear();
       return text;
-    } catch (e, stackTrace) {
-      _setError(
-          'Failed to generate AI response: ${e.toString()}', e, stackTrace);
+    } catch (e) {
+      _setError('Failed to generate AI response: ${e.toString()}', e);
       _isLoading = false;
 
       // Add error message to chat
@@ -245,9 +273,77 @@ USER_QUESTION: $question'''),
       messages.add(
           ChatMessage.error(false, errorMessage, errorDetails: e.toString()));
 
+      // Persist history with the error message so restores match the UI state
+      if (_isHistoryEnabled) {
+        await saveChatToHistory(
+          includePersonal: includePersonal,
+          includeMsNotes: includeMsNotes,
+        );
+      }
+
       notifyListeners();
       return null;
     }
+  }
+
+  // Removed unused text-only URL collector; image bytes are now attached via _buildGeminiContent.
+
+  Future<List<Content>> _buildGeminiContent(String question,
+      {required bool includePersonal, required bool includeMsNotes}) async {
+    final List<Part> parts = [];
+    if (includePersonal || includeMsNotes) {
+      parts.add(TextPart(
+          '''You are a helpful AI assistant that has access to the user's personal notes and MS Notes. Answer questions based on the provided context. If the answer is not in the notes, say you don't know. Cite note titles in parentheses when referencing specific notes.'''));
+    } else {
+      parts.add(TextPart(
+          'You are a helpful AI assistant having a general conversation.'));
+    }
+
+    final RegExp img = RegExp(
+        r'^(http|https)://.*\.(png|jpg|jpeg|webp)(\?.*)?$',
+        caseSensitive: false);
+    final List<String> urls =
+        _pendingImageUrls.where((u) => img.hasMatch(u)).take(2).toList();
+
+    for (final url in urls) {
+      try {
+        final resp = await http.get(Uri.parse(url)).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            FlutterBugfender.error('Image fetch timed out');
+            throw TimeoutException(
+                'Image fetch timed out', const Duration(seconds: 30));
+          },
+        );
+        if (resp.statusCode == 200 && resp.bodyBytes.isNotEmpty) {
+          final String mime = _inferMimeFromUrl(url);
+          parts.add(DataPart(mime, resp.bodyBytes));
+        }
+      } on TimeoutException catch (e) {
+        await FlutterBugfender.error(
+          'Image fetch timed out +  $e',
+        );
+      } catch (e) {
+        await FlutterBugfender.error(
+          'Failed to fetch image bytes for Gemini: $e',
+        );
+      }
+    }
+
+    // Include notes context only if enabled
+    if (includePersonal || includeMsNotes) {
+      parts.add(TextPart(
+          '''\nNOTES_CONTEXT:\n```json\n${_contextJson ?? ''}\n```\n'''));
+    }
+    parts.add(TextPart('USER_QUESTION: $question'));
+    return [Content.multi(parts)];
+  }
+
+  String _inferMimeFromUrl(String url) {
+    final lower = url.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 
   // Retry the last question
@@ -283,15 +379,15 @@ USER_QUESTION: $question'''),
   }
 
   // Set error state
-  void _setError(String message, dynamic error, StackTrace? stackTrace) {
+  void _setError(String message, dynamic error) {
     _hasError = true;
     _lastErrorMessage = message;
 
     // Log to Firebase Crashlytics
     if (error != null) {
-      FirebaseCrashlytics.instance.recordError(error, stackTrace);
+      FlutterBugfender.error('Chat Provider Error: $message');
     }
-    FirebaseCrashlytics.instance.log('Chat Provider Error: $message');
+    FlutterBugfender.log('Chat Provider Error: $message');
 
     notifyListeners();
   }
@@ -316,12 +412,9 @@ USER_QUESTION: $question'''),
   Future<void> _logCustomEvent(
       String eventName, Map<String, dynamic> parameters) async {
     try {
-      FirebaseCrashlytics.instance.log('Chat Provider Event: $eventName');
-      FirebaseCrashlytics.instance
-          .setCustomKey('event_$eventName', parameters.toString());
+      FlutterBugfender.log('Chat Provider Event: $eventName');
     } catch (e) {
-      // Fallback if Crashlytics fails
-      debugPrint('Failed to log to Crashlytics: $e');
+      FlutterBugfender.error('Failed to log to Crashlytics: $e');
     }
   }
 
@@ -363,9 +456,7 @@ USER_QUESTION: $question'''),
 
     try {
       // Generate chat ID if not exists
-      if (_currentChatId == null) {
-        _currentChatId = const Uuid().v4();
-      }
+      _currentChatId ??= const Uuid().v4();
 
       // Create chat title from first user message
       String title = 'AI Chat';
@@ -387,6 +478,7 @@ USER_QUESTION: $question'''),
                 timestamp: DateTime.now(),
                 isError: msg.isError,
                 errorDetails: msg.errorDetails,
+                imageUrls: msg.imageUrls.isEmpty ? null : msg.imageUrls,
               ))
           .toList();
 
@@ -405,16 +497,11 @@ USER_QUESTION: $question'''),
       // Save to Hive
       await ChatHistoryRepo.saveChatHistory(chatHistory);
 
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Chat history saved: ${chatHistory.id} with ${historyMessages.length} messages',
       );
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to save chat history',
-        information: ['Messages count: ${messages.length}'],
-      );
+    } catch (e) {
+      await FlutterBugfender.error('Failed to save chat history: $e');
     }
   }
 
@@ -433,36 +520,52 @@ USER_QUESTION: $question'''),
           historyMsg.text,
           isError: historyMsg.isError,
           errorDetails: historyMsg.errorDetails,
+          imageUrls: historyMsg.imageUrls,
         ));
       }
 
-      // Update context based on history settings
+      // Update context based on history settings in the background to avoid UI jank
       if (chatHistory.includePersonal || chatHistory.includeMsNotes) {
-        _contextJson = await NotesContextBuilder.buildJson(
-          includePersonal: chatHistory.includePersonal,
-          includeMsNotes: chatHistory.includeMsNotes,
-        );
+        Future.microtask(() async {
+          try {
+            _contextJson = await NotesContextBuilder.buildJson(
+              includePersonal: chatHistory.includePersonal,
+              includeMsNotes: chatHistory.includeMsNotes,
+            );
+            notifyListeners();
+          } catch (e) {
+            await FlutterBugfender.error(
+              'Failed to build context after loading history: $e',
+            );
+          }
+        });
       }
 
-      // Initialize model if needed
+      // Initialize model if needed without blocking the UI
       if (_model == null) {
-        await _initializeModel();
+        Future.microtask(() async {
+          try {
+            await _initializeModel();
+            notifyListeners();
+          } catch (e) {
+            await FlutterBugfender.error(
+              'Failed to initialize model after loading history: $e',
+            );
+          }
+        });
       }
 
       _clearError();
       notifyListeners();
 
-      await FirebaseCrashlytics.instance.log(
+      await FlutterBugfender.log(
         'Chat loaded from history: ${chatHistory.id}',
       );
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to load chat from history',
-        information: ['Chat ID: ${chatHistory.id}'],
+    } catch (e) {
+      await FlutterBugfender.error(
+        'Failed to load chat from history: $e',
       );
-      _setError('Failed to load chat history', e, stackTrace);
+      _setError('Failed to load chat history', e);
     }
   }
 

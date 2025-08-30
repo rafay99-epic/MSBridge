@@ -1,8 +1,8 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/buildModernSettingsTile.dart';
-import 'package:msbridge/widgets/buildSectionHeader.dart';
+import 'package:msbridge/widgets/build_modern_settings_tile.dart';
+import 'package:msbridge/widgets/build_section_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/utils/version_download_utils.dart';

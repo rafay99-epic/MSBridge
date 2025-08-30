@@ -9,7 +9,7 @@ import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 
 class DataManagementBottomSheet extends StatelessWidget {
-  const DataManagementBottomSheet({Key? key}) : super(key: key);
+  const DataManagementBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

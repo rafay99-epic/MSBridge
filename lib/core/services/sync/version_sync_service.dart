@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
@@ -288,6 +289,82 @@ class VersionSyncService {
         'localVersions': 0,
         'cloudVersions': 0,
       };
+    }
+  }
+
+  Future<void> pruneCloudVersions({
+    required String userId,
+    required String noteId,
+    required int keepLatest,
+  }) async {
+    try {
+      // Verify user authentication and match
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        FlutterBugfender.log(
+            'Prune cloud versions failed: No authenticated user');
+        return;
+      }
+
+      if (currentUser.uid != userId) {
+        FlutterBugfender.log(
+            'Prune cloud versions failed: User ID mismatch. Expected: ${currentUser.uid}, Got: $userId');
+        return;
+      }
+
+      // Clamp keepLatest to prevent negative values
+      final safeKeepLatest = keepLatest < 0 ? 0 : keepLatest;
+
+      final versionsRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notes')
+          .doc(noteId)
+          .collection('versions');
+
+      final snapshot =
+          await versionsRef.orderBy('versionNumber', descending: true).get();
+
+      if (snapshot.docs.length <= safeKeepLatest) return;
+
+      final toDelete = snapshot.docs.skip(safeKeepLatest);
+      final deleteCount = toDelete.length;
+
+      // Split deletes into chunks of max 500 operations to avoid WriteBatch overflow
+      const maxBatchSize = 500;
+      final chunks = <List<DocumentSnapshot>>[];
+
+      for (int i = 0; i < deleteCount; i += maxBatchSize) {
+        final end =
+            (i + maxBatchSize < deleteCount) ? i + maxBatchSize : deleteCount;
+        chunks.add(toDelete.toList().sublist(i, end));
+      }
+
+      // Process each chunk with a fresh batch
+      for (int i = 0; i < chunks.length; i++) {
+        final chunk = chunks[i];
+        final batch = _firestore.batch();
+
+        for (final doc in chunk) {
+          batch.delete(doc.reference);
+        }
+
+        // Commit each batch individually
+        await batch.commit();
+
+        FlutterBugfender.log(
+            'Pruned cloud versions chunk ${i + 1}/${chunks.length}: ${chunk.length} versions deleted');
+      }
+
+      FlutterBugfender.log(
+          'Successfully pruned $deleteCount cloud versions for noteId=$noteId, keeping $safeKeepLatest');
+    } catch (e) {
+      FlutterBugfender.log(
+          'Failed pruning cloud versions for noteId=$noteId, userId=$userId');
+      FlutterBugfender.error(
+          'Failed pruning cloud versions for noteId=$noteId, userId=$userId, error=$e');
+      throw Exception(
+          'Failed pruning cloud versions for noteId=$noteId, userId=$userId');
     }
   }
 }

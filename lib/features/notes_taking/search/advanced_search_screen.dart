@@ -1,18 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/services/advance_search/advanced_note_search_service.dart';
+import 'package:msbridge/features/msnotes/notes_detail.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/notes_taking/search/date_ranger.dart';
+import 'package:msbridge/features/notes_taking/search/tag_selector.dart';
 import 'package:page_transition/page_transition.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
+class UnifiedSearchResult {
+  final dynamic note; // Can be NoteTakingModel or MSNote
+  final double relevanceScore;
+  final bool isReadingNote; // Flag to identify the type
+
+  UnifiedSearchResult({
+    required this.note,
+    required this.relevanceScore,
+    required this.isReadingNote,
+  });
+}
+
 class AdvancedSearchScreen extends StatefulWidget {
-  final List<NoteTakingModel> allNotes;
+  final List<NoteTakingModel> takingNotes;
+  final List<MSNote> readingNotes;
+  final bool searchReadingNotes; // Flag to determine which notes to search
 
   const AdvancedSearchScreen({
     super.key,
-    required this.allNotes,
+    required this.takingNotes,
+    this.readingNotes = const [],
+    this.searchReadingNotes = false,
   });
 
   @override
@@ -29,11 +49,11 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   late Animation<Offset> _slideAnimation;
 
   String _searchQuery = '';
-  List<NoteSearchResult> _searchResults = [];
+  List<UnifiedSearchResult> _searchResults = [];
   List<String> searchSuggestions = [];
   bool _isSearching = false;
   bool _showFilters = false;
-  bool _isLoadingResults = false; // Add loading state
+  bool _isLoadingResults = false;
 
   // Filter states
   DateTime? _fromDate;
@@ -44,13 +64,16 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   // Available tags from all notes
   List<String> _availableTags = const [];
 
+  // Flag to track if tag extraction is complete
+  bool _tagsExtractionComplete = false;
+
   Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
       vsync: this,
     );
 
@@ -63,18 +86,22 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     ));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
 
-    // Extract tags lazily to avoid blocking the UI
+    // Start animation immediately to reduce perceived lag
+    _animationController.forward();
+
+    // Request focus after animation starts
+    _searchFocusNode.requestFocus();
+
+    // Extract tags in the background after UI is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _extractAvailableTags();
-      _animationController.forward();
-      _searchFocusNode.requestFocus();
     });
   }
 
@@ -88,42 +115,41 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   }
 
   void _extractAvailableTags() {
+    // Start with an empty list to avoid null checks
+    setState(() {
+      _availableTags = [];
+    });
+
+    // Only extract tags from taking notes as reading notes don't have tags
     try {
-      // Convert Hive objects to simple data structures before background processing
-      final simpleNotes = widget.allNotes
+      // Prepare data for background processing
+      final simpleNotes = widget.takingNotes
           .map((note) => {
-                'noteId': note.noteId,
-                'noteTitle': note.noteTitle,
-                'noteContent': note.noteContent,
                 'tags': note.tags,
-                'createdAt': note.createdAt.toIso8601String(),
-                'updatedAt': note.updatedAt.toIso8601String(),
-                'isDeleted': note.isDeleted,
               })
           .toList();
 
-      // Use compute to run tag extraction in background
+      // Use compute for background processing
       compute(_extractTagsInBackground, simpleNotes).then((tags) {
         if (mounted) {
           setState(() {
             _availableTags = tags;
+            _tagsExtractionComplete = true;
           });
         }
       }).catchError((error) {
-        // Fallback to main thread if background processing fails
-        if (mounted) {
-          _extractTagsInMainThread();
-        }
+        // Fallback to main thread
+        _extractTagsInMainThread();
       });
     } catch (e) {
-      // Fallback to main thread if conversion fails
+      // Fallback to main thread
       _extractTagsInMainThread();
     }
   }
 
   void _extractTagsInMainThread() {
     final Set<String> tags = {};
-    for (final note in widget.allNotes) {
+    for (final note in widget.takingNotes) {
       if (note.tags.isNotEmpty) {
         tags.addAll(note.tags);
       }
@@ -131,6 +157,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     if (mounted) {
       setState(() {
         _availableTags = tags.toList()..sort();
+        _tagsExtractionComplete = true;
       });
     }
   }
@@ -148,25 +175,36 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   }
 
   void _onSearchChanged(String query) {
+    // Cancel previous timer to avoid multiple searches
+    _debounceTimer?.cancel();
+
     setState(() {
       _searchQuery = query;
       _isSearching = query.isNotEmpty;
+
+      // Clear results immediately when query is empty
+      if (query.isEmpty) {
+        _searchResults = [];
+        searchSuggestions = [];
+      }
     });
 
-    if (query.isEmpty) {
-      _clearSearch();
-      return;
-    }
+    if (query.isEmpty) return;
 
-    // Debounce search to improve performance
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+    // Use a shorter debounce time for better responsiveness
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () {
       if (mounted) {
-        // Get search suggestions (keep in main thread to avoid isolate issues)
-        searchSuggestions = AdvancedNoteSearchService.getSearchSuggestions(
-          widget.allNotes,
-          query,
-        );
+        // Get search suggestions based on the active note type
+        if (widget.searchReadingNotes) {
+          // For reading notes, we might need a different approach for suggestions
+          searchSuggestions = _getReadingNotesSuggestions(query);
+        } else {
+          // For taking notes, use the existing service
+          searchSuggestions = AdvancedNoteSearchService.getSearchSuggestions(
+            widget.takingNotes,
+            query,
+          );
+        }
 
         // Process search in background
         _performSearchInBackground();
@@ -174,67 +212,119 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     });
   }
 
+  List<String> _getReadingNotesSuggestions(String query) {
+    // Simple implementation for reading notes suggestions
+    final Set<String> suggestions = {};
+
+    for (final note in widget.readingNotes) {
+      if (note.lectureTitle.toLowerCase().contains(query.toLowerCase())) {
+        suggestions.add(note.lectureTitle);
+      }
+      if (note.subject.toLowerCase().contains(query.toLowerCase())) {
+        suggestions.add(note.subject);
+      }
+      if (note.lectureDescription.toLowerCase().contains(query.toLowerCase())) {
+        suggestions.add(note.lectureDescription.substring(
+            0,
+            note.lectureDescription.length > 30
+                ? 30
+                : note.lectureDescription.length));
+      }
+    }
+
+    return suggestions.take(5).toList();
+  }
+
   void _performSearchInBackground() {
     try {
       // Show loading indicator
       setState(() {
-        _searchResults = [];
         _isLoadingResults = true;
       });
 
-      // Convert Hive objects to simple data structures
-      final simpleNotes = widget.allNotes
-          .map((note) => {
-                'noteId': note.noteId,
-                'noteTitle': note.noteTitle,
-                'noteContent': note.noteContent,
-                'tags': note.tags,
-                'createdAt': note.createdAt?.toIso8601String(),
-                'updatedAt': note.updatedAt.toIso8601String(),
-                'isDeleted': note.isDeleted,
-                'isSynced': note.isSynced,
-                'userId': note.userId,
-                'versionNumber': note.versionNumber,
-              })
-          .toList();
-
-      // Process search in background
-      compute(_processSearchInBackground, {
-        'notes': simpleNotes,
-        'query': _searchQuery,
-        'fromDate': _fromDate?.toIso8601String(),
-        'toDate': _toDate?.toIso8601String(),
-        'tags': _selectedTags.isNotEmpty ? _selectedTags : null,
-        'includeDeleted': includeDeleted,
-      }).then((results) {
-        if (mounted) {
-          setState(() {
-            _searchResults = results;
-            _isLoadingResults = false;
-          });
-        }
-      }).catchError((error) {
-        // Fallback to main thread if background processing fails
-        if (mounted) {
-          _performSearchInMainThread();
-        }
-      });
+      if (widget.searchReadingNotes) {
+        // Search in reading notes
+        _searchInReadingNotes();
+      } else {
+        // Search in taking notes
+        _searchInTakingNotes();
+      }
     } catch (e) {
-      // Fallback to main thread if conversion fails
-      _performSearchInMainThread();
+      // Handle errors
+      setState(() {
+        _searchResults = [];
+        _isLoadingResults = false;
+      });
     }
   }
 
-  void _performSearchInMainThread() {
+  void _searchInReadingNotes() {
+    // Prepare minimal data for search
+    widget.readingNotes
+        .map((note) => {
+              'id': note.id,
+              'lectureTitle': note.lectureTitle,
+              'lectureDescription': note.lectureDescription,
+              'pubDate': note.pubDate,
+              'subject': note.subject,
+              'body': note.body ?? '',
+            })
+        .toList();
+    Future.microtask(_searchInReadingNotesMainThread);
+  }
+
+  void _searchInReadingNotesMainThread() {
     try {
-      final results = AdvancedNoteSearchService.searchNotes(
-        notes: widget.allNotes,
-        query: _searchQuery,
-        fromDate: _fromDate,
-        toDate: _toDate,
-        tags: _selectedTags.isNotEmpty ? _selectedTags : null,
-        includeDeleted: includeDeleted,
-      );
+      final results = <UnifiedSearchResult>[];
+      final query = _searchQuery.toLowerCase();
+
+      for (final note in widget.readingNotes) {
+        double score = 0;
+
+        // Check title match (highest weight)
+        if (note.lectureTitle.toLowerCase().contains(query)) {
+          score += 3.0;
+        }
+
+        // Check subject match
+        if (note.subject.toLowerCase().contains(query)) {
+          score += 2.0;
+        }
+
+        // Check description match
+        if (note.lectureDescription.toLowerCase().contains(query)) {
+          score += 1.5;
+        }
+
+        // Check body match
+        if (note.body != null && note.body!.toLowerCase().contains(query)) {
+          score += 1.0;
+        }
+
+        // Date filtering
+        if (_fromDate != null && _toDate != null) {
+          try {
+            final noteDate = DateTime.parse(note.pubDate);
+            if (noteDate.isBefore(_fromDate!) || noteDate.isAfter(_toDate!)) {
+              continue; // Skip this note if outside date range
+            }
+          } catch (e) {
+            // If date parsing fails, include the note anyway
+          }
+        }
+
+        // Add to results if there's any match
+        if (score > 0) {
+          results.add(UnifiedSearchResult(
+            note: note,
+            relevanceScore: score,
+            isReadingNote: true,
+          ));
+        }
+      }
+
+      // Sort by relevance score
+      results.sort((a, b) => b.relevanceScore.compareTo(a.relevanceScore));
 
       if (mounted) {
         setState(() {
@@ -252,49 +342,62 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     }
   }
 
-  static List<NoteSearchResult> _processSearchInBackground(
-      Map<String, dynamic> params) {
-    final simpleNotes = params['notes'] as List<Map<String, dynamic>>;
-    final query = params['query'] as String;
-    final fromDateStr = params['fromDate'] as String?;
-    final toDateStr = params['toDate'] as String?;
-    final tags = params['tags'] as List<String>?;
-    final includeDeleted = params['includeDeleted'] as bool;
-
-    // Convert simple data back to NoteTakingModel for search
-    final notes = simpleNotes
-        .map((simpleNote) => NoteTakingModel(
-              noteId: simpleNote['noteId'] as String?,
-              noteTitle: simpleNote['noteTitle'] as String,
-              noteContent: simpleNote['noteContent'] as String,
-              tags: (simpleNote['tags'] as List<dynamic>).cast<String>(),
-              createdAt: simpleNote['createdAt'] != null
-                  ? DateTime.parse(simpleNote['createdAt'] as String)
-                  : null,
-              updatedAt: DateTime.parse(simpleNote['updatedAt'] as String),
-              isDeleted: simpleNote['isDeleted'] as bool,
-              isSynced: simpleNote['isSynced'] as bool,
-              userId: simpleNote['userId'] as String,
-              versionNumber: simpleNote['versionNumber'] as int,
-            ))
+  void _searchInTakingNotes() {
+    widget.takingNotes
+        .map((note) => {
+              'noteId': note.noteId,
+              'noteTitle': note.noteTitle,
+              'noteContent': note.noteContent,
+              'tags': note.tags,
+              'createdAt': note.createdAt.toIso8601String(),
+              'updatedAt': note.updatedAt.toIso8601String(),
+              'isDeleted': note.isDeleted,
+              'isSynced': note.isSynced,
+              'userId': note.userId,
+              'versionNumber': note.versionNumber,
+            })
         .toList();
+    // Temporarily avoid compute: return to main-thread implementation
+    Future.microtask(_searchInTakingNotesMainThread);
+  }
 
-    // Parse dates
-    final fromDate = fromDateStr != null ? DateTime.parse(fromDateStr) : null;
-    final toDate = toDateStr != null ? DateTime.parse(toDateStr) : null;
+  void _searchInTakingNotesMainThread() {
+    try {
+      final noteResults = AdvancedNoteSearchService.searchNotes(
+        notes: widget.takingNotes,
+        query: _searchQuery,
+        fromDate: _fromDate,
+        toDate: _toDate,
+        tags: _selectedTags.isNotEmpty ? _selectedTags : null,
+        includeDeleted: includeDeleted,
+      );
 
-    return AdvancedNoteSearchService.searchNotes(
-      notes: notes,
-      query: query,
-      fromDate: fromDate,
-      toDate: toDate,
-      tags: tags,
-      includeDeleted: includeDeleted,
-    );
+      // Convert to unified results
+      final unifiedResults = noteResults
+          .map((result) => UnifiedSearchResult(
+                note: result.note,
+                relevanceScore: result.relevanceScore,
+                isReadingNote: false,
+              ))
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _searchResults = unifiedResults;
+          _isLoadingResults = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _searchResults = [];
+          _isLoadingResults = false;
+        });
+      }
+    }
   }
 
   void _performSearch() {
-    // Use background processing for better performance
     _performSearchInBackground();
   }
 
@@ -319,7 +422,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _CustomDateRangePicker(
+      builder: (context) => CustomDateRangePicker(
         fromDate: _fromDate,
         toDate: _toDate,
         theme: Theme.of(context),
@@ -399,7 +502,9 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        hintText: 'Search notes, tags, or content...',
+        hintText: widget.searchReadingNotes
+            ? 'Search lectures, subjects, or content...'
+            : 'Search notes, tags, or content...',
         hintStyle: TextStyle(
           color: theme.colorScheme.primary.withOpacity(0.6),
           fontSize: 16,
@@ -469,17 +574,19 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: _buildFilterChip(
-                    theme,
-                    icon: Icons.label,
-                    label: _selectedTags.isNotEmpty
-                        ? '${_selectedTags.length} Tags'
-                        : 'Tags',
-                    isActive: _selectedTags.isNotEmpty,
-                    onTap: () => _showTagSelector(theme),
+                // Only show tags filter for taking notes
+                if (!widget.searchReadingNotes)
+                  Expanded(
+                    child: _buildFilterChip(
+                      theme,
+                      icon: Icons.label,
+                      label: _selectedTags.isNotEmpty
+                          ? '${_selectedTags.length} Tags'
+                          : 'Tags',
+                      isActive: _selectedTags.isNotEmpty,
+                      onTap: () => _showTagSelector(theme),
+                    ),
                   ),
-                ),
               ],
             ),
           ],
@@ -542,14 +649,14 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   }
 
   void _showTagSelector(ThemeData theme) {
+    // Don't show if tags aren't loaded yet
+    if (!_tagsExtractionComplete) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _TagSelectorBottomSheet(
+      builder: (context) => TagSelectorBottomSheet(
         availableTags: _availableTags,
         selectedTags: _selectedTags,
         onTagsChanged: (tags) {
@@ -580,47 +687,50 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
   }
 
   Widget _buildSearchSuggestions(ThemeData theme) {
-    return Container(
+    // Use ListView instead of Column for better performance
+    return ListView(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Search Tips',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
-            ),
+      children: [
+        Text(
+          widget.searchReadingNotes ? 'Search Lectures' : 'Search Notes',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.primary,
           ),
-          const SizedBox(height: 16),
-          _buildSearchTip(
-            theme,
-            icon: LineIcons.search,
-            title: 'Search in titles, content, and tags',
-            description: 'Type any word or phrase to find matching notes',
-          ),
-          _buildSearchTip(
-            theme,
-            icon: Icons.calendar_today,
-            title: 'Filter by date range',
-            description: 'Use filters to narrow down results by creation date',
-          ),
+        ),
+        const SizedBox(height: 16),
+        _buildSearchTip(
+          theme,
+          icon: LineIcons.search,
+          title: widget.searchReadingNotes
+              ? 'Search in titles, subjects, and content'
+              : 'Search in titles, content, and tags',
+          description: 'Type any word or phrase to find matching items',
+        ),
+        _buildSearchTip(
+          theme,
+          icon: Icons.calendar_today,
+          title: 'Filter by date range',
+          description: widget.searchReadingNotes
+              ? 'Narrow down results by publication date'
+              : 'Narrow down results by creation date',
+        ),
+        if (!widget.searchReadingNotes)
           _buildSearchTip(
             theme,
             icon: LineIcons.tag,
             title: 'Filter by tags',
             description: 'Select specific tags to find related notes',
           ),
-          const Spacer(),
-          Center(
-            child: Icon(
-              LineIcons.search,
-              size: 64,
-              color: theme.colorScheme.primary.withOpacity(0.3),
-            ),
+        const SizedBox(height: 60),
+        Center(
+          child: Icon(
+            LineIcons.search,
+            size: 64,
+            color: theme.colorScheme.primary.withOpacity(0.3),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -714,7 +824,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'No notes found',
+            widget.searchReadingNotes ? 'No lectures found' : 'No notes found',
             style: theme.textTheme.titleLarge?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
@@ -794,15 +904,14 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
           ),
         ),
         Expanded(
+          // Use ListView.builder with cacheExtent for better performance
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: _searchResults.length,
+            cacheExtent: 500, // Cache more items
             itemBuilder: (context, index) {
               final result = _searchResults[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: _buildSearchResultCard(theme, result),
-              );
+              return _buildSearchResultItem(theme, result, index);
             },
           ),
         ),
@@ -810,9 +919,33 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     );
   }
 
-  Widget _buildSearchResultCard(ThemeData theme, NoteSearchResult result) {
+  Widget _buildSearchResultItem(
+      ThemeData theme, UnifiedSearchResult result, int index) {
+    // Use RepaintBoundary to optimize rendering
+    return RepaintBoundary(
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16),
+        child: result.isReadingNote
+            ? _buildReadingNoteCard(theme, result)
+            : _buildTakingNoteCard(theme, result),
+      ),
+    );
+  }
+
+  Widget _buildReadingNoteCard(ThemeData theme, UnifiedSearchResult result) {
+    final note = result.note as MSNote;
+
+    // Format date
+    String formattedDate = 'No date';
+    try {
+      final date = DateTime.parse(note.pubDate);
+      formattedDate = _formatDate(date);
+    } catch (e) {
+      // Use default if parsing fails
+    }
+
     return GestureDetector(
-      onTap: () => _openNote(result.note),
+      onTap: () => _openReadingNote(note),
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
@@ -831,7 +964,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -840,7 +973,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                     children: [
                       Expanded(
                         child: Text(
-                          result.note.noteTitle,
+                          note.lectureTitle,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.primary,
@@ -857,7 +990,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${result.relevanceScore.toStringAsFixed(1)}',
+                          result.relevanceScore.toStringAsFixed(1),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -869,7 +1002,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _getContentPreview(result.note.noteContent),
+                    note.lectureDescription,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
@@ -886,13 +1019,126 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _formatDate(result.note.createdAt),
+                        formattedDate,
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
-                      if (result.note.tags.isNotEmpty) ...[
+                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.book,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        note.subject,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTakingNoteCard(ThemeData theme, UnifiedSearchResult result) {
+    final note = result.note as NoteTakingModel;
+
+    // Pre-compute content preview for better performance
+    final contentPreview = _getContentPreview(note.noteContent);
+    final formattedDate = _formatDate(note.createdAt);
+
+    return GestureDetector(
+      onTap: () => _openTakingNote(note),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          note.noteTitle,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          result.relevanceScore.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    contentPreview,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        formattedDate,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                      if (note.tags.isNotEmpty) ...[
                         const SizedBox(width: 16),
                         Icon(
                           Icons.label,
@@ -901,7 +1147,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${result.note.tags.length} tags',
+                          '${note.tags.length} tags',
                           style: TextStyle(
                             fontSize: 12,
                             color: theme.colorScheme.onSurface.withOpacity(0.5),
@@ -913,46 +1159,54 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
                 ],
               ),
             ),
-            if (result.note.tags.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: result.note.tags.take(3).map((tag) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        tag,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+            if (note.tags.isNotEmpty) _buildTagsList(theme, note.tags),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildTagsList(ThemeData theme, List<String> tags) {
+    // Limit number of tags shown for performance
+    final displayTags = tags.length > 3 ? tags.sublist(0, 3) : tags;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: displayTags.map((tag) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              tag,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   String _getContentPreview(String content) {
+    // Cache this result if possible
     final plainText =
         AdvancedNoteSearchService.extractPlainTextFromQuill(content);
     if (plainText.length <= 150) return plainText;
     return '${plainText.substring(0, 150)}...';
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'No date';
+
     final now = DateTime.now();
     final difference = now.difference(date);
 
@@ -967,725 +1221,25 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
     }
   }
 
-  void _openNote(NoteTakingModel note) {
+  void _openTakingNote(NoteTakingModel note) {
     Navigator.push(
       context,
       PageTransition(
         child: CreateNote(note: note),
         type: PageTransitionType.rightToLeft,
-        duration: const Duration(milliseconds: 300),
-      ),
-    );
-  }
-}
-
-class _TagSelectorBottomSheet extends StatefulWidget {
-  final List<String> availableTags;
-  final List<String> selectedTags;
-  final Function(List<String>) onTagsChanged;
-  final ThemeData theme;
-
-  const _TagSelectorBottomSheet({
-    required this.availableTags,
-    required this.selectedTags,
-    required this.onTagsChanged,
-    required this.theme,
-  });
-
-  @override
-  State<_TagSelectorBottomSheet> createState() =>
-      _TagSelectorBottomSheetState();
-}
-
-class _TagSelectorBottomSheetState extends State<_TagSelectorBottomSheet>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200), // Reduced duration
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2), // Reduced slide distance
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Start animation immediately
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animationController.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _toggleTag(String tag) {
-    final newSelectedTags = List<String>.from(widget.selectedTags);
-    if (newSelectedTags.contains(tag)) {
-      newSelectedTags.remove(tag);
-    } else {
-      newSelectedTags.add(tag);
-    }
-    widget.onTagsChanged(newSelectedTags);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Container(
-          decoration: BoxDecoration(
-            color: widget.theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              Flexible(
-                child: _buildTagGrid(),
-              ),
-            ],
-          ),
-        ),
+        duration: const Duration(milliseconds: 250),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Text(
-            'Select Tags',
-            style: widget.theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: widget.theme.colorScheme.primary,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.close,
-              color: widget.theme.colorScheme.primary,
-              size: 24,
-            ),
-          ),
-        ],
+  void _openReadingNote(MSNote note) {
+    Navigator.push(
+      context,
+      PageTransition(
+        child: LectureDetailScreen(lecture: note),
+        type: PageTransitionType.rightToLeft,
+        duration: const Duration(milliseconds: 250),
       ),
     );
-  }
-
-  Widget _buildTagGrid() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = (constraints.maxWidth / 120).floor().clamp(2, 4);
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 3.5,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: widget.availableTags.length,
-          itemBuilder: (context, index) {
-            final tag = widget.availableTags[index];
-            final isSelected = widget.selectedTags.contains(tag);
-
-            return _buildTagChip(tag, isSelected);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildTagChip(String tag, bool isSelected) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _toggleTag(tag),
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? widget.theme.colorScheme.primary.withOpacity(0.2)
-                : widget.theme.colorScheme.surface,
-            border: Border.all(
-              color: isSelected
-                  ? widget.theme.colorScheme.primary
-                  : widget.theme.colorScheme.outline.withOpacity(0.3),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isSelected)
-                Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: widget.theme.colorScheme.primary,
-                ),
-              if (isSelected) const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  tag,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? widget.theme.colorScheme.primary
-                        : widget.theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomDateRangePicker extends StatefulWidget {
-  final DateTime? fromDate;
-  final DateTime? toDate;
-  final ThemeData theme;
-  final Function(DateTimeRange) onDateRangeSelected;
-
-  const _CustomDateRangePicker({
-    required this.fromDate,
-    required this.toDate,
-    required this.theme,
-    required this.onDateRangeSelected,
-  });
-
-  @override
-  State<_CustomDateRangePicker> createState() => _CustomDateRangePickerState();
-}
-
-class _CustomDateRangePickerState extends State<_CustomDateRangePicker>
-    with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  DateTime? _selectedFromDate;
-  DateTime? _selectedToDate;
-  DateTime _currentMonth = DateTime.now();
-  bool _isSelectingEndDate = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedFromDate = widget.fromDate;
-    _selectedToDate = widget.toDate;
-
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 250), // Reduced duration
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2), // Reduced slide distance
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Start animation after frame is rendered
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animationController.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _selectDate(DateTime date) {
-    if (_selectedFromDate == null || _isSelectingEndDate) {
-      // Selecting end date
-      if (_selectedFromDate != null && date.isBefore(_selectedFromDate!)) {
-        // If end date is before start date, swap them
-        setState(() {
-          _selectedFromDate = date;
-          _selectedToDate = _selectedFromDate;
-        });
-      } else {
-        setState(() {
-          _selectedToDate = date;
-        });
-      }
-      _isSelectingEndDate = false;
-    } else {
-      // Selecting start date
-      setState(() {
-        _selectedFromDate = date;
-        _isSelectingEndDate = true;
-      });
-    }
-  }
-
-  void _confirmSelection() {
-    if (_selectedFromDate != null && _selectedToDate != null) {
-      widget.onDateRangeSelected(
-        DateTimeRange(start: _selectedFromDate!, end: _selectedToDate!),
-      );
-      Navigator.pop(context);
-    }
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _selectedFromDate = null;
-      _selectedToDate = null;
-      _isSelectingEndDate = false;
-    });
-  }
-
-  void _previousMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-    });
-  }
-
-  void _nextMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-    });
-  }
-
-  bool _isDateInRange(DateTime date) {
-    if (_selectedFromDate == null || _selectedToDate == null) return false;
-    return date.isAfter(_selectedFromDate!.subtract(const Duration(days: 1))) &&
-        date.isBefore(_selectedToDate!.add(const Duration(days: 1)));
-  }
-
-  bool _isDateSelected(DateTime date) {
-    if (_selectedFromDate == null && _selectedToDate == null) return false;
-    if (_selectedFromDate != null && _isSameDay(date, _selectedFromDate!))
-      return true;
-    if (_selectedToDate != null && _isSameDay(date, _selectedToDate!))
-      return true;
-    return false;
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          decoration: BoxDecoration(
-            color: widget.theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildDateRangeDisplay(),
-              _buildCalendarHeader(),
-              Expanded(child: _buildCalendar()),
-              _buildActionButtons(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: widget.theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.close,
-              color: widget.theme.colorScheme.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'Select Date Range',
-            style: widget.theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: widget.theme.colorScheme.primary,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: _clearSelection,
-            icon: Icon(
-              Icons.clear_all,
-              color: widget.theme.colorScheme.primary.withOpacity(0.7),
-              size: 20,
-            ),
-            tooltip: 'Clear selection',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateRangeDisplay() {
-    final fromText = _selectedFromDate != null
-        ? '${_selectedFromDate!.day}/${_selectedFromDate!.month}/${_selectedFromDate!.year}'
-        : 'Start Date';
-    final toText = _selectedToDate != null
-        ? '${_selectedToDate!.day}/${_selectedToDate!.month}/${_selectedToDate!.year}'
-        : 'End Date';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildDateChip(
-              label: 'From',
-              date: fromText,
-              isSelected: _selectedFromDate != null,
-              isActive: !_isSelectingEndDate,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(
-              Icons.arrow_forward,
-              color: widget.theme.colorScheme.primary.withOpacity(0.5),
-              size: 20,
-            ),
-          ),
-          Expanded(
-            child: _buildDateChip(
-              label: 'To',
-              date: toText,
-              isSelected: _selectedToDate != null,
-              isActive: _isSelectingEndDate,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateChip({
-    required String label,
-    required String date,
-    required bool isSelected,
-    required bool isActive,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? widget.theme.colorScheme.primary.withOpacity(0.1)
-            : widget.theme.colorScheme.surface,
-        border: Border.all(
-          color: isActive
-              ? widget.theme.colorScheme.primary
-              : isSelected
-                  ? widget.theme.colorScheme.primary.withOpacity(0.3)
-                  : widget.theme.colorScheme.outline.withOpacity(0.2),
-          width: isActive ? 2 : 1,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            date,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? widget.theme.colorScheme.primary
-                  : widget.theme.colorScheme.onSurface.withOpacity(0.8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCalendarHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: _previousMonth,
-            icon: Icon(
-              Icons.chevron_left,
-              color: widget.theme.colorScheme.primary,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
-              style: widget.theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: widget.theme.colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          IconButton(
-            onPressed: _nextMonth,
-            icon: Icon(
-              Icons.chevron_right,
-              color: widget.theme.colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCalendar() {
-    final daysInMonth =
-        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    final firstDayOfMonth =
-        DateTime(_currentMonth.year, _currentMonth.month, 1);
-    final firstWeekday = firstDayOfMonth.weekday;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          // Days of week header
-          Row(
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
-              return Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    day,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: widget.theme.colorScheme.primary.withOpacity(0.7),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          // Calendar grid
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1,
-              ),
-              itemCount: 42, // 6 weeks * 7 days
-              itemBuilder: (context, index) {
-                final dayOffset = index - (firstWeekday - 1);
-                final day = dayOffset + 1;
-
-                if (day < 1 || day > daysInMonth) {
-                  return Container(); // Empty space
-                }
-
-                final date =
-                    DateTime(_currentMonth.year, _currentMonth.month, day);
-                final isInRange = _isDateInRange(date);
-                final isSelected = _isDateSelected(date);
-                final isToday = _isSameDay(date, DateTime.now());
-
-                return GestureDetector(
-                  onTap: () => _selectDate(date),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? widget.theme.colorScheme.primary
-                          : isInRange
-                              ? widget.theme.colorScheme.primary
-                                  .withOpacity(0.1)
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: isToday
-                          ? Border.all(
-                              color: widget.theme.colorScheme.primary,
-                              width: 2,
-                            )
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        day.toString(),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isSelected || isToday
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? widget.theme.colorScheme.onPrimary
-                              : isInRange
-                                  ? widget.theme.colorScheme.primary
-                                  : widget.theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                side: BorderSide(
-                  color: widget.theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: (_selectedFromDate != null && _selectedToDate != null)
-                  ? _confirmSelection
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: widget.theme.colorScheme.primary,
-                foregroundColor: widget.theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Confirm',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: widget.theme.colorScheme.onPrimary,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-    return months[month - 1];
   }
 }

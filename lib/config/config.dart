@@ -8,7 +8,6 @@ class FirebaseConfig {
 }
 
 class APIConfig {
-  // API Endpoint for fetching notes (replace with your actual API endpoint)
   static const String notesApiEndpoint = 'https://www.rafay99.com/api/ms_notes';
   static const String aboutAuthorApiEndpoint = '/api/author';
   static const String baseURL = 'https://www.rafay99.com';
@@ -24,7 +23,23 @@ class ChatAPI {
 }
 
 class URL {
-  static const String prravicyPolicy =
-      'https://ms-bridge-app.vercel.app/privacy';
-  static const String termsOfService = 'https://ms-bridge-app.vercel.app/terms';
+  static const String prravicyPolicy = 'https://msbridge.rafay99.com/privacy';
+  static const String termsOfService = 'https://msbridge.rafay99.com/terms';
+}
+
+class APKFile {
+  static const String apkFile =
+      'https://msbridge.rafay99.com/downloads/ms-bridge-stable.apk';
+  static const String betaApkFile =
+      'https://msbridge.rafay99.com/downloads/ms-bridge-beta.apk';
+}
+
+class UploadThingConfig {
+  // Put your UploadThing API key here (or load from env/secrets at runtime)
+  static const String apiKey =
+      '';
+}
+
+class BugfenderConfig {
+  static const String apiKey = "s";
 }

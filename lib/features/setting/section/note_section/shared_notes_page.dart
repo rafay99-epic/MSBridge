@@ -16,8 +16,20 @@ class SharedNotesPage extends StatefulWidget {
 }
 
 class _SharedNotesPageState extends State<SharedNotesPage> {
+  final Set<String> _disableInProgressNoteIds = <String>{};
+
   Future<List<SharedNoteMeta>> _loadSharedNotes() async {
     return await ShareRepository.getSharedNotes();
+  }
+
+  Future<void> _disableSharing(String noteId, NoteTakingModel? note) async {
+    final n = note ?? (await _getNote(noteId));
+    if (n == null) return;
+    await ShareRepository.disableShare(n);
+    if (mounted) {
+      CustomSnackBar.show(context, 'Sharing disabled');
+      setState(() {});
+    }
   }
 
   Future<NoteTakingModel?> _getNote(String noteId) async {
@@ -33,7 +45,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: const CustomAppBar(title: 'Shared Notes', showBackButton: true),
@@ -68,19 +80,20 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
               ),
             );
           }
-          
+
           final shared = snapshot.data ?? [];
           if (shared.isEmpty) {
             return _buildEmptyState(context, colorScheme, theme);
           }
-          
+
           return CustomScrollView(
             slivers: [
               // Header Section
               SliverToBoxAdapter(
-                child: _buildHeaderSection(context, colorScheme, theme, shared.length),
+                child: _buildHeaderSection(
+                    context, colorScheme, theme, shared.length),
               ),
-              
+
               // Shared Notes List
               SliverPadding(
                 padding: const EdgeInsets.all(20),
@@ -109,7 +122,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   ),
                 ),
               ),
-              
+
               // Bottom spacing
               const SliverToBoxAdapter(
                 child: SizedBox(height: 20),
@@ -121,7 +134,8 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
     );
   }
 
-  Widget _buildHeaderSection(BuildContext context, ColorScheme colorScheme, ThemeData theme, int noteCount) {
+  Widget _buildHeaderSection(BuildContext context, ColorScheme colorScheme,
+      ThemeData theme, int noteCount) {
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(24),
@@ -155,9 +169,9 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
               color: colorScheme.primary,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Title
           Text(
             "Shared Notes",
@@ -167,9 +181,9 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Note Count
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -190,7 +204,8 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, ColorScheme colorScheme, ThemeData theme) {
+  Widget _buildEmptyState(
+      BuildContext context, ColorScheme colorScheme, ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -207,9 +222,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
               color: colorScheme.primary,
             ),
           ),
-          
           const SizedBox(height: 24),
-          
           Text(
             'No shared notes yet',
             style: theme.textTheme.headlineSmall?.copyWith(
@@ -217,9 +230,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          
           const SizedBox(height: 8),
-          
           Text(
             'Share your notes with others to collaborate and stay connected.',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -276,14 +287,14 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                     color: colorScheme.primary,
                   ),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 // Note Title
                 Expanded(
                   child: Text(
-                    note?.noteTitle.isNotEmpty == true 
-                        ? note!.noteTitle 
+                    note?.noteTitle.isNotEmpty == true
+                        ? note!.noteTitle
                         : (item.title.isNotEmpty ? item.title : 'Untitled'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -295,9 +306,9 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Share URL
             Container(
               padding: const EdgeInsets.all(12),
@@ -331,9 +342,9 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -345,7 +356,10 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   colorScheme.primary,
                   () async {
                     await Clipboard.setData(ClipboardData(text: item.shareUrl));
-                    if (mounted) CustomSnackBar.show(context, 'Link copied to clipboard');
+                    if (mounted) {
+                      CustomSnackBar.show(context, 'Link copied to clipboard',
+                          isSuccess: true);
+                    }
                   },
                 ),
                 _buildActionButton(
@@ -357,16 +371,37 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                 ),
                 _buildActionButton(
                   context,
-                  'Disable',
-                  LineIcons.eyeSlash,
-                  Colors.redAccent,
+                  _disableInProgressNoteIds.contains(item.noteId)
+                      ? 'Disabling...'
+                      : 'Disable',
+                  _disableInProgressNoteIds.contains(item.noteId)
+                      ? Icons.hourglass_empty
+                      : LineIcons.eyeSlash,
+                  _disableInProgressNoteIds.contains(item.noteId)
+                      ? Colors.grey
+                      : Colors.redAccent,
                   () async {
-                    final n = note ?? (await _getNote(item.noteId));
-                    if (n == null) return;
-                    await ShareRepository.disableShare(n);
+                    if (_disableInProgressNoteIds.contains(item.noteId)) return;
+
                     if (mounted) {
-                      CustomSnackBar.show(context, 'Sharing disabled');
-                      setState(() {});
+                      setState(() {
+                        _disableInProgressNoteIds.add(item.noteId);
+                      });
+                    }
+
+                    try {
+                      await _disableSharing(item.noteId, note);
+                    } catch (e) {
+                      if (mounted) {
+                        CustomSnackBar.show(
+                            context, 'Failed to disable sharing: $e');
+                      }
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _disableInProgressNoteIds.remove(item.noteId);
+                        });
+                      }
                     }
                   },
                 ),

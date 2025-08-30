@@ -79,11 +79,15 @@ class ChatHistoryMessage {
   @HiveField(4)
   final String? errorDetails;
 
+  @HiveField(5)
+  final List<String> imageUrls;
+
   ChatHistoryMessage({
     required this.text,
     required this.fromUser,
     required this.timestamp,
     this.isError = false,
     this.errorDetails,
-  });
+    List<String>? imageUrls,
+  }) : imageUrls = imageUrls ?? const [];
 }

@@ -12,7 +12,7 @@ import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:page_transition/page_transition.dart';
 
 class AIFeaturesBottomSheet extends StatelessWidget {
-  const AIFeaturesBottomSheet({Key? key}) : super(key: key);
+  const AIFeaturesBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

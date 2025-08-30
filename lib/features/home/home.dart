@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/msnotes/msnotes.dart';
-import 'package:msbridge/features/search/search.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
@@ -20,7 +20,6 @@ class _HomeState extends State<Home> {
   int _selectedIndex = 0;
   PageController? _pageController;
 
-  // Lazy loading for pages
   final List<Widget?> _pages = List.filled(5, null);
   final List<bool> _pagesLoaded = List.filled(5, false);
 
@@ -28,18 +27,15 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
-    // Pre-load the first page
+
     _pagesLoaded[0] = true;
     _pages[0] = const Msnotes();
 
-    // Pre-load adjacent pages for smoother navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _preloadAdjacentPages();
       _initializeDeletionSync();
     });
   }
 
-  /// Initialize deletion sync system for the current user
   Future<void> _initializeDeletionSync() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -47,15 +43,7 @@ class _HomeState extends State<Home> {
         await DeletionSyncHelper.initializeForUser(user.uid);
       }
     } catch (e) {
-      // Log error but don't block app initialization
-      debugPrint('Error initializing deletion sync: $e');
-    }
-  }
-
-  void _preloadAdjacentPages() {
-    // Pre-load the next page for smoother navigation
-    if (_selectedIndex < _pages.length - 1) {
-      _getPage(_selectedIndex + 1);
+      FlutterBugfender.log('Error initializing deletion sync: $e');
     }
   }
 
@@ -78,22 +66,19 @@ class _HomeState extends State<Home> {
         page = const Msnotes();
         break;
       case 1:
-        page = const Search();
-        break;
-      case 2:
         page = const ChatAssistantPage();
         break;
-      case 3:
+      case 2:
         page = const Notetaking();
         break;
-      case 4:
+      case 3:
         page = const Setting();
         break;
       default:
         page = const Msnotes();
     }
 
-    // Cache the page
+    // Cache the page instance
     _pages[index] = page;
     _pagesLoaded[index] = true;
 
@@ -104,18 +89,6 @@ class _HomeState extends State<Home> {
     final controller = _pageController;
     if (controller == null) return;
 
-    // Pre-load the target page to reduce lag
-    if (!_pagesLoaded[index]) {
-      _getPage(index);
-    }
-
-    // Preload notes if switching to Notes tab (index 3)
-    if (index == 3 && _pages[3] != null) {
-      _preloadNotesData();
-    }
-
-    // For non-adjacent tabs, jump instantly to avoid animating
-    // through heavy intermediate pages which can cause jank.
     final pageDelta = (index - _selectedIndex).abs();
     if (pageDelta > 1) {
       controller.jumpToPage(index);
@@ -125,42 +98,13 @@ class _HomeState extends State<Home> {
     // Optimized animation for better performance
     controller.animateToPage(
       index,
-      duration: const Duration(
-          milliseconds: 150), // Further reduced for better performance
-      curve: Curves.easeOut, // Changed from easeOutCubic for better performance
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
     );
   }
 
-  void _preloadNotesData() {
-    // Preload notes data when Notes tab becomes visible
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Trigger notes loading by ensuring the page is loaded
-      if (!_pagesLoaded[3]) {
-        _getPage(3);
-      }
-    });
-  }
-
   void _onPageChanged(int index) {
-    // Only update state if the index actually changed
-    if (_selectedIndex != index) {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
-
-    // Pre-load adjacent pages for smoother navigation
-    if (index > 0 && !_pagesLoaded[index - 1]) {
-      _getPage(index - 1);
-    }
-    if (index < _pages.length - 1 && !_pagesLoaded[index + 1]) {
-      _getPage(index + 1);
-    }
-
-    // Preload notes data when Notes tab becomes visible
-    if (index == 3) {
-      _preloadNotesData();
-    }
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -171,99 +115,64 @@ class _HomeState extends State<Home> {
     final width = media.size.width;
     final bottomInset = media.padding.bottom;
     final bool isCompact = width < 360;
-    final bool isSmall = width < 400;
-    final double horizontalPad = isCompact ? 12 : (isSmall ? 14 : 18);
-    final double verticalPad = isCompact ? 8 : 12;
     final double iconSz = isCompact ? 18 : 20;
     final double labelSz = isCompact ? 12 : 13;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
-        physics:
-            const ClampingScrollPhysics(), // Better performance than BouncingScrollPhysics
-        allowImplicitScrolling:
-            false, // Disabled to prevent unnecessary loading
+        physics: const ClampingScrollPhysics(),
+        allowImplicitScrolling: false,
         children: List.generate(
-            5,
-            (index) => RepaintBoundary(
-                  child: _getPage(index),
-                )),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: EdgeInsets.only(
-          left: 12,
-          right: 12,
-          bottom: bottomInset > 0 ? 0 : 8,
+          5,
+          (index) => RepaintBoundary(
+            child: _getPage(index),
+          ),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: colorScheme.shadow.withOpacity(0.08),
-            //     blurRadius: 12,
-            //     offset: const Offset(0, 4),
-            //   ),
-            // ],
-            // border: Border.all(
-            //   color: colorScheme.outline.withOpacity(0.06),
-            //   width: 1,
-            // ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: GNav(
+          selectedIndex: _selectedIndex,
+          onTabChange: _onItemTapped,
+          backgroundColor: colorScheme.surface,
+          color: colorScheme.onSurface.withOpacity(0.6),
+          activeColor: colorScheme.primary,
+          tabBackgroundColor: colorScheme.primary.withOpacity(0.1),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          gap: 8,
+          duration: const Duration(milliseconds: 200),
+          iconSize: iconSz,
+          tabBorderRadius: 12,
+          textStyle: theme.textTheme.labelMedium?.copyWith(
+            fontSize: labelSz,
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
           ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: horizontalPad, vertical: verticalPad),
-            child: GNav(
-              selectedIndex: _selectedIndex,
-              onTabChange: _onItemTapped,
-              backgroundColor: colorScheme.surface,
-              color: colorScheme.onSurface,
-              activeColor: colorScheme.primary,
-              tabBackgroundColor: colorScheme.primary.withOpacity(0.08),
-              padding:
-                  EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 10),
-              gap: 5,
-              duration: const Duration(milliseconds: 150),
-              iconSize: iconSz,
-              tabBorderRadius: 12,
-              textStyle: theme.textTheme.labelMedium?.copyWith(
-                fontSize: labelSz,
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-              tabs: [
-                GButton(
-                  icon: LineIcons.book,
-                  text: 'Reading',
-                  iconColor: colorScheme.primary,
-                ),
-                GButton(
-                  icon: LineIcons.search,
-                  text: 'Search',
-                  iconColor: colorScheme.primary,
-                ),
-                GButton(
-                  icon: LineIcons.robot,
-                  text: 'AI Chat',
-                  iconColor: colorScheme.primary,
-                ),
-                GButton(
-                  icon: LineIcons.edit,
-                  text: 'Notes',
-                  iconColor: colorScheme.primary,
-                ),
-                GButton(
-                  icon: LineIcons.cog,
-                  text: 'Settings',
-                  iconColor: colorScheme.primary,
-                ),
-              ],
+          tabs: [
+            GButton(
+              icon: LineIcons.book,
+              text: 'Reading',
+              iconColor: colorScheme.primary,
             ),
-          ),
+            GButton(
+              icon: LineIcons.robot,
+              text: 'AI Chat',
+              iconColor: colorScheme.primary,
+            ),
+            GButton(
+              icon: LineIcons.edit,
+              text: 'Notes',
+              iconColor: colorScheme.primary,
+            ),
+            GButton(
+              icon: LineIcons.cog,
+              text: 'Settings',
+              iconColor: colorScheme.primary,
+            ),
+          ],
         ),
       ),
     );

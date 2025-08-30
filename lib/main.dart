@@ -5,10 +5,11 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
+import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
@@ -16,7 +17,6 @@ import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
-import 'package:msbridge/core/provider/connectivity_provider.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
@@ -43,6 +43,7 @@ import 'package:msbridge/theme/colors.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -58,6 +59,10 @@ void main() async {
   }
 
   try {
+    await FlutterBugfender.init(BugfenderConfig.apiKey,
+        enableCrashReporting: false,
+        enableUIEventLogging: true,
+        enableAndroidLogcatLogging: true);
     await Firebase.initializeApp();
     await Hive.initFlutter();
     Hive.registerAdapter(MSNoteAdapter());
@@ -84,6 +89,8 @@ void main() async {
       await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
       await SchedulerRegistration.registerAdaptive();
     } catch (e, st) {
+      FlutterBugfender.log('Workmanager init failed: $e');
+      FlutterBugfender.error(e.toString());
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'Workmanager init failed');
     }
@@ -91,8 +98,10 @@ void main() async {
     // Initialize deletion sync system (will be fully initialized when user logs in)
     try {
       // Import the deletion sync helper
-      debugPrint('✅ Deletion sync system ready for initialization');
+      FlutterBugfender.log('✅ Deletion sync system ready for initialization');
     } catch (e, st) {
+      FlutterBugfender.log('Deletion sync system init failed: $e');
+      FlutterBugfender.error(e.toString());
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'Deletion sync system init failed');
     }
@@ -101,9 +110,6 @@ void main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => ThemeProvider()),
-          ChangeNotifierProvider(
-              create: (context) =>
-                  ConnectivityProvider(navigatorKey: navigatorKey)),
           ChangeNotifierProvider(
               create: (context) => TodoProvider()..initialize()),
           ChangeNotifierProvider(
@@ -122,6 +128,8 @@ void main() async {
           ChangeNotifierProvider(create: (_) => AiConsentProvider()),
           ChangeNotifierProvider(create: (_) => AppPinLockProvider()),
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => UploadThingProvider()),
           ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),
@@ -130,24 +138,32 @@ void main() async {
 
     await AutoSyncScheduler.initialize();
 
-    bool weWantFatalErrorRecording = true;
+    // Unified error handling for both Crashlytics and Bugfender
     FlutterError.onError = (errorDetails) {
-      if (weWantFatalErrorRecording) {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-      }
+      // Forward to Crashlytics
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      // Forward to Bugfender
+      FlutterBugfender.error('Flutter Error: ${errorDetails.exception}');
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
+      // Forward to Crashlytics
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      // Forward to Bugfender
+      FlutterBugfender.error('Platform Error: $error');
       return true;
     };
+
     Isolate.current.addErrorListener(RawReceivePort((pair) async {
       final List<dynamic> errorAndStacktrace = pair;
+      // Forward to Crashlytics
       await FirebaseCrashlytics.instance.recordError(
         errorAndStacktrace.first,
         errorAndStacktrace.last,
         fatal: true,
       );
+      // Forward to Bugfender
+      FlutterBugfender.error('Isolate Error: ${errorAndStacktrace.first}');
     }).sendPort);
   } catch (e) {
     FirebaseCrashlytics.instance
@@ -173,11 +189,8 @@ class MyApp extends StatelessWidget {
           ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
           : const AppPinLockWrapper(child: AuthGate()),
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
+      localizationsDelegates: [
         FlutterQuillLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en', 'US'),
@@ -242,8 +255,10 @@ class _DynamicLinkObserver extends NavigatorObserver {
         );
       }
     } catch (e, st) {
+      // Forward to both Crashlytics and Bugfender
       await FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'DynamicLink handling failed');
+      FlutterBugfender.error('DynamicLink handling failed: $e');
     }
   }
 

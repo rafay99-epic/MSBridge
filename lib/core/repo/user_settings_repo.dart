@@ -254,6 +254,9 @@ class UserSettingsRepo {
         return settings.copyWith(autoSaveEnabled: value as bool);
       case 'fingerprintEnabled':
         return settings.copyWith(fingerprintEnabled: value as bool);
+      case 'pinLockEnabled':
+        return settings.copyWith(
+            pinLockEnabled: value as bool); // Added PIN lock case
       case 'cloudSyncEnabled':
         return settings.copyWith(cloudSyncEnabled: value as bool);
       case 'versionHistoryEnabled':
