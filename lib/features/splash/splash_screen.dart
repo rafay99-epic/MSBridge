@@ -47,7 +47,8 @@ class _SplashScreenState extends State<SplashScreen> {
     Navigator.of(context).push(
       PageTransition(
         child: const LoginScreen(),
-        type: PageTransitionType.leftToRight,
+        type: PageTransitionType.rightToLeft,
+        duration: const Duration(milliseconds: 300),
       ),
     );
   }

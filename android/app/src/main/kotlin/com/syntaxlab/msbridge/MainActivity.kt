@@ -1,8 +1,8 @@
-package com.syntaxlab.msbridge
+// package com.syntaxlab.msbridge
 
-import io.flutter.embedding.android.FlutterActivity
+// import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity: FlutterActivity()
+// class MainActivity: FlutterActivity()
 
 
 // Enable this if you want to use fingperprint authentication in your app
@@ -11,10 +11,10 @@ class MainActivity: FlutterActivity()
 // If you want to use this then uncomment the below code and comment the above code
 
 
-// package com.syntaxlab.msbridge
+package com.syntaxlab.msbridge
 
-// import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-// class MainActivity : FlutterFragmentActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
-// }
+}

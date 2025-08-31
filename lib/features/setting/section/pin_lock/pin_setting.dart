@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/fingerprint_provider.dart';
-import 'package:msbridge/features/setting/section/user_section/pin_lock_screen.dart';
+import 'package:msbridge/features/setting/section/pin_lock/pin_lock_screen.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
 
-class UserSettingsSection extends StatelessWidget {
-  const UserSettingsSection({super.key});
+class PinSetting extends StatelessWidget {
+  const PinSetting({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Security & Privacy
         _buildSubsectionHeader(
             context, "Security & Privacy", LineIcons.userShield),
         const SizedBox(height: 12),
@@ -89,11 +88,11 @@ class UserSettingsSection extends StatelessWidget {
                               context,
                               PageTransition(
                                 type: PageTransitionType.rightToLeft,
+                                duration: const Duration(milliseconds: 300),
                                 child: PinLockScreen(
                                   isCreating: true,
                                   onConfirmed: (pin) async {
-                                    await pinProvider.savePin(
-                                        pin); // ✅ Use savePin for new PINs
+                                    await pinProvider.savePin(pin);
                                     await pinProvider.setEnabled(true);
                                     Navigator.pop(context);
                                   },
@@ -127,8 +126,6 @@ class UserSettingsSection extends StatelessWidget {
             },
           ),
         ),
-
-        // Change PIN option - only show if PIN lock is enabled
         Consumer<AppPinLockProvider>(
           builder: (context, pinProvider, _) {
             if (!pinProvider.enabled) return const SizedBox.shrink();
@@ -149,12 +146,12 @@ class UserSettingsSection extends StatelessWidget {
                         context,
                         PageTransition(
                           type: PageTransitionType.rightToLeft,
+                          duration: const Duration(milliseconds: 300),
                           child: PinLockScreen(
                             isChanging: true,
                             existingPin: currentPin,
                             onConfirmed: (newPin) async {
-                              await pinProvider
-                                  .updatePin(newPin); // ✅ Use updatePin method
+                              await pinProvider.updatePin(newPin);
                               CustomSnackBar.show(
                                 context,
                                 'PIN changed successfully!',
@@ -175,7 +172,6 @@ class UserSettingsSection extends StatelessWidget {
                   subtitle: "Remove PIN lock completely",
                   icon: LineIcons.trash,
                   onTap: () async {
-                    // Show confirmation dialog
                     bool? confirm = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
@@ -234,7 +230,6 @@ class UserSettingsSection extends StatelessWidget {
             );
           },
         ),
-
         if (FeatureFlag.enableFingerprintLock)
           // Security & Privacy
           Consumer<FingerprintAuthProvider>(
