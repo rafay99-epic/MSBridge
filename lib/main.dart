@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'dart:isolate';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
@@ -30,40 +27,46 @@ import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
 import 'package:msbridge/core/provider/font_provider.dart';
 import 'package:msbridge/core/provider/template_settings_provider.dart';
-import 'package:msbridge/core/repo/auth_gate.dart';
-import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
-import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/my_app.dart';
 import 'package:msbridge/utils/error.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/config/config.dart';
-import 'package:msbridge/theme/colors.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
+import 'package:msbridge/firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   try {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-  } catch (e) {
-    FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-        reason: 'Failed to set preferred orientations');
-  }
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  try {
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      FlutterBugfender.error('Flutter Error: ${errorDetails.exception}');
+    };
+
+    Isolate.current.addErrorListener(RawReceivePort((pair) async {
+      final List<dynamic> errorAndStacktrace = pair;
+      await FirebaseCrashlytics.instance.recordError(
+        errorAndStacktrace.first,
+        errorAndStacktrace.last,
+        fatal: true,
+      );
+      FlutterBugfender.error('Isolate Error: ${errorAndStacktrace.first}');
+    }).sendPort);
+
     await FlutterBugfender.init(BugfenderConfig.apiKey,
         enableCrashReporting: false,
         enableUIEventLogging: true,
         enableAndroidLogcatLogging: true);
-    await Firebase.initializeApp();
+
     await Hive.initFlutter();
     Hive.registerAdapter(MSNoteAdapter());
     await Hive.openBox<MSNote>('notesBox');
@@ -84,27 +87,9 @@ void main() async {
     Hive.registerAdapter(NoteTemplateAdapter());
     await Hive.openBox<NoteTemplate>('note_templates');
 
-    // Initialize Workmanager for background tasks
-    try {
-      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-      await SchedulerRegistration.registerAdaptive();
-    } catch (e, st) {
-      FlutterBugfender.log('Workmanager init failed: $e');
-      FlutterBugfender.error(e.toString());
-      await FirebaseCrashlytics.instance
-          .recordError(e, st, reason: 'Workmanager init failed');
-    }
-
-    // Initialize deletion sync system (will be fully initialized when user logs in)
-    try {
-      // Import the deletion sync helper
-      FlutterBugfender.log('✅ Deletion sync system ready for initialization');
-    } catch (e, st) {
-      FlutterBugfender.log('Deletion sync system init failed: $e');
-      FlutterBugfender.error(e.toString());
-      await FirebaseCrashlytics.instance
-          .recordError(e, st, reason: 'Deletion sync system init failed');
-    }
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
 
     runApp(
       MultiProvider(
@@ -135,194 +120,20 @@ void main() async {
         child: const MyApp(),
       ),
     );
+    // Worker
+    try {
+      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+      await SchedulerRegistration.registerAdaptive();
+      FlutterBugfender.log('Workmanager init Passed');
+    } catch (e) {
+      FlutterBugfender.log('Workmanager init failed: $e');
+      FlutterBugfender.error(e.toString());
+    }
 
     await AutoSyncScheduler.initialize();
-
-    // Unified error handling for both Crashlytics and Bugfender
-    FlutterError.onError = (errorDetails) {
-      // Forward to Crashlytics
-      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-      // Forward to Bugfender
-      FlutterBugfender.error('Flutter Error: ${errorDetails.exception}');
-    };
-
-    PlatformDispatcher.instance.onError = (error, stack) {
-      // Forward to Crashlytics
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      // Forward to Bugfender
-      FlutterBugfender.error('Platform Error: $error');
-      return true;
-    };
-
-    Isolate.current.addErrorListener(RawReceivePort((pair) async {
-      final List<dynamic> errorAndStacktrace = pair;
-      // Forward to Crashlytics
-      await FirebaseCrashlytics.instance.recordError(
-        errorAndStacktrace.first,
-        errorAndStacktrace.last,
-        fatal: true,
-      );
-      // Forward to Bugfender
-      FlutterBugfender.error('Isolate Error: ${errorAndStacktrace.first}');
-    }).sendPort);
   } catch (e) {
     FirebaseCrashlytics.instance
         .recordError(e, StackTrace.current, reason: 'Failed to initialize app');
     runApp(ErrorApp(errorMessage: e.toString()));
   }
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      theme: _buildTheme(themeProvider, false),
-      darkTheme: _buildTheme(themeProvider, true),
-      themeMode: themeProvider.selectedTheme == AppTheme.light
-          ? ThemeMode.light
-          : ThemeMode.dark,
-      home: FeatureFlag.enableFingerprintLock
-          ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
-          : const AppPinLockWrapper(child: AuthGate()),
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: [
-        FlutterQuillLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en', 'US'),
-        Locale('en'),
-      ],
-      navigatorObservers: [
-        _DynamicLinkObserver(),
-      ],
-    );
-  }
-
-  ThemeData _buildTheme(ThemeProvider themeProvider, bool isDark) {
-    // Use the theme provider's getThemeData method which handles dynamic colors
-    return themeProvider.getThemeData();
-  }
-}
-
-class _DynamicLinkObserver extends NavigatorObserver {
-  _DynamicLinkObserver() {
-    _initDynamicLinks();
-  }
-
-  void _initDynamicLinks() async {
-    final PendingDynamicLinkData? initialLink =
-        await FirebaseDynamicLinks.instance.getInitialLink();
-    if (initialLink?.link != null) {
-      _handleLink(initialLink!.link);
-    }
-
-    FirebaseDynamicLinks.instance.onLink.listen((data) {
-      _handleLink(data.link);
-    });
-  }
-
-  void _handleLink(Uri link) async {
-    try {
-      final Uri deep = link;
-      final Uri target = deep;
-      final List<String> parts =
-          target.path.split('/').where((p) => p.isNotEmpty).toList();
-      if (parts.length >= 2 && parts[0] == 's') {
-        final String shareId = parts[1];
-        // Fetch and show a simple in-app viewer dialog
-        final doc = await FirebaseFirestore.instance
-            .collection('shared_notes')
-            .doc(shareId)
-            .get();
-        final state = navigatorKey.currentState;
-        if (state == null || !state.mounted) return;
-        if (!doc.exists) {
-          _showSnack('This shared note does not exist or was disabled.');
-          return;
-        }
-        final data = doc.data() as Map<String, dynamic>;
-        if (data['viewOnly'] != true) {
-          _showSnack('This link is not viewable.');
-          return;
-        }
-        _showSharedViewer(
-          title: (data['title'] as String?) ?? 'Untitled',
-          content: (data['content'] as String?) ?? '',
-        );
-      }
-    } catch (e, st) {
-      // Forward to both Crashlytics and Bugfender
-      await FirebaseCrashlytics.instance
-          .recordError(e, st, reason: 'DynamicLink handling failed');
-      FlutterBugfender.error('DynamicLink handling failed: $e');
-    }
-  }
-
-  void _showSnack(String message) {
-    final context = navigatorKey.currentState?.overlay?.context;
-    if (context == null) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _showSharedViewer({required String title, required String content}) {
-    final context = navigatorKey.currentState?.overlay?.context;
-    if (context == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        String plain;
-        try {
-          final parsed = _tryParseQuill(content);
-          plain = parsed;
-        } catch (_) {
-          plain = content;
-        }
-        return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
-          title:
-              Text(title, style: TextStyle(color: theme.colorScheme.primary)),
-          content: SingleChildScrollView(
-            child:
-                Text(plain, style: TextStyle(color: theme.colorScheme.primary)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Close'),
-            )
-          ],
-        );
-      },
-    );
-  }
-}
-
-String _tryParseQuill(String content) {
-  try {
-    final dynamic json = _jsonDecode(content);
-    if (json is List) {
-      return json
-          .map((op) =>
-              op is Map && op['insert'] is String ? op['insert'] as String : '')
-          .join('');
-    }
-    if (json is Map && json['ops'] is List) {
-      final List ops = json['ops'];
-      return ops
-          .map((op) =>
-              op is Map && op['insert'] is String ? op['insert'] as String : '')
-          .join('');
-    }
-  } catch (_) {}
-  return content;
-}
-
-dynamic _jsonDecode(String s) {
-  return jsonDecode(s);
 }
