@@ -271,7 +271,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
                     } else if (widget.isChanging) {
                       if (!_isConfirming) {
                         // First verify current PIN
-                        _handlePinChange(pin);
+                        _handlePinVerification(pin);
                       } else if (_isFirstNewPinEntry) {
                         // First time entering new PIN
                         _handleFirstNewPin(pin);
@@ -481,54 +481,13 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
     try {
       final isCorrect = await pinProvider.verifyPin(pin);
-
+      if (!mounted) return;
       if (isCorrect) {
-        // Correct PIN
-        widget.onConfirmed(pin);
-
-        // Don't navigate back if this is a startup PIN lock
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-      } else {
-        // Incorrect PIN
-        setState(() {
-          _isError = true;
-          _pinController.clear();
-          _isProcessing = false;
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _pinFocusNode.requestFocus();
-        });
-      }
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          "Error verifying PIN. Please try again.", e.toString());
-      CustomSnackBar.show(
-        context,
-        'Error verifying PIN. Please try again.',
-        isSuccess: false,
-      );
-      setState(() {
-        _isProcessing = false;
-      });
-    }
-  }
-
-  void _handlePinChange(String pin) async {
-    final pinProvider = Provider.of<AppPinLockProvider>(context, listen: false);
-
-    try {
-      final isCorrect = await pinProvider.verifyPin(pin);
-
-      if (isCorrect) {
-        // Current PIN is correct, now create new PIN
         CustomSnackBar.show(
           context,
           'Current PIN verified! Now enter your new PIN',
           isSuccess: true,
         );
-
         setState(() {
           _isConfirming = true;
           _isFirstNewPinEntry = true;
@@ -536,7 +495,6 @@ class _PinLockScreenState extends State<PinLockScreen> {
           _pinController.clear();
           _isProcessing = false;
         });
-
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _pinFocusNode.requestFocus();
         });
@@ -547,7 +505,6 @@ class _PinLockScreenState extends State<PinLockScreen> {
           'Incorrect current PIN. Please try again.',
           isSuccess: false,
         );
-
         setState(() {
           _isError = true;
           _pinController.clear();
@@ -558,6 +515,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       FlutterBugfender.sendCrash(
           "Error verifying PIN. Please try again.", e.toString());
       CustomSnackBar.show(
@@ -615,11 +573,13 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
         // Use a small delay to ensure the snackbar is shown
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
+          if (!mounted) return;
+          if (Navigator.canPop(context)) {
             Navigator.pop(context);
           }
         });
       }).catchError((e) {
+        if (!mounted) return;
         FlutterBugfender.sendCrash(
             "Failed to update PIN. Please try again.", e.toString());
         CustomSnackBar.show(

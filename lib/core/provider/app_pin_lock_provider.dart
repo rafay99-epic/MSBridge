@@ -93,6 +93,9 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       _clearError();
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to refresh PIN lock state: ${e.toString()}',
+          StackTrace.current.toString());
       _setError('Failed to refresh PIN lock state: ${e.toString()}');
       _logError('Failed to refresh PIN lock state', e.toString());
     }
@@ -126,7 +129,10 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
       _setCrashlyticsProps();
       notifyListeners();
     } catch (e) {
-      _enabled = false;
+      FlutterBugfender.sendCrash(
+          'Failed to load PIN lock status: ${e.toString()}',
+          StackTrace.current.toString());
+
       _setError('Failed to load PIN lock status: ${e.toString()}');
       _logError('Failed to load PIN lock status', e.toString());
       notifyListeners();
@@ -137,9 +143,10 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final success = await _repository.setEnabled(value);
       if (success) {
-        _enabled = value;
+        // Re-read from storage to ensure consistency
+        _enabled = await _repository.isPinEnabled();
 
-        if (value) {
+        if (_enabled) {
           _lastEnabledTime = DateTime.now();
           FlutterBugfender.log(
               "PIN ENABLED at ${_lastEnabledTime!.toIso8601String()}");
@@ -150,7 +157,7 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
         }
 
         _clearError();
-        _logEvent('pin_lock_enabled_changed', {'enabled': value});
+        _logEvent('pin_lock_enabled_changed', {'enabled': _enabled});
         _setCrashlyticsProps();
       } else {
         _setError('Failed to update PIN lock status');
