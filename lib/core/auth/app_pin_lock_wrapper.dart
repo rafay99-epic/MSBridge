@@ -32,7 +32,7 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
 
   void _initializeAnimations() {
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 400), // Reduced from 800ms
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(
@@ -40,7 +40,7 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut, // Changed from easeInOut for better performance
+      curve: Curves.easeOut,
     ));
   }
 
@@ -48,6 +48,9 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
     try {
       final pinProvider =
           Provider.of<AppPinLockProvider>(context, listen: false);
+
+      // Listen to PIN provider changes
+      pinProvider.addListener(_onPinProviderChanged);
 
       final hasPin = await pinProvider.hasPin();
 
@@ -62,7 +65,6 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
           _pinVerified = true;
           _isInitialized = true;
         });
-        // Start fade in animation for immediate content
         _fadeController.forward();
       }
     } catch (e) {
@@ -71,13 +73,40 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
         _pinVerified = true;
         _isInitialized = true;
       });
-      // Start fade in animation for immediate content
       _fadeController.forward();
+    }
+  }
+
+  void _onPinProviderChanged() {
+    if (!mounted) return;
+
+    final pinProvider = Provider.of<AppPinLockProvider>(context, listen: false);
+
+    // Check if PIN lock state changed and we need to show lock screen
+    if (pinProvider.enabled && pinProvider.wasRecentlyInBackground) {
+      setState(() {
+        _shouldShowPinLock = true;
+        _pinVerified = false;
+      });
+    } else if (!pinProvider.enabled) {
+      setState(() {
+        _shouldShowPinLock = false;
+        _pinVerified = true;
+      });
     }
   }
 
   @override
   void dispose() {
+    // Remove listener when widget is disposed
+    try {
+      final pinProvider =
+          Provider.of<AppPinLockProvider>(context, listen: false);
+      pinProvider.removeListener(_onPinProviderChanged);
+    } catch (e) {
+      // Provider might not be available during dispose
+    }
+
     _fadeController.dispose();
     super.dispose();
   }
@@ -111,15 +140,19 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
         child: StartupPinLockScreen(
           key: const ValueKey('pin_lock'),
           onPinCorrect: () async {
-            // Optimized transition: faster and smoother
+            // ⭐ CRITICAL FIX: Notify the provider that PIN verification was successful
+            Provider.of<AppPinLockProvider>(context, listen: false)
+                .onPinVerificationSuccess();
             await _fadeController.reverse();
 
-            // Use microtask for better performance
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() {
-                _pinVerified = true;
-              });
-              _fadeController.forward();
+              if (mounted) {
+                setState(() {
+                  _pinVerified = true;
+                  _shouldShowPinLock = false;
+                });
+                _fadeController.forward();
+              }
             });
           },
         ),

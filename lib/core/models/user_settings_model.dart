@@ -136,7 +136,6 @@ class UserSettingsModel {
     bool? vibrationEnabled,
     bool? autoSaveEnabled,
     bool? fingerprintEnabled,
-    bool? pinLockEnabled, // Added to copyWith
     bool? cloudSyncEnabled,
     bool? versionHistoryEnabled,
     String? selectedAIModel,
