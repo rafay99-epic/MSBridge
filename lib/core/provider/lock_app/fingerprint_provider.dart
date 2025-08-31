@@ -1,3 +1,4 @@
+// fingerprint_auth_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
@@ -122,11 +123,21 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   Future<void> setFingerprintEnabled(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    _isFingerprintEnabled = value;
-    await prefs.setBool(_fingerprintKey, value);
-    _logEvent('fingerprint_enabled_changed', {'enabled': value});
-    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isFingerprintEnabled = value;
+      await prefs.setBool(_fingerprintKey, value);
+      _logEvent('fingerprint_enabled_changed', {'enabled': value});
+      notifyListeners();
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to set fingerprint status: ${e.toString()}',
+          StackTrace.current.toString());
+      // Revert to previous state on error
+      final prefs = await SharedPreferences.getInstance();
+      _isFingerprintEnabled = prefs.getBool(_fingerprintKey) ?? false;
+      notifyListeners();
+    }
   }
 
   Future<bool> authenticate(BuildContext context) async {

@@ -1,3 +1,4 @@
+// app_pin_lock_provider.dart
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/pin_repo.dart';
@@ -161,11 +162,15 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
         _setCrashlyticsProps();
       } else {
         _setError('Failed to update PIN lock status');
+        // Revert to previous state on failure
+        _enabled = await _repository.isPinEnabled();
       }
       notifyListeners();
     } catch (e) {
       _setError('Failed to update PIN lock status: ${e.toString()}');
       _logError('Failed to update PIN lock status', e.toString());
+      // Revert to previous state on error
+      _enabled = await _repository.isPinEnabled();
       notifyListeners();
     }
   }

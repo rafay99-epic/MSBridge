@@ -1,12 +1,13 @@
+// pin_setting.dart
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
-import 'package:msbridge/core/provider/fingerprint_provider.dart';
-import 'package:msbridge/features/setting/section/pin_lock/pin_lock_screen.dart';
+import 'package:msbridge/core/provider/lock_app/fingerprint_provider.dart';
+import 'package:msbridge/features/lock/set_pin/create_pin_update_pin.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/lock_app/app_pin_lock_provider.dart';
 
 class PinSetting extends StatelessWidget {
   const PinSetting({super.key});
@@ -24,89 +25,105 @@ class PinSetting extends StatelessWidget {
           title: "PIN Lock",
           subtitle: "Secure your app with a PIN code",
           icon: LineIcons.lock,
-          trailing: Consumer<AppPinLockProvider>(
-            builder: (context, pinProvider, _) {
+          trailing: Consumer2<AppPinLockProvider, FingerprintAuthProvider>(
+            builder: (context, pinProvider, fingerprintProvider, _) {
+              // Determine if PIN toggle should be enabled
+              final isToggleEnabled = !fingerprintProvider.isFingerprintEnabled;
+
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Switch(
                     value: pinProvider.enabled,
-                    onChanged: (v) async {
-                      if (v) {
-                        if (!await pinProvider.hasPin()) {
-                          // Show warning dialog before creating PIN
-                          bool? proceed = await showDialog<bool>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              final theme = Theme.of(context);
-                              final colorScheme = theme.colorScheme;
-                              return AlertDialog(
-                                backgroundColor: colorScheme.surface,
-                                title: Text(
-                                  'Important: PIN Security',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                content: Text(
-                                  '⚠️ Warning: There is no "forgot PIN" option.\n\n'
-                                  'If you forget your PIN, you can only change it in Settings.\n\n'
-                                  'Make sure to remember your PIN or keep it in a secure place.',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
-                                    child: Text(
-                                      'Cancel',
-                                      style:
-                                          TextStyle(color: colorScheme.primary),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colorScheme.primary,
-                                      foregroundColor: colorScheme.onPrimary,
-                                    ),
-                                    child: const Text('I Understand'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
+                    onChanged: isToggleEnabled
+                        ? (v) async {
+                            if (v) {
+                              // Disable fingerprint if enabling PIN
+                              if (fingerprintProvider.isFingerprintEnabled) {
+                                await fingerprintProvider
+                                    .setFingerprintEnabled(false);
+                              }
 
-                          if (proceed == true) {
-                            Navigator.push(
-                              context,
-                              PageTransition(
-                                type: PageTransitionType.rightToLeft,
-                                duration: const Duration(milliseconds: 300),
-                                child: PinLockScreen(
-                                  isCreating: true,
-                                  onConfirmed: (pin) async {
-                                    await pinProvider.savePin(pin);
-                                    await pinProvider.setEnabled(true);
-                                    Navigator.pop(context);
+                              if (!await pinProvider.hasPin()) {
+                                // Show warning dialog before creating PIN
+                                bool? proceed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    final theme = Theme.of(context);
+                                    final colorScheme = theme.colorScheme;
+                                    return AlertDialog(
+                                      backgroundColor: colorScheme.surface,
+                                      title: Text(
+                                        'Important: PIN Security',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      content: Text(
+                                        '⚠️ Warning: There is no "forgot PIN" option.\n\n'
+                                        'If you forget your PIN, you can only change it in Settings.\n\n'
+                                        'Make sure to remember your PIN or keep it in a secure place.',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                                color: colorScheme.primary),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                colorScheme.primary,
+                                            foregroundColor:
+                                                colorScheme.onPrimary,
+                                          ),
+                                          child: const Text('I Understand'),
+                                        ),
+                                      ],
+                                    );
                                   },
-                                ),
-                              ),
-                            );
+                                );
+
+                                if (proceed == true) {
+                                  Navigator.push(
+                                    context,
+                                    PageTransition(
+                                      type: PageTransitionType.rightToLeft,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      child: PinLockScreen(
+                                        isCreating: true,
+                                        onConfirmed: (pin) async {
+                                          await pinProvider.savePin(pin);
+                                          await pinProvider.setEnabled(true);
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                await pinProvider.setEnabled(true);
+                              }
+                            } else {
+                              await pinProvider.setEnabled(false);
+                            }
                           }
-                        } else {
-                          await pinProvider.setEnabled(true);
-                        }
-                      } else {
-                        await pinProvider.setEnabled(false);
-                      }
-                    },
+                        : null, // Disable toggle when fingerprint is enabled
                   ),
                   if (pinProvider.enabled) ...[
                     const SizedBox(height: 4),
@@ -120,14 +137,26 @@ class PinSetting extends StatelessWidget {
                             fontSize: 10,
                           ),
                     ),
+                  ] else if (fingerprintProvider.isFingerprintEnabled) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Disabled (Fingerprint enabled)',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.5),
+                            fontSize: 10,
+                          ),
+                    ),
                   ],
                 ],
               );
             },
           ),
         ),
-        Consumer<AppPinLockProvider>(
-          builder: (context, pinProvider, _) {
+        Consumer2<AppPinLockProvider, FingerprintAuthProvider>(
+          builder: (context, pinProvider, fingerprintProvider, _) {
             if (!pinProvider.enabled) return const SizedBox.shrink();
 
             return Column(
@@ -141,7 +170,7 @@ class PinSetting extends StatelessWidget {
                   onTap: () async {
                     // First verify current PIN
                     final currentPin = await pinProvider.readPin();
-                    if (currentPin != null) {
+                    if (currentPin != null && context.mounted) {
                       Navigator.push(
                         context,
                         PageTransition(
@@ -152,12 +181,14 @@ class PinSetting extends StatelessWidget {
                             existingPin: currentPin,
                             onConfirmed: (newPin) async {
                               await pinProvider.updatePin(newPin);
-                              CustomSnackBar.show(
-                                context,
-                                'PIN changed successfully!',
-                                isSuccess: true,
-                              );
-                              Navigator.pop(context);
+                              if (context.mounted) {
+                                CustomSnackBar.show(
+                                  context,
+                                  'PIN changed successfully!',
+                                  isSuccess: true,
+                                );
+                                Navigator.pop(context);
+                              }
                             },
                           ),
                         ),
@@ -172,6 +203,8 @@ class PinSetting extends StatelessWidget {
                   subtitle: "Remove PIN lock completely",
                   icon: LineIcons.trash,
                   onTap: () async {
+                    if (!context.mounted) return;
+
                     bool? confirm = await showDialog<bool>(
                       context: context,
                       builder: (BuildContext context) {
@@ -215,7 +248,7 @@ class PinSetting extends StatelessWidget {
                       },
                     );
 
-                    if (confirm == true) {
+                    if (confirm == true && context.mounted) {
                       await pinProvider.clearPin();
                       await pinProvider.setEnabled(false);
                       CustomSnackBar.show(
@@ -231,35 +264,85 @@ class PinSetting extends StatelessWidget {
           },
         ),
         if (FeatureFlag.enableFingerprintLock)
-          // Security & Privacy
-          Consumer<FingerprintAuthProvider>(
-            builder: (context, fingerprintProvider, child) {
+          Consumer2<AppPinLockProvider, FingerprintAuthProvider>(
+            builder: (context, pinProvider, fingerprintProvider, child) {
+              // Determine if fingerprint toggle should be enabled
+              final hasPin = pinProvider.enabled &&
+                  (pinProvider.hasPin() as dynamic) != false;
+              final isToggleEnabled = !hasPin || !pinProvider.enabled;
+
               return Column(
                 children: [
                   const SizedBox(height: 12),
                   _buildModernSettingsTile(
                     context,
                     title: "Fingerprint Lock",
-                    subtitle: "Use biometric authentication to secure the app",
+                    subtitle: fingerprintProvider.isFingerprintEnabled
+                        ? "Biometric authentication enabled"
+                        : "Use biometric authentication to secure the app",
                     icon: LineIcons.fingerprint,
                     trailing: Switch(
                       value: fingerprintProvider.isFingerprintEnabled,
-                      onChanged: (value) async {
-                        if (value) {
-                          bool authenticated =
-                              await fingerprintProvider.authenticate(context);
-                          if (authenticated) {
-                            fingerprintProvider.setFingerprintEnabled(true);
-                          } else {
-                            CustomSnackBar.show(
-                                context, "Fingerprint authentication failed.");
-                          }
-                        } else {
-                          fingerprintProvider.setFingerprintEnabled(false);
-                        }
-                      },
+                      onChanged: isToggleEnabled
+                          ? (value) async {
+                              if (value) {
+                                // Disable PIN if enabling fingerprint
+                                if (pinProvider.enabled) {
+                                  await pinProvider.setEnabled(false);
+                                  await pinProvider.clearPin();
+                                }
+
+                                bool authenticated = await fingerprintProvider
+                                    .authenticate(context);
+                                if (authenticated) {
+                                  await fingerprintProvider
+                                      .setFingerprintEnabled(true);
+                                } else {
+                                  // Revert to disabled state if authentication fails
+                                  await fingerprintProvider
+                                      .setFingerprintEnabled(false);
+                                  if (context.mounted) {
+                                    CustomSnackBar.show(context,
+                                        "Fingerprint authentication failed.");
+                                  }
+                                }
+                              } else {
+                                await fingerprintProvider
+                                    .setFingerprintEnabled(false);
+                              }
+                            }
+                          : null, // Disable toggle when PIN is enabled
                     ),
                   ),
+                  if (fingerprintProvider.isFingerprintEnabled) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(
+                        'Biometric authentication is active',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.7),
+                            ),
+                      ),
+                    ),
+                  ] else if (pinProvider.enabled) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(
+                        'Disabled (PIN enabled)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.5),
+                            ),
+                      ),
+                    ),
+                  ],
                 ],
               );
             },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
-import 'package:msbridge/features/setting/section/pin_lock/pin_lock_screen.dart';
+import 'package:msbridge/core/provider/lock_app/app_pin_lock_provider.dart';
+import 'package:msbridge/features/lock/set_pin/create_pin_update_pin.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 

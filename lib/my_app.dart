@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/dynamic_link/dynamic_link.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/core/repo/auth_gate.dart';
-import 'package:msbridge/core/auth/app_pin_lock_wrapper.dart';
-import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
+import 'package:msbridge/core/wrapper/authrntication_wrapper.dart';
 import 'package:msbridge/main.dart';
 import 'package:msbridge/theme/colors.dart';
 import 'package:provider/provider.dart';
@@ -23,9 +20,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.selectedTheme == AppTheme.light
           ? ThemeMode.light
           : ThemeMode.dark,
-      home: FeatureFlag.enableFingerprintLock
-          ? const AppPinLockWrapper(child: FingerprintAuthWrapper())
-          : const AppPinLockWrapper(child: AuthGate()),
+      home: const AuthenticationWrapper(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: [
         FlutterQuillLocalizations.delegate,
