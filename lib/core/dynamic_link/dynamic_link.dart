@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/main.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'dart:convert' as convert;
 
 class DynamicLinkObserver extends NavigatorObserver {
   DynamicLinkObserver() {
@@ -61,7 +62,7 @@ class DynamicLinkObserver extends NavigatorObserver {
   void _showSnack(String message) {
     final context = navigatorKey.currentState?.overlay?.context;
     if (context == null) return;
-    CustomSnackBar.show(context, message, isSuccess: true);
+    CustomSnackBar.show(context, message, isSuccess: false);
   }
 
   void _showSharedViewer({required String title, required String content}) {
@@ -101,7 +102,7 @@ class DynamicLinkObserver extends NavigatorObserver {
 
 String tryParseQuill(String content) {
   try {
-    final dynamic json = jsonDecode(content);
+    final dynamic json = convert.jsonDecode(content);
     if (json is List) {
       return json
           .map((op) =>
@@ -115,10 +116,8 @@ String tryParseQuill(String content) {
               op is Map && op['insert'] is String ? op['insert'] as String : '')
           .join('');
     }
-  } catch (_) {}
+  } catch (e) {
+    FlutterBugfender.error('Quill parsing failed: $e');
+  }
   return content;
-}
-
-dynamic jsonDecode(String s) {
-  return jsonDecode(s);
 }

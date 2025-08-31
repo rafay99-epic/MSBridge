@@ -266,10 +266,7 @@ class PinSetting extends StatelessWidget {
         if (FeatureFlag.enableFingerprintLock)
           Consumer2<AppPinLockProvider, FingerprintAuthProvider>(
             builder: (context, pinProvider, fingerprintProvider, child) {
-              // Determine if fingerprint toggle should be enabled
-              final hasPin = pinProvider.enabled &&
-                  (pinProvider.hasPin() as dynamic) != false;
-              final isToggleEnabled = !hasPin || !pinProvider.enabled;
+              final isToggleEnabled = !pinProvider.enabled;
 
               return Column(
                 children: [

@@ -25,6 +25,7 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
   bool _shouldShowPinLock = false;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  bool _navigatedToFingerprint = false;
 
   @override
   void initState() {
@@ -120,7 +121,8 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
 
         if (fingerprintProvider.isFingerprintEnabled) {
           // Switch to fingerprint authentication
-          if (mounted) {
+          if (mounted && !_navigatedToFingerprint) {
+            _navigatedToFingerprint = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.pushReplacement(
                 context,
@@ -132,7 +134,8 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
             });
           }
         } else {
-          if (mounted) {
+          if (mounted && !_navigatedToFingerprint) {
+            _navigatedToFingerprint = true;
             setState(() {
               _shouldShowPinLock = false;
               _pinVerified = true;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/core/dynamic_link/dynamic_link.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/core/wrapper/authrntication_wrapper.dart';
+import 'package:msbridge/core/wrapper/authentication_wrapper.dart';
 import 'package:msbridge/main.dart';
 import 'package:msbridge/theme/colors.dart';
 import 'package:provider/provider.dart';
