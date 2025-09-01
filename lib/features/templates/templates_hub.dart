@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
@@ -228,7 +229,10 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
           document: Document.fromJson(jsonDecode(widget.template!.contentJson)),
           selection: const TextSelection.collapsed(offset: 0),
         );
-      } catch (_) {
+      } catch (e) {
+        FlutterBugfender.sendCrash('Failed to decode template content.',
+            StackTrace.current.toString());
+        FlutterBugfender.error('Failed to decode template content.');
         // Try interpreting stored content as plain text instead of blanking it
         _controller = QuillController(
           document: Document()..insert(0, widget.template!.contentJson),
@@ -445,7 +449,10 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
     String contentJson;
     try {
       contentJson = jsonEncode(_controller.document.toDelta().toJson());
-    } catch (_) {
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to encode template content.', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to encode template content.');
       // Ensure we still persist valid Delta JSON
       final fallbackDoc = Document()
         ..insert(0, _controller.document.toPlainText());

@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 Widget buildContent(String content, ThemeData theme) {
@@ -27,9 +27,9 @@ Widget buildContent(String content, ThemeData theme) {
       );
     }
   } catch (e) {
-    FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-        reason:
-            'Error building content $content , with $theme and expection is $e');
+    FlutterBugfender.sendCrash(
+        'Error building content: $e', StackTrace.current.toString());
+    FlutterBugfender.error('Error building content: $e');
     return Text(
       content,
       maxLines: 4,

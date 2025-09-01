@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/theme/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,7 +28,11 @@ class ThemeProvider with ChangeNotifier {
     } catch (e) {
       _selectedTheme = AppTheme.dark;
       _dynamicColorsEnabled = false;
-      debugPrint("Error loading theme: $e");
+      FlutterBugfender.sendCrash(
+          'Error loading theme: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error loading theme: $e',
+      );
     }
     notifyListeners();
   }
@@ -48,7 +53,8 @@ class ThemeProvider with ChangeNotifier {
 
   Future<void> setTheme(AppTheme theme) async {
     if (_dynamicColorsEnabled) {
-      debugPrint('Cannot set custom theme when dynamic colors are enabled');
+      FlutterBugfender.log(
+          'Cannot set custom theme when dynamic colors are enabled');
       return;
     }
 
@@ -58,7 +64,11 @@ class ThemeProvider with ChangeNotifier {
       _selectedTheme = theme;
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to set theme: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to set theme: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to set theme: $e',
+      );
     }
   }
 
@@ -76,7 +86,11 @@ class ThemeProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to set dynamic colors: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to set dynamic colors: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to set dynamic colors: $e',
+      );
     }
   }
 
@@ -145,7 +159,11 @@ class ThemeProvider with ChangeNotifier {
       _dynamicColorsEnabled = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to reset theme: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to reset theme: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to reset theme: $e',
+      );
     }
   }
 

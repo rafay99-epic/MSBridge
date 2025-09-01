@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -85,8 +85,11 @@ class FontProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _selectedFontFamily = 'Poppins';
-      FirebaseCrashlytics.instance
-          .recordError(e, StackTrace.current, reason: 'Failed to load font');
+      FlutterBugfender.sendCrash(
+          'Failed to load font: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load font: $e',
+      );
     }
   }
 
@@ -99,8 +102,11 @@ class FontProvider extends ChangeNotifier {
       _selectedFontFamily = fontFamily;
       notifyListeners();
     } catch (e) {
-      FirebaseCrashlytics.instance
-          .recordError(e, StackTrace.current, reason: 'Failed to save font');
+      FlutterBugfender.sendCrash(
+          'Failed to save font: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to save font: $e',
+      );
     }
   }
 
@@ -191,6 +197,11 @@ class FontProvider extends ChangeNotifier {
 
       return textStyle;
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to get current font: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to get current font: $e',
+      );
       // Fallback to system font with font family name if Google Fonts fails
       // This will use the system's version of the font if available
       return TextStyle(
@@ -237,6 +248,11 @@ class FontProvider extends ChangeNotifier {
     try {
       return availableFonts.firstWhere((font) => font.name == name);
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to get font by name: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to get font by name: $e',
+      );
       return null;
     }
   }
@@ -326,6 +342,11 @@ class FontProvider extends ChangeNotifier {
     } catch (e) {
       // Return a basic TextStyle with font family if Google Fonts fails
       // This will use the system's version of the font if available
+      FlutterBugfender.sendCrash('Failed to get preview text style: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to get preview text style: $e',
+      );
       return TextStyle(
         fontSize: fontSize,
         fontWeight: fontWeight,

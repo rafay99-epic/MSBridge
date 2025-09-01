@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
@@ -248,11 +248,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Error syncing settings: $e'),
-        StackTrace.current,
-        reason: 'Error syncing settings: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Error syncing settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error syncing settings: $e');
       CustomSnackBar.show(
         context,
         "Error syncing settings: $e",
@@ -289,11 +287,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Error force syncing settings: $e'),
-        StackTrace.current,
-        reason: 'Error force syncing settings: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Error force syncing settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error force syncing settings: $e');
       CustomSnackBar.show(
         context,
         "Error force syncing settings: $e",
@@ -464,11 +460,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Error uploading settings: $e'),
-        StackTrace.current,
-        reason: 'Error uploading settings: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Error uploading settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error uploading settings: $e');
       CustomSnackBar.show(
         context,
         "Error uploading settings: $e",
@@ -503,11 +497,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Error downloading settings: $e'),
-        StackTrace.current,
-        reason: 'Error downloading settings: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Error downloading settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error downloading settings: $e');
       CustomSnackBar.show(
         context,
         "Error downloading settings: $e",
@@ -527,13 +519,16 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
       try {
         hasPermission =
             await PermissionHandler.checkAndRequestFilePermission(context);
-      } catch (_) {}
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+            'Storage permission denied.', StackTrace.current.toString());
+        FlutterBugfender.error('Storage permission denied.');
+      }
       if (!hasPermission) {
-        FirebaseCrashlytics.instance.recordError(
-          Exception('Storage permission denied.'),
-          StackTrace.current,
-          reason: 'Storage permission denied.',
-        );
+        FlutterBugfender.sendCrash(
+            'Storage permission denied.', StackTrace.current.toString());
+        FlutterBugfender.error('Storage permission denied.');
+
         throw Exception('Storage permission denied.');
       }
 
@@ -575,11 +570,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         isSuccess: true,
       );
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Export failed: $e'),
-        StackTrace.current,
-        reason: 'Export failed: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Export failed: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Export failed: $e');
       if (!mounted) return;
       CustomSnackBar.show(
         context,
@@ -612,11 +605,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         isSuccess: success,
       );
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Import failed: $e'),
-        StackTrace.current,
-        reason: 'Import failed: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Import failed: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Import failed: $e');
       CustomSnackBar.show(
         context,
         'Import failed: $e',
@@ -678,11 +669,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Reset failed: $e'),
-        StackTrace.current,
-        reason: 'Reset failed: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Reset failed: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Reset failed: $e');
       CustomSnackBar.show(
         context,
         "Error resetting settings: $e",

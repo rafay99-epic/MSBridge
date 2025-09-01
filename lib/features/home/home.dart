@@ -43,6 +43,8 @@ class _HomeState extends State<Home> {
       }
     } catch (e) {
       FlutterBugfender.error('Error initializing deletion sync: $e');
+      FlutterBugfender.sendCrash("Error initializing deletion sync: $e",
+          StackTrace.current.toString());
     }
   }
 

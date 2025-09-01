@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/models/user_settings_model.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class UserSettingsProvider extends ChangeNotifier {
   final UserSettingsRepo _repo = UserSettingsRepo();
@@ -50,8 +50,6 @@ class UserSettingsProvider extends ChangeNotifier {
       _isInitialized = true;
     } catch (e) {
       _setError('Failed to initialize settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to initialize user settings provider');
     } finally {
       _setLoading(false);
     }
@@ -67,8 +65,6 @@ class UserSettingsProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _setError('Failed to refresh settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to refresh user settings');
     } finally {
       _setLoading(false);
     }
@@ -101,8 +97,6 @@ class UserSettingsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _setError('Failed to sync settings to Firebase: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to sync user settings to Firebase');
       return false;
     } finally {
       _setLoading(false);
@@ -129,8 +123,6 @@ class UserSettingsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _setError('Failed to sync settings from Firebase: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to sync user settings from Firebase');
       return false;
     } finally {
       _setLoading(false);
@@ -153,8 +145,6 @@ class UserSettingsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _setError('Failed to update setting: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to update user setting: $settingKey');
       return false;
     } finally {
       _setLoading(false);
@@ -187,8 +177,6 @@ class UserSettingsProvider extends ChangeNotifier {
       return allSuccess;
     } catch (e) {
       _setError('Failed to update multiple settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to update multiple user settings');
       return false;
     } finally {
       _setLoading(false);
@@ -200,8 +188,11 @@ class UserSettingsProvider extends ChangeNotifier {
     try {
       return await _repo.exportSettings();
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to export user settings');
+      FlutterBugfender.sendCrash(
+          'Failed to export settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to export settings: $e',
+      );
       return {};
     }
   }
@@ -219,8 +210,6 @@ class UserSettingsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _setError('Failed to import settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to import user settings');
       return false;
     } finally {
       _setLoading(false);
@@ -240,8 +229,7 @@ class UserSettingsProvider extends ChangeNotifier {
       return success;
     } catch (e) {
       _setError('Failed to reset settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to reset user settings to default');
+
       return false;
     } finally {
       _setLoading(false);
@@ -279,8 +267,7 @@ class UserSettingsProvider extends ChangeNotifier {
       return refreshSuccess;
     } catch (e) {
       _setError('Failed to force sync settings: $e');
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to force sync user settings');
+
       return false;
     } finally {
       _setLoading(false);
@@ -335,6 +322,11 @@ class UserSettingsProvider extends ChangeNotifier {
 
   void _setError(String error) {
     _errorMessage = error;
+    FlutterBugfender.sendCrash(
+        'Failed to set error: $error', StackTrace.current.toString());
+    FlutterBugfender.error(
+      'Failed to set error: $error',
+    );
     notifyListeners();
   }
 
@@ -342,5 +334,4 @@ class UserSettingsProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
-
 }

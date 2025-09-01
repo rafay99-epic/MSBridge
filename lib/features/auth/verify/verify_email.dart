@@ -174,7 +174,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
       CustomSnackBar.show(
           context, "An unexpected error occurred. Please try again later.");
       FlutterBugfender.error("Error in resend verification email $e");
-
+      FlutterBugfender.sendCrash("Error in resend verification email $e",
+          StackTrace.current.toString());
       // For unexpected errors, re-enable immediately for retry
       if (mounted) {
         setState(() {

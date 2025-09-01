@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/models/user_model.dart';
 import 'package:msbridge/core/utils/rate_limiter.dart';
 import 'package:workmanager/workmanager.dart';
@@ -29,18 +29,19 @@ class AuthRepo {
       try {
         await SchedulerRegistration.registerAdaptive();
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to register background periodic sync: $e',
+        FlutterBugfender.error(
+          "Failed to register background periodic sync: $e",
         );
+        FlutterBugfender.sendCrash(
+            "Failed to register background periodic sync: $e",
+            StackTrace.current.toString());
       }
       return AuthResult(user: user);
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Login failed: $e',
+      FlutterBugfender.sendCrash(
+          "Login failed: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Login failed: $e",
       );
       return AuthResult(error: "Login failed: $e");
     }
@@ -57,10 +58,10 @@ class AuthRepo {
 
       User? user = userCredential.user;
       if (user == null) {
-        FirebaseCrashlytics.instance.recordError(
-          Exception('User registration failed.'),
-          StackTrace.current,
-          reason: 'User registration failed.',
+        FlutterBugfender.sendCrash(
+            "User registration failed.", StackTrace.current.toString());
+        FlutterBugfender.error(
+          "User registration failed.",
         );
         return AuthResult(error: "User registration failed.");
       }
@@ -71,11 +72,11 @@ class AuthRepo {
       try {
         await user.sendEmailVerification();
       } catch (verificationError) {
-        FirebaseCrashlytics.instance.recordError(
-          verificationError,
-          StackTrace.current,
-          reason:
-              'Email verification failed during registration: $verificationError',
+        FlutterBugfender.sendCrash(
+            "Email verification failed during registration: $verificationError",
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          "Email verification failed during registration: $verificationError",
         );
       }
 
@@ -93,10 +94,10 @@ class AuthRepo {
 
       return AuthResult(user: user);
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Registration failed: $e',
+      FlutterBugfender.sendCrash(
+          "Registration failed: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Registration failed: $e",
       );
 
       // Provide more specific error messages
@@ -129,20 +130,20 @@ class AuthRepo {
         await Workmanager().cancelByUniqueName('msbridge.periodic.all.id');
         await Workmanager().cancelByUniqueName('msbridge.oneoff.sync.id');
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to cancel background sync jobs: $e',
+        FlutterBugfender.sendCrash("Failed to cancel background sync jobs: $e",
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          "Failed to cancel background sync jobs: $e",
         );
       }
       await _auth.signOut();
       _authStateController.add(null);
       return null;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Logout failed: $e',
+      FlutterBugfender.sendCrash(
+          "Logout failed: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Logout failed: $e",
       );
       return "Logout failed: $e";
     }
@@ -156,10 +157,10 @@ class AuthRepo {
       }
       return AuthResult(error: "No user session found.");
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to get current user: $e',
+      FlutterBugfender.sendCrash(
+          "Failed to get current user: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to get current user: $e",
       );
       return AuthResult(error: "No user session found.");
     }
@@ -183,6 +184,11 @@ class AuthRepo {
       await _auth.sendPasswordResetEmail(email: email);
       return AuthResult(user: _auth.currentUser);
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Password reset failed: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Password reset failed: $e",
+      );
       return AuthResult(error: "Password reset failed: \$e");
     }
   }
@@ -203,10 +209,10 @@ class AuthRepo {
             error: "Email not verified. Please check your inbox.");
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Email verification check failed: $e',
+      FlutterBugfender.sendCrash(
+          "Email verification check failed: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Email verification check failed: $e",
       );
       return AuthResult(error: "Email verification check failed: $e");
     }
@@ -266,11 +272,12 @@ class AuthRepo {
 
         return AuthResult(user: user);
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to send verification email: $e',
+        FlutterBugfender.sendCrash("Failed to send verification email: $e",
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          "Failed to send verification email: $e",
         );
+
         // If Firebase blocks the request, don't record it as a successful attempt
         if (e.toString().contains('too-many-requests')) {
           return AuthResult(
@@ -283,10 +290,10 @@ class AuthRepo {
         rethrow; // Re-throw to be caught by outer catch block
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to send verification email: $e',
+      FlutterBugfender.sendCrash("Failed to send verification email: $e",
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to send verification email: $e",
       );
 
       // Provide more user-friendly error messages
@@ -323,10 +330,10 @@ class AuthRepo {
         return AuthResult(error: "No user logged in.");
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to get current user email: $e',
+      FlutterBugfender.sendCrash("Failed to get current user email: $e",
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to get current user email: $e",
       );
       return AuthResult(error: "Failed to get current user email: $e");
     }
@@ -406,10 +413,10 @@ class AuthRepo {
 
       return AuthResult(user: null); // success indicated by error == null
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to delete user and data: $e',
+      FlutterBugfender.sendCrash(
+          "Failed to delete user and data: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to delete user and data: $e",
       );
       return AuthResult(error: "Failed to delete user and data: $e");
     }
@@ -434,10 +441,10 @@ class AuthRepo {
         return AuthResult(user: user, error: 'User document not found.');
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to get user role: $e',
+      FlutterBugfender.sendCrash(
+          "Failed to get user role: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to get user role: $e",
       );
       return AuthResult(user: null, error: "Error getting user role: $e");
     }
@@ -451,10 +458,10 @@ class AuthRepo {
       }
       return AuthResult(user: user, error: user.uid);
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to get user ID: $e',
+      FlutterBugfender.sendCrash(
+          "Failed to get user ID: $e", StackTrace.current.toString());
+      FlutterBugfender.error(
+        "Failed to get user ID: $e",
       );
       return AuthResult(user: null, error: "Error getting user ID: $e");
     }

@@ -233,6 +233,8 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
       FlutterBugfender.log("PIN DISABLED due to fingerprint being enabled");
       _logEvent('pin_disabled_for_fingerprint');
     } catch (e) {
+      FlutterBugfender.sendCrash("Failed to disable PIN: ${e.toString()}",
+          StackTrace.current.toString());
       FlutterBugfender.error("Failed to disable PIN: ${e.toString()}");
     }
   }

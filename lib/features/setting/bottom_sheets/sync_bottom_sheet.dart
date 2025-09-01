@@ -1,6 +1,6 @@
 // features/setting/bottom_sheets/sync_bottom_sheet.dart
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
@@ -75,10 +75,11 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                         isSuccess: true,
                       );
                     }
-                  } catch (e, s) {
+                  } catch (e) {
                     // Roll back both provider and runtime services
-                    FirebaseCrashlytics.instance
-                        .recordError(e, s, reason: 'Toggle cloud sync failed');
+                    FlutterBugfender.sendCrash('Toggle cloud sync failed: $e',
+                        StackTrace.current.toString());
+                    FlutterBugfender.error('Toggle cloud sync failed: $e');
                     try {
                       await syncSettings.setCloudSyncEnabled(prevEnabled);
                       final userSettings = context.read<UserSettingsProvider>();
@@ -91,7 +92,12 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                         await AutoSyncScheduler.setIntervalMinutes(0);
                         await SyncService().stopListening();
                       }
-                    } catch (_) {}
+                    } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to update cloud sync: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error('Failed to update cloud sync: $e');
+                    }
 
                     if (mounted) {
                       CustomSnackBar.show(
@@ -242,6 +248,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to sync notes to cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to sync notes to cloud: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -269,6 +278,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to pull from cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to pull from cloud: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,

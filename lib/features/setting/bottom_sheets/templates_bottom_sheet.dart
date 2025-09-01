@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/template_settings_provider.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
@@ -94,7 +95,12 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                           isSuccess: true,
                         );
                       }
-                    } catch (_) {
+                    } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to sync templates to cloud: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error(
+                          'Failed to sync templates to cloud: $e');
                     } finally {
                       if (mounted) setState(() => _isSyncing = false);
                     }
@@ -134,7 +140,12 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                           isSuccess: count > 0,
                         );
                       }
-                    } catch (_) {
+                    } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to pull templates from cloud: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error(
+                          'Failed to pull templates from cloud: $e');
                     } finally {
                       if (mounted) setState(() => _isPulling = false);
                     }

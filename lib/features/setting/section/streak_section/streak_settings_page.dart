@@ -1,5 +1,6 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
@@ -205,8 +206,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                                 isSuccess: true,
                               );
                             }
-                            FirebaseCrashlytics.instance
-                                .log('Streak sync toggle ON and synced');
+                            FlutterBugfender.log(
+                                'Streak sync toggle ON and synced');
                           } else {
                             if (context.mounted) {
                               CustomSnackBar.show(
@@ -215,21 +216,21 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                                 isSuccess: true,
                               );
                             }
-                            FirebaseCrashlytics.instance
-                                .log('Streak sync toggle OFF');
+                            FlutterBugfender.log('Streak sync toggle OFF');
                           }
-                        } catch (e, st) {
+                        } catch (e) {
                           // Roll back pref on failure
                           try {
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setBool(
                                 StreakSyncService.streakCloudToggleKey, prev);
-                          } catch (_) {}
-                          FirebaseCrashlytics.instance.recordError(
-                            e,
-                            st,
-                            reason: 'Failed toggling streak cloud sync',
-                          );
+                          } catch (e) {
+                            FlutterBugfender.sendCrash(
+                                'Failed toggling streak cloud sync: $e',
+                                StackTrace.current.toString());
+                            FlutterBugfender.error(
+                                'Failed toggling streak cloud sync: $e');
+                          }
                           if (context.mounted) {
                             CustomSnackBar.show(
                               context,
@@ -264,12 +265,10 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                         isSuccess: true,
                       );
                     }
-                  } catch (e, st) {
-                    FirebaseCrashlytics.instance.recordError(
-                      e,
-                      st,
-                      reason: 'Refresh streak failed',
-                    );
+                  } catch (e) {
+                    FlutterBugfender.sendCrash('Refresh streak failed: $e',
+                        StackTrace.current.toString());
+                    FlutterBugfender.error('Refresh streak failed: $e');
                     if (context.mounted) {
                       CustomSnackBar.show(
                         context,
@@ -300,12 +299,10 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                       );
                     }
                     FirebaseCrashlytics.instance.log('Streak syncNow success');
-                  } catch (e, st) {
-                    FirebaseCrashlytics.instance.recordError(
-                      e,
-                      st,
-                      reason: 'Streak syncNow failed',
-                    );
+                  } catch (e) {
+                    FlutterBugfender.sendCrash('Streak syncNow failed: $e',
+                        StackTrace.current.toString());
+                    FlutterBugfender.error('Streak syncNow failed: $e');
                     if (context.mounted) {
                       CustomSnackBar.show(
                         context,
@@ -331,12 +328,10 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                       );
                     }
                     FirebaseCrashlytics.instance.log('Streak pull success');
-                  } catch (e, st) {
-                    FirebaseCrashlytics.instance.recordError(
-                      e,
-                      st,
-                      reason: 'Streak pull failed',
-                    );
+                  } catch (e) {
+                    FlutterBugfender.sendCrash('Streak pull failed: $e',
+                        StackTrace.current.toString());
+                    FlutterBugfender.error('Streak pull failed: $e');
                     if (context.mounted) {
                       CustomSnackBar.show(
                         context,

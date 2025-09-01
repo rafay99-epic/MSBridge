@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:msbridge/core/repo/contact_repo.dart';
 import 'package:msbridge/utils/img.dart';
@@ -26,6 +27,9 @@ class ContactPage extends StatelessWidget {
       nameController.clear();
       emailController.clear();
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Failed to send message: $e", StackTrace.current.toString());
+      FlutterBugfender.error("Failed to send message: $e");
       showDialog(
         context: context,
         builder: (context) => AlertDialog(

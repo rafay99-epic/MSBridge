@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
@@ -46,6 +46,10 @@ class StreakDisplayWidget extends StatelessWidget {
                           );
                         }
                       } catch (e) {
+                        FlutterBugfender.sendCrash(
+                            'Failed to refresh streak: $e',
+                            StackTrace.current.toString());
+                        FlutterBugfender.error('Failed to refresh streak: $e');
                         if (context.mounted) {
                           CustomSnackBar.show(
                             context,
@@ -299,11 +303,9 @@ class StreakDisplayWidget extends StatelessWidget {
                   );
                 }
               } catch (e) {
-                FirebaseCrashlytics.instance.recordError(
-                  e,
-                  StackTrace.current,
-                  reason: 'Failed to sync streak: $e',
-                );
+                FlutterBugfender.sendCrash(
+                    'Failed to sync streak: $e', StackTrace.current.toString());
+                FlutterBugfender.error('Failed to sync streak: $e');
                 if (context.mounted) {
                   CustomSnackBar.show(
                     context,

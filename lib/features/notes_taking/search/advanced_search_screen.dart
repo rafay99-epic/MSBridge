@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
@@ -138,10 +139,16 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
           });
         }
       }).catchError((error) {
+        FlutterBugfender.sendCrash(
+            'Error extracting tags: $error', StackTrace.current.toString());
+        FlutterBugfender.error('Error extracting tags: $error');
         // Fallback to main thread
         _extractTagsInMainThread();
       });
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error extracting tags: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error extracting tags: $e');
       // Fallback to main thread
       _extractTagsInMainThread();
     }
@@ -250,6 +257,9 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         _searchInTakingNotes();
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error performing search: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error performing search: $e');
       // Handle errors
       setState(() {
         _searchResults = [];
@@ -309,7 +319,11 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
               continue; // Skip this note if outside date range
             }
           } catch (e) {
+            FlutterBugfender.sendCrash(
+                'Error parsing date: $e', StackTrace.current.toString());
+            FlutterBugfender.error('Error parsing date: $e');
             // If date parsing fails, include the note anyway
+            continue;
           }
         }
 
@@ -333,6 +347,9 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         });
       }
     } catch (e) {
+      FlutterBugfender.sendCrash('Error searching in reading notes: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Error searching in reading notes: $e');
       if (mounted) {
         setState(() {
           _searchResults = [];
@@ -388,6 +405,9 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
         });
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error searching in taking notes: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error searching in taking notes: $e');
       if (mounted) {
         setState(() {
           _searchResults = [];
@@ -941,7 +961,10 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen>
       final date = DateTime.parse(note.pubDate);
       formattedDate = _formatDate(date);
     } catch (e) {
-      // Use default if parsing fails
+      FlutterBugfender.sendCrash(
+          'Error parsing date: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error parsing date: $e');
+      formattedDate = 'No date';
     }
 
     return GestureDetector(

@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
@@ -86,9 +86,11 @@ class ForgetPassword extends StatelessWidget {
                               isSuccess: true,
                             );
                           } else {
-                            FirebaseCrashlytics.instance.recordError(
-                                result.error, StackTrace.current,
-                                reason: "Password reset failed");
+                            FlutterBugfender.sendCrash(
+                                "Password reset failed: $result.error",
+                                StackTrace.current.toString());
+                            FlutterBugfender.error(
+                                "Password reset failed: $result.error");
                             CustomSnackBar.show(
                               context,
                               result.error ?? "Password reset failed.",
@@ -96,9 +98,10 @@ class ForgetPassword extends StatelessWidget {
                             );
                           }
                         } catch (e) {
-                          FirebaseCrashlytics.instance.recordError(
-                              e, StackTrace.current,
-                              reason: "Password reset failed");
+                          FlutterBugfender.sendCrash(
+                              "Password reset failed: $e",
+                              StackTrace.current.toString());
+                          FlutterBugfender.error("Password reset failed: $e");
                           CustomSnackBar.show(
                             context,
                             "Password reset failed.",

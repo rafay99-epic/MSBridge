@@ -275,6 +275,7 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
       _lastError = error;
       FlutterBugfender.error("PIN ERROR: $error");
     } catch (e) {
+      FlutterBugfender.sendCrash("Failed to set error: $error", e.toString());
       FlutterBugfender.error("Failed to set error: $error");
     }
   }

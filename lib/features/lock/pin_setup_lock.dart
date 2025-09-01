@@ -582,6 +582,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
         if (!mounted) return;
         FlutterBugfender.sendCrash(
             "Failed to update PIN. Please try again.", e.toString());
+        FlutterBugfender.error("Failed to update PIN. Please try again.");
         CustomSnackBar.show(
           context,
           'Failed to update PIN. Please try again.',

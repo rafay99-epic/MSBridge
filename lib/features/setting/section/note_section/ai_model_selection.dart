@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:msbridge/widgets/appbar.dart';
@@ -76,6 +77,9 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
         selectedModelName = selectedModel.name;
       });
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error loading selected model: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error loading selected model: $e');
       CustomSnackBar.show(context, "Error loading selected model: $e");
       setState(() {
         selectedModelName = AIModelsConfig.models.first.name;
@@ -95,6 +99,9 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
           AIModelsConfig.selectedModelKey, selectedModel.modelName);
       CustomSnackBar.show(context, "Selected model: ${selectedModel.name}");
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error saving selected model: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error saving selected model: $e');
       CustomSnackBar.show(context, "Error saving selected model: $e");
     }
   }

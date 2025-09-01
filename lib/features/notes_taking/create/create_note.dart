@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:line_icons/line_icons.dart';
@@ -109,9 +110,9 @@ class _CreateNoteState extends State<CreateNote>
             );
           }
         } catch (e) {
-          FirebaseCrashlytics.instance.recordError(
-              Exception("Error loading note"), StackTrace.current,
-              reason: "Error loading note: $e");
+          FlutterBugfender.sendCrash(
+              'Error loading note: $e', StackTrace.current.toString());
+          FlutterBugfender.error('Error loading note: $e');
           _controller = QuillController(
             document: Document()..insert(0, widget.note!.noteContent),
             selection: const TextSelection.collapsed(offset: 0),
@@ -135,9 +136,9 @@ class _CreateNoteState extends State<CreateNote>
         _titleController.text = widget.initialTemplate!.title;
         _tagsNotifier.value = List<String>.from(widget.initialTemplate!.tags);
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-            Exception("Error loading template"), StackTrace.current,
-            reason: "Error loading template: $e");
+        FlutterBugfender.sendCrash(
+            'Error loading template: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Error loading template: $e');
         _controller = QuillController.basic();
       }
     } else {
@@ -286,11 +287,9 @@ class _CreateNoteState extends State<CreateNote>
             selection: const TextSelection.collapsed(offset: 0));
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Failed to load Quill content'),
-        StackTrace.current,
-        reason: 'Failed to load Quill content: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to load Quill content: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to load Quill content: $e');
       _controller = QuillController(
           document: Document()..insert(0, noteContent),
           selection: const TextSelection.collapsed(offset: 0));
@@ -317,11 +316,9 @@ class _CreateNoteState extends State<CreateNote>
       try {
         content = await encodeContent(_controller.document.toDelta());
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          Exception('Failed to encode content'),
-          StackTrace.current,
-          reason: 'Failed to encode content: $e',
-        );
+        FlutterBugfender.sendCrash(
+            'Failed to encode content: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to encode content: $e');
         content = _controller.document.toPlainText().trim();
       }
       if (title.isEmpty && content.isEmpty) {
@@ -350,8 +347,10 @@ class _CreateNoteState extends State<CreateNote>
           try {
             await _updateStreakOnNoteCreation();
           } catch (e) {
-            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                reason: "Streak update failed on note creation: $e");
+            FlutterBugfender.sendCrash(
+                'Streak update failed on note creation: $e',
+                StackTrace.current.toString());
+            FlutterBugfender.error('Streak update failed on note creation: $e');
           }
         }
       }
@@ -373,14 +372,12 @@ class _CreateNoteState extends State<CreateNote>
         });
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to save note: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to save note: $e');
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
-        FirebaseCrashlytics.instance.recordError(
-          Exception('Failed to save note'),
-          StackTrace.current,
-          reason: 'Failed to save note: $e',
-        );
         CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
       }
     }
@@ -394,6 +391,9 @@ class _CreateNoteState extends State<CreateNote>
     try {
       content = await encodeContent(_controller.document.toDelta());
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to encode content: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to encode content: $e');
       content = _controller.document.toPlainText().trim();
     }
     SaveNoteResult result;
@@ -426,19 +426,19 @@ class _CreateNoteState extends State<CreateNote>
           try {
             await _updateStreakOnNoteCreation();
           } catch (e) {
-            FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                reason: "Streak update failed on note creation");
+            FlutterBugfender.sendCrash(
+                'Streak update failed on note creation: $e',
+                StackTrace.current.toString());
+            FlutterBugfender.error('Streak update failed on note creation: $e');
           }
 
           Navigator.pop(context);
         }
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        Exception('Failed to save note'),
-        StackTrace.current,
-        reason: 'Failed to save note: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to save note: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to save note: $e');
       CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }
@@ -468,8 +468,9 @@ class _CreateNoteState extends State<CreateNote>
     try {
       await StreakIntegrationService.onNoteCreated(context);
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: "Streak update failed on note creation");
+      FlutterBugfender.sendCrash('Streak update failed on note creation: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Streak update failed on note creation: $e');
     }
   }
 
@@ -502,9 +503,9 @@ class _CreateNoteState extends State<CreateNote>
         }
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-          Exception("Copy failed"), StackTrace.current,
-          reason: "Copy failed");
+      FlutterBugfender.sendCrash(
+          'Failed to copy text: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to copy text: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -557,6 +558,9 @@ class _CreateNoteState extends State<CreateNote>
         }
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to cut text: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to cut text: $e');
       FirebaseCrashlytics.instance.recordError(
           Exception("Cut failed"), StackTrace.current,
           reason: "Cut failed");
@@ -627,8 +631,9 @@ class _CreateNoteState extends State<CreateNote>
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance
-          .recordError(e, StackTrace.current, reason: "Paste failed");
+      FlutterBugfender.sendCrash(
+          'Failed to paste text: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to paste text: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1204,12 +1209,9 @@ class _CreateNoteState extends State<CreateNote>
               ChangeSource.local,
             );
           } catch (e) {
-            FirebaseCrashlytics.instance.recordError(
-              Exception('Failed to apply template'),
-              StackTrace.current,
-              reason: 'Failed to apply template: $e',
-            );
-            // Fallback to plain text insert
+            FlutterBugfender.sendCrash(
+                'Failed to apply template: $e', StackTrace.current.toString());
+            FlutterBugfender.error('Failed to apply template: $e');
             _controller.replaceText(
               selection.start,
               0,
@@ -1223,14 +1225,12 @@ class _CreateNoteState extends State<CreateNote>
       await _saveNote();
       if (mounted) CustomSnackBar.show(context, 'Template applied');
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to apply template: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to apply template: $e');
       if (mounted) {
         CustomSnackBar.show(context, 'Failed to apply template',
             isSuccess: false);
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to apply template',
-        );
       }
     }
   }
@@ -1340,11 +1340,11 @@ class _CreateNoteState extends State<CreateNote>
                                       }
                                     }
                                   } catch (e) {
-                                    FirebaseCrashlytics.instance.recordError(
-                                      e,
-                                      StackTrace.current,
-                                      reason: 'Failed to enable/disable share',
-                                    );
+                                    FlutterBugfender.sendCrash(
+                                        'Failed to enable/disable share: $e',
+                                        StackTrace.current.toString());
+                                    FlutterBugfender.error(
+                                        'Failed to enable/disable share: $e');
                                     if (mounted) {
                                       CustomSnackBar.show(context, e.toString(),
                                           isSuccess: false);

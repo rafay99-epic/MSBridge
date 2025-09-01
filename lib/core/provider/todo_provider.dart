@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/models/todo_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,11 @@ class TodoProvider with ChangeNotifier {
       _prefs = await SharedPreferences.getInstance();
       await _loadTasks();
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to initialize: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to initialize: $e',
+      );
       _errorMessage = "Failed to initialize: ${e.toString()}";
     } finally {
       _isLoading = false;
@@ -48,6 +54,11 @@ class TodoProvider with ChangeNotifier {
       await _saveTasks();
     } catch (e) {
       _errorMessage = "Failed to add task: ${e.toString()}";
+      FlutterBugfender.sendCrash(
+          'Failed to add task: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to add task: $e',
+      );
       throw Exception("Failed to add task: ${e.toString()}");
     } finally {
       notifyListeners();
@@ -78,6 +89,11 @@ class TodoProvider with ChangeNotifier {
       await _saveTasks();
     } catch (e) {
       _errorMessage = "Failed to toggle task: ${e.toString()}";
+      FlutterBugfender.sendCrash(
+          'Failed to toggle task: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to toggle task: $e',
+      );
       throw Exception("Failed to toggle task: ${e.toString()}");
     } finally {
       notifyListeners();
@@ -104,6 +120,11 @@ class TodoProvider with ChangeNotifier {
         throw Exception("Invalid index for tasks list");
       }
       _errorMessage = "Failed to remove task: ${e.toString()}";
+      FlutterBugfender.sendCrash(
+          'Failed to remove task: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to remove task: $e',
+      );
       throw Exception("Failed to remove task: ${e.toString()}");
     } finally {
       notifyListeners();
@@ -123,6 +144,11 @@ class TodoProvider with ChangeNotifier {
           .toList();
     } catch (e) {
       _errorMessage = "Failed to load tasks: ${e.toString()}";
+      FlutterBugfender.sendCrash(
+          'Failed to load tasks: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load tasks: $e',
+      );
     } finally {
       notifyListeners();
     }
@@ -139,6 +165,11 @@ class TodoProvider with ChangeNotifier {
       await _prefs.setStringList('completedTasks', completedTasksJson);
     } catch (e) {
       _errorMessage = "Failed to save tasks: ${e.toString()}";
+      FlutterBugfender.sendCrash(
+          'Failed to save tasks: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to save tasks: $e',
+      );
     } finally {
       notifyListeners();
     }

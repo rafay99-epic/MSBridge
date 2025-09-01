@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -226,6 +226,9 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to sync: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to sync: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -252,8 +255,9 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
             isSuccess: true);
       }
     } catch (e) {
-      FirebaseCrashlytics.instance
-          .recordError(e, StackTrace.current, reason: "Pull from cloud failed");
+      FlutterBugfender.sendCrash(
+          'Failed to pull from cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to pull from cloud: $e');
       if (mounted) {
         CustomSnackBar.show(context, "Pull from cloud failed: $e",
             isSuccess: false);

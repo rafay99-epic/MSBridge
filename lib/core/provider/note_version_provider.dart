@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
@@ -32,6 +33,11 @@ class NoteVersionProvider with ChangeNotifier {
     } catch (e) {
       _error = 'Failed to load versions: $e';
       _versions = [];
+      FlutterBugfender.sendCrash(
+          'Failed to load versions: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load versions: $e',
+      );
     } finally {
       _setLoading(false);
     }
@@ -63,6 +69,11 @@ class NoteVersionProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to create version: $e';
+      FlutterBugfender.sendCrash(
+          'Failed to create version: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to create version: $e',
+      );
       notifyListeners();
     }
   }
@@ -77,6 +88,11 @@ class NoteVersionProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to delete old versions: $e';
+      FlutterBugfender.sendCrash(
+          'Failed to delete old versions: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to delete old versions: $e',
+      );
       notifyListeners();
     }
   }
@@ -92,6 +108,11 @@ class NoteVersionProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to delete all versions: $e';
+      FlutterBugfender.sendCrash(
+          'Failed to delete all versions: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to delete all versions: $e',
+      );
       notifyListeners();
     }
   }
@@ -101,6 +122,11 @@ class NoteVersionProvider with ChangeNotifier {
       return await NoteVersionRepo.getVersionCount(noteId);
     } catch (e) {
       _error = 'Failed to get version count: $e';
+      FlutterBugfender.sendCrash(
+          'Failed to get version count: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to get version count: $e',
+      );
       notifyListeners();
       return 0;
     }
@@ -154,6 +180,11 @@ class NoteVersionProvider with ChangeNotifier {
       _currentNoteId = null;
     } catch (e) {
       _error = 'Error clearing all versions: $e';
+      FlutterBugfender.sendCrash(
+          'Error clearing all versions: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error clearing all versions: $e',
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -185,6 +216,11 @@ class NoteVersionProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Error restoring note: $e';
+      FlutterBugfender.sendCrash(
+          'Error restoring note: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error restoring note: $e',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -203,6 +239,11 @@ class NoteVersionProvider with ChangeNotifier {
       return await NoteVersionRepo.getVersionCount(noteId);
     } catch (e) {
       _error = 'Error getting version count: $e';
+      FlutterBugfender.sendCrash(
+          'Error getting version count: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error getting version count: $e',
+      );
       return 0;
     }
   }
@@ -229,6 +270,11 @@ class NoteVersionProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'Error cleaning up versions: $e';
+      FlutterBugfender.sendCrash(
+          'Error cleaning up versions: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error cleaning up versions: $e',
+      );
       return false;
     } finally {
       _isLoading = false;
@@ -242,6 +288,11 @@ class NoteVersionProvider with ChangeNotifier {
       return await NoteVersionRepo.getTotalVersionCount();
     } catch (e) {
       _error = 'Error getting total version count: $e';
+      FlutterBugfender.sendCrash(
+          'Error getting total version count: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error getting total version count: $e',
+      );
       return 0;
     }
   }
@@ -252,6 +303,11 @@ class NoteVersionProvider with ChangeNotifier {
       return await NoteVersionRepo.getStorageInfo();
     } catch (e) {
       _error = 'Error getting storage info: $e';
+      FlutterBugfender.sendCrash(
+          'Error getting storage info: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error getting storage info: $e',
+      );
       return {};
     }
   }
@@ -263,6 +319,11 @@ class NoteVersionProvider with ChangeNotifier {
       return await versionSyncService.getVersionSyncStatus();
     } catch (e) {
       _error = 'Error getting sync status: $e';
+      FlutterBugfender.sendCrash(
+          'Error getting sync status: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error getting sync status: $e',
+      );
       return {
         'enabled': false,
         'message': 'Error: $e',

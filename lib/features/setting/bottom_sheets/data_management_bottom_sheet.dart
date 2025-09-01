@@ -1,5 +1,6 @@
 // features/setting/bottom_sheets/data_management_bottom_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/services/backup/backup_service.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
@@ -67,6 +68,9 @@ class DataManagementBottomSheet extends StatelessWidget {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to export backup: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to export backup: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -88,6 +92,9 @@ class DataManagementBottomSheet extends StatelessWidget {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to import backup: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to import backup: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,

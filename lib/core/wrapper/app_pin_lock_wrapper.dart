@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/features/lock/startup_pin_lock_screen.dart';
@@ -104,6 +105,9 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
           Provider.of<AppPinLockProvider>(context, listen: false);
       pinProvider.removeListener(_onPinProviderChanged);
     } catch (e) {
+      FlutterBugfender.sendCrash("Error removing pin provider listener: $e",
+          StackTrace.current.toString());
+      FlutterBugfender.error("Error removing pin provider listener: $e");
       // Provider might not be available during dispose
     }
 

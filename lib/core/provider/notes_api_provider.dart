@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import '../database/note_reading/notes_model.dart';
 import 'package:hive/hive.dart';
@@ -22,6 +23,11 @@ class LectureNotesProvider with ChangeNotifier {
       var box = Hive.box<MSNote>('notesBox');
       _notes = box.values.toList();
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to fetch notes: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to fetch notes: $e',
+      );
       if (e is ApiException) {
         _errorMessage = e.message;
       } else {

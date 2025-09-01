@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:pinput/pinput.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
@@ -177,6 +178,9 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
         }
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Error verifying PIN: $e", StackTrace.current.toString());
+      FlutterBugfender.error("Error verifying PIN: $e");
       if (mounted) {
         setState(() {
           _errorMessage = 'Error verifying PIN. Please try again.';

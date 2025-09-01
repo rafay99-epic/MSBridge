@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/section/app_info/app_info_page.dart';
@@ -100,11 +100,10 @@ class NavigationMethods {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to sync notes: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to sync notes: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to sync notes: $e');
+
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -143,11 +142,9 @@ class NavigationMethods {
         }
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Failed to pull from cloud: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to pull from cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to pull from cloud: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -172,11 +169,9 @@ class NavigationMethods {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Backup failed: $e',
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to export backup: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to export backup: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -222,11 +217,9 @@ class NavigationMethods {
           Navigator.of(context).pushReplacementNamed('/login');
         }
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to delete account: $e',
-        );
+        FlutterBugfender.sendCrash(
+            'Failed to delete account: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to delete account: $e');
         if (context.mounted) {
           CustomSnackBar.show(
             context,
@@ -273,11 +266,9 @@ class NavigationMethods {
           );
         }
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to reset theme: $e',
-        );
+        FlutterBugfender.sendCrash(
+            'Failed to reset theme: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to reset theme: $e');
         if (context.mounted) {
           CustomSnackBar.show(
             context,

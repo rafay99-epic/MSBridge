@@ -1,54 +1,48 @@
 {
-  "project_info": {
-    "project_number": "689509093484",
-    "project_id": "msbridge-9a2c7",
-    "storage_bucket": "msbridge-9a2c7.firebasestorage.app"
-  },
-  "client": [
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:689509093484:android:56039ff98006d7766ac849",
-        "android_client_info": {
-          "package_name": "com.syntaxlab.msbridge"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "689509093484-ss40kd7sgg8snf2rotb0e02g6dq6vts5.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.syntaxlab.msbridge",
-            "certificate_hash": "e740ace4e5ced5dbc65c621aff2242feea552c9c"
-          }
+    "project_info": {
+        "project_number": "",
+        "project_id": "",
+        "storage_bucket": ""
+    },
+    "client": [{
+        "client_info": {
+            "mobilesdk_app_id": "",
+            "android_client_info": {
+                "package_name": ""
+            }
         },
-        {
-          "client_id": "689509093484-2r12odi82ihuqeif3dmhhultl0ir0o4d.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCs14O9rfNaFgPBlN1Z3_2coBpLdY_UI9w"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "689509093484-2r12odi82ihuqeif3dmhhultl0ir0o4d.apps.googleusercontent.com",
-              "client_type": 3
+        "oauth_client": [{
+                "client_id": "  ",
+                "client_type": 1,
+                "android_info": {
+                    "package_name": "",
+                    "certificate_hash": ""
+                }
             },
             {
-              "client_id": "689509093484-gbh7npqe7t7vt5lt67a3cvi4tcafmu91.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.syntaxlab.msbridge"
-              }
+                "client_id": "",
+                "client_type": 3
             }
-          ]
+        ],
+        "api_key": [{
+            "current_key": ""
+        }],
+        "services": {
+            "appinvite_service": {
+                "other_platform_oauth_client": [{
+                        "client_id": "",
+                        "client_type": 3
+                    },
+                    {
+                        "client_id": "",
+                        "client_type": 2,
+                        "ios_info": {
+                            "bundle_id": ""
+                        }
+                    }
+                ]
+            }
         }
-      }
-    }
-  ],
-  "configuration_version": "1"
+    }],
+    "configuration_version": "1"
 }
