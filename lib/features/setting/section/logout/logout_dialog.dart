@@ -1,13 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
-import 'package:msbridge/features/auth/login/login.dart';
+import 'package:msbridge/features/splash/splash_screen.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:line_icons/line_icons.dart';
 
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+/// Fast parallel clearing of all Hive boxes
+Future<void> _clearAllHiveBoxesFast() async {
+  // Define all known box names
+  const List<String> boxNames = [
+    'notesBox',
+    'notes',
+    'deleted_notes',
+    'note_versions',
+    'chat_history',
+    'note_templates',
+  ];
+
+  final List<Future<void>> clearFutures = boxNames.map((boxName) async {
+    try {
+      if (Hive.isBoxOpen(boxName)) {
+        final box = Hive.box(boxName);
+        await box.clear();
+        await box.close();
+      }
+      await Hive.deleteBoxFromDisk(boxName);
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Failed to clear box '$boxName': $e", StackTrace.current.toString());
+    }
+  }).toList();
+
+  // Execute all clearing operations in parallel
+  await Future.wait(clearFutures);
+}
+
+/// Clear all secure storage data
+Future<void> _clearAllSecureStorage() async {
+  try {
+    const storage = FlutterSecureStorage();
+    await storage.deleteAll();
+  } catch (e) {
+    FlutterBugfender.sendCrash(
+        "Failed to clear secure storage: $e", StackTrace.current.toString());
+  }
+}
 
 void showLogoutDialog(BuildContext context) {
   final theme = Theme.of(context);
@@ -273,34 +315,27 @@ void handleLogout(BuildContext context) async {
   Navigator.pop(context);
 
   if (error == null) {
-    // Clear local Hive data for multi-account safety
     try {
-      try {
-        final noteBox = await HiveNoteTakingRepo.getBox();
-        await noteBox.clear();
-      } catch (_) {}
-      try {
-        final deletedBox = await HiveNoteTakingRepo.getDeletedBox();
-        await deletedBox.clear();
-      } catch (_) {}
-      try {
-        if (Hive.isBoxOpen('notesBox')) {
-          await Hive.box('notesBox').clear();
-        }
-      } catch (_) {}
-    } catch (_) {}
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    Navigator.pushAndRemoveUntil(
-      context,
-      PageTransition(
-        type: PageTransitionType.leftToRight,
-        child: const LoginScreen(),
-      ),
-      (route) => false,
-    );
+      await _clearAllHiveBoxesFast();
+      await _clearAllSecureStorage();
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      Navigator.pushAndRemoveUntil(
+        context,
+        PageTransition(
+          type: PageTransitionType.leftToRight,
+          duration: const Duration(milliseconds: 300),
+          child: const SplashScreen(),
+        ),
+        (route) => false,
+      );
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Failed to clear data: $e", StackTrace.current.toString());
+    }
   } else {
     CustomSnackBar.show(context, "Logout Failed: $error");
+    FlutterBugfender.sendCrash(
+        "Logout Failed: $error", StackTrace.current.toString());
   }
 }

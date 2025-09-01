@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
-import 'package:msbridge/core/auth/startup_pin_lock_screen.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
+import 'package:msbridge/features/lock/startup_pin_lock_screen.dart';
 
 class AppPinLockWrapper extends StatefulWidget {
   final Widget child;

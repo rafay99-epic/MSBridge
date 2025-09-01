@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
-import 'package:msbridge/features/setting/section/user_section/pin_lock_screen.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
+import 'package:msbridge/features/lock/pin_setup_lock.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 
@@ -89,34 +89,37 @@ class PinSettingsBottomSheet extends StatelessWidget {
                       return FutureBuilder<bool>(
                         future: pinProvider.hasPin(),
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
                           }
                           final hasPin = snapshot.data ?? false;
                           return Column(
                             children: [
                               // PIN Lock Toggle
-_buildSettingsTile(
-  context,
-  "PIN Lock",
-  "Secure your app with a PIN code",
-  LineIcons.lock,
-  Switch(
-    value: pinProvider.enabled,
-    onChanged: (value) {
-      if (value) {
-        if (hasPin) {
-          pinProvider.setEnabled(true);
-        } else {
-          _showCreatePinDialog(context);
-        }
-      } else {
-        _showDisablePinDialog(context, pinProvider);
-      }
-    },
-    activeColor: colorScheme.primary,
-  ),
-),
+                              _buildSettingsTile(
+                                context,
+                                "PIN Lock",
+                                "Secure your app with a PIN code",
+                                LineIcons.lock,
+                                Switch(
+                                  value: pinProvider.enabled,
+                                  onChanged: (value) {
+                                    if (value) {
+                                      if (hasPin) {
+                                        pinProvider.setEnabled(true);
+                                      } else {
+                                        _showCreatePinDialog(context);
+                                      }
+                                    } else {
+                                      _showDisablePinDialog(
+                                          context, pinProvider);
+                                    }
+                                  },
+                                  activeColor: colorScheme.primary,
+                                ),
+                              ),
 
                               const SizedBox(height: 16),
 
@@ -180,7 +183,8 @@ _buildSettingsTile(
                                         pinProvider.enabled
                                             ? "PIN Lock is enabled"
                                             : "PIN Lock is disabled",
-                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
                                           color: pinProvider.enabled
                                               ? colorScheme.primary
                                               : colorScheme.outline,

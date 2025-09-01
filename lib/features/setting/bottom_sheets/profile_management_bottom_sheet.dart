@@ -5,7 +5,7 @@ import 'package:msbridge/features/changePassword/change_password.dart';
 import 'package:msbridge/features/profile/profile_edit_page.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
-import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileManagementBottomSheet extends StatelessWidget {

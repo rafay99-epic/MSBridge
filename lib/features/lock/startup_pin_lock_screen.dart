@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 
 class StartupPinLockScreen extends StatefulWidget {
   final Function() onPinCorrect;

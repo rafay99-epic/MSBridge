@@ -14,7 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/setting/bottom_sheets/bottom_sheet_manager.dart';
-import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 
 class NavigationMethods {
   static void navigateToProfile(BuildContext context) {

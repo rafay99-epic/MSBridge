@@ -18,18 +18,17 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
-  PageController? _pageController;
 
-  final List<Widget?> _pages = List.filled(5, null);
-  final List<bool> _pagesLoaded = List.filled(5, false);
+  final List<Widget> _pages = [
+    const Msnotes(),
+    const ChatAssistantPage(),
+    const Notetaking(),
+    const Setting(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _selectedIndex);
-
-    _pagesLoaded[0] = true;
-    _pages[0] = const Msnotes();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDeletionSync();
@@ -43,68 +42,19 @@ class _HomeState extends State<Home> {
         await DeletionSyncHelper.initializeForUser(user.uid);
       }
     } catch (e) {
-      FlutterBugfender.log('Error initializing deletion sync: $e');
+      FlutterBugfender.error('Error initializing deletion sync: $e');
     }
   }
 
   @override
   void dispose() {
-    _pageController?.dispose();
     super.dispose();
   }
 
-  Widget _getPage(int index) {
-    // Return cached page if already loaded
-    if (_pagesLoaded[index] && _pages[index] != null) {
-      return _pages[index]!;
-    }
-
-    // Load page on demand
-    Widget page;
-    switch (index) {
-      case 0:
-        page = const Msnotes();
-        break;
-      case 1:
-        page = const ChatAssistantPage();
-        break;
-      case 2:
-        page = const Notetaking();
-        break;
-      case 3:
-        page = const Setting();
-        break;
-      default:
-        page = const Msnotes();
-    }
-
-    // Cache the page instance
-    _pages[index] = page;
-    _pagesLoaded[index] = true;
-
-    return page;
-  }
-
   void _onItemTapped(int index) {
-    final controller = _pageController;
-    if (controller == null) return;
-
-    final pageDelta = (index - _selectedIndex).abs();
-    if (pageDelta > 1) {
-      controller.jumpToPage(index);
-      return;
-    }
-
-    // Optimized animation for better performance
-    controller.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _onPageChanged(int index) {
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -120,16 +70,35 @@ class _HomeState extends State<Home> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const ClampingScrollPhysics(),
-        allowImplicitScrolling: false,
-        children: List.generate(
-          5,
-          (index) => RepaintBoundary(
-            child: _getPage(index),
-          ),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == 0) return;
+          if (details.primaryVelocity! > 0) {
+            if (_selectedIndex > 0) {
+              setState(() {
+                _selectedIndex--;
+              });
+            }
+          } else {
+            if (_selectedIndex < _pages.length - 1) {
+              setState(() {
+                _selectedIndex++;
+              });
+            }
+          }
+        },
+        child: Stack(
+          children: _pages.asMap().entries.map((entry) {
+            final index = entry.key;
+            final page = entry.value;
+            return Offstage(
+              offstage: _selectedIndex != index,
+              child: TickerMode(
+                enabled: _selectedIndex == index,
+                child: page,
+              ),
+            );
+          }).toList(),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -146,6 +115,7 @@ class _HomeState extends State<Home> {
           duration: const Duration(milliseconds: 200),
           iconSize: iconSz,
           tabBorderRadius: 12,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           textStyle: theme.textTheme.labelMedium?.copyWith(
             fontSize: labelSz,
             color: colorScheme.onSurface,

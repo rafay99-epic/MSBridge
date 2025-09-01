@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/provider/fingerprint_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'dart:async';
 import 'package:msbridge/core/repo/auth_repo.dart';
-import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:provider/provider.dart';
