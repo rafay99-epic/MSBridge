@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/wrapper/finger_print_wrapper.dart';
 import 'package:msbridge/features/lock/verify_pin/startup_pin_lock_screen.dart';
@@ -39,6 +40,13 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _fadeController.dispose();
+    try {
+      Provider.of<AppPinLockProvider>(context, listen: false)
+          .removeListener(_onPinProviderChanged);
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to remove listener: $e', StackTrace.current.toString());
+    }
     super.dispose();
   }
 
