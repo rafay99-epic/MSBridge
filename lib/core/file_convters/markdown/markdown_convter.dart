@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,6 +40,11 @@ class MarkdownExporter {
 
       CustomSnackBar.show(context, "Markdown saved to ${file.path}");
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error creating Markdown: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error creating Markdown: $e',
+      );
       CustomSnackBar.show(context, "Error creating Markdown: $e");
     }
   }

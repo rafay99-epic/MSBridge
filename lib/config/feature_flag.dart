@@ -1,6 +1,6 @@
 class FeatureFlag {
   // Enable Fingerprint lock
-  static const bool enableFingerprintLock = false;
+  static const bool enableFingerprintLock = true;
   // enable Autosave feature
   static const bool enableAutoSave = true;
   // enable Sync Layer to firebase

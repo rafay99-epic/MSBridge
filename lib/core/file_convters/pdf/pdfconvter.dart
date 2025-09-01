@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,7 +14,7 @@ class PdfExporter {
       CustomSnackBar.show(context, "Title is empty.");
       return;
     }
-    
+
     final content = controller.document.toPlainText().trim();
     if (content.isEmpty) {
       CustomSnackBar.show(context, "Content is empty.");
@@ -61,6 +62,11 @@ class PdfExporter {
 
       CustomSnackBar.show(context, "PDF saved to ${file.path}");
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error creating PDF: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error creating PDF: $e',
+      );
       CustomSnackBar.show(context, "Error creating PDF: $e");
     }
   }

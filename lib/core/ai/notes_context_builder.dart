@@ -66,6 +66,9 @@ class NotesContextBuilder {
           'Added ${(root['personal'] as List).length} personal notes to context. Remaining budget: $budget characters',
         );
       } catch (e) {
+        await FlutterBugfender.sendCrash(
+            'Failed to load personal notes for AI context: $e',
+            StackTrace.current.toString());
         await FlutterBugfender.error(
           'Failed to load personal notes for AI context: $e',
         );
@@ -111,6 +114,9 @@ class NotesContextBuilder {
           'Added ${(root['msNotes'] as List).length} MS notes to context. Remaining budget: $budget characters',
         );
       } catch (e) {
+        await FlutterBugfender.sendCrash(
+            'Failed to load MS notes for AI context: $e',
+            StackTrace.current.toString());
         await FlutterBugfender.error(
           'Failed to load MS notes for AI context: $e',
         );
@@ -141,6 +147,8 @@ class NotesContextBuilder {
             .join('');
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to parse Quill delta: $e', StackTrace.current.toString());
       FlutterBugfender.error(
         'Failed to parse Quill delta: $e',
       );

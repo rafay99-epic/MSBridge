@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 
 class NoteTakingModel {
   String? noteId;
@@ -38,6 +39,11 @@ class NoteTakingModel {
     try {
       parsedDate = DateTime.parse(data['updatedAt'] ?? '');
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error parsing updatedAt: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error parsing updatedAt: $e',
+      );
       parsedDate = DateTime.now();
     }
     return NoteTakingModel(

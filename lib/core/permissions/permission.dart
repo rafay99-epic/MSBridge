@@ -29,6 +29,8 @@ class PermissionHandler {
       return true;
     } catch (e) {
       FlutterBugfender.error("Error checking permissions: $e");
+      FlutterBugfender.sendCrash(
+          'Error checking permissions: $e', StackTrace.current.toString());
       CustomSnackBar.show(context, "Error checking permissions: $e",
           isSuccess: false);
       return false;
@@ -83,6 +85,11 @@ class PermissionHandler {
         }
       }
     } catch (e) {
+      FlutterBugfender.sendCrash('Error requesting Android permissions: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error requesting Android permissions: $e',
+      );
       CustomSnackBar.show(context, "Error requesting Android permissions: $e",
           isSuccess: false);
       return false;
@@ -117,6 +124,11 @@ class PermissionHandler {
       // This ensures we request the less restrictive STORAGE permission
       return false;
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error checking Android version: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error checking Android version: $e',
+      );
       // If we can't determine SDK version, assume older Android for safety
       return false;
     }

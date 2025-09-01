@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/pin_repo.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
   final PinRepository _repository;
@@ -150,6 +151,9 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
           _lastEnabledTime = DateTime.now();
           FlutterBugfender.log(
               "PIN ENABLED at ${_lastEnabledTime!.toIso8601String()}");
+
+          // Disable fingerprint when PIN is enabled
+          await _disableFingerprintIfEnabled();
         } else if (_lastEnabledTime != null) {
           final duration = DateTime.now().difference(_lastEnabledTime!);
           FlutterBugfender.log(
@@ -378,6 +382,22 @@ class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (e) {
       _logError('Failed to set Crashlytics properties', e.toString());
+    }
+  }
+
+  Future<void> _disableFingerprintIfEnabled() async {
+    try {
+      // Import SharedPreferences to disable fingerprint
+      final prefs = await SharedPreferences.getInstance();
+      final fingerprintEnabled = prefs.getBool('fingerprintEnabled') ?? false;
+
+      if (fingerprintEnabled) {
+        await prefs.setBool('fingerprintEnabled', false);
+        FlutterBugfender.log("FINGERPRINT DISABLED due to PIN being enabled");
+        _logEvent('fingerprint_disabled_for_pin');
+      }
+    } catch (e) {
+      FlutterBugfender.error("Failed to disable fingerprint: ${e.toString()}");
     }
   }
 }

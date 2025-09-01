@@ -1,3 +1,4 @@
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:http/http.dart' as http;
 import 'package:msbridge/config/config.dart';
 import 'dart:convert';
@@ -22,6 +23,12 @@ class ApiService {
       try {
         uri = Uri.parse(apiUrl);
       } catch (e) {
+        FlutterBugfender.sendCrash(
+            'MSNotes: Invalid URL format: $apiUrl.  Error: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: Invalid URL format: $apiUrl.  Error: $e',
+        );
         throw ApiException('Invalid URL format: $apiUrl.  Error: $e');
       }
 
@@ -29,12 +36,30 @@ class ApiService {
       try {
         response = await http.get(uri);
       } on SocketException catch (e) {
+        FlutterBugfender.sendCrash(
+            'MSNotes: Failed to connect to the server. Please check your internet connection. Error: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: Failed to connect to the server. Please check your internet connection. Error: $e',
+        );
         throw ApiException(
             'Failed to connect to the server. Please check your internet connection. Error: $e');
       } on HttpException catch (e) {
+        FlutterBugfender.sendCrash(
+            'MSNotes: HTTP error occurred while connecting to the server. Error: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: HTTP error occurred while connecting to the server. Error: $e',
+        );
         throw ApiException(
             'HTTP error occurred while connecting to the server. Error: $e');
       } catch (e) {
+        FlutterBugfender.sendCrash(
+            'MSNotes: An unexpected error occurred while connecting to the server. Error: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: An unexpected error occurred while connecting to the server. Error: $e',
+        );
         throw ApiException(
             'An unexpected error occurred while connecting to the server. Error: $e');
       }
@@ -48,6 +73,11 @@ class ApiService {
           try {
             await box.clear();
           } catch (e) {
+            FlutterBugfender.sendCrash('MSNotes: Error clearing Hive box: $e',
+                StackTrace.current.toString());
+            FlutterBugfender.error(
+              'MSNotes: Error clearing Hive box: $e',
+            );
             throw ApiException('Error clearing Hive box: $e');
           }
         }
@@ -70,18 +100,40 @@ class ApiService {
           try {
             await box.put(note.id, note);
           } catch (e) {
+            FlutterBugfender.sendCrash(
+                'MSNotes: Error putting note with ID ${note.id} into Hive box: $e',
+                StackTrace.current.toString());
+            FlutterBugfender.error(
+              'MSNotes: Error putting note with ID ${note.id} into Hive box: $e',
+            );
             throw ApiException(
                 'Error putting note with ID ${note.id} into Hive box: $e');
           }
         }
       } else {
+        FlutterBugfender.sendCrash(
+            'MSNotes: Failed to fetch data: Status ${response.statusCode}',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: Failed to fetch data: Status ${response.statusCode}',
+        );
         throw ApiException(
             'Failed to fetch data: Status ${response.statusCode}');
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'MSNotes: Unexpected error: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'MSNotes: Unexpected error: $e',
+      );
       if (e is ApiException) {
         rethrow;
       } else {
+        FlutterBugfender.sendCrash('MSNotes: Unexpected error: ${e.toString()}',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'MSNotes: Unexpected error: ${e.toString()}',
+        );
         throw ApiException('Unexpected Error: ${e.toString()}');
       }
     }
