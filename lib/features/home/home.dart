@@ -16,8 +16,10 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   final List<Widget> _pages = [
     const Msnotes(),
@@ -29,6 +31,23 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize fade animation controller
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Start with the first page visible
+    _fadeController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDeletionSync();
@@ -50,13 +69,21 @@ class _HomeState extends State<Home> {
 
   @override
   void dispose() {
+    _fadeController.dispose();
     super.dispose();
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index != _selectedIndex) {
+      // Start fade out animation
+      _fadeController.reverse().then((_) {
+        setState(() {
+          _selectedIndex = index;
+        });
+        // Start fade in animation
+        _fadeController.forward();
+      });
+    }
   }
 
   @override
@@ -75,32 +102,38 @@ class _HomeState extends State<Home> {
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity == 0) return;
+          int newIndex = _selectedIndex;
+
           if (details.primaryVelocity! > 0) {
+            // Swipe right - go to previous page
             if (_selectedIndex > 0) {
-              setState(() {
-                _selectedIndex--;
-              });
+              newIndex = _selectedIndex - 1;
             }
           } else {
+            // Swipe left - go to next page
             if (_selectedIndex < _pages.length - 1) {
-              setState(() {
-                _selectedIndex++;
-              });
+              newIndex = _selectedIndex + 1;
             }
           }
+
+          // Only animate if we're actually changing pages
+          if (newIndex != _selectedIndex) {
+            _fadeController.reverse().then((_) {
+              setState(() {
+                _selectedIndex = newIndex;
+              });
+              _fadeController.forward();
+            });
+          }
         },
-        child: Stack(
-          children: _pages.asMap().entries.map((entry) {
-            final index = entry.key;
-            final page = entry.value;
-            return Offstage(
-              offstage: _selectedIndex != index,
-              child: TickerMode(
-                enabled: _selectedIndex == index,
-                child: page,
-              ),
+        child: AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: _pages[_selectedIndex],
             );
-          }).toList(),
+          },
         ),
       ),
       bottomNavigationBar: Padding(
