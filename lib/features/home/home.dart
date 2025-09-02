@@ -73,16 +73,37 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
-    if (index != _selectedIndex) {
-      // Start fade out animation
-      _fadeController.reverse().then((_) {
-        setState(() {
-          _selectedIndex = index;
-        });
-        // Start fade in animation
-        _fadeController.forward();
-      });
+  // void _onItemTapped(int index) {
+  //   if (index != _selectedIndex) {
+  //     // Start fade out animation
+  //     _fadeController.reverse().then((_) {
+  //       setState(() {
+  //         _selectedIndex = index;
+  //       });
+  //       // Start fade in animation
+  //       _fadeController.forward();
+  //     });
+  //   }
+  // }
+
+  bool _isTransitioning = false;
+
+  Future<void> _onItemTapped(int index) async {
+    if (index == _selectedIndex ||
+        _isTransitioning ||
+        _fadeController.isAnimating) {
+      return;
+    }
+    _isTransitioning = true;
+    try {
+      await _fadeController.reverse();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _selectedIndex = index);
+      await _fadeController.forward();
+    } finally {
+      _isTransitioning = false;
     }
   }
 
@@ -101,7 +122,9 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
-          if (details.primaryVelocity == 0) return;
+          if (details.primaryVelocity == 0) {
+            return;
+          }
           int newIndex = _selectedIndex;
 
           if (details.primaryVelocity! > 0) {

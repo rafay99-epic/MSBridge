@@ -41,21 +41,24 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await FlutterBugfender.init(BugfenderConfig.apiKey,
+      enableCrashReporting: false,
+      enableUIEventLogging: true,
+      enableAndroidLogcatLogging: true);
+
   try {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-  } catch (e) {
+  } catch (e, s) {
     FlutterBugfender.sendCrash('Failed to set preferred orientations: $e',
         StackTrace.current.toString());
+    FlutterBugfender.error('Failed to set preferred orientations: $e');
+    FlutterBugfender.log('stack: $s');
   }
 
   try {
-    await FlutterBugfender.init(BugfenderConfig.apiKey,
-        enableCrashReporting: false,
-        enableUIEventLogging: true,
-        enableAndroidLogcatLogging: true);
-
     try {
       await Firebase.initializeApp();
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:msbridge/features/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/section/app_info/app_info_page.dart';
@@ -214,7 +215,14 @@ class NavigationMethods {
             'Account deleted successfully. We are sorry to see you go.',
             isSuccess: true,
           );
-          Navigator.of(context).pushReplacementNamed('/login');
+          Navigator.of(context).pushAndRemoveUntil(
+            PageTransition(
+              type: PageTransitionType.rightToLeft,
+              child: const SplashScreen(), // replace with your login widget
+              duration: const Duration(milliseconds: 300),
+            ),
+            (route) => false,
+          );
         }
       } catch (e) {
         FlutterBugfender.sendCrash(

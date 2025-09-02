@@ -58,12 +58,11 @@ class StreakProvider extends ChangeNotifier {
       }
 
       _isInitialized = true;
-    } catch (e) {
-      FlutterBugfender.sendCrash('Failed to initialize streak provider: $e',
-          StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Failed to initialize streak provider: $e',
-      );
+    } catch (e, s) {
+      FlutterBugfender.error('Failed to initialize streak provider: $e');
+      FlutterBugfender.log('stack: $s');
+      FlutterBugfender.sendCrash(
+          'Failed to initialize streak provider: $e', s.toString());
     } finally {
       _setLoading(false);
     }
