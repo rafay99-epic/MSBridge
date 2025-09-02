@@ -29,10 +29,12 @@ Future<void> _clearAllHiveBoxesFast() async {
         await box.clear();
         await box.close();
       }
-      await Hive.deleteBoxFromDisk(boxName);
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          "Failed to clear box '$boxName': $e", StackTrace.current.toString());
+      if (await Hive.boxExists(boxName)) {
+        await Hive.deleteBoxFromDisk(boxName);
+      }
+    } catch (e, st) {
+      FlutterBugfender.error("Failed to clear box '$boxName': $e");
+      FlutterBugfender.sendCrash("Hive cleanup error: $e", st.toString());
     }
   }).toList();
 
