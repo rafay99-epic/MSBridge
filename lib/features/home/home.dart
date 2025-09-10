@@ -119,7 +119,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final double labelSz = isCompact ? 12 : 13;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity == 0) {

@@ -471,7 +471,9 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      // Let the chat page resize so the input stays above the keyboard,
+      // without moving the global bottom nav (handled by Home)
+      resizeToAvoidBottomInset: true,
       backgroundColor: colorScheme.surface,
       appBar: CustomAppBar(
         title: "Ask AI",
