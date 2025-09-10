@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/widgets/build_modern_settings_tile.dart';
@@ -202,10 +202,12 @@ class _NotesSettingState extends State<NotesSetting> {
                             isSuccess: true);
                       }
                     } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to sync notes to cloud: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error(
+                          'Failed to sync notes to cloud: $e');
                       if (mounted) {
-                        FirebaseCrashlytics.instance.recordError(
-                            e, StackTrace.current,
-                            reason: "Failed to sync notes to cloud");
                         CustomSnackBar.show(context, 'Sync failed: $e',
                             isSuccess: false);
                       }
@@ -235,10 +237,12 @@ class _NotesSettingState extends State<NotesSetting> {
                             isSuccess: true);
                       }
                     } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to download notes from cloud: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error(
+                          'Failed to download notes from cloud: $e');
                       if (mounted) {
-                        FirebaseCrashlytics.instance.recordError(
-                            e, StackTrace.current,
-                            reason: "Failed to download notes from cloud");
                         CustomSnackBar.show(context, 'Download failed: $e',
                             isSuccess: false);
                       }
@@ -364,6 +368,9 @@ class _NotesSettingState extends State<NotesSetting> {
                     isSuccess: true);
               }
             } catch (e) {
+              FlutterBugfender.sendCrash(
+                  'Backup failed: $e', StackTrace.current.toString());
+              FlutterBugfender.error('Backup failed: $e');
               if (mounted) {
                 CustomSnackBar.show(context, 'Backup failed: $e');
               }

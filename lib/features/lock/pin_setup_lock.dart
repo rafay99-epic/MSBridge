@@ -3,7 +3,7 @@ import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:pinput/pinput.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 
 class PinLockScreen extends StatefulWidget {
   final bool isCreating;
@@ -582,6 +582,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
         if (!mounted) return;
         FlutterBugfender.sendCrash(
             "Failed to update PIN. Please try again.", e.toString());
+        FlutterBugfender.error("Failed to update PIN. Please try again.");
         CustomSnackBar.show(
           context,
           'Failed to update PIN. Please try again.',

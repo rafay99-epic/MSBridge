@@ -7,7 +7,7 @@ import 'package:msbridge/features/setting/widgets/profile_header_widget.dart';
 import 'package:msbridge/features/setting/widgets/quick_actions_widget.dart';
 import 'package:msbridge/features/setting/widgets/settings_section_widget.dart';
 import 'package:msbridge/features/setting/widgets/danger_admin_widgets.dart';
-import 'package:msbridge/features/setting/widgets/app_bar_widget.dart';
+import 'package:msbridge/features/setting/search/settings_search_bottom_sheet.dart';
 import 'package:msbridge/features/setting/widgets/navigation_methods.dart';
 import 'package:msbridge/widgets/streak_display_widget.dart';
 import 'package:provider/provider.dart';
@@ -198,8 +198,8 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
-      _isSearching = query.isNotEmpty;
-      if (_isSearching) {
+      // Stay in search mode until user exits explicitly.
+      if (query.isNotEmpty) {
         _searchResults = _allSettings.where((setting) {
           return setting.title.toLowerCase().contains(query) ||
               setting.subtitle.toLowerCase().contains(query) ||
@@ -212,23 +212,18 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
   }
 
   void _enterSearch() {
+    if (_isSearching) return;
     setState(() {
       _isSearching = true;
     });
 
-    // Focus the search field immediately
+    // Slight delay to avoid first-frame jank on AnimatedSwitcher
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _searchFocusNode.requestFocus();
+        Future.delayed(const Duration(milliseconds: 60), () {
+          if (mounted) _searchFocusNode.requestFocus();
+        });
       }
-    });
-  }
-
-  void _exitSearch() {
-    setState(() {
-      _isSearching = false;
-      _searchController.clear();
-      _searchResults.clear();
     });
   }
 
@@ -243,24 +238,34 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
-          title: AppBarWidgets.buildAppBarTitle(
-            theme,
-            _isSearching,
-            _searchController,
-            _searchFocusNode,
+          title: Text(
+            'Settings',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.primary,
+            ),
           ),
-          automaticallyImplyLeading: false,
+          automaticallyImplyLeading: true,
           backgroundColor: colorScheme.surface,
           foregroundColor: colorScheme.primary,
           elevation: 1,
           shadowColor: colorScheme.shadow.withOpacity(0.2),
           centerTitle: true,
-          leading: AppBarWidgets.buildAppBarLeading(_isSearching, _exitSearch),
-          actions: AppBarWidgets.buildAppBarActions(_isSearching, _enterSearch),
-          titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.primary,
-          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: 'Search settings',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) =>
+                      SettingsSearchBottomSheet(items: _allSettings),
+                );
+              },
+            ),
+          ],
         ),
         body: KeyboardListener(
           focusNode: FocusNode(),

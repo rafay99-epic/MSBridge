@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/models/streak_model.dart';
 import 'package:msbridge/core/models/streak_settings_model.dart';
 import 'package:msbridge/core/repo/streak_repo.dart';
 import 'package:msbridge/core/repo/streak_settings_repo.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:msbridge/core/services/telemetry/telemetry.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
@@ -58,13 +58,11 @@ class StreakProvider extends ChangeNotifier {
       }
 
       _isInitialized = true;
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to initialize streak provider',
-      );
-      debugPrint('Error initializing streak: $e');
+    } catch (e, s) {
+      FlutterBugfender.error('Failed to initialize streak provider: $e');
+      FlutterBugfender.log('stack: $s');
+      FlutterBugfender.sendCrash(
+          'Failed to initialize streak provider: $e', s.toString());
     } finally {
       _setLoading(false);
     }
@@ -88,15 +86,13 @@ class StreakProvider extends ChangeNotifier {
           vibrationEnabled: _settings.vibrationEnabled,
         );
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Log error but don't crash the app
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to initialize notifications',
+      FlutterBugfender.sendCrash('Failed to initialize notifications: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to initialize notifications: $e',
       );
-      debugPrint('Notification initialization failed: $e');
-      // Continue without notifications rather than crashing
     }
   }
 
@@ -121,26 +117,20 @@ class StreakProvider extends ChangeNotifier {
       try {
         await StreakSyncService().pushLocalToCloud();
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          StackTrace.current,
-          reason: 'Failed to sync streak to cloud: $e',
+        FlutterBugfender.sendCrash('Failed to sync streak to cloud: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error(
+          'Failed to sync streak to cloud: $e',
         );
-        // non-fatal; already logged inside service
       }
 
       // touch activity for adaptive scheduling
       await Telemetry.touchLastActivity();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to update streak on activity',
-        information: [
-          'Streak enabled: $_settings.streakEnabled',
-          'Notifications enabled: $_settings.notificationsEnabled',
-          'Current streak before update: ${_currentStreak.currentStreak}',
-        ],
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to update streak on activity: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update streak on activity: $e',
       );
     }
   }
@@ -163,14 +153,13 @@ class StreakProvider extends ChangeNotifier {
           vibrationEnabled: _settings.vibrationEnabled,
         );
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Log error but don't crash the app
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to update notifications',
+      FlutterBugfender.sendCrash(
+          'Failed to update notifications: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update notifications: $e',
       );
-      debugPrint('Notification update failed: $e');
       // Continue without notifications rather than crashing
     }
   }
@@ -200,11 +189,11 @@ class StreakProvider extends ChangeNotifier {
         _showMilestoneNotification(
             "100-Day Streak!", "💎 Legendary! 100 days of dedication!", 100);
       }
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to show streak milestone message',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to show streak milestone message: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to show streak milestone message: $e',
       );
     }
   }
@@ -212,7 +201,12 @@ class StreakProvider extends ChangeNotifier {
   void _showStreakMessage(String message) {
     // This will be implemented to show messages in the UI
     // For now, we'll just print to console
-    debugPrint(message);
+    FlutterBugfender.sendCrash('Failed to show streak message: $message',
+        StackTrace.current.toString());
+    FlutterBugfender.error(
+      'Failed to show streak message: $message',
+    );
+    FlutterBugfender.log('Streak message: $message');
   }
 
   Future<void> _showMilestoneNotification(
@@ -227,11 +221,11 @@ class StreakProvider extends ChangeNotifier {
           vibrationEnabled: _settings.vibrationEnabled,
         );
       }
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to show milestone notification',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to show milestone notification: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to show milestone notification: $e',
       );
     }
   }
@@ -254,14 +248,13 @@ class StreakProvider extends ChangeNotifier {
       }
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to update streak setting',
-        information: ['Setting: $settingKey', 'Value: $value'],
+    } catch (e) {
+      FlutterBugfender.sendCrash('Error updating setting $settingKey: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error updating setting $settingKey: $e',
       );
-      debugPrint('Error updating setting $settingKey: $e');
+      FlutterBugfender.log('Error updating setting $settingKey: $e');
     }
   }
 
@@ -308,11 +301,11 @@ class StreakProvider extends ChangeNotifier {
       await StreakRepo.resetStreak();
       _currentStreak = StreakModel.initial();
       notifyListeners();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to reset streak',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to reset streak: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to reset streak: $e',
       );
     }
   }
@@ -329,11 +322,11 @@ class StreakProvider extends ChangeNotifier {
       }
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to reset streak settings',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to reset streak settings: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to reset streak settings: $e',
       );
     }
   }
@@ -345,11 +338,11 @@ class StreakProvider extends ChangeNotifier {
       _currentStreak = await StreakRepo.getStreakData();
       // keep settings as-is
       notifyListeners();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to refresh streak from storage',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to refresh streak from storage: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to refresh streak from storage: $e',
       );
     } finally {
       _setLoading(false);
@@ -382,11 +375,11 @@ class StreakProvider extends ChangeNotifier {
   Future<Map<String, dynamic>> exportSettings() async {
     try {
       return await StreakSettingsRepo.exportSettings();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to export streak settings',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to export streak settings: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to export streak settings: $e',
       );
       return {};
     }
@@ -401,11 +394,11 @@ class StreakProvider extends ChangeNotifier {
         notifyListeners();
       }
       return success;
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to import streak settings',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to import streak settings: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to import streak settings: $e',
       );
       return false;
     }
@@ -415,5 +408,4 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = loading;
     notifyListeners();
   }
-
 }

@@ -36,10 +36,9 @@ class APKFile {
 
 class UploadThingConfig {
   // Put your UploadThing API key here (or load from env/secrets at runtime)
-  static const String apiKey =
-      '';
+  static const String apiKey = '';
 }
 
 class BugfenderConfig {
-  static const String apiKey = "s";
+  static const String apiKey = "";
 }

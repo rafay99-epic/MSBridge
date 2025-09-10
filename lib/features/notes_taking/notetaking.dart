@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
@@ -98,6 +97,8 @@ class _NotetakingState extends State<Notetaking>
       }
     } catch (e) {
       FlutterBugfender.error("Failed to load layout preference: $e");
+      FlutterBugfender.sendCrash("Failed to load layout preference: $e",
+          StackTrace.current.toString());
       if (!mounted) return;
       setState(() {
         _layoutMode = NoteLayoutMode.grid;
@@ -111,10 +112,10 @@ class _NotetakingState extends State<Notetaking>
       await prefs.setString(
           _layoutPrefKey, mode == NoteLayoutMode.grid ? 'grid' : 'list');
     } catch (e) {
-      // Silently fail if preferences can't be saved
       FlutterBugfender.log("Failed to save layout preference: $e");
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to save layout preference');
+      FlutterBugfender.sendCrash("Failed to save layout preference: $e",
+          StackTrace.current.toString());
+      FlutterBugfender.error("Failed to save layout preference: $e");
     }
   }
 
@@ -142,6 +143,8 @@ class _NotetakingState extends State<Notetaking>
       }
     } catch (e) {
       FlutterBugfender.error("Failed to load notes: $e");
+      FlutterBugfender.sendCrash(
+          "Failed to load notes: $e", StackTrace.current.toString());
       if (!mounted) return;
       setState(() {
         _isLoading = false;

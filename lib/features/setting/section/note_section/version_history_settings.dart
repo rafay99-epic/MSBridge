@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/widgets/build_modern_settings_tile.dart';
 import 'package:msbridge/widgets/build_section_header.dart';
@@ -57,6 +57,9 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
       });
     } catch (e) {
       // Handle error silently
+      FlutterBugfender.sendCrash(
+          'Error loading storage info: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error loading storage info: $e');
     }
   }
 
@@ -65,6 +68,9 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
       final downloadPath = await VersionDownloadUtils.getDownloadDirectory();
       return VersionDownloadUtils.getUserFriendlyPath(downloadPath);
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error getting download location: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error getting download location: $e');
       return 'Unknown location';
     }
   }
@@ -100,7 +106,9 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+      FlutterBugfender.sendCrash(
+          'Error during cleanup: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error during cleanup: $e');
       if (mounted) {
         CustomSnackBar.show(
           context,

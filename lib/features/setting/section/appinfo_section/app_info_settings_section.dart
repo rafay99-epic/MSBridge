@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/webview_repo.dart';
 import 'package:msbridge/features/contact/contact.dart';
@@ -37,6 +38,9 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
         buildVersion = packageInfo.buildNumber;
       });
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to get app version: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to get app version: $e');
       setState(() {
         appVersion = 'Not available';
         buildVersion = 'Not available';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/todo_repo.dart';
 import 'package:msbridge/features/todo/create_task/create_task.dart';
@@ -179,6 +180,9 @@ class _ToDOState extends State<ToDO> {
                       await todoRepository.toggleTask(
                           context, index, isCompleted);
                     } catch (e) {
+                      FlutterBugfender.sendCrash('Failed to toggle task.',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error('Failed to toggle task.');
                       CustomSnackBar.show(context, e.toString());
                     }
                   },
@@ -191,6 +195,9 @@ class _ToDOState extends State<ToDO> {
                       await todoRepository.removeTask(
                           context, index, isCompleted);
                     } catch (e) {
+                      FlutterBugfender.sendCrash('Failed to remove task.',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error('Failed to remove task.');
                       CustomSnackBar.show(context, e.toString());
                     }
                   },

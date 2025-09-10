@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
@@ -735,6 +736,9 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error downloading version: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error downloading version: $e');
       if (mounted) {
         CustomSnackBar.show(
           context,
@@ -823,6 +827,9 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
         );
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error restoring note: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error restoring note: $e');
       if (mounted) {
         CustomSnackBar.show(
           context,

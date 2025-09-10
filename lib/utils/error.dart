@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 // import 'package:restart_app/restart_app.dart';
 
 class ErrorApp extends StatelessWidget {
@@ -132,7 +133,13 @@ class ErrorApp extends StatelessWidget {
                             try {
                               FirebaseCrashlytics.instance.log(
                                   'Initialization error copied to clipboard');
-                            } catch (_) {}
+                            } catch (e) {
+                              FlutterBugfender.sendCrash(
+                                  'Failed to copy initialization error.',
+                                  StackTrace.current.toString());
+                              FlutterBugfender.error(
+                                  'Failed to copy initialization error.');
+                            }
                             if (context.mounted) {
                               const snackBar = SnackBar(
                                 content: Text('Error details copied'),

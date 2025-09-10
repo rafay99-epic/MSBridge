@@ -1,6 +1,6 @@
 // features/setting/bottom_sheets/notes_bottom_sheet.dart
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
@@ -68,13 +68,17 @@ class NotesBottomSheet extends StatelessWidget {
           subtitle: "Configure version limits and cleanup",
           icon: LineIcons.cog,
           onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const VersionHistorySettings(),
-              ),
-            );
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              Navigator.push(
+                context,
+                PageTransition(
+                  type: PageTransitionType.rightToLeft,
+                  child: const VersionHistorySettings(),
+                ),
+              );
+            });
           },
         ),
 
@@ -104,13 +108,17 @@ class NotesBottomSheet extends StatelessWidget {
                     subtitle: "Manage your shared notes and links",
                     icon: LineIcons.share,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        PageTransition(
-                          type: PageTransitionType.rightToLeft,
-                          child: const SharedNotesPage(),
-                        ),
-                      );
+                      Navigator.of(context).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!context.mounted) return;
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: const SharedNotesPage(),
+                          ),
+                        );
+                      });
                     },
                   ),
                 ],
@@ -177,8 +185,9 @@ class NotesBottomSheet extends StatelessWidget {
       try {
         await ShareRepository.disableAllShares();
       } catch (e) {
-        FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-            reason: 'Failed to disable existing shares');
+        FlutterBugfender.sendCrash('Failed to disable existing shares: $e',
+            StackTrace.current.toString());
+        FlutterBugfender.error('Failed to disable existing shares: $e');
         if (context.mounted) {
           CustomSnackBar.show(
             context,

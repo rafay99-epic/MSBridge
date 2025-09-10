@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/font_provider.dart';
 import 'package:msbridge/widgets/appbar.dart';
@@ -307,8 +307,10 @@ class _FontSelectionPageState extends State<FontSelectionPage> {
         );
       }
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to apply font: $_selectedFontFamily');
+      FlutterBugfender.sendCrash('Failed to apply font: $_selectedFontFamily',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Failed to apply font: $_selectedFontFamily');
+
       if (mounted) {
         CustomSnackBar.show(
           context,

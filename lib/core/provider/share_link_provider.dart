@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShareLinkProvider extends ChangeNotifier {
@@ -16,7 +17,13 @@ class ShareLinkProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _shareLinksEnabled = prefs.getBool(_prefKey) ?? true;
       notifyListeners();
-    } catch (_) {}
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to load share links enabled: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load share links enabled: $e',
+      );
+    }
   }
 
   set shareLinksEnabled(bool value) {
@@ -30,6 +37,12 @@ class ShareLinkProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_prefKey, _shareLinksEnabled);
-    } catch (_) {}
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to save share links enabled: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to save share links enabled: $e',
+      );
+    }
   }
 }

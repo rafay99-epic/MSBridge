@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
-import 'package:msbridge/core/provider/fingerprint_provider.dart';
-import 'package:msbridge/features/setting/section/user_section/pin_lock_screen.dart';
+import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
+import 'package:msbridge/features/lock/pin_setup_lock.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 
-class UserSettingsSection extends StatelessWidget {
-  const UserSettingsSection({super.key});
+class PinSetup extends StatelessWidget {
+  const PinSetup({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +85,11 @@ class UserSettingsSection extends StatelessWidget {
                           );
 
                           if (proceed == true) {
+                            final sheetContext = context;
                             Navigator.push(
                               context,
                               PageTransition(
+                                duration: const Duration(milliseconds: 300),
                                 type: PageTransitionType.rightToLeft,
                                 child: PinLockScreen(
                                   isCreating: true,
@@ -95,7 +97,11 @@ class UserSettingsSection extends StatelessWidget {
                                     await pinProvider.savePin(
                                         pin); // ✅ Use savePin for new PINs
                                     await pinProvider.setEnabled(true);
-                                    Navigator.pop(context);
+                                    Navigator.maybePop(context);
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      Navigator.of(sheetContext).pop();
+                                    });
                                   },
                                 ),
                               ),
@@ -103,9 +109,11 @@ class UserSettingsSection extends StatelessWidget {
                           }
                         } else {
                           await pinProvider.setEnabled(true);
+                          if (context.mounted) Navigator.of(context).maybePop();
                         }
                       } else {
                         await pinProvider.setEnabled(false);
+                        if (context.mounted) Navigator.of(context).maybePop();
                       }
                     },
                   ),
@@ -145,6 +153,7 @@ class UserSettingsSection extends StatelessWidget {
                     // First verify current PIN
                     final currentPin = await pinProvider.readPin();
                     if (currentPin != null) {
+                      final sheetContext = context;
                       Navigator.push(
                         context,
                         PageTransition(
@@ -160,7 +169,10 @@ class UserSettingsSection extends StatelessWidget {
                                 'PIN changed successfully!',
                                 isSuccess: true,
                               );
-                              Navigator.pop(context);
+                              Navigator.maybePop(context);
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Navigator.of(sheetContext).pop();
+                              });
                             },
                           ),
                         ),
@@ -227,6 +239,7 @@ class UserSettingsSection extends StatelessWidget {
                         'PIN lock has been reset!',
                         isSuccess: true,
                       );
+                      if (context.mounted) Navigator.of(context).maybePop();
                     }
                   },
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/note_summary_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/config/ai_model_choice.dart';
@@ -55,6 +56,11 @@ class NoteSummaryProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _aiSummary = "Error generating summary: $e";
+      FlutterBugfender.sendCrash(
+          'Error generating summary: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error generating summary: $e',
+      );
       notifyListeners();
     } finally {
       _isGeneratingSummary = false;

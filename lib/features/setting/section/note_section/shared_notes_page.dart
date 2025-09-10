@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
@@ -36,7 +37,10 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
     final notes = await HiveNoteTakingRepo.getNotes();
     try {
       return notes.firstWhere((n) => n.noteId == noteId);
-    } catch (_) {
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to get note: $noteId', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to get note: $noteId');
       return null;
     }
   }
@@ -392,6 +396,10 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                     try {
                       await _disableSharing(item.noteId, note);
                     } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to disable sharing: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error('Failed to disable sharing: $e');
                       if (mounted) {
                         CustomSnackBar.show(
                             context, 'Failed to disable sharing: $e');

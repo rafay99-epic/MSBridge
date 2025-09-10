@@ -211,7 +211,12 @@ class _TagFolderPageState extends State<TagFolderPage> {
             .join(' ')
             .trim();
       }
-    } catch (_) {}
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error parsing JSON: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Error parsing JSON: $e');
+      return content.replaceAll('\n', ' ').trim();
+    }
     return content.replaceAll('\n', ' ').trim();
   }
 
@@ -219,6 +224,8 @@ class _TagFolderPageState extends State<TagFolderPage> {
     try {
       return jsonDecode(s);
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error parsing JSON: $e', StackTrace.current.toString());
       FlutterBugfender.error('Error parsing JSON: $e');
       return null;
     }

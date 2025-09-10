@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:pinput/pinput.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 
 class StartupPinLockScreen extends StatefulWidget {
   final Function() onPinCorrect;
@@ -23,6 +24,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
   final FocusNode _pinFocusNode = FocusNode();
   bool _isVerifying = false;
   String _errorMessage = '';
+  bool isUnlocking = false;
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _successController;
@@ -52,8 +54,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
       vsync: this,
     );
     _iconController = AnimationController(
-      duration:
-          const Duration(milliseconds: 1500), // Reduced for better performance
+      duration: const Duration(milliseconds: 1200), // Slightly shorter loop
       vsync: this,
     );
 
@@ -140,14 +141,18 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
       final storedPin = await pinProvider.readPin();
 
       if (storedPin == pin) {
-        // Start success animation
-        _successController.forward();
+        isUnlocking = true;
+        // Pause repeating icon animation to save frames during transition
+        if (_iconController.isAnimating) _iconController.stop();
+
+        // Start success animation and then fade out the whole view for a smooth handoff
+        await _successController.forward();
 
         // Clear background time to prevent "incorrect password" bug
         pinProvider.onPinVerificationSuccess();
 
-        // Show success message (non-blocking)
         if (mounted) {
+          // Subtle success toast
           CustomSnackBar.show(
             context,
             'Welcome back!',
@@ -155,12 +160,14 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
           );
         }
 
-        // Optimized unlock timing
-        Future.delayed(const Duration(milliseconds: 400), () {
-          if (mounted) {
-            widget.onPinCorrect();
-          }
-        });
+        // Fade out content before navigating to home, avoiding sudden frame spikes
+        if (mounted) {
+          await _fadeController.reverse();
+        }
+
+        if (mounted) {
+          widget.onPinCorrect();
+        }
       } else {
         if (mounted) {
           setState(() {
@@ -177,6 +184,9 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
         }
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          "Error verifying PIN: $e", StackTrace.current.toString());
+      FlutterBugfender.error("Error verifying PIN: $e");
       if (mounted) {
         setState(() {
           _errorMessage = 'Error verifying PIN. Please try again.';
@@ -212,7 +222,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     colorScheme.surface,
-                    colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
                     colorScheme.surface,
                   ],
                 ),
@@ -220,11 +230,13 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
-                  child: Column(
+                  child: RepaintBoundary(
+                      child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // App Logo/Icon Section - Cool Settings Header Effect
-                      AnimatedBuilder(
+                      RepaintBoundary(
+                          child: AnimatedBuilder(
                         animation: _iconController,
                         builder: (context, child) {
                           return Transform.scale(
@@ -248,15 +260,9 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                   boxShadow: [
                                     BoxShadow(
                                       color:
-                                          colorScheme.primary.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                    BoxShadow(
-                                      color: colorScheme.secondary
-                                          .withOpacity(0.2),
-                                      blurRadius: 30,
-                                      offset: const Offset(0, 15),
+                                          colorScheme.primary.withOpacity(0.20),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
                                     ),
                                   ],
                                 ),
@@ -269,7 +275,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                             ),
                           );
                         },
-                      ),
+                      )),
 
                       const SizedBox(height: 32),
 
@@ -297,152 +303,157 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                       const SizedBox(height: 40),
 
                       // PIN Input Section - Minimal Design
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: colorScheme.outline.withOpacity(0.2),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withOpacity(0.15),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Pinput(
-                              controller: _pinController,
-                              focusNode: _pinFocusNode,
-                              length: 4,
-                              onCompleted: _verifyPin,
-                              obscureText: true,
-                              obscuringCharacter: '●',
-                              // Android performance optimizations
-                              autofocus: false, // Let us control focus manually
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
+                      RepaintBoundary(
+                        child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: colorScheme.outline.withOpacity(0.2),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.shadow.withOpacity(0.10),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
                               ],
-                              defaultPinTheme: PinTheme(
-                                width: 56,
-                                height: 56,
-                                textStyle:
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: colorScheme.outline.withOpacity(0.3),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          colorScheme.shadow.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              focusedPinTheme: PinTheme(
-                                width: 56,
-                                height: 56,
-                                textStyle:
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: colorScheme.primary,
-                                    width: 2.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          colorScheme.primary.withOpacity(0.2),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              errorPinTheme: PinTheme(
-                                width: 56,
-                                height: 56,
-                                textStyle:
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onErrorContainer,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.errorContainer,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: colorScheme.error,
-                                    width: 2.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: colorScheme.error.withOpacity(0.2),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
-
-                            const SizedBox(height: 20),
-
-                            // Error Message - Clean and Simple
-                            if (_errorMessage.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.errorContainer,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: colorScheme.onErrorContainer,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        _errorMessage,
-                                        style:
-                                            theme.textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.onErrorContainer,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
+                            child: Column(
+                              children: [
+                                Pinput(
+                                  controller: _pinController,
+                                  focusNode: _pinFocusNode,
+                                  length: 4,
+                                  onCompleted: _verifyPin,
+                                  obscureText: true,
+                                  obscuringCharacter: '●',
+                                  // Android performance optimizations
+                                  autofocus:
+                                      false, // Let us control focus manually
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
                                   ],
+                                  defaultPinTheme: PinTheme(
+                                    width: 56,
+                                    height: 56,
+                                    textStyle:
+                                        theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: colorScheme.outline
+                                            .withOpacity(0.25),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colorScheme.shadow
+                                              .withOpacity(0.08),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  focusedPinTheme: PinTheme(
+                                    width: 56,
+                                    height: 56,
+                                    textStyle:
+                                        theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surface,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: colorScheme.primary,
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colorScheme.primary
+                                              .withOpacity(0.2),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  errorPinTheme: PinTheme(
+                                    width: 56,
+                                    height: 56,
+                                    textStyle:
+                                        theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onErrorContainer,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.errorContainer,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: colorScheme.error,
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: colorScheme.error
+                                              .withOpacity(0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                          ],
-                        ),
+
+                                const SizedBox(height: 20),
+
+                                // Error Message - Clean and Simple
+                                if (_errorMessage.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.errorContainer,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: colorScheme.onErrorContainer,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            _errorMessage,
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color:
+                                                  colorScheme.onErrorContainer,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            )),
                       ),
 
                       const SizedBox(height: 24),
@@ -500,7 +511,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'PIN Correct! Unlocking...',
+                                  'Unlocked',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: colorScheme.onPrimaryContainer,
                                     fontWeight: FontWeight.w600,
@@ -537,7 +548,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                         ],
                       ),
                     ],
-                  ),
+                  )),
                 ),
               ),
             ),

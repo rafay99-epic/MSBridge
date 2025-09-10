@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
-import 'package:msbridge/features/setting/section/user_section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -393,19 +394,35 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
       try {
         final box = await HiveNoteTakingRepo.getBox();
         await box.clear();
-      } catch (_) {}
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+            'Failed to clear note box: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to clear note box: $e');
+      }
       try {
         final deletedBox = await HiveNoteTakingRepo.getDeletedBox();
         await deletedBox.clear();
-      } catch (_) {}
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+            'Failed to clear deleted box: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to clear deleted box: $e');
+      }
 
       // Additionally clear any other Hive boxes registered in main.dart
       try {
         if (Hive.isBoxOpen('notesBox')) {
           await Hive.box('notesBox').clear();
         }
-      } catch (_) {}
-    } catch (_) {}
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+            'Failed to clear Hive box: $e', StackTrace.current.toString());
+        FlutterBugfender.error('Failed to clear Hive box: $e');
+      }
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to delete account: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to delete account: $e');
+    }
 
     // Step 2: Delete all user docs and auth user
     final result = await authRepo.deleteUserAndData();

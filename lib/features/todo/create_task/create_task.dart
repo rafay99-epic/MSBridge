@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/repo/todo_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -198,6 +199,9 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
               isSuccess: true);
           Navigator.pop(context);
         } catch (e) {
+          FlutterBugfender.sendCrash(
+              'Failed to add task.', StackTrace.current.toString());
+          FlutterBugfender.error('Failed to add task.');
           CustomSnackBar.show(context, e.toString());
         }
       },

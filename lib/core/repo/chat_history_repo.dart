@@ -17,6 +17,7 @@ class ChatHistoryRepo {
       try {
         _box = await Hive.openBox<ChatHistory>(_boxName);
       } catch (e) {
+        
         await FirebaseCrashlytics.instance.recordError(
           e,
           null,

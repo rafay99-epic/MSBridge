@@ -1,6 +1,5 @@
-// features/setting/bottom_sheets/sync_bottom_sheet.dart
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
@@ -26,7 +25,7 @@ class SyncBottomSheet extends StatefulWidget {
 class _SyncBottomSheetState extends State<SyncBottomSheet> {
   bool _isSyncingNotesToCloud = false;
   bool _isPullingFromCloud = false;
-  bool _isTogglingCloud = false; // guard to prevent re-entrancy
+  bool _isTogglingCloud = false;
 
   @override
   Widget build(BuildContext context) {
@@ -75,10 +74,11 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                         isSuccess: true,
                       );
                     }
-                  } catch (e, s) {
+                  } catch (e) {
                     // Roll back both provider and runtime services
-                    FirebaseCrashlytics.instance
-                        .recordError(e, s, reason: 'Toggle cloud sync failed');
+                    FlutterBugfender.sendCrash('Toggle cloud sync failed: $e',
+                        StackTrace.current.toString());
+                    FlutterBugfender.error('Toggle cloud sync failed: $e');
                     try {
                       await syncSettings.setCloudSyncEnabled(prevEnabled);
                       final userSettings = context.read<UserSettingsProvider>();
@@ -91,7 +91,12 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                         await AutoSyncScheduler.setIntervalMinutes(0);
                         await SyncService().stopListening();
                       }
-                    } catch (_) {}
+                    } catch (e) {
+                      FlutterBugfender.sendCrash(
+                          'Failed to update cloud sync: $e',
+                          StackTrace.current.toString());
+                      FlutterBugfender.error('Failed to update cloud sync: $e');
+                    }
 
                     if (mounted) {
                       CustomSnackBar.show(
@@ -101,7 +106,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                       );
                     }
                   } finally {
-                    _isTogglingCloud = false;
+                    if (mounted) {
+                      _isTogglingCloud = false;
+                    }
                   }
                 },
               );
@@ -119,13 +126,17 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
               "Advanced options: bidirectional sync, export/import, reset",
           icon: LineIcons.cog,
           onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const SettingsSyncPage(),
-              ),
-            );
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              Navigator.push(
+                context,
+                PageTransition(
+                  type: PageTransitionType.rightToLeft,
+                  child: const SettingsSyncPage(),
+                ),
+              );
+            });
           },
         ),
         const SizedBox(height: 24),
@@ -240,8 +251,12 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           "Notes synced to cloud successfully!",
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to sync notes to cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to sync notes to cloud: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -250,7 +265,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } finally {
-      setState(() => _isSyncingNotesToCloud = false);
+      if (mounted) {
+        setState(() => _isSyncingNotesToCloud = false);
+      }
     }
   }
 
@@ -267,8 +284,12 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           "Successfully pulled data from cloud!",
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to pull from cloud: $e', StackTrace.current.toString());
+      FlutterBugfender.error('Failed to pull from cloud: $e');
       if (context.mounted) {
         CustomSnackBar.show(
           context,
@@ -277,7 +298,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } finally {
-      setState(() => _isPullingFromCloud = false);
+      if (mounted) {
+        setState(() => _isPullingFromCloud = false);
+      }
     }
   }
 
@@ -294,6 +317,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
               : 'Auto sync set to every $minutes minutes',
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     }
   }

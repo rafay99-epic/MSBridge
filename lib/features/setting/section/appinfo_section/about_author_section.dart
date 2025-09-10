@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,10 +39,14 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
       });
 
       // Log successful data fetch
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: Data fetched successfully from API service');
+      FlutterBugfender.log(
+          'AboutAuthor: Data fetched successfully from API service');
     } on AboutAuthorApiException catch (e) {
       // Handle API-specific errors
+      FlutterBugfender.sendCrash(
+          'AboutAuthor: API service error - ${e.message}',
+          StackTrace.current.toString());
+      FlutterBugfender.error('AboutAuthor: API service error - ${e.message}');
       FirebaseCrashlytics.instance
           .log('AboutAuthor: API service error - ${e.message}');
 
@@ -49,19 +54,13 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         errorMessage = e.toString();
         isLoading = false;
       });
-    } catch (e, stackTrace) {
+    } catch (e) {
+      FlutterBugfender.sendCrash('Unexpected error in About Author UI: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Unexpected error in About Author UI: $e');
       // Handle any other unexpected errors
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: Unexpected error in UI - ${e.toString()}');
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Unexpected error in About Author UI',
-        information: [
-          'Error type: ${e.runtimeType}',
-          'Error message: ${e.toString()}'
-        ],
-      );
+      FlutterBugfender.log(
+          'AboutAuthor: Unexpected error in UI - ${e.toString()}');
 
       setState(() {
         errorMessage = 'An unexpected error occurred. Please try again later.';
@@ -1106,18 +1105,12 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
     // Validate URL format
     try {
       Uri.parse(url);
-    } catch (e, stackTrace) {
-      // Log and report invalid URL format errors
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: Invalid URL format detected: $url');
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Invalid URL format in social links',
-        information: ['URL: $url', 'Error: ${e.toString()}'],
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Invalid URL format detected: $url', StackTrace.current.toString());
+      FlutterBugfender.error('Invalid URL format detected: $url');
+      FlutterBugfender.log('AboutAuthor: Invalid URL format detected: $url');
 
-      debugPrint('Invalid URL format: $url');
       return const SizedBox.shrink();
     }
 
@@ -1228,23 +1221,15 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
             .log('AboutAuthor: URL launched successfully: $url');
       } else {
         // Fallback: try to launch without mode specification
-        FirebaseCrashlytics.instance
-            .log('AboutAuthor: Fallback URL launch attempt: $url');
+        FlutterBugfender.log('AboutAuthor: Fallback URL launch attempt: $url');
         await launchUrl(uri);
       }
-    } catch (e, stackTrace) {
-      // Log and report URL launch errors
-      FirebaseCrashlytics.instance
-          .log('AboutAuthor: Failed to launch URL: $url, Error: $e');
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to launch URL from About Author section',
-        information: ['URL: $url', 'Error type: ${e.runtimeType}'],
-      );
-
-      // Handle URL launch errors gracefully
-      debugPrint('Failed to launch URL: $url, Error: $e');
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to launch URL: $url, Error: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Failed to launch URL: $url, Error: $e');
+      FlutterBugfender.log(
+          'AboutAuthor: Failed to launch URL: $url, Error: $e');
     }
   }
 }

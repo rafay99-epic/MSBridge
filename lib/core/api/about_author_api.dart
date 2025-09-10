@@ -189,13 +189,11 @@ class AboutAuthorApiService {
   static Map<String, dynamic> _handleSocketError(
       SocketException e, StackTrace stackTrace) {
     // Log network connectivity errors
-    FirebaseCrashlytics.instance
-        .log('AboutAuthor: Network connectivity error - ${e.message}');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      stackTrace,
-      reason: 'Network connectivity issue when calling author API',
-      information: ['Socket error: ${e.message}'],
+    FlutterBugfender.sendCrash(
+        'AboutAuthor: Network connectivity error - ${e.message}',
+        stackTrace.toString());
+    FlutterBugfender.error(
+      'AboutAuthor: Network connectivity error - ${e.message}',
     );
 
     throw AboutAuthorApiException(
@@ -208,16 +206,11 @@ class AboutAuthorApiService {
   static Map<String, dynamic> _handleUnexpectedError(
       dynamic e, StackTrace stackTrace) {
     // Log unexpected errors
-    FirebaseCrashlytics.instance
-        .log('AboutAuthor: Unexpected error - ${e.toString()}');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      stackTrace,
-      reason: 'Unexpected error occurred while fetching author data',
-      information: [
-        'Error type: ${e.runtimeType}',
-        'Error message: ${e.toString()}'
-      ],
+    FlutterBugfender.sendCrash(
+        'AboutAuthor: Unexpected error - ${e.toString()}',
+        stackTrace.toString());
+    FlutterBugfender.error(
+      'AboutAuthor: Unexpected error - ${e.toString()}',
     );
 
     throw AboutAuthorApiException(

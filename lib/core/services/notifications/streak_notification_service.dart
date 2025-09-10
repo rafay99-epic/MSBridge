@@ -15,12 +15,10 @@ class StreakNotificationService {
 
   static bool _isInitialized = false;
 
-  // Initialize notification service
   static Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      // Initialize timezone
       tz.initializeTimeZones();
 
       const AndroidInitializationSettings initializationSettingsAndroid =
@@ -55,7 +53,6 @@ class StreakNotificationService {
     }
   }
 
-  // Check if notifications are enabled
   static Future<bool> areNotificationsEnabled() async {
     try {
       await initialize();
@@ -71,7 +68,6 @@ class StreakNotificationService {
     }
   }
 
-  // Request notification permission
   static Future<bool> requestPermission(BuildContext context) async {
     try {
       return await NotificationPermissionHandler
@@ -86,19 +82,14 @@ class StreakNotificationService {
     }
   }
 
-  // Check if exact alarms are permitted (Android 12+)
   static Future<bool> areExactAlarmsPermitted() async {
     try {
-      // For Android 12+, exact alarms require special permission
-      // We'll handle this gracefully by falling back to inexact scheduling
-      return false; // Assume inexact for now, handle errors gracefully
+      return false;
     } catch (e) {
       return false;
     }
   }
 
-  // Evaluate current settings/state and schedule the right notifications.
-  // This runs safely in foreground or background isolates.
   static Future<void> evaluateAndScheduleAll({
     required bool notificationsEnabled,
     required bool dailyReminders,
@@ -144,7 +135,6 @@ class StreakNotificationService {
     }
   }
 
-  // Schedule daily reminder notification
   static Future<void> scheduleDailyReminder({
     required TimeOfDay time,
     required bool enabled,
@@ -157,6 +147,11 @@ class StreakNotificationService {
     }
 
     try {
+      if (!await areNotificationsEnabled()) {
+        debugPrint(
+            'Daily reminder skipped: notification permission not granted');
+        return;
+      }
       await initialize();
 
       final now = DateTime.now();
@@ -168,7 +163,6 @@ class StreakNotificationService {
         time.minute,
       );
 
-      // If time has passed today, schedule for tomorrow
       if (scheduledDate.isBefore(now)) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
@@ -183,7 +177,8 @@ class StreakNotificationService {
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
         icon: '@mipmap/ic_launcher',
-        color: Color(0xFF7AA2F7), // Your app's secondary color
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        color: Color(0xFF7AA2F7),
       );
 
       const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
@@ -197,7 +192,6 @@ class StreakNotificationService {
         iOS: iOSDetails,
       );
 
-      // Try exact scheduling first, fallback to inexact if permission denied
       try {
         await _notificationsPlugin.zonedSchedule(
           _dailyReminderId.hashCode,
@@ -211,7 +205,6 @@ class StreakNotificationService {
         debugPrint(
             'Daily streak reminder scheduled for ${time.hour}:${time.minute}');
       } catch (exactError) {
-        // Fallback to inexact scheduling if exact alarms not permitted
         if (exactError.toString().contains('exact_alarms_not_permitted')) {
           await _notificationsPlugin.zonedSchedule(
             _dailyReminderId.hashCode,
@@ -225,7 +218,7 @@ class StreakNotificationService {
           debugPrint(
               'Daily streak reminder scheduled (inexact) for ${time.hour}:${time.minute}');
         } else {
-          rethrow; // Re-throw if it's a different error
+          rethrow;
         }
       }
     } catch (e, stackTrace) {
@@ -239,27 +232,23 @@ class StreakNotificationService {
     }
   }
 
-  // Schedule urgent reminder when streak is about to end
   static Future<void> scheduleStreakEndingReminder({
     bool soundEnabled = true,
     bool vibrationEnabled = true,
   }) async {
     try {
+      if (!await areNotificationsEnabled()) {
+        debugPrint(
+            'Urgent reminder skipped: notification permission not granted');
+        return;
+      }
       await initialize();
 
-      // Schedule for 8 PM same day if not already passed
       final now = DateTime.now();
-      var scheduledDate = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        20, // 8 PM
-        0,
-      );
-
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
-      }
+      final eightPmToday = DateTime(now.year, now.month, now.day, 20, 0);
+      var scheduledDate = now.isBefore(eightPmToday)
+          ? eightPmToday
+          : now.add(const Duration(minutes: 5));
 
       AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
         'streak_ending_reminder',
@@ -271,6 +260,7 @@ class StreakNotificationService {
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
         icon: '@mipmap/ic_launcher',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         color: const Color(0xFFFF7043), // Warning color
         category: AndroidNotificationCategory.alarm,
       );
@@ -287,7 +277,6 @@ class StreakNotificationService {
         iOS: iOSDetails,
       );
 
-      // Try exact scheduling first, fallback to inexact if permission denied
       try {
         await _notificationsPlugin.zonedSchedule(
           _streakEndingId.hashCode,
@@ -298,9 +287,9 @@ class StreakNotificationService {
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           matchDateTimeComponents: DateTimeComponents.time,
         );
-        debugPrint('Streak ending reminder scheduled for 8 PM');
+        debugPrint(
+            'Streak ending reminder scheduled for ${scheduledDate.toLocal()}');
       } catch (exactError) {
-        // Fallback to inexact scheduling if exact alarms not permitted
         if (exactError.toString().contains('exact_alarms_not_permitted')) {
           await _notificationsPlugin.zonedSchedule(
             _streakEndingId.hashCode,
@@ -311,9 +300,10 @@ class StreakNotificationService {
             androidScheduleMode: AndroidScheduleMode.inexact,
             matchDateTimeComponents: DateTimeComponents.time,
           );
-          debugPrint('Streak ending reminder scheduled (inexact) for 8 PM');
+          debugPrint(
+              'Streak ending reminder scheduled (inexact) for ${scheduledDate.toLocal()}');
         } else {
-          rethrow; // Re-throw if it's a different error
+          rethrow;
         }
       }
     } catch (e, stackTrace) {
@@ -326,7 +316,60 @@ class StreakNotificationService {
     }
   }
 
-  // Show milestone notification
+  static Future<void> showImmediateStreakEndingReminder({
+    bool soundEnabled = true,
+    bool vibrationEnabled = true,
+  }) async {
+    try {
+      if (!await areNotificationsEnabled()) {
+        debugPrint('Immediate urgent reminder skipped: permission not granted');
+        return;
+      }
+      await initialize();
+
+      AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'streak_ending_reminder',
+        'Streak Ending Alert',
+        channelDescription: 'Urgent alerts when streak is about to end',
+        importance: Importance.max,
+        priority: Priority.max,
+        showWhen: true,
+        enableVibration: vibrationEnabled,
+        playSound: soundEnabled,
+        icon: '@mipmap/ic_launcher',
+        color: const Color(0xFFFF7043),
+        category: AndroidNotificationCategory.alarm,
+      );
+
+      const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
+      );
+
+      NotificationDetails details = NotificationDetails(
+        android: androidDetails,
+        iOS: iOSDetails,
+      );
+
+      await _notificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        '⚠️ Your Streak is About to End!',
+        'Create a note today to save your streak before midnight!',
+        details,
+      );
+
+      debugPrint('Immediate streak ending reminder shown');
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'Failed to show immediate streak ending reminder',
+      );
+    }
+  }
+
   static Future<void> showMilestoneNotification({
     required String title,
     required String body,
@@ -347,7 +390,8 @@ class StreakNotificationService {
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
         icon: '@mipmap/ic_launcher',
-        color: const Color(0xFF4CAF50), // Success color
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        color: const Color(0xFF4CAF50),
         category: AndroidNotificationCategory.status,
       );
 
@@ -381,7 +425,6 @@ class StreakNotificationService {
     }
   }
 
-  // Cancel daily reminder
   static Future<void> cancelDailyReminder() async {
     try {
       await _notificationsPlugin.cancel(_dailyReminderId.hashCode);
@@ -396,7 +439,6 @@ class StreakNotificationService {
     }
   }
 
-  // Cancel streak ending reminder
   static Future<void> cancelStreakEndingReminder() async {
     try {
       await _notificationsPlugin.cancel(_streakEndingId.hashCode);
@@ -411,7 +453,6 @@ class StreakNotificationService {
     }
   }
 
-  // Cancel all streak notifications
   static Future<void> cancelAllNotifications() async {
     try {
       await cancelDailyReminder();
@@ -428,7 +469,6 @@ class StreakNotificationService {
     }
   }
 
-  // Get notification timing options
   static Map<String, String> getNotificationTimingOptions() {
     return {
       '9:00 AM': 'Morning motivation',
@@ -438,10 +478,8 @@ class StreakNotificationService {
     };
   }
 
-  // Set custom notification time
   static Future<void> setCustomNotificationTime(TimeOfDay time) async {
     try {
-      // This would be called from settings to update notification time
       debugPrint(
           'Custom notification time set to: ${time.hour}:${time.minute}');
     } catch (e, stackTrace) {
@@ -454,14 +492,9 @@ class StreakNotificationService {
     }
   }
 
-  // Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
     try {
-      // Navigate to appropriate screen based on notification type
       debugPrint('Notification tapped: ${response.payload}');
-
-      // You can implement navigation logic here
-      // For example, navigate to note creation screen
     } catch (e, stackTrace) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -472,7 +505,6 @@ class StreakNotificationService {
     }
   }
 
-  // Check if notification is scheduled
   static Future<bool> isDailyReminderScheduled() async {
     try {
       final pendingNotifications =

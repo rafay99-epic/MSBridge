@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/repo/chat_history_repo.dart';
@@ -30,12 +31,13 @@ class ChatHistoryProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _isHistoryEnabled = prefs.getBool(_historyEnabledKey) ?? true;
       notifyListeners();
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to load chat history settings',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to load chat history settings: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load chat history settings: $e',
       );
+
       _error = 'Failed to load settings: $e';
       notifyListeners();
     }
@@ -46,12 +48,13 @@ class ChatHistoryProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_historyEnabledKey, _isHistoryEnabled);
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to save chat history settings',
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to save chat history settings: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to save chat history settings: $e',
       );
+
       _error = 'Failed to save settings: $e';
       notifyListeners();
     }
@@ -63,11 +66,15 @@ class ChatHistoryProvider extends ChangeNotifier {
     await _saveSettings();
 
     if (!_isHistoryEnabled) {
-      await FirebaseCrashlytics.instance.log(
+      FlutterBugfender.sendCrash(
+          'Chat history disabled by user', StackTrace.current.toString());
+      FlutterBugfender.error(
         'Chat history disabled by user',
       );
     } else {
-      await FirebaseCrashlytics.instance.log(
+      FlutterBugfender.sendCrash(
+          'Chat history enabled by user', StackTrace.current.toString());
+      FlutterBugfender.error(
         'Chat history enabled by user',
       );
     }
@@ -86,14 +93,17 @@ class ChatHistoryProvider extends ChangeNotifier {
 
       _chatHistories = await ChatHistoryRepo.getAllChatHistories();
 
-      await FirebaseCrashlytics.instance.log(
+      FlutterBugfender.sendCrash(
+          'Loaded ${_chatHistories.length} chat histories',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
         'Loaded ${_chatHistories.length} chat histories',
       );
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to load chat histories',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to load chat histories: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to load chat histories: $e',
       );
       _error = 'Failed to load chat histories: $e';
     } finally {
@@ -123,13 +133,13 @@ class ChatHistoryProvider extends ChangeNotifier {
       );
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to save chat history in provider',
-        information: ['Chat ID: ${chatHistory.id}'],
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to save chat history in provider: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to save chat history in provider: $e',
       );
+
       _error = 'Failed to save chat history: $e';
       notifyListeners();
     }
@@ -149,18 +159,22 @@ class ChatHistoryProvider extends ChangeNotifier {
         _chatHistories.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
       }
 
-      await FirebaseCrashlytics.instance.log(
+      FlutterBugfender.sendCrash(
+          'Chat history updated locally: ${chatHistory.id}',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
         'Chat history updated locally: ${chatHistory.id}',
       );
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to update chat history in provider',
-        information: ['Chat ID: ${chatHistory.id}'],
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to update chat history in provider: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update chat history in provider: $e',
       );
+
       _error = 'Failed to update chat history: $e';
       notifyListeners();
     }
@@ -174,18 +188,16 @@ class ChatHistoryProvider extends ChangeNotifier {
       // Remove from local list
       _chatHistories.removeWhere((h) => h.id == id);
 
-      await FirebaseCrashlytics.instance.log(
-        'Chat history deleted: $id',
-      );
+      await FlutterBugfender.log('Chat history deleted: $id');
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to delete chat history',
-        information: ['Chat ID: $id'],
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to delete chat history: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to delete chat history: $e',
       );
+
       _error = 'Failed to delete chat history: $e';
       notifyListeners();
     }
@@ -199,17 +211,16 @@ class ChatHistoryProvider extends ChangeNotifier {
       // Clear local list
       _chatHistories.clear();
 
-      await FirebaseCrashlytics.instance.log(
-        'All chat histories cleared',
-      );
+      await FlutterBugfender.log('All chat histories cleared');
 
       notifyListeners();
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to clear all chat histories',
+    } catch (e) {
+      await FlutterBugfender.sendCrash('Failed to clear all chat histories: $e',
+          StackTrace.current.toString());
+      await FlutterBugfender.error(
+        'Failed to clear all chat histories: $e',
       );
+
       _error = 'Failed to clear chat histories: $e';
       notifyListeners();
     }

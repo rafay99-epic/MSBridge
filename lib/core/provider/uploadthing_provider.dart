@@ -66,6 +66,8 @@ class UploadThingProvider extends ChangeNotifier {
       FlutterBugfender.error(
         'UploadThingProvider.uploadImage failed: $e',
       );
+      FlutterBugfender.sendCrash('UploadThingProvider.uploadImage failed: $e',
+          StackTrace.current.toString());
       return null;
     } finally {
       _isUploading = false;

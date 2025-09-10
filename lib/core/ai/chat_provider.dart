@@ -67,6 +67,11 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removePendingImageUrl(String url) {
+    _pendingImageUrls.remove(url);
+    notifyListeners();
+  }
+
   void clearPendingImages() {
     _pendingImageUrls.clear();
     notifyListeners();
@@ -89,7 +94,8 @@ class ChatProvider extends ChangeNotifier {
         ),
       );
     } catch (e) {
-      // Try fallback to a stable model
+      FlutterBugfender.sendCrash(
+          'Failed to initialize AI model: $e', StackTrace.current.toString());
       try {
         _modelName = 'gemini-2.5-pro';
         _model = GenerativeModel(
@@ -204,6 +210,8 @@ class ChatProvider extends ChangeNotifier {
       // Add user message merged with any pending images
       final List<String> attachments = List<String>.from(_pendingImageUrls);
       messages.add(ChatMessage(true, question, imageUrls: attachments));
+      // Clear previews immediately after sending; the message keeps attachments
+      _pendingImageUrls.clear();
       notifyListeners();
 
       // Save to chat history if enabled
@@ -320,10 +328,15 @@ class ChatProvider extends ChangeNotifier {
           parts.add(DataPart(mime, resp.bodyBytes));
         }
       } on TimeoutException catch (e) {
+        await FlutterBugfender.sendCrash(
+            'Image fetch timed out + $e', StackTrace.current.toString());
         await FlutterBugfender.error(
           'Image fetch timed out +  $e',
         );
       } catch (e) {
+        await FlutterBugfender.sendCrash(
+            'Failed to fetch image bytes for Gemini: $e',
+            StackTrace.current.toString());
         await FlutterBugfender.error(
           'Failed to fetch image bytes for Gemini: $e',
         );
@@ -385,7 +398,8 @@ class ChatProvider extends ChangeNotifier {
 
     // Log to Firebase Crashlytics
     if (error != null) {
-      FlutterBugfender.error('Chat Provider Error: $message');
+      FlutterBugfender.sendCrash(
+          'Chat Provider Error: $message', StackTrace.current.toString());
     }
     FlutterBugfender.log('Chat Provider Error: $message');
 
@@ -414,6 +428,8 @@ class ChatProvider extends ChangeNotifier {
     try {
       FlutterBugfender.log('Chat Provider Event: $eventName');
     } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to log to Crashlytics: $e', StackTrace.current.toString());
       FlutterBugfender.error('Failed to log to Crashlytics: $e');
     }
   }
@@ -501,6 +517,8 @@ class ChatProvider extends ChangeNotifier {
         'Chat history saved: ${chatHistory.id} with ${historyMessages.length} messages',
       );
     } catch (e) {
+      await FlutterBugfender.sendCrash(
+          'Failed to save chat history: $e', StackTrace.current.toString());
       await FlutterBugfender.error('Failed to save chat history: $e');
     }
   }
@@ -534,6 +552,9 @@ class ChatProvider extends ChangeNotifier {
             );
             notifyListeners();
           } catch (e) {
+            await FlutterBugfender.sendCrash(
+                'Failed to build context after loading history: $e',
+                StackTrace.current.toString());
             await FlutterBugfender.error(
               'Failed to build context after loading history: $e',
             );
@@ -548,6 +569,9 @@ class ChatProvider extends ChangeNotifier {
             await _initializeModel();
             notifyListeners();
           } catch (e) {
+            await FlutterBugfender.sendCrash(
+                'Failed to initialize model after loading history: $e',
+                StackTrace.current.toString());
             await FlutterBugfender.error(
               'Failed to initialize model after loading history: $e',
             );
@@ -562,9 +586,6 @@ class ChatProvider extends ChangeNotifier {
         'Chat loaded from history: ${chatHistory.id}',
       );
     } catch (e) {
-      await FlutterBugfender.error(
-        'Failed to load chat from history: $e',
-      );
       _setError('Failed to load chat history', e);
     }
   }

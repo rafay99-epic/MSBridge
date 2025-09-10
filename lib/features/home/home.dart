@@ -16,20 +16,38 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  PageController? _pageController;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
-  final List<Widget?> _pages = List.filled(5, null);
-  final List<bool> _pagesLoaded = List.filled(5, false);
+  final List<Widget> _pages = [
+    const Msnotes(),
+    const ChatAssistantPage(),
+    const Notetaking(),
+    const Setting(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _selectedIndex);
 
-    _pagesLoaded[0] = true;
-    _pages[0] = const Msnotes();
+    // Initialize fade animation controller
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Start with the first page visible
+    _fadeController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDeletionSync();
@@ -43,68 +61,50 @@ class _HomeState extends State<Home> {
         await DeletionSyncHelper.initializeForUser(user.uid);
       }
     } catch (e) {
-      FlutterBugfender.log('Error initializing deletion sync: $e');
+      FlutterBugfender.error('Error initializing deletion sync: $e');
+      FlutterBugfender.sendCrash("Error initializing deletion sync: $e",
+          StackTrace.current.toString());
     }
   }
 
   @override
   void dispose() {
-    _pageController?.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
-  Widget _getPage(int index) {
-    // Return cached page if already loaded
-    if (_pagesLoaded[index] && _pages[index] != null) {
-      return _pages[index]!;
-    }
+  // void _onItemTapped(int index) {
+  //   if (index != _selectedIndex) {
+  //     // Start fade out animation
+  //     _fadeController.reverse().then((_) {
+  //       setState(() {
+  //         _selectedIndex = index;
+  //       });
+  //       // Start fade in animation
+  //       _fadeController.forward();
+  //     });
+  //   }
+  // }
 
-    // Load page on demand
-    Widget page;
-    switch (index) {
-      case 0:
-        page = const Msnotes();
-        break;
-      case 1:
-        page = const ChatAssistantPage();
-        break;
-      case 2:
-        page = const Notetaking();
-        break;
-      case 3:
-        page = const Setting();
-        break;
-      default:
-        page = const Msnotes();
-    }
+  bool _isTransitioning = false;
 
-    // Cache the page instance
-    _pages[index] = page;
-    _pagesLoaded[index] = true;
-
-    return page;
-  }
-
-  void _onItemTapped(int index) {
-    final controller = _pageController;
-    if (controller == null) return;
-
-    final pageDelta = (index - _selectedIndex).abs();
-    if (pageDelta > 1) {
-      controller.jumpToPage(index);
+  Future<void> _onItemTapped(int index) async {
+    if (index == _selectedIndex ||
+        _isTransitioning ||
+        _fadeController.isAnimating) {
       return;
     }
-
-    // Optimized animation for better performance
-    controller.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _onPageChanged(int index) {
-    setState(() => _selectedIndex = index);
+    _isTransitioning = true;
+    try {
+      await _fadeController.reverse();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _selectedIndex = index);
+      await _fadeController.forward();
+    } finally {
+      _isTransitioning = false;
+    }
   }
 
   @override
@@ -119,17 +119,44 @@ class _HomeState extends State<Home> {
     final double labelSz = isCompact ? 12 : 13;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const ClampingScrollPhysics(),
-        allowImplicitScrolling: false,
-        children: List.generate(
-          5,
-          (index) => RepaintBoundary(
-            child: _getPage(index),
-          ),
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == 0) {
+            return;
+          }
+          int newIndex = _selectedIndex;
+
+          if (details.primaryVelocity! > 0) {
+            // Swipe right - go to previous page
+            if (_selectedIndex > 0) {
+              newIndex = _selectedIndex - 1;
+            }
+          } else {
+            // Swipe left - go to next page
+            if (_selectedIndex < _pages.length - 1) {
+              newIndex = _selectedIndex + 1;
+            }
+          }
+
+          // Only animate if we're actually changing pages
+          if (newIndex != _selectedIndex) {
+            _fadeController.reverse().then((_) {
+              setState(() {
+                _selectedIndex = newIndex;
+              });
+              _fadeController.forward();
+            });
+          }
+        },
+        child: AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: _pages[_selectedIndex],
+            );
+          },
         ),
       ),
       bottomNavigationBar: Padding(
@@ -146,6 +173,7 @@ class _HomeState extends State<Home> {
           duration: const Duration(milliseconds: 200),
           iconSize: iconSz,
           tabBorderRadius: 12,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           textStyle: theme.textTheme.labelMedium?.copyWith(
             fontSize: labelSz,
             color: colorScheme.onSurface,

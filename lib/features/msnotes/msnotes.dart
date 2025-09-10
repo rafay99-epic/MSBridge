@@ -60,6 +60,8 @@ class _MSNotesScreenState extends State<Msnotes>
       } catch (e) {
         FlutterBugfender.log("Error fetching notes: $e");
         FlutterBugfender.error(e.toString());
+        FlutterBugfender.sendCrash(
+            "Error fetching notes: $e", StackTrace.current.toString());
         if (mounted) {
           CustomSnackBar.show(
             context,
