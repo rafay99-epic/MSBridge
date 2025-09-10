@@ -1,4 +1,3 @@
-// features/setting/bottom_sheets/sync_bottom_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
@@ -26,7 +25,7 @@ class SyncBottomSheet extends StatefulWidget {
 class _SyncBottomSheetState extends State<SyncBottomSheet> {
   bool _isSyncingNotesToCloud = false;
   bool _isPullingFromCloud = false;
-  bool _isTogglingCloud = false; // guard to prevent re-entrancy
+  bool _isTogglingCloud = false;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +106,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                       );
                     }
                   } finally {
-                    _isTogglingCloud = false;
+                    if (mounted) {
+                      _isTogglingCloud = false;
+                    }
                   }
                 },
               );
@@ -264,7 +265,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } finally {
-      setState(() => _isSyncingNotesToCloud = false);
+      if (mounted) {
+        setState(() => _isSyncingNotesToCloud = false);
+      }
     }
   }
 
@@ -295,7 +298,9 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
         );
       }
     } finally {
-      setState(() => _isPullingFromCloud = false);
+      if (mounted) {
+        setState(() => _isPullingFromCloud = false);
+      }
     }
   }
 

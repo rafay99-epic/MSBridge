@@ -97,7 +97,7 @@ class PinSetup extends StatelessWidget {
                                     await pinProvider.savePin(
                                         pin); // ✅ Use savePin for new PINs
                                     await pinProvider.setEnabled(true);
-                                    Navigator.pop(context);
+                                    Navigator.maybePop(context);
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
                                       Navigator.of(sheetContext).pop();
@@ -109,11 +109,11 @@ class PinSetup extends StatelessWidget {
                           }
                         } else {
                           await pinProvider.setEnabled(true);
-                          if (context.mounted) Navigator.of(context).pop();
+                          if (context.mounted) Navigator.of(context).maybePop();
                         }
                       } else {
                         await pinProvider.setEnabled(false);
-                        if (context.mounted) Navigator.of(context).pop();
+                        if (context.mounted) Navigator.of(context).maybePop();
                       }
                     },
                   ),
@@ -169,7 +169,7 @@ class PinSetup extends StatelessWidget {
                                 'PIN changed successfully!',
                                 isSuccess: true,
                               );
-                              Navigator.pop(context);
+                              Navigator.maybePop(context);
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 Navigator.of(sheetContext).pop();
                               });
@@ -239,7 +239,7 @@ class PinSetup extends StatelessWidget {
                         'PIN lock has been reset!',
                         isSuccess: true,
                       );
-                      if (context.mounted) Navigator.of(context).pop();
+                      if (context.mounted) Navigator.of(context).maybePop();
                     }
                   },
                 ),

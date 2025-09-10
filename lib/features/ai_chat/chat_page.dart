@@ -471,6 +471,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: colorScheme.surface,
       appBar: CustomAppBar(
         title: "Ask AI",
@@ -511,7 +512,14 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           if (_isTyping) _buildTypingIndicator(context, colorScheme),
 
           // Message Composer
-          _buildComposer(context, colorScheme, theme),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: _buildComposer(context, colorScheme, theme),
+          ),
         ],
       ),
     );
@@ -977,6 +985,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
   Widget _buildComposer(
       BuildContext context, ColorScheme colorScheme, ThemeData theme) {
+    final chat = Provider.of<ChatProvider>(context);
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -989,94 +998,144 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             ),
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              onPressed: _isSending ? null : () => _attachImage(context),
-              icon: Icon(LineIcons.image, color: colorScheme.primary),
-              tooltip: 'Attach Image',
-            ),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.4),
-                    width: 2.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _controller,
-                  maxLines: null,
-                  enabled: !_isSending, // Disable text field when sending
-                  textInputAction: TextInputAction.send,
-                  decoration: InputDecoration(
-                    hintText: _isSending
-                        ? 'Sending message...'
-                        : 'Ask AI anything...',
-                    hintStyle: TextStyle(
-                      color: colorScheme.primary.withOpacity(0.7),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontSize: 16,
-                  ),
-                  onSubmitted: _isSending ? null : (_) => _sendMessage(context),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: _isSending
-                    ? colorScheme.primary.withOpacity(0.5)
-                    : colorScheme.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: _isSending
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              colorScheme.onPrimary),
+            if (chat.pendingImageUrls.isNotEmpty)
+              SizedBox(
+                height: 76,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  itemBuilder: (_, i) {
+                    final url = chat.pendingImageUrls[i];
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            url,
+                            width: 76,
+                            height: 76,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      )
-                    : Icon(
-                        LineIcons.paperPlane,
-                        color: colorScheme.onPrimary,
-                        size: 20,
-                      ),
-                onPressed: _isSending ? null : () => _sendMessage(context),
-                style: IconButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
+                        Positioned(
+                          top: -6,
+                          right: -6,
+                          child: Material(
+                            color: colorScheme.error,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => chat.removePendingImageUrl(url),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(Icons.close,
+                                    size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemCount: chat.pendingImageUrls.length,
                 ),
               ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: _isSending ? null : () => _attachImage(context),
+                  icon: Icon(LineIcons.image, color: colorScheme.primary),
+                  tooltip: 'Attach Image',
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.4),
+                        width: 2.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      maxLines: null,
+                      enabled: !_isSending, // Disable text field when sending
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: _isSending
+                            ? 'Sending message...'
+                            : 'Ask AI anything...',
+                        hintStyle: TextStyle(
+                          color: colorScheme.primary.withOpacity(0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontSize: 16,
+                      ),
+                      onSubmitted:
+                          _isSending ? null : (_) => _sendMessage(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: _isSending
+                        ? colorScheme.primary.withOpacity(0.5)
+                        : colorScheme.primary,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: _isSending
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.onPrimary),
+                            ),
+                          )
+                        : Icon(
+                            LineIcons.paperPlane,
+                            color: colorScheme.onPrimary,
+                            size: 20,
+                          ),
+                    onPressed: _isSending ? null : () => _sendMessage(context),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

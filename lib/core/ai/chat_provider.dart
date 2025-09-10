@@ -67,6 +67,11 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removePendingImageUrl(String url) {
+    _pendingImageUrls.remove(url);
+    notifyListeners();
+  }
+
   void clearPendingImages() {
     _pendingImageUrls.clear();
     notifyListeners();
@@ -205,6 +210,8 @@ class ChatProvider extends ChangeNotifier {
       // Add user message merged with any pending images
       final List<String> attachments = List<String>.from(_pendingImageUrls);
       messages.add(ChatMessage(true, question, imageUrls: attachments));
+      // Clear previews immediately after sending; the message keeps attachments
+      _pendingImageUrls.clear();
       notifyListeners();
 
       // Save to chat history if enabled

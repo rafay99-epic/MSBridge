@@ -50,10 +50,8 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
       final pinProvider =
           Provider.of<AppPinLockProvider>(context, listen: false);
 
-      // Listen to PIN provider changes
       pinProvider.addListener(_onPinProviderChanged);
 
-      // Ensure persisted state is loaded before deciding what to show
       await pinProvider.refreshPinLockState();
 
       final hasPin = await pinProvider.hasPin();
