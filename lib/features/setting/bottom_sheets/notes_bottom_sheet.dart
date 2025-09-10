@@ -68,13 +68,17 @@ class NotesBottomSheet extends StatelessWidget {
           subtitle: "Configure version limits and cleanup",
           icon: LineIcons.cog,
           onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const VersionHistorySettings(),
-              ),
-            );
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              Navigator.push(
+                context,
+                PageTransition(
+                  type: PageTransitionType.rightToLeft,
+                  child: const VersionHistorySettings(),
+                ),
+              );
+            });
           },
         ),
 
@@ -104,13 +108,17 @@ class NotesBottomSheet extends StatelessWidget {
                     subtitle: "Manage your shared notes and links",
                     icon: LineIcons.share,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        PageTransition(
-                          type: PageTransitionType.rightToLeft,
-                          child: const SharedNotesPage(),
-                        ),
-                      );
+                      Navigator.of(context).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!context.mounted) return;
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: const SharedNotesPage(),
+                          ),
+                        );
+                      });
                     },
                   ),
                 ],

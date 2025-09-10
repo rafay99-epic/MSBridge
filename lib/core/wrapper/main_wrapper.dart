@@ -14,13 +14,13 @@ class SecurityWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<AppPinLockProvider, FingerprintAuthProvider>(
       builder: (context, pinProvider, fingerprintProvider, _) {
+        final Widget pinWrapped = AppPinLockWrapper(child: child);
+
         if (fingerprintProvider.isFingerprintEnabled) {
-          return FingerprintAuthWrapper(child: child);
-        } else if (pinProvider.enabled) {
-          return AppPinLockWrapper(child: child);
-        } else {
-          return child;
+          return FingerprintAuthWrapper(child: pinWrapped);
         }
+
+        return pinWrapped;
       },
     );
   }

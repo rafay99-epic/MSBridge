@@ -85,6 +85,7 @@ class PinSetup extends StatelessWidget {
                           );
 
                           if (proceed == true) {
+                            final sheetContext = context;
                             Navigator.push(
                               context,
                               PageTransition(
@@ -97,6 +98,10 @@ class PinSetup extends StatelessWidget {
                                         pin); // ✅ Use savePin for new PINs
                                     await pinProvider.setEnabled(true);
                                     Navigator.pop(context);
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      Navigator.of(sheetContext).pop();
+                                    });
                                   },
                                 ),
                               ),
@@ -104,9 +109,11 @@ class PinSetup extends StatelessWidget {
                           }
                         } else {
                           await pinProvider.setEnabled(true);
+                          if (context.mounted) Navigator.of(context).pop();
                         }
                       } else {
                         await pinProvider.setEnabled(false);
+                        if (context.mounted) Navigator.of(context).pop();
                       }
                     },
                   ),
@@ -146,6 +153,7 @@ class PinSetup extends StatelessWidget {
                     // First verify current PIN
                     final currentPin = await pinProvider.readPin();
                     if (currentPin != null) {
+                      final sheetContext = context;
                       Navigator.push(
                         context,
                         PageTransition(
@@ -162,6 +170,9 @@ class PinSetup extends StatelessWidget {
                                 isSuccess: true,
                               );
                               Navigator.pop(context);
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Navigator.of(sheetContext).pop();
+                              });
                             },
                           ),
                         ),
@@ -228,6 +239,7 @@ class PinSetup extends StatelessWidget {
                         'PIN lock has been reset!',
                         isSuccess: true,
                       );
+                      if (context.mounted) Navigator.of(context).pop();
                     }
                   },
                 ),

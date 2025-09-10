@@ -66,6 +66,7 @@ class DataManagementBottomSheet extends StatelessWidget {
           'Backup exported successfully to $detailedLocation',
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -90,6 +91,7 @@ class DataManagementBottomSheet extends StatelessWidget {
           'Import: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped',
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       FlutterBugfender.sendCrash(

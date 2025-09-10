@@ -125,13 +125,17 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
               "Advanced options: bidirectional sync, export/import, reset",
           icon: LineIcons.cog,
           onTap: () {
-            Navigator.push(
-              context,
-              PageTransition(
-                type: PageTransitionType.rightToLeft,
-                child: const SettingsSyncPage(),
-              ),
-            );
+            Navigator.of(context).pop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              Navigator.push(
+                context,
+                PageTransition(
+                  type: PageTransitionType.rightToLeft,
+                  child: const SettingsSyncPage(),
+                ),
+              );
+            });
           },
         ),
         const SizedBox(height: 24),
@@ -246,6 +250,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           "Notes synced to cloud successfully!",
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -276,6 +281,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           "Successfully pulled data from cloud!",
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -306,6 +312,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
               : 'Auto sync set to every $minutes minutes',
           isSuccess: true,
         );
+        Navigator.of(context).pop();
       }
     }
   }
