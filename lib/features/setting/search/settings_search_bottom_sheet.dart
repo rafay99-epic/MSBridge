@@ -173,8 +173,12 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
               icon: Icon(Icons.close, size: 18, color: cs.primary),
               tooltip: 'Clear',
               onPressed: () {
+                _debounce?.cancel();
                 _controller.clear();
-                _onChanged('');
+                setState(() {
+                  _isSearching = false;
+                  _results = const [];
+                });
               },
             ),
         ],
