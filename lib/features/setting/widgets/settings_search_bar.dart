@@ -64,13 +64,16 @@ class SettingsSearchBar extends StatelessWidget {
                 ),
               ),
             ),
-            if (controller.text.isNotEmpty)
-              IconButton(
-                icon: Icon(Icons.close, size: 18, color: cs.primary),
-                tooltip: 'Clear',
-                onPressed: onClear,
-              ),
-          ],
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (_, value, __) => value.text.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.close, size: 18, color: cs.primary),
+                      tooltip: 'Clear',
+                      onPressed: onClear,
+                    )
+                  : const SizedBox.shrink(),
+            ),
         ),
       ),
     );
