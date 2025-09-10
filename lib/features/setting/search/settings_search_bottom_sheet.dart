@@ -27,6 +27,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
   bool _isSearching = false;
 
   @override
+  @override
   void initState() {
     super.initState();
     _anim = AnimationController(
@@ -35,6 +36,9 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
     _slide = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
     _anim.forward();
+    _controller.addListener(() {
+      if (mounted) setState(() {}); // updates clear button visibility instantly
+    });
     // Focus shortly after open for smoother keyboard animation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(
