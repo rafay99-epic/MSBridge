@@ -21,6 +21,8 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
   bool _pinVerified = false;
   bool _isInitialized = false;
   bool _shouldShowPinLock = false;
+  AppPinLockProvider? _cachedPinProvider;
+  bool _listenerAttached = false;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -47,16 +49,34 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
 
   Future<void> _initializePinLock() async {
     try {
-      final pinProvider =
+      _cachedPinProvider ??=
           Provider.of<AppPinLockProvider>(context, listen: false);
 
-      pinProvider.addListener(_onPinProviderChanged);
+      final provider = _cachedPinProvider;
+      if (provider == null) {
+        // Provider not available yet; treat as verified to avoid blocking UI
+        if (!mounted) return;
+        setState(() {
+          _shouldShowPinLock = false;
+          _pinVerified = true;
+          _isInitialized = true;
+        });
+        _fadeController.forward();
+        return;
+      }
 
-      await pinProvider.refreshPinLockState();
+      if (!_listenerAttached) {
+        provider.addListener(_onPinProviderChanged);
+        _listenerAttached = true;
+      }
 
-      final hasPin = await pinProvider.hasPin();
+      await provider.refreshPinLockState();
 
-      if (pinProvider.enabled && hasPin) {
+      final hasPin = await provider.hasPin();
+
+      if (!mounted) return;
+
+      if (provider.enabled && hasPin) {
         setState(() {
           _shouldShowPinLock = true;
           _isInitialized = true;
@@ -70,6 +90,7 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
         _fadeController.forward();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _shouldShowPinLock = false;
         _pinVerified = true;
@@ -81,10 +102,13 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
 
   void _onPinProviderChanged() {
     if (!mounted) return;
-
-    final pinProvider = Provider.of<AppPinLockProvider>(context, listen: false);
+    // Fall back to reading once if the cache is missing, but avoid during dispose
+    _cachedPinProvider ??=
+        Provider.of<AppPinLockProvider>(context, listen: false);
 
     // Check if PIN lock state changed and we need to show lock screen
+    final pinProvider = _cachedPinProvider;
+    if (pinProvider == null) return;
     if (pinProvider.enabled && pinProvider.wasRecentlyInBackground) {
       setState(() {
         _shouldShowPinLock = true;
@@ -102,15 +126,17 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
   void dispose() {
     // Remove listener when widget is disposed
     try {
-      final pinProvider =
-          Provider.of<AppPinLockProvider>(context, listen: false);
-      pinProvider.removeListener(_onPinProviderChanged);
+      if (_listenerAttached) {
+        _cachedPinProvider?.removeListener(_onPinProviderChanged);
+        _listenerAttached = false;
+      }
     } catch (e) {
       FlutterBugfender.sendCrash("Error removing pin provider listener: $e",
           StackTrace.current.toString());
       FlutterBugfender.error("Error removing pin provider listener: $e");
       // Provider might not be available during dispose
     }
+    _cachedPinProvider = null;
 
     _fadeController.dispose();
     super.dispose();
@@ -145,8 +171,8 @@ class _AppPinLockWrapperState extends State<AppPinLockWrapper>
         child: StartupPinLockScreen(
           key: const ValueKey('pin_lock'),
           onPinCorrect: () async {
-            // ⭐ CRITICAL FIX: Notify the provider that PIN verification was successful
-            Provider.of<AppPinLockProvider>(context, listen: false)
+            (_cachedPinProvider ??
+                    Provider.of<AppPinLockProvider>(context, listen: false))
                 .onPinVerificationSuccess();
             await _fadeController.reverse();
 

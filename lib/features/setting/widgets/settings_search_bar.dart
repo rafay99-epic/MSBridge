@@ -74,6 +74,7 @@ class SettingsSearchBar extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
+          ],
         ),
       ),
     );
