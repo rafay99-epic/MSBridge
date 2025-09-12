@@ -71,6 +71,8 @@ dependencies:
   uploadthing: ^1.0.4
   flutter_bugfender: ^3.0.0+1
   flutter_localization: ^0.3.3
+  markdown_quill: ^4.3.0
+  flutter_quill_to_pdf: ^2.3.9
 
 dev_dependencies:
   flutter_test:
