@@ -8,6 +8,34 @@ import 'package:path_provider/path_provider.dart';
 import 'package:msbridge/core/permissions/permission.dart';
 
 class MarkdownExporter {
+  /// Sanitizes a filename by trimming, replacing invalid characters with underscores,
+  /// collapsing whitespace, defaulting to 'note' if empty, and truncating to 64 chars.
+  static String _safeFileName(String title) {
+    if (title.isEmpty) return 'note';
+
+    // Trim whitespace
+    String sanitized = title.trim();
+
+    // Replace invalid filesystem characters and newlines with underscores
+    sanitized = sanitized.replaceAll(RegExp(r'[<>:"/\\|?*\n\r]'), '_');
+
+    // Collapse multiple whitespace characters into single spaces
+    sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
+
+    // Remove leading/trailing spaces after whitespace collapse
+    sanitized = sanitized.trim();
+
+    // Default to 'note' if empty after sanitization
+    if (sanitized.isEmpty) return 'note';
+
+    // Truncate to 64 characters
+    if (sanitized.length > 64) {
+      sanitized = sanitized.substring(0, 64);
+    }
+
+    return sanitized;
+  }
+
   static Future<void> exportToMarkdown(
       BuildContext context, String title, QuillController controller) async {
     // Convert Quill Delta to Markdown using markdown_quill package
@@ -41,7 +69,8 @@ class MarkdownExporter {
         return;
       }
 
-      final file = File('${downloadsDirectory.path}/$title.md');
+      final safeFileName = _safeFileName(title);
+      final file = File('${downloadsDirectory.path}/$safeFileName.md');
       await file.writeAsString(content);
 
       CustomSnackBar.show(context, "Markdown saved to ${file.path}",

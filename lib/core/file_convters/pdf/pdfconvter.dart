@@ -9,6 +9,34 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:msbridge/core/permissions/permission.dart';
 
 class PdfExporter {
+  /// Sanitizes a filename by trimming, replacing invalid characters with underscores,
+  /// collapsing whitespace, defaulting to 'document' if empty, and truncating to 64 chars.
+  static String _safeFileName(String raw) {
+    if (raw.isEmpty) return 'document';
+
+    // Trim whitespace
+    String sanitized = raw.trim();
+
+    // Replace invalid filesystem characters and newlines with underscores
+    sanitized = sanitized.replaceAll(RegExp(r'[<>:"/\\|?*\n\r]'), '_');
+
+    // Collapse multiple whitespace characters into single spaces
+    sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
+
+    // Remove leading/trailing spaces after whitespace collapse
+    sanitized = sanitized.trim();
+
+    // Default to 'document' if empty after sanitization
+    if (sanitized.isEmpty) return 'document';
+
+    // Truncate to 64 characters
+    if (sanitized.length > 64) {
+      sanitized = sanitized.substring(0, 64);
+    }
+
+    return sanitized;
+  }
+
   static Future<void> exportToPdf(
       BuildContext context, String title, QuillController controller) async {
     if (title.isEmpty) {
@@ -42,7 +70,13 @@ class PdfExporter {
         return;
       }
 
-      final file = File('${downloadsDirectory.path}/$title.pdf');
+      // Ensure the downloads directory exists
+      if (!downloadsDirectory.existsSync()) {
+        downloadsDirectory.createSync(recursive: true);
+      }
+
+      final safeFileName = _safeFileName(title);
+      final file = File('${downloadsDirectory.path}/$safeFileName.pdf');
 
       // Build the converter from Quill Delta
       final delta = controller.document.toDelta();
