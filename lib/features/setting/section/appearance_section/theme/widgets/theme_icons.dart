@@ -40,6 +40,8 @@ class ThemeIcons {
         return Icons.beach_access;
       case AppTheme.arcticFrost:
         return Icons.ac_unit;
+      case AppTheme.pureBlack:
+        return Icons.local_fire_department;
     }
   }
 }

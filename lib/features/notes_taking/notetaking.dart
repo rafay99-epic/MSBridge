@@ -424,11 +424,10 @@ class _NotetakingState extends State<Notetaking>
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      cacheExtent: 1000, // prefetch ~1k px ahead for smoother scrolling
+      cacheExtent: 1000, 
       slivers: [
-        // Removed heading per request
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 28.0),
+          padding: const EdgeInsets.fromLTRB(8.0, 20.0, 8.0, 28.0),
           sliver: SliverMasonryGrid.count(
             crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
             mainAxisSpacing: 16,
