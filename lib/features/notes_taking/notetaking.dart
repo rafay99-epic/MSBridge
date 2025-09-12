@@ -5,7 +5,6 @@ import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
@@ -19,11 +18,14 @@ import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
 enum NoteLayoutMode { grid, list }
+
+enum NoteSortField { updatedAt, createdAt, tag }
+
+enum NoteSortOrder { desc, asc }
 
 class Notetaking extends StatefulWidget {
   const Notetaking({super.key});
@@ -49,28 +51,29 @@ class _NotetakingState extends State<Notetaking>
   // Cached data
   ValueListenable<Box<NoteTakingModel>>? _notesListenable;
   List<NoteTakingModel>? _cachedNotes;
-  List<NoteTakingModel>? _cachedPinnedNotes;
-  List<NoteTakingModel>? _cachedUnpinnedNotes;
+  // Pin-related caches removed
+  int _lastNotesCount = -1;
+  DateTime? _lastLatestUpdate;
 
   // Layout preferences
   static const String _layoutPrefKey = 'note_layout_mode';
   NoteLayoutMode _layoutMode = NoteLayoutMode.grid;
 
-  // Providers
-  NoteePinProvider? _pinProvider;
+  // Sort preferences
+  static const String _sortFieldKey = 'note_sort_field';
+  static const String _sortOrderKey = 'note_sort_order';
+  NoteSortField _sortField = NoteSortField.updatedAt;
+  NoteSortOrder _sortOrder = NoteSortOrder.desc;
+
+  // Pin provider removed
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize pin provider early
-    _pinProvider = NoteePinProvider();
-    _pinProvider!.initialize();
-
-    // Load layout preference immediately
     _loadLayoutPreference();
+    _loadSortPreference();
 
-    // Defer data loading to prevent jank during initial render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotes();
     });
@@ -78,11 +81,7 @@ class _NotetakingState extends State<Notetaking>
 
   @override
   void dispose() {
-    _pinProvider?.dispose();
-    _pinProvider = null;
     _cachedNotes = null;
-    _cachedPinnedNotes = null;
-    _cachedUnpinnedNotes = null;
     super.dispose();
   }
 
@@ -119,6 +118,54 @@ class _NotetakingState extends State<Notetaking>
     }
   }
 
+  Future<void> _loadSortPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final field = prefs.getString(_sortFieldKey);
+      final order = prefs.getString(_sortOrderKey);
+      if (mounted) {
+        setState(() {
+          _sortField = _parseSortField(field) ?? NoteSortField.updatedAt;
+          _sortOrder = _parseSortOrder(order) ?? NoteSortOrder.desc;
+        });
+      }
+    } catch (e) {
+      FlutterBugfender.error("Failed to load sort preference: $e");
+    }
+  }
+
+  Future<void> _saveSortPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sortFieldKey, _sortField.name);
+      await prefs.setString(_sortOrderKey, _sortOrder.name);
+    } catch (e) {
+      FlutterBugfender.error("Failed to save sort preference: $e");
+    }
+  }
+
+  NoteSortField? _parseSortField(String? value) {
+    switch (value) {
+      case 'updatedAt':
+        return NoteSortField.updatedAt;
+      case 'createdAt':
+        return NoteSortField.createdAt;
+      case 'tag':
+        return NoteSortField.tag;
+    }
+    return null;
+  }
+
+  NoteSortOrder? _parseSortOrder(String? value) {
+    switch (value) {
+      case 'asc':
+        return NoteSortOrder.asc;
+      case 'desc':
+        return NoteSortOrder.desc;
+    }
+    return null;
+  }
+
   Future<void> _loadNotes() async {
     if (_isLoading || _isDataLoaded) return;
 
@@ -127,10 +174,8 @@ class _NotetakingState extends State<Notetaking>
     });
 
     try {
-      // Get notes listenable
       _notesListenable = await HiveNoteTakingRepo.getNotesListenable();
 
-      // Pre-cache notes for faster initial render
       if (_notesListenable != null) {
         _updateCachedNotes(_notesListenable!.value);
       }
@@ -152,25 +197,35 @@ class _NotetakingState extends State<Notetaking>
     }
   }
 
-  // Update cached notes when data changes
-  void _updateCachedNotes(Box<NoteTakingModel> box) {
-    if (_pinProvider == null) return;
+  void _updateCachedNotes(Box<NoteTakingModel> box, {bool force = false}) {
+    final values = box.values;
+    final notesCount = values.length;
+    DateTime? latestUpdate;
+    for (final n in values) {
+      if (latestUpdate == null || n.updatedAt.isAfter(latestUpdate)) {
+        latestUpdate = n.updatedAt;
+      }
+    }
+    if (!force &&
+        notesCount == _lastNotesCount &&
+        latestUpdate == _lastLatestUpdate) {
+      return;
+    }
 
-    final notes = box.values.toList();
+    final notes = values.toList();
+    _applySorting(notes);
 
-    // Split into pinned and unpinned notes
-    final pinnedNotes = notes.where((note) {
-      final id = note.noteId;
-      return id != null && _pinProvider!.isNotePinned(id);
-    }).toList();
-
-    final unpinnedNotes = notes.where((note) {
-      final id = note.noteId;
-      return id == null || !_pinProvider!.isNotePinned(id);
-    }).toList();
     _cachedNotes = notes;
-    _cachedPinnedNotes = pinnedNotes;
-    _cachedUnpinnedNotes = unpinnedNotes;
+    _lastNotesCount = notesCount;
+    _lastLatestUpdate = latestUpdate;
+  }
+
+  void _recomputeSorting() {
+    final list = _notesListenable?.value;
+    if (list != null) {
+      _updateCachedNotes(list, force: true);
+      if (mounted) setState(() {});
+    }
   }
 
   void _toggleLayoutMode() {
@@ -275,27 +330,19 @@ class _NotetakingState extends State<Notetaking>
       return _buildLoadingState(theme);
     }
 
-    // Provide pin provider to descendants and ensure reactivity
-    return ChangeNotifierProvider.value(
-      value: _pinProvider!,
-      child: Consumer<NoteePinProvider>(
-        builder: (context, _, __) =>
-            ValueListenableBuilder<Box<NoteTakingModel>>(
-          valueListenable: _notesListenable!,
-          builder: (context, box, _) {
-            // Update cached notes when box changes
-            _updateCachedNotes(box);
+    return ValueListenableBuilder<Box<NoteTakingModel>>(
+      valueListenable: _notesListenable!,
+      builder: (context, box, _) {
+        _updateCachedNotes(box);
 
-            if (box.values.isEmpty) {
-              return const EmptyNotesMessage(
-                message: 'No notes yet',
-                description: 'Tap + to create a new note',
-              );
-            }
-            return _buildNotesList(theme);
-          },
-        ),
-      ),
+        if (box.values.isEmpty) {
+          return const EmptyNotesMessage(
+            message: 'No notes yet',
+            description: 'Tap + to create a new note',
+          );
+        }
+        return _buildNotesList(theme);
+      },
     );
   }
 
@@ -322,47 +369,17 @@ class _NotetakingState extends State<Notetaking>
   }
 
   Widget _buildNotesList(ThemeData theme) {
-    final pinnedNotes = _cachedPinnedNotes ?? [];
-    final unpinnedNotes = _cachedUnpinnedNotes ?? [];
+    final notes = _cachedNotes ?? [];
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
+      cacheExtent: 1000, // prefetch ~1k px ahead for smoother scrolling
       slivers: [
-        // Pinned notes section
-        if (pinnedNotes.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-              child: Text(
-                "Pinned Notes",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            sliver: SliverMasonryGrid.count(
-              crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childCount: pinnedNotes.length,
-              itemBuilder: (context, index) {
-                final note = pinnedNotes[index];
-                return _buildNoteItem(note, context);
-              },
-            ),
-          ),
-        ],
-
-        // Unpinned notes section
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: Text(
-              " Notes",
+              "Notes",
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
@@ -376,9 +393,9 @@ class _NotetakingState extends State<Notetaking>
             crossAxisCount: _layoutMode == NoteLayoutMode.grid ? 2 : 1,
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
-            childCount: unpinnedNotes.length,
+            childCount: notes.length,
             itemBuilder: (context, index) {
-              final note = unpinnedNotes[index];
+              final note = notes[index];
               return _buildNoteItem(note, context);
             },
           ),
@@ -462,6 +479,11 @@ class _NotetakingState extends State<Notetaking>
               tooltip: 'Search notes',
             ),
             IconButton(
+              tooltip: 'Sort',
+              icon: const Icon(Icons.sort),
+              onPressed: _openSortBottomSheet,
+            ),
+            IconButton(
               tooltip: 'Switch layout',
               icon: Icon(
                 _layoutMode == NoteLayoutMode.grid
@@ -471,6 +493,123 @@ class _NotetakingState extends State<Notetaking>
               onPressed: _toggleLayoutMode,
             ),
           ];
+  }
+
+  void _openSortBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Sort by',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(color: theme.colorScheme.primary)),
+              ),
+              RadioListTile<NoteSortField>(
+                value: NoteSortField.updatedAt,
+                groupValue: _sortField,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortField = v);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
+                title: const Text('Last updated'),
+              ),
+              RadioListTile<NoteSortField>(
+                value: NoteSortField.createdAt,
+                groupValue: _sortField,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortField = v);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
+                title: const Text('Date created'),
+              ),
+              RadioListTile<NoteSortField>(
+                value: NoteSortField.tag,
+                groupValue: _sortField,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortField = v);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
+                title: const Text('Tag (A→Z)'),
+              ),
+              const Divider(height: 8),
+              ListTile(
+                title: Text('Order',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(color: theme.colorScheme.primary)),
+              ),
+              RadioListTile<NoteSortOrder>(
+                value: NoteSortOrder.desc,
+                groupValue: _sortOrder,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortOrder = v);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
+                title: const Text('Descending'),
+              ),
+              RadioListTile<NoteSortOrder>(
+                value: NoteSortOrder.asc,
+                groupValue: _sortOrder,
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sortOrder = v);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
+                title: const Text('Ascending'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _applySorting(List<NoteTakingModel> list) {
+    int cmp(NoteTakingModel a, NoteTakingModel b) {
+      int result;
+      switch (_sortField) {
+        case NoteSortField.updatedAt:
+          result = a.updatedAt.compareTo(b.updatedAt);
+          break;
+        case NoteSortField.createdAt:
+          result = a.createdAt.compareTo(b.createdAt);
+          break;
+        case NoteSortField.tag:
+          final at = (a.tags.isNotEmpty ? a.tags.first : '').toLowerCase();
+          final bt = (b.tags.isNotEmpty ? b.tags.first : '').toLowerCase();
+          result = at.compareTo(bt);
+          if (result == 0) {
+            result = a.updatedAt.compareTo(b.updatedAt);
+          }
+          break;
+      }
+      return _sortOrder == NoteSortOrder.asc ? result : -result;
+    }
+
+    list.sort(cmp);
   }
 
   Widget _buildExpandableFab(ThemeData theme) {

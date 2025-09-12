@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
-import 'package:provider/provider.dart';
 
 class NoteCard extends StatefulWidget {
   const NoteCard({
@@ -29,8 +27,6 @@ class _NoteCardState extends State<NoteCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final noteProvider = Provider.of<NoteePinProvider>(context, listen: false);
-    final isPinned = noteProvider.isNotePinned(widget.note.noteId.toString());
 
     final lastUpdated = DateTime.parse(widget.note.updatedAt.toString());
     final formattedDate = DateFormat('dd/MM/yyyy').format(lastUpdated);
@@ -142,46 +138,7 @@ class _NoteCardState extends State<NoteCard> {
                         ),
                       ),
 
-                      // Right side - Pin Button
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        transitionBuilder: (child, animation) =>
-                            ScaleTransition(scale: animation, child: child),
-                        child: TextButton.icon(
-                          key: ValueKey<bool>(isPinned),
-                          onPressed: () => noteProvider
-                              .togglePin(widget.note.noteId.toString()),
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 36),
-                            backgroundColor: isPinned
-                                ? theme.colorScheme.primary.withOpacity(0.2)
-                                : theme.colorScheme.surfaceContainerHighest
-                                    .withOpacity(0.3),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: Icon(
-                            isPinned
-                                ? LineIcons.thumbtack
-                                : Icons.push_pin_outlined,
-                            size: 18,
-                            color: isPinned
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.secondary,
-                          ),
-                          label: Text(
-                            isPinned ? 'Pinned' : 'Pin',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: isPinned
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.secondary,
-                            ),
-                          ),
-                        ),
-                      ),
+                      const SizedBox.shrink(),
                     ],
                   ),
                 ],
