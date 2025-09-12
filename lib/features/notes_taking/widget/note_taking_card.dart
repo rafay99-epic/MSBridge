@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 
 class NoteCard extends StatefulWidget {
   const NoteCard({
@@ -125,7 +128,20 @@ class _NoteCardState extends State<NoteCard> {
 
               const SizedBox(height: 12),
 
-              buildContent(widget.note.noteContent, theme),
+              Builder(builder: (context) {
+                final rich = _buildRichPreview(theme);
+                if (rich != null) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      rich,
+                      const SizedBox(height: 8),
+                      _buildPlainExcerpt(theme),
+                    ],
+                  );
+                }
+                return buildContent(widget.note.noteContent, theme);
+              }),
 
               const SizedBox(height: 12),
 
@@ -175,6 +191,66 @@ class _NoteCardState extends State<NoteCard> {
         ),
       ),
     );
+  }
+
+  Widget _buildPlainExcerpt(ThemeData theme) {
+    try {
+      final raw = widget.note.noteContent.trim();
+      String text;
+      if (raw.startsWith('[')) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          final doc = Document.fromJson(decoded);
+          text = doc.toPlainText();
+        } else {
+          text = raw;
+        }
+      } else {
+        text = raw;
+      }
+      text = text.replaceAll('\n', ' ').trim();
+      if (text.length > 200) text = text.substring(0, 200) + '…';
+      if (text.isEmpty) return const SizedBox.shrink();
+      return Text(
+        text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.primary.withOpacity(0.85),
+        ),
+      );
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget? _buildRichPreview(ThemeData theme) {
+    try {
+      final raw = widget.note.noteContent.trim();
+      if (!raw.startsWith('[')) return null;
+      final dynamic decoded = jsonDecode(raw);
+      if (decoded is! List) return null;
+      final doc = Document.fromJson(decoded);
+      final controller = QuillController(
+        document: doc,
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 240),
+        child: AbsorbPointer(
+          absorbing: true,
+          child: QuillEditor.basic(
+            controller: controller,
+            config: QuillEditorConfig(
+              scrollable: true,
+              expands: false,
+              showCursor: false,
+              embedBuilders: FlutterQuillEmbeds.editorBuilders(),
+            ),
+          ),
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   void _showVersionHistory(BuildContext context) {

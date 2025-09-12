@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
@@ -27,6 +29,7 @@ import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note, this.initialTemplate});
@@ -65,6 +68,8 @@ class _CreateNoteState extends State<CreateNote>
   bool _isShareOperationInProgress =
       false; // Added to prevent multiple share operations
   StreamSubscription? _docChangesSub;
+  StreamSubscription? _imageUploadSub;
+  StreamSubscription? _imageNewlineFixSub;
 
   void _addTag(String rawTag) {
     final tag = rawTag.trim();
@@ -198,6 +203,8 @@ class _CreateNoteState extends State<CreateNote>
   @override
   void dispose() {
     _docChangesSub?.cancel();
+    _imageUploadSub?.cancel();
+    _imageNewlineFixSub?.cancel();
     _controller.dispose();
     _titleController.dispose();
     _tagInputController.dispose();
@@ -247,6 +254,32 @@ class _CreateNoteState extends State<CreateNote>
       }
     });
 
+    // Upload-and-replace for local image embeds
+    _imageUploadSub = _controller.document.changes.listen((event) async {
+      try {
+        if (!mounted) return;
+        final delta = event.change; // DocChange.change is the applied Delta
+        for (final op in delta.toList()) {
+          final data = op.data;
+          if (data is Map && data['image'] is String) {
+            final src = data['image'] as String;
+            final isLocal = src.startsWith('file://') || src.startsWith('/');
+            if (!isLocal) continue;
+            final file = File(src.replaceFirst('file://', ''));
+            if (!await file.exists()) continue;
+            if (!mounted) return;
+            final uploader =
+                Provider.of<UploadThingProvider>(context, listen: false);
+            final url = await uploader.uploadImage(file);
+            if (!mounted) return;
+            if (url != null && url.isNotEmpty) {
+              _controller.replaceImageSrc(src, url);
+            }
+          }
+        }
+      } catch (_) {}
+    });
+
     // Debounced document changes for auto-save
     if (FeatureFlag.enableAutoSave) {
       _docChangesSub?.cancel();
@@ -258,11 +291,53 @@ class _CreateNoteState extends State<CreateNote>
         });
       });
     }
+
+    // Ensure every image embed is followed by a newline so blocks (e.g., headings) work below images
+    _imageNewlineFixSub?.cancel();
+    _imageNewlineFixSub = _controller.document.changes.listen((_) {
+      if (!mounted) return;
+      _ensureImageFollowedByNewline();
+    });
+  }
+
+  void _ensureImageFollowedByNewline() {
+    // Prevent recursive triggers by doing minimal edits and exiting
+    final Delta delta = _controller.document.toDelta();
+    final List<Operation> ops = delta.toList();
+    int offset = 0;
+    for (int i = 0; i < ops.length; i++) {
+      final Operation op = ops[i];
+      final int len = op.length ?? 0;
+      final dynamic data = op.data;
+      final bool isImage = data is Map && data['image'] is String;
+      if (isImage) {
+        // Look ahead to next op; if none or doesn't start with newline, insert one
+        String nextTextFirstChar = '';
+        if (i + 1 < ops.length) {
+          final Operation next = ops[i + 1];
+          if (next.data is String && (next.data as String).isNotEmpty) {
+            nextTextFirstChar = (next.data as String)[0];
+          }
+        }
+        if (nextTextFirstChar != '\n') {
+          _controller.compose(
+            Delta()
+              ..retain(offset + 1)
+              ..insert('\n'),
+            _controller.selection,
+            ChangeSource.local,
+          );
+        }
+        break; // Handle a single image per change to avoid loops
+      }
+      offset += len;
+    }
   }
 
   void _reinitializeController(Document newDoc) {
     // Dispose old controller to avoid leaks
     _docChangesSub?.cancel();
+    _imageNewlineFixSub?.cancel();
     _controller.dispose();
     _controller = QuillController(
       document: newDoc,
@@ -317,7 +392,8 @@ class _CreateNoteState extends State<CreateNote>
         FlutterBugfender.sendCrash(
             'Failed to encode content: $e', StackTrace.current.toString());
         FlutterBugfender.error('Failed to encode content: $e');
-        content = _controller.document.toPlainText().trim();
+        // Fallback: ALWAYS save Quill JSON, never plain text
+        content = jsonEncode(_controller.document.toDelta().toJson());
       }
       if (title.isEmpty && content.isEmpty) {
         _isSaving = false;
@@ -388,7 +464,8 @@ class _CreateNoteState extends State<CreateNote>
       FlutterBugfender.sendCrash(
           'Failed to encode content: $e', StackTrace.current.toString());
       FlutterBugfender.error('Failed to encode content: $e');
-      content = _controller.document.toPlainText().trim();
+      // Fallback: ALWAYS save Quill JSON, never plain text
+      content = jsonEncode(_controller.document.toDelta().toJson());
     }
     SaveNoteResult result;
 
@@ -914,6 +991,7 @@ class _CreateNoteState extends State<CreateNote>
                         autoFocus: true,
                         placeholder: 'Note...',
                         expands: true,
+                        embedBuilders: FlutterQuillEmbeds.editorBuilders(),
                         onTapUp: (_, __) {
                           if (!_quillFocusNode.hasFocus) {
                             FocusScope.of(context)
@@ -959,7 +1037,7 @@ class _CreateNoteState extends State<CreateNote>
                     },
                     child: QuillSimpleToolbar(
                       controller: _controller,
-                      config: const QuillSimpleToolbarConfig(
+                      config: QuillSimpleToolbarConfig(
                         multiRowsDisplay: false,
                         toolbarSize: 44,
                         showCodeBlock: true,
@@ -989,6 +1067,7 @@ class _CreateNoteState extends State<CreateNote>
                         showDirection: false,
                         showSearchButton: true,
                         headerStyleType: HeaderStyleType.buttons,
+                        embedButtons: FlutterQuillEmbeds.toolbarButtons(),
                       ),
                     ),
                   ),
@@ -1406,5 +1485,27 @@ class _CreateNoteState extends State<CreateNote>
         });
       },
     );
+  }
+}
+
+extension _QuillImageReplace on QuillController {
+  void replaceImageSrc(String oldSrc, String newSrc) {
+    final d = document.toDelta();
+    int offset = 0;
+    for (final op in d.toList()) {
+      final len = op.length ?? 0;
+      final data = op.data;
+      if (data is Map && data['image'] == oldSrc) {
+        compose(
+            Delta()
+              ..retain(offset)
+              ..delete(1)
+              ..insert({"image": newSrc}),
+            selection,
+            ChangeSource.local);
+        break;
+      }
+      offset += len;
+    }
   }
 }
