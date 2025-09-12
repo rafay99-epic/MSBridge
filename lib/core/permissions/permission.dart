@@ -9,15 +9,11 @@ class PermissionHandler {
   static Future<bool> checkAndRequestFilePermission(
       BuildContext context) async {
     try {
-      // Gate by platform - only run Android-specific flows on Android
       if (kIsWeb) {
-        // Web doesn't need file permissions
         return true;
       }
 
       if (Platform.isIOS) {
-        // iOS uses different permission model - return true for now
-        // In production, you might want to request specific iOS permissions
         return true;
       }
 
@@ -25,7 +21,6 @@ class PermissionHandler {
         return await _handleAndroidFilePermission(context);
       }
 
-      // Desktop platforms don't need file permissions
       return true;
     } catch (e) {
       FlutterBugfender.error("Error checking permissions: $e");
