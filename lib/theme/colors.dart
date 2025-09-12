@@ -19,7 +19,8 @@ enum AppTheme {
   goldenHour,
   midnightPurple,
   tropicalParadise,
-  arcticFrost;
+  arcticFrost,
+  pureBlack;
 
   String get name => toString().split('.').last;
 }
@@ -63,6 +64,8 @@ extension AppThemeExtension on AppTheme {
         return 'Tropical Paradise';
       case AppTheme.arcticFrost:
         return 'Arctic Frost';
+      case AppTheme.pureBlack:
+        return 'Black & Orange';
     }
   }
 
@@ -104,6 +107,8 @@ extension AppThemeExtension on AppTheme {
         return 'assets/svg/ForestGreen.svg';
       case AppTheme.arcticFrost:
         return 'assets/svg/cyber_dark.svg';
+      case AppTheme.pureBlack:
+        return 'assets/svg/SunsetGlow.svg';
     }
   }
 }
@@ -476,6 +481,37 @@ class AppThemes {
     ),
   );
 
+  static ThemeData pureBlackTheme = ThemeData(
+    colorScheme: const ColorScheme.dark(
+      primary: Color(0xFFFF6B35), // Simple orange
+      secondary: Color(0xFFFF8A65), // Lighter orange
+      surface: Color(0xFF000000),
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Colors.white,
+      outline: Color(0xFF333333),
+      shadow: Color(0xFFE65100),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF000000),
+    cardColor: const Color(0xFF1A1A1A),
+    canvasColor: const Color(0xFF000000),
+    dialogBackgroundColor: const Color(0xFF1A1A1A),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xFF1A1A1A),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF000000),
+      foregroundColor: Color(0xFFE65100),
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      const TextTheme(
+        bodyLarge: TextStyle(color: Colors.white),
+        bodyMedium: TextStyle(color: Colors.white),
+        bodySmall: TextStyle(color: Color(0xFFE65100)),
+      ),
+    ),
+  );
+
   static final Map<AppTheme, ThemeData> themeMap = {
     AppTheme.light: lightTheme,
     AppTheme.dark: darkTheme,
@@ -495,6 +531,7 @@ class AppThemes {
     AppTheme.midnightPurple: midnightPurpleTheme,
     AppTheme.tropicalParadise: tropicalParadiseTheme,
     AppTheme.arcticFrost: arcticFrostTheme,
+    AppTheme.pureBlack: pureBlackTheme,
   };
 }
 
@@ -525,6 +562,18 @@ class AppColors {
     Color(0xFFFF79C6),
   ];
 
+  static const List<Color> blackGradient = [
+    Color(0xFF000000),
+    Color(0xFF333333),
+    Color(0xFF666666),
+  ];
+
+  static const List<Color> blackOrangeGradient = [
+    Color(0xFF000000),
+    Color(0xFFE65100),
+    Color(0xFFFF9800),
+  ];
+
   // Accent colors for highlights
   static const Color neonGreen = Color(0xFF00FF88);
   static const Color hotPink = Color(0xFFFF0080);
@@ -533,6 +582,8 @@ class AppColors {
   static const Color goldenOrange = Color(0xFFFF6B35);
   static const Color tropicalGreen = Color(0xFF00B894);
   static const Color iceBlue = Color(0xFF74B9FF);
+  static const Color pureBlack = Color(0xFF000000);
+  static const Color deepOrange = Color(0xFFE65100);
 
   // Utility colors
   static const Color glassWhite = Color(0x1AFFFFFF);

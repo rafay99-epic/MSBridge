@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/core/provider/pin_note_provider.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
@@ -10,7 +9,6 @@ class NoteList extends StatelessWidget {
   const NoteList({
     super.key,
     required this.notes,
-    required this.noteProvider,
     required this.theme,
     required this.isSelectionMode,
     required this.selectedNoteIds,
@@ -19,7 +17,6 @@ class NoteList extends StatelessWidget {
   });
 
   final List<NoteTakingModel> notes;
-  final NoteePinProvider noteProvider;
   final ThemeData theme;
   final bool isSelectionMode;
   final List<String> selectedNoteIds;
@@ -35,22 +32,15 @@ class NoteList extends StatelessWidget {
       );
     }
 
-    final pinnedNotes = notes
-        .where((note) => noteProvider.isNotePinned(note.noteId.toString()))
-        .toList();
-    final unpinnedNotes = notes
-        .where((note) => !noteProvider.isNotePinned(note.noteId.toString()))
-        .toList();
+    final allNotes = notes.toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pinnedNotes.isNotEmpty) _buildSectionTitle("Pinned Notes"),
-          if (pinnedNotes.isNotEmpty) _buildNoteGrid(pinnedNotes),
-          _buildSectionTitle("All Notes"),
-          _buildNoteGrid(unpinnedNotes),
+          _buildSectionTitle("Notes"),
+          _buildNoteGrid(allNotes),
         ],
       ),
     );
@@ -107,8 +97,7 @@ class NoteList extends StatelessWidget {
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
-          transitionDuration: const Duration(
-              milliseconds: 200), // Reduced for better performance
+          transitionDuration: const Duration(milliseconds: 200),
         ),
       );
     }

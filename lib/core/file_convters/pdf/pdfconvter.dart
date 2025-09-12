@@ -2,22 +2,51 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill_to_pdf/flutter_quill_to_pdf.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:msbridge/core/permissions/permission.dart';
 
 class PdfExporter {
+  /// Sanitizes a filename by trimming, replacing invalid characters with underscores,
+  /// collapsing whitespace, defaulting to 'document' if empty, and truncating to 64 chars.
+  static String _safeFileName(String raw) {
+    if (raw.isEmpty) return 'document';
+
+    // Trim whitespace
+    String sanitized = raw.trim();
+
+    // Replace invalid filesystem characters and newlines with underscores
+    sanitized = sanitized.replaceAll(RegExp(r'[<>:"/\\|?*\n\r]'), '_');
+
+    // Collapse multiple whitespace characters into single spaces
+    sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
+
+    // Remove leading/trailing spaces after whitespace collapse
+    sanitized = sanitized.trim();
+
+    // Default to 'document' if empty after sanitization
+    if (sanitized.isEmpty) return 'document';
+
+    // Truncate to 64 characters
+    if (sanitized.length > 64) {
+      sanitized = sanitized.substring(0, 64);
+    }
+
+    return sanitized;
+  }
+
   static Future<void> exportToPdf(
       BuildContext context, String title, QuillController controller) async {
     if (title.isEmpty) {
-      CustomSnackBar.show(context, "Title is empty.");
+      CustomSnackBar.show(context, "Title is empty.", isSuccess: false);
       return;
     }
 
-    final content = controller.document.toPlainText().trim();
-    if (content.isEmpty) {
-      CustomSnackBar.show(context, "Content is empty.");
+    // Quick sanity check
+    if (controller.document.toPlainText().trim().isEmpty) {
+      CustomSnackBar.show(context, "Content is empty.", isSuccess: false);
       return;
     }
 
@@ -36,38 +65,53 @@ class PdfExporter {
       }
 
       if (downloadsDirectory == null) {
-        CustomSnackBar.show(context, "Could not find the downloads directory.");
+        CustomSnackBar.show(context, "Could not find the downloads directory.",
+            isSuccess: false);
         return;
       }
 
-      final file = File('${downloadsDirectory.path}/$title.pdf');
-      final pdf = pw.Document();
+      // Ensure the downloads directory exists
+      if (!downloadsDirectory.existsSync()) {
+        downloadsDirectory.createSync(recursive: true);
+      }
 
-      pdf.addPage(pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(title,
-                  style: pw.TextStyle(
-                      fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-              pw.Text(controller.document.toPlainText().trim()),
-            ],
-          );
-        },
-      ));
+      final safeFileName = _safeFileName(title);
+      final file = File('${downloadsDirectory.path}/$safeFileName.pdf');
 
-      await file.writeAsBytes(await pdf.save());
+      // Build the converter from Quill Delta
+      final delta = controller.document.toDelta();
+      final pdfConverter = PDFConverter(
+        document: delta,
+        pageFormat: PDFPageFormat.all(
+          width: PDFPageFormat.a4.width,
+          height: PDFPageFormat.a4.height,
+          margin: 36,
+        ),
+        documentOptions: DocumentOptions(
+          title: title,
+          subject: 'Exported from MSBridge',
+          author: 'MSBridge',
+        ),
+        fallbacks: const <pw.Font>[],
+      );
 
-      CustomSnackBar.show(context, "PDF saved to ${file.path}");
+      final pw.Document? doc = await pdfConverter.createDocument();
+      if (doc == null) {
+        CustomSnackBar.show(context, "Failed to generate PDF document",
+            isSuccess: false);
+        return;
+      }
+      await file.writeAsBytes(await doc.save());
+
+      CustomSnackBar.show(context, "PDF saved to ${file.path}",
+          isSuccess: true);
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error creating PDF: $e', StackTrace.current.toString());
       FlutterBugfender.error(
         'Error creating PDF: $e',
       );
-      CustomSnackBar.show(context, "Error creating PDF: $e");
+      CustomSnackBar.show(context, "Error creating PDF: $e", isSuccess: false);
     }
   }
 }

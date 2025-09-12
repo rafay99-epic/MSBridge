@@ -199,14 +199,7 @@ class StreakProvider extends ChangeNotifier {
   }
 
   void _showStreakMessage(String message) {
-    // This will be implemented to show messages in the UI
-    // For now, we'll just print to console
-    FlutterBugfender.sendCrash('Failed to show streak message: $message',
-        StackTrace.current.toString());
-    FlutterBugfender.error(
-      'Failed to show streak message: $message',
-    );
-    FlutterBugfender.log('Streak message: $message');
+    FlutterBugfender.info('Streak message: $message');
   }
 
   Future<void> _showMilestoneNotification(
