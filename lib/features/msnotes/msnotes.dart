@@ -170,21 +170,18 @@ class _MSNotesScreenState extends State<Msnotes>
                 valueListenable: _notesBoxListenable!,
                 builder: (context, box, _) {
                   final subjects = _getSubjects(box);
-                  return LayoutBuilder(
-                    builder: (BuildContext context,
-                        BoxConstraints viewportConstraints) {
-                      return subjects.isEmpty
-                          ? EmptyStateWidget(
-                              title: 'No Subjects Found',
-                              description:
-                                  'Pull down to refresh and load notes from the server',
-                              actionText: 'Swipe down to refresh',
-                              icon: LineIcons.bookOpen,
-                              colorScheme: colorScheme,
-                            )
-                          : _buildSubjectsList(subjects, colorScheme);
-                    },
-                  );
+                  return subjects.isEmpty
+                      ? Center(
+                          child: EmptyStateWidget(
+                            title: 'No Subjects Found',
+                            description:
+                                'Pull down to refresh and load notes from the server',
+                            actionText: 'Swipe down to refresh',
+                            icon: LineIcons.bookOpen,
+                            colorScheme: colorScheme,
+                          ),
+                        )
+                      : _buildSubjectsList(subjects, colorScheme);
                 },
               ),
             ),
