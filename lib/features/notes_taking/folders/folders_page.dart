@@ -6,7 +6,6 @@ import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/features/notes_taking/folders/tag_folder_page.dart';
-import 'package:msbridge/widgets/appbar.dart';
 
 class FoldersPage extends StatefulWidget {
   const FoldersPage({super.key});
@@ -18,7 +17,6 @@ class FoldersPage extends StatefulWidget {
 class _FoldersPageState extends State<FoldersPage> {
   ValueListenable<Box<NoteTakingModel>>? _notesListenable;
 
-  // Cache for computed values to avoid recalculation
   Map<String, int>? _cachedTagCounts;
   int? _cachedUntagged;
   List<String>? _cachedSortedTags;
@@ -34,7 +32,6 @@ class _FoldersPageState extends State<FoldersPage> {
     if (mounted) setState(() {});
   }
 
-  // Memoized computation - only recalculates when notes actually change
   void _computeTagData(List<NoteTakingModel> notes) {
     final Map<String, int> tagCounts = {};
     int untagged = 0;
@@ -62,7 +59,6 @@ class _FoldersPageState extends State<FoldersPage> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: const CustomAppBar(title: 'Folders', showBackButton: true),
       body: _notesListenable == null
           ? _buildLoadingState(colorScheme, theme)
           : ValueListenableBuilder<Box<NoteTakingModel>>(

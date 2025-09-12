@@ -35,7 +35,7 @@ class Notetaking extends StatefulWidget {
 }
 
 class _NotetakingState extends State<Notetaking>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -301,27 +301,78 @@ class _NotetakingState extends State<Notetaking>
 
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text("Note Taking"),
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.surface,
-        foregroundColor: theme.colorScheme.primary,
-        elevation: 1,
-        shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
-        centerTitle: true,
-        leading: _buildAppBarLeading(),
-        actions: _buildAppBarActions(),
-        titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: theme.colorScheme.primary,
-        ),
-      ),
-      body: _buildBody(theme),
-      floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: _showFab ? _buildExpandableFab(theme) : null,
-    );
+    return DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          appBar: AppBar(
+            title: const Text("Note Taking"),
+            automaticallyImplyLeading: false,
+            backgroundColor: theme.colorScheme.surface,
+            foregroundColor: theme.colorScheme.primary,
+            elevation: 1,
+            shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _openSettingsSheet,
+              tooltip: 'Settings',
+            ),
+            actions: _buildAppBarActions(),
+            titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TabBar(
+                    dividerColor: Colors.transparent,
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: const MaterialStatePropertyAll<Color>(
+                        Colors.transparent),
+                    indicator: UnderlineTabIndicator(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary.withOpacity(0.8),
+                        width: 3,
+                      ),
+                      insets: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.label,
+                    labelColor: theme.colorScheme.primary,
+                    unselectedLabelColor:
+                        theme.colorScheme.primary.withOpacity(0.55),
+                    labelStyle: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Notes'),
+                      Tab(text: 'Folders'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          body: TabBarView(
+            physics: const BouncingScrollPhysics(),
+            children: [
+              _KeepAlive(child: _buildBody(theme)),
+              const _KeepAlive(child: FoldersPage()),
+            ],
+          ),
+          floatingActionButtonLocation: ExpandableFab.location,
+          floatingActionButton: _showFab ? _buildExpandableFab(theme) : null,
+        ));
   }
 
   Widget _buildBody(ThemeData theme) {
@@ -375,18 +426,7 @@ class _NotetakingState extends State<Notetaking>
       physics: const BouncingScrollPhysics(),
       cacheExtent: 1000, // prefetch ~1k px ahead for smoother scrolling
       slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: Text(
-              "Notes",
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-        ),
+        // Removed heading per request
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 28.0),
           sliver: SliverMasonryGrid.count(
@@ -444,24 +484,7 @@ class _NotetakingState extends State<Notetaking>
     );
   }
 
-  IconButton? _buildAppBarLeading() {
-    return IconButton(
-      icon: Icon(_isSelectionMode ? LineIcons.check : LineIcons.folder),
-      onPressed: _isSelectionMode
-          ? _exitSelectionMode
-          : () {
-              Navigator.push(
-                context,
-                PageTransition(
-                  child: const FoldersPage(),
-                  type: PageTransitionType.rightToLeft,
-                  duration: const Duration(milliseconds: 300),
-                ),
-              );
-            },
-      tooltip: _isSelectionMode ? 'Exit selection mode' : 'Folders',
-    );
-  }
+  // Old leading kept for reference; no longer used after tabs
 
   List<Widget> _buildAppBarActions() {
     return _isSelectionMode
@@ -477,11 +500,6 @@ class _NotetakingState extends State<Notetaking>
               icon: const Icon(LineIcons.search),
               onPressed: _enterSearch,
               tooltip: 'Search notes',
-            ),
-            IconButton(
-              tooltip: 'Sort',
-              icon: const Icon(Icons.sort),
-              onPressed: _openSortBottomSheet,
             ),
             IconButton(
               tooltip: 'Switch layout',
@@ -587,6 +605,42 @@ class _NotetakingState extends State<Notetaking>
     );
   }
 
+  void _openSettingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.sort),
+                title: const Text('Sort Notes'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openSortBottomSheet();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard_customize_outlined),
+                title: const Text('Arrange View (Layout)'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _toggleLayoutMode();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _applySorting(List<NoteTakingModel> list) {
     int cmp(NoteTakingModel a, NoteTakingModel b) {
       int result;
@@ -616,10 +670,10 @@ class _NotetakingState extends State<Notetaking>
     return ExpandableFab(
       type: ExpandableFabType.up,
       childrenAnimation: ExpandableFabAnimation.rotate,
-      distance: 80,
+      distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: theme.colorScheme.surface.withOpacity(0.5),
-        blur: 1,
+        color: Colors.transparent,
+        blur: 0,
       ),
       children: [
         buildExpandableButton(
@@ -687,5 +741,24 @@ class _NotetakingState extends State<Notetaking>
         ),
       ],
     );
+  }
+}
+
+class _KeepAlive extends StatefulWidget {
+  final Widget child;
+  const _KeepAlive({required this.child});
+  @override
+  State<_KeepAlive> createState() => _KeepAliveState();
+}
+
+class _KeepAliveState extends State<_KeepAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

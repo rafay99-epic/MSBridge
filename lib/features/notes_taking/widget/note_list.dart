@@ -32,7 +32,6 @@ class NoteList extends StatelessWidget {
       );
     }
 
-    // Pinning removed: render a single unified list
     final allNotes = notes.toList();
 
     return SingleChildScrollView(
@@ -98,8 +97,7 @@ class NoteList extends StatelessWidget {
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
-          transitionDuration: const Duration(
-              milliseconds: 200), // Reduced for better performance
+          transitionDuration: const Duration(milliseconds: 200),
         ),
       );
     }
