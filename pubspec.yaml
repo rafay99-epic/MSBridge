@@ -73,7 +73,6 @@ dependencies:
   flutter_localization: ^0.3.3
   markdown_quill: ^4.3.0
   flutter_quill_to_pdf: ^2.3.9
-  background_downloader: ^9.2.4
 
 dev_dependencies:
   flutter_test:

@@ -6,14 +6,30 @@ import 'package:msbridge/config/config.dart';
 
 class UpdateService {
   static const String _baseUrl = UpdateConfig.apiUrl;
+  static const String _msBridgeApiKey = UpdateConfig.msBridgeApiKey;
 
   /// Check if the system is live
   static Future<bool> isSystemLive() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/health'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(UpdateConfig.healthCheckTimeout);
+      final headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': _msBridgeApiKey,
+      };
+
+      FlutterBugfender.log('Health check request to: $_baseUrl/health');
+      FlutterBugfender.log('Headers: $headers');
+      FlutterBugfender.log('API Key length: ${_msBridgeApiKey.length}');
+
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/health'),
+            headers: headers,
+          )
+          .timeout(UpdateConfig.healthCheckTimeout);
+
+      FlutterBugfender.log(
+          'Health check response status: ${response.statusCode}');
+      FlutterBugfender.log('Health check response body: ${response.body}');
 
       if (response.statusCode == 200) {
         FlutterBugfender.log('Health check successful: $_baseUrl');
@@ -40,22 +56,41 @@ class UpdateService {
       FlutterBugfender.log(
           'Checking for updates - Current version: $currentVersion ($buildNumber)');
 
+      final headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': _msBridgeApiKey,
+      };
+
+      final requestBody = {
+        'version': currentVersion,
+        'buildNumber': buildNumber,
+      };
+
+      FlutterBugfender.log('Update check request to: $_baseUrl/update-check');
+      FlutterBugfender.log('Headers: $headers');
+      FlutterBugfender.log('Request body: $requestBody');
+      FlutterBugfender.log('API Key length: ${_msBridgeApiKey.length}');
+
       final response = await http
           .post(
             Uri.parse('$_baseUrl/update-check'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'version': currentVersion,
-              'buildNumber': buildNumber,
-            }),
+            headers: headers,
+            body: json.encode(requestBody),
           )
           .timeout(UpdateConfig.updateCheckTimeout);
+
+      FlutterBugfender.log(
+          'Update check response status: ${response.statusCode}');
+      FlutterBugfender.log('Update check response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         FlutterBugfender.log('Update check successful: $_baseUrl');
         return UpdateCheckResult.fromJson(data);
       } else {
+        FlutterBugfender.error(
+            'Update check failed with status: ${response.statusCode}');
+        FlutterBugfender.error('Response body: ${response.body}');
         throw Exception(
             'Update check failed with status: ${response.statusCode}');
       }
@@ -139,8 +174,12 @@ class UpdateCheckResult {
       final v2Parts = version2.split('.').map(int.parse).toList();
 
       // Pad with zeros to make both lists the same length
-      while (v1Parts.length < v2Parts.length) v1Parts.add(0);
-      while (v2Parts.length < v1Parts.length) v2Parts.add(0);
+      while (v1Parts.length < v2Parts.length) {
+        v1Parts.add(0);
+      }
+      while (v2Parts.length < v1Parts.length) {
+        v2Parts.add(0);
+      }
 
       for (int i = 0; i < v1Parts.length; i++) {
         if (v1Parts[i] > v2Parts[i]) return 1;

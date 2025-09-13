@@ -4,7 +4,6 @@ import 'package:msbridge/features/setting/widgets/settings_section.dart';
 import 'package:msbridge/widgets/build_settings_tile.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
 import 'package:msbridge/core/services/update_manager.dart';
-import 'package:msbridge/core/services/update_testing_service.dart';
 import 'package:page_transition/page_transition.dart';
 
 class AppUpdateSettingsSection extends StatelessWidget {
@@ -39,16 +38,6 @@ class AppUpdateSettingsSection extends StatelessWidget {
                 child: const UpdateApp(),
               ),
             );
-          },
-        ),
-        const SizedBox(height: 12),
-        buildSettingsTile(
-          context,
-          title: "Test Update Flow",
-          subtitle: "Simulate version downgrade for testing",
-          icon: LineIcons.bug,
-          onTap: () {
-            UpdateTestingService.simulateVersionDowngrade(context);
           },
         ),
       ],
