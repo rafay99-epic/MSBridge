@@ -5,6 +5,7 @@ import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
 import 'package:msbridge/core/permissions/notification_permission.dart';
+import 'package:msbridge/core/services/update_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AuthGate extends StatelessWidget {
@@ -34,6 +35,11 @@ class AuthGate extends StatelessWidget {
                 await Permission.storage.request();
 
                 await Permission.camera.request();
+
+                // Check for updates after permissions are set up
+                if (UpdateManager.shouldCheckForUpdates()) {
+                  await UpdateManager.checkForUpdatesOnStartup(context);
+                }
               });
               return const Home();
             }

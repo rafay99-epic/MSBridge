@@ -387,9 +387,11 @@ class _NotetakingState extends State<Notetaking>
         _updateCachedNotes(box);
 
         if (box.values.isEmpty) {
-          return const EmptyNotesMessage(
-            message: 'No notes yet',
-            description: 'Tap + to create a new note',
+          return const Center(
+            child: EmptyNotesMessage(
+              message: 'No notes yet',
+              description: 'Tap + to create a new note',
+            ),
           );
         }
         return _buildNotesList(theme);
@@ -424,7 +426,7 @@ class _NotetakingState extends State<Notetaking>
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      cacheExtent: 1000, 
+      cacheExtent: 1000,
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(8.0, 20.0, 8.0, 28.0),

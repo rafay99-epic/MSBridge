@@ -36,6 +36,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
+import 'package:msbridge/core/services/update_manager.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -133,6 +134,13 @@ void main() async {
     } catch (e) {
       FlutterBugfender.sendCrash(
           'AutoSyncScheduler Error: $e', StackTrace.current.toString());
+    }
+
+    try {
+      await UpdateManager.initialize();
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'UpdateManager Error: $e', StackTrace.current.toString());
     }
 
     FlutterError.onError = (errorDetails) {
