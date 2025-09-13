@@ -6,6 +6,7 @@ import 'package:msbridge/features/msnotes/msnotes.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
 import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
+import 'package:msbridge/features/voice_notes/screens/voice_notes_screen.dart';
 import 'package:msbridge/core/services/delete/deletion_sync_helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -25,6 +26,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     const Msnotes(),
     const ChatAssistantPage(),
     const Notetaking(),
+    const VoiceNotesScreen(),
     const Setting(),
   ];
 
@@ -193,6 +195,11 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             GButton(
               icon: LineIcons.edit,
               text: 'Notes',
+              iconColor: colorScheme.primary,
+            ),
+            GButton(
+              icon: LineIcons.microphone,
+              text: 'Voice',
               iconColor: colorScheme.primary,
             ),
             GButton(

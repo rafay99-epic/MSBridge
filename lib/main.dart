@@ -12,6 +12,7 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
@@ -91,6 +92,10 @@ void main() async {
     // Register templates adapter
     Hive.registerAdapter(NoteTemplateAdapter());
     await Hive.openBox<NoteTemplate>('note_templates');
+
+    // Register voice notes adapter
+    Hive.registerAdapter(VoiceNoteModelAdapter());
+    await Hive.openBox<VoiceNoteModel>('voice_notes');
 
     try {
       await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
