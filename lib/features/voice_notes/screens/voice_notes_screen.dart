@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
@@ -9,6 +10,9 @@ import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:msbridge/core/repo/voice_note_share_repo.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:msbridge/features/voice_notes/screens/shared_voice_notes_screen.dart';
 
 class VoiceNotesScreen extends StatefulWidget {
   const VoiceNotesScreen({super.key});
@@ -321,16 +325,31 @@ class _VoiceNotesScreenState extends State<VoiceNotesScreen>
                         ),
                       ),
                       const SizedBox(width: 16.0),
-                      // Delete button
-                      _buildActionButton(
-                        context,
-                        LineIcons.trash,
-                        'Delete Voice Note',
-                        () {
-                          Navigator.of(context).pop();
-                          _showDeleteConfirmation(voiceNote);
-                        },
-                        isDestructive: true,
+                      // Action buttons row
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Share button
+                          _buildActionButton(
+                            context,
+                            LineIcons.share,
+                            'Share Voice Note',
+                            () => _shareVoiceNote(voiceNote),
+                            isDestructive: false,
+                          ),
+                          const SizedBox(width: 8.0),
+                          // Delete button
+                          _buildActionButton(
+                            context,
+                            LineIcons.trash,
+                            'Delete Voice Note',
+                            () {
+                              Navigator.of(context).pop();
+                              _showDeleteConfirmation(voiceNote);
+                            },
+                            isDestructive: true,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -491,6 +510,368 @@ class _VoiceNotesScreenState extends State<VoiceNotesScreen>
     } catch (e) {
       return false;
     }
+  }
+
+  Future<void> _shareVoiceNote(VoiceNoteModel voiceNote) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Preparing voice note for sharing...',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Enable sharing and get the share URL
+      final shareUrl = await VoiceNoteShareRepository.enableShare(voiceNote);
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show share options dialog
+      if (mounted) {
+        _showShareOptionsDialog(voiceNote, shareUrl);
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) Navigator.of(context).pop();
+
+      FlutterBugfender.sendIssue(
+        e.toString(),
+        StackTrace.current.toString(),
+      );
+
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Error sharing voice note: $e',
+          SnackBarType.error,
+        );
+      }
+    }
+  }
+
+  void _showShareOptionsDialog(VoiceNoteModel voiceNote, String shareUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                LineIcons.share,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Share Voice Note',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Voice note title
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LineIcons.microphone,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      voiceNote.voiceNoteTitle,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Share URL section
+            Text(
+              'Share Link',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // URL container
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      shareUrl,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: shareUrl));
+                      if (mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          'Link copied to clipboard!',
+                          SnackBarType.success,
+                        );
+                      }
+                    },
+                    icon: Icon(
+                      LineIcons.copy,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 18,
+                    ),
+                    tooltip: 'Copy link',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Share options
+            Text(
+              'Share Options',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Share buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _buildShareButton(
+                    context,
+                    'Share via App',
+                    LineIcons.share,
+                    () async {
+                      Navigator.of(context).pop();
+                      await Share.share(
+                        '🎤 Check out my voice note: "${voiceNote.voiceNoteTitle}"\n\n$shareUrl',
+                        subject: 'Voice Note: ${voiceNote.voiceNoteTitle}',
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildShareButton(
+                    context,
+                    'Copy Link',
+                    LineIcons.copy,
+                    () async {
+                      await Clipboard.setData(ClipboardData(text: shareUrl));
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                        CustomSnackBar.show(
+                          context,
+                          'Link copied to clipboard!',
+                          SnackBarType.success,
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Additional sharing options
+            Row(
+              children: [
+                Expanded(
+                  child: _buildShareButton(
+                    context,
+                    'WhatsApp',
+                    LineIcons.comments,
+                    () async {
+                      Navigator.of(context).pop();
+                      final message =
+                          '🎤 Check out my voice note: "${voiceNote.voiceNoteTitle}"\n\n$shareUrl';
+                      await Share.share(
+                        message,
+                        subject: 'Voice Note: ${voiceNote.voiceNoteTitle}',
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildShareButton(
+                    context,
+                    'Email',
+                    LineIcons.envelope,
+                    () async {
+                      Navigator.of(context).pop();
+                      await Share.share(
+                        '🎤 Check out my voice note: "${voiceNote.voiceNoteTitle}"\n\n$shareUrl',
+                        subject: 'Voice Note: ${voiceNote.voiceNoteTitle}',
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor:
+                  Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              'Close',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildMetadataRow(BuildContext context, VoiceNoteModel voiceNote) {
@@ -706,6 +1087,21 @@ class _VoiceNotesScreenState extends State<VoiceNotesScreen>
         title: "Voice Notes",
         showTitle: true,
         actions: [
+          // Shared Voice Notes button
+          IconButton(
+            icon: Icon(
+              LineIcons.share,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SharedVoiceNotesScreen(),
+                ),
+              );
+            },
+            tooltip: 'Shared Voice Notes',
+          ),
           if (_voiceNotes.isNotEmpty)
             IconButton(
               icon: Icon(
