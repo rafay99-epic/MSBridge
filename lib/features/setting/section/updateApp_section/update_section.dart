@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/setting/widgets/settings_section.dart';
-import 'package:msbridge/features/setting/widgets/settings_tile.dart';
+import 'package:msbridge/widgets/build_settings_tile.dart';
 import 'package:msbridge/features/update_app/update_app.dart';
+import 'package:msbridge/core/services/update_manager.dart';
+import 'package:msbridge/core/services/update_testing_service.dart';
 import 'package:page_transition/page_transition.dart';
 
 class AppUpdateSettingsSection extends StatelessWidget {
@@ -15,8 +17,19 @@ class AppUpdateSettingsSection extends StatelessWidget {
       title: "App Update Settings",
       children: [
         Divider(color: theme.colorScheme.primary),
-        SettingsTile(
-          title: "Update App",
+        buildSettingsTile(
+          context,
+          title: "Check for Updates",
+          subtitle: "Automatically check for the latest version",
+          icon: LineIcons.robot,
+          onTap: () {
+            UpdateManager.checkForUpdatesManually(context);
+          },
+        ),
+        buildSettingsTile(
+          context,
+          title: "Manual Download",
+          subtitle: "Download APK manually from server",
           icon: LineIcons.arrowCircleDown,
           onTap: () {
             Navigator.push(
@@ -26,6 +39,16 @@ class AppUpdateSettingsSection extends StatelessWidget {
                 child: const UpdateApp(),
               ),
             );
+          },
+        ),
+        const SizedBox(height: 12),
+        buildSettingsTile(
+          context,
+          title: "Test Update Flow",
+          subtitle: "Simulate version downgrade for testing",
+          icon: LineIcons.bug,
+          onTap: () {
+            UpdateTestingService.simulateVersionDowngrade(context);
           },
         ),
       ],
