@@ -19,17 +19,14 @@ class VoiceNoteShareRepository {
   }
 
   static String _buildDefaultShareUrl(String shareId) {
-    return 'https://msbridge.page.link/voice/$shareId';
+    return 'https://msbridge.rafay99.com/voice/$shareId';
   }
 
   static Future<String> _buildDynamicLink(String shareId) async {
     try {
-      final String defaultUrl = _buildDefaultShareUrl(shareId);
-      print('🔗 Building dynamic link for: $defaultUrl');
-
       final DynamicLinkParameters params = DynamicLinkParameters(
-        link: Uri.parse('https://msbridge.page.link/voice/$shareId'),
-        uriPrefix: 'https://msbridge.page.link',
+        link: Uri.parse('https://msbridge.rafay99.com/voice/$shareId'),
+        uriPrefix: 'https://msbridge.rafay99.com',
         androidParameters: const AndroidParameters(
           packageName: 'com.syntaxlab.msbridge',
           minimumVersion: 1,
@@ -40,19 +37,16 @@ class VoiceNoteShareRepository {
         ),
       );
 
-      print('📱 Dynamic link parameters created');
       final ShortDynamicLink short =
           await FirebaseDynamicLinks.instance.buildShortLink(params);
 
       final String shortUrl = short.shortUrl.toString();
-      print('✅ Dynamic link generated: $shortUrl');
       return shortUrl;
     } catch (e) {
-      print('❌ Failed to build dynamic link: $e');
       FlutterBugfender.error('Failed to build dynamic link: $e');
-      final String fallbackUrl = _buildDefaultShareUrl(shareId);
-      print('🔄 Using fallback URL: $fallbackUrl');
-      return fallbackUrl;
+      FlutterBugfender.sendCrash(
+          'Failed to build dynamic link: $e', StackTrace.current.toString());
+      return _buildDefaultShareUrl(shareId);
     }
   }
 
@@ -76,10 +70,6 @@ class VoiceNoteShareRepository {
     _isOperationInProgress = true;
 
     try {
-      print('🎤 Starting voice note sharing process...');
-      print('📝 Voice Note ID: ${voiceNote.voiceNoteId}');
-      print('👤 User ID: ${user.uid}');
-
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
       final Box meta = await _getShareMetaBox();
       final UploadThingService uploadService =
@@ -93,21 +83,14 @@ class VoiceNoteShareRepository {
           ? existing['shareId'] as String
           : generateUuid();
 
-      print('🆔 Generated Share ID: $shareId');
-
-      // Upload audio file to UploadThing
       final audioFile = File(voiceNote.audioFilePath);
       if (!await audioFile.exists()) {
         throw Exception('Audio file not found: ${voiceNote.audioFilePath}');
       }
 
-      print('📤 Uploading audio file to UploadThing...');
       final String audioUrl = await uploadService.uploadAudioFile(audioFile);
-      print('✅ Audio uploaded successfully: $audioUrl');
 
-      print('🔗 Building Firebase Dynamic Link...');
       final String shareUrl = await _buildDynamicLink(shareId);
-      print('✅ Dynamic link generated: $shareUrl');
 
       // Create payload for Firebase
       final Map<String, dynamic> payloadWithoutCreatedAt = {
@@ -129,31 +112,20 @@ class VoiceNoteShareRepository {
         ...payloadWithoutCreatedAt,
         'createdAt': FieldValue.serverTimestamp(),
       };
-
-      // Try update first; on not-found create with createdAt
-      print('💾 Saving to Firebase collection: $_shareCollection');
-      print('📄 Document ID: $shareId');
-
       final docRef = firestore.collection(_shareCollection).doc(shareId);
       try {
-        print('🔄 Attempting to update existing document...');
         await docRef.update(payloadWithoutCreatedAt);
-        print('✅ Document updated successfully');
       } on FirebaseException catch (e, s) {
-        print('⚠️ Update failed with error: ${e.code} - ${e.message}');
         FlutterBugfender.error(
             'Failed to update voice note share: ${e.code} ${e.message}');
         FlutterBugfender.sendCrash('enableShare update failed', s.toString());
         if (e.code == 'not-found') {
-          print('📝 Document not found, creating new document...');
           await docRef.set(payloadWithCreatedAt, SetOptions(merge: true));
-          print('✅ New document created successfully');
         } else {
           rethrow;
         }
       }
 
-      print('💾 Saving to local Hive cache...');
       await meta.put(voiceNote.voiceNoteId, {
         'shareId': shareId,
         'enabled': true,
@@ -162,10 +134,7 @@ class VoiceNoteShareRepository {
         'audioUrl': audioUrl,
         'updatedAt': DateTime.now().toIso8601String(),
       });
-      print('✅ Local cache updated successfully');
 
-      print('🎉 Voice note sharing completed successfully!');
-      print('🔗 Final share URL: $shareUrl');
       return shareUrl;
     } finally {
       _isOperationInProgress = false;

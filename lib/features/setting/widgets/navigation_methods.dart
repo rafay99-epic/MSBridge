@@ -42,6 +42,10 @@ class NavigationMethods {
     BottomSheetManager.showTemplatesBottomSheet(context);
   }
 
+  static void navigateToVoiceNotesSettings(BuildContext context) {
+    BottomSheetManager.showVoiceNotesBottomSheet(context);
+  }
+
   static void navigateToDataManagement(BuildContext context) {
     BottomSheetManager.showDataManagementBottomSheet(context);
   }

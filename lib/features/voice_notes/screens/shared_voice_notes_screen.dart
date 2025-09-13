@@ -15,12 +15,22 @@ class SharedVoiceNotesScreen extends StatefulWidget {
 
 class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
   List<SharedVoiceNoteMeta> _sharedVoiceNotes = [];
+  List<SharedVoiceNoteMeta> _filteredVoiceNotes = [];
   bool _isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _loadSharedVoiceNotes();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSharedVoiceNotes() async {
@@ -29,6 +39,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
       if (mounted) {
         setState(() {
           _sharedVoiceNotes = sharedNotes;
+          _filteredVoiceNotes = sharedNotes;
           _isLoading = false;
         });
       }
@@ -44,6 +55,33 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
         );
       }
     }
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase().trim();
+
+    setState(() {
+      _isSearching = query.isNotEmpty;
+
+      if (query.isEmpty) {
+        _filteredVoiceNotes = _sharedVoiceNotes;
+      } else {
+        _filteredVoiceNotes = _sharedVoiceNotes.where((note) {
+          // Search in title
+          final titleMatch = note.title.toLowerCase().contains(query);
+
+          return titleMatch;
+        }).toList();
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _filteredVoiceNotes = _sharedVoiceNotes;
+    });
   }
 
   Future<void> _deleteSharedVoiceNote(SharedVoiceNoteMeta sharedNote) async {
@@ -240,6 +278,185 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
         SnackBarType.error,
       );
     }
+  }
+
+  void _showSharedVoiceNoteSettingsBottomSheet(
+      BuildContext context, SharedVoiceNoteMeta sharedNote) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 48,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      LineIcons.cog,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Shared Voice Note Settings',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Settings options
+            _buildSettingsOption(
+              context,
+              LineIcons.eye,
+              'View Share Link',
+              'Open the share link for this voice note',
+              () async {
+                Navigator.of(context).pop();
+                _showShareLinkDialog(sharedNote);
+              },
+              isDestructive: false,
+            ),
+
+            _buildSettingsOption(
+              context,
+              LineIcons.trash,
+              'Delete Share',
+              'Remove the share link for this voice note',
+              () async {
+                Navigator.of(context).pop();
+                await _deleteSharedVoiceNote(sharedNote);
+              },
+              isDestructive: true,
+            ),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsOption(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap, {
+    required bool isDestructive,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = isDestructive ? colorScheme.error : colorScheme.primary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  LineIcons.chevronRight,
+                  color: colorScheme.onSurface.withOpacity(0.4),
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showShareLinkDialog(SharedVoiceNoteMeta sharedNote) {
@@ -544,162 +761,497 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.all(16.0),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                    theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _isSearching
+                      ? theme.colorScheme.primary.withOpacity(0.3)
+                      : theme.colorScheme.outline.withOpacity(0.1),
+                  width: _isSearching ? 2 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.shadow.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading shared voice notes...',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  if (_isSearching)
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search shared voice notes...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(
+                      LineIcons.search,
+                      color: _isSearching
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withOpacity(0.6),
+                      size: 22,
+                    ),
+                  ),
+                  suffixIcon: _isSearching
+                      ? Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _clearSearch,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  LineIcons.times,
+                                  color: theme.colorScheme.primary,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Search results counter
+          if (_isSearching && _filteredVoiceNotes.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary.withOpacity(0.1),
+                          theme.colorScheme.primary.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LineIcons.search,
+                          size: 14,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_filteredVoiceNotes.length} result${_filteredVoiceNotes.length == 1 ? '' : 's'} found',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            )
-          : _sharedVoiceNotes.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          LineIcons.share,
-                          size: 48,
+            ),
+
+          // Content
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
                           color: theme.colorScheme.primary,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'No Shared Voice Notes',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Voice notes you share will appear here',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _sharedVoiceNotes.length,
-                  itemBuilder: (context, index) {
-                    final sharedNote = _sharedVoiceNotes[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withOpacity(0.1),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.shadow.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading shared voice notes...',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => _showShareLinkDialog(sharedNote),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                // Icon
+                        ),
+                      ],
+                    ),
+                  )
+                : _filteredVoiceNotes.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(32),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.05),
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  _isSearching
+                                      ? LineIcons.search
+                                      : LineIcons.share,
+                                  size: 56,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              Text(
+                                _isSearching
+                                    ? 'No Results Found'
+                                    : 'No Shared Voice Notes',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 22,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _isSearching
+                                    ? 'Try adjusting your search terms or check the spelling'
+                                    : 'Voice notes you share will appear here',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                  fontSize: 16,
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (_isSearching) ...[
+                                const SizedBox(height: 24),
                                 Container(
-                                  width: 48,
-                                  height: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary
                                         .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.2),
+                                      width: 1,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    LineIcons.microphone,
-                                    color: theme.colorScheme.primary,
-                                    size: 24,
+                                  child: Text(
+                                    'Tip: Search by voice note title',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      color: theme.colorScheme.primary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-
-                                // Content
-                                Expanded(
+                              ],
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _filteredVoiceNotes.length,
+                        itemBuilder: (context, index) {
+                          final sharedNote = _filteredVoiceNotes[index];
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 16.0),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => _showShareLinkDialog(sharedNote),
+                                borderRadius: BorderRadius.circular(20.0),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeInOut,
+                                  padding: const EdgeInsets.all(20.0),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        theme.colorScheme.surface,
+                                        theme.colorScheme.surface
+                                            .withOpacity(0.95),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20.0),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: theme.colorScheme.shadow
+                                            .withOpacity(0.08),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        sharedNote.title,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                          color: theme.colorScheme.onSurface,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
+                                      // Header row with icon, title and settings
                                       Row(
                                         children: [
+                                          // Enhanced microphone icon
                                           Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
+                                            width: 56,
+                                            height: 56,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  theme.colorScheme.primary,
+                                                  theme.colorScheme.primary
+                                                      .withOpacity(0.8),
+                                                ],
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: theme
+                                                      .colorScheme.primary
+                                                      .withOpacity(0.4),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              LineIcons.microphone,
+                                              size: 28,
+                                              color:
+                                                  theme.colorScheme.onPrimary,
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 16.0),
+
+                                          // Title and share status
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  sharedNote.title,
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: theme
+                                                        .colorScheme.onSurface,
+                                                    fontFamily: 'Poppins',
+                                                    height: 1.2,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 8.0),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      colors: [
+                                                        theme
+                                                            .colorScheme.primary
+                                                            .withOpacity(0.1),
+                                                        theme
+                                                            .colorScheme.primary
+                                                            .withOpacity(0.05),
+                                                      ],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                    border: Border.all(
+                                                      color: theme
+                                                          .colorScheme.primary
+                                                          .withOpacity(0.3),
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        LineIcons.share,
+                                                        size: 14,
+                                                        color: theme.colorScheme
+                                                            .primary,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        'Shared',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: theme
+                                                              .colorScheme
+                                                              .primary,
+                                                          fontFamily: 'Poppins',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          // Settings button
+                                          Container(
+                                            width: 44,
+                                            height: 44,
                                             decoration: BoxDecoration(
                                               color: theme.colorScheme.primary
                                                   .withOpacity(0.1),
                                               borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: theme.colorScheme.primary
-                                                    .withOpacity(0.3),
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: IconButton(
+                                              icon: Icon(
+                                                LineIcons.cog,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                                size: 20,
                                               ),
+                                              onPressed: () =>
+                                                  _showSharedVoiceNoteSettingsBottomSheet(
+                                                      context, sharedNote),
+                                              tooltip: 'Voice Note Settings',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      // Bottom row with tap hint
+                                      const SizedBox(height: 16.0),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.primary
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Icon(
-                                                  LineIcons.share,
+                                                  LineIcons.chevronRight,
                                                   size: 12,
-                                                  color:
-                                                      theme.colorScheme.primary,
+                                                  color: theme
+                                                      .colorScheme.primary
+                                                      .withOpacity(0.7),
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  'Shared',
+                                                  'Tap to view',
                                                   style: TextStyle(
                                                     fontSize: 11,
                                                     color: theme
-                                                        .colorScheme.primary,
+                                                        .colorScheme.primary
+                                                        .withOpacity(0.7),
                                                     fontFamily: 'Poppins',
-                                                    fontWeight: FontWeight.w600,
+                                                    fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
                                               ],
@@ -710,78 +1262,14 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                     ],
                                   ),
                                 ),
-
-                                // Actions
-                                PopupMenuButton<String>(
-                                  icon: Icon(
-                                    Icons.more_vert,
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                                  onSelected: (value) async {
-                                    switch (value) {
-                                      case 'view_link':
-                                        _showShareLinkDialog(sharedNote);
-                                        break;
-                                      case 'delete':
-                                        await _deleteSharedVoiceNote(
-                                            sharedNote);
-                                        break;
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    PopupMenuItem(
-                                      value: 'view_link',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            LineIcons.link,
-                                            color: theme.colorScheme.primary,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'View Share Link',
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontWeight: FontWeight.w500,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            LineIcons.trash,
-                                            color: theme.colorScheme.error,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Delete Share',
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontWeight: FontWeight.w500,
-                                              color: theme.colorScheme.error,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+          ),
+        ],
+      ),
     );
   }
 }

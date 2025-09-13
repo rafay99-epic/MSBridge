@@ -9,6 +9,7 @@ import 'package:msbridge/features/setting/bottom_sheets/security_bottom_sheet.da
 import 'package:msbridge/features/setting/bottom_sheets/sync_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/templates_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/background_sync_bottom_sheet.dart';
+import 'package:msbridge/features/setting/bottom_sheets/voice_notes_bottom_sheet.dart';
 
 class BottomSheetManager {
   static Future<void> showAIFeaturesBottomSheet(BuildContext context) async {
@@ -82,6 +83,15 @@ class BottomSheetManager {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const TemplatesBottomSheet(),
+    );
+  }
+
+  static Future<void> showVoiceNotesBottomSheet(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const VoiceNotesBottomSheet(),
     );
   }
 
