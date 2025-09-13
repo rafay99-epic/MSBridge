@@ -18,7 +18,6 @@ class NoteSummaryAPI {
 }
 
 class ChatAPI {
-  // Add your new Gemini API key here for chat functionality
   static const String apiKey = "";
 }
 
@@ -41,4 +40,16 @@ class UploadThingConfig {
 
 class BugfenderConfig {
   static const String apiKey = "";
+}
+
+class UpdateConfig {
+  // Change this URL to switch between dev and production
+  static const String apiUrl = 'https://msbridge.rafay99.com/api';
+
+  // API key for authentication
+  static const String msBridgeApiKey = '';
+
+  static const Duration checkInterval = Duration(hours: 6);
+  static const Duration healthCheckTimeout = Duration(seconds: 10);
+  static const Duration updateCheckTimeout = Duration(seconds: 15);
 }
