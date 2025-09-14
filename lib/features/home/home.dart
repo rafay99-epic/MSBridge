@@ -8,7 +8,9 @@ import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
 import 'package:msbridge/features/voice_notes/screens/voice_notes_screen.dart';
 import 'package:msbridge/core/services/delete/deletion_sync_helper.dart';
+import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -96,6 +98,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         _fadeController.isAnimating) {
       return;
     }
+
+    // Trigger haptic feedback for navigation
+    final hapticProvider =
+        Provider.of<HapticFeedbackSettingsProvider>(context, listen: false);
+    hapticProvider.triggerNavigationHaptic();
+
     _isTransitioning = true;
     try {
       await _fadeController.reverse();
@@ -143,6 +151,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
           // Only animate if we're actually changing pages
           if (newIndex != _selectedIndex) {
+            // Trigger haptic feedback for gesture navigation
+            final hapticProvider = Provider.of<HapticFeedbackSettingsProvider>(
+                context,
+                listen: false);
+            hapticProvider.triggerGestureHaptic();
+
             _fadeController.reverse().then((_) {
               setState(() {
                 _selectedIndex = newIndex;

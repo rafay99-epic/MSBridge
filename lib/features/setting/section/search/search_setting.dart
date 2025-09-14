@@ -160,6 +160,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         section: "System",
         onTap: () => NavigationMethods.navigateToBackgroundSync(context),
       ),
+      SearchableSetting(
+        title: "App Settings",
+        subtitle: "Haptic feedback and app preferences",
+        icon: LineIcons.cog,
+        section: "System",
+        onTap: () => NavigationMethods.navigateToAppSettings(context),
+      ),
 
       // Danger Zone
       SearchableSetting(
@@ -471,6 +478,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         icon: LineIcons.history,
                         onTap: () =>
                             NavigationMethods.navigateToBackgroundSync(context),
+                      ),
+                      SettingsTile(
+                        title: "App Settings",
+                        subtitle: "Haptic feedback and app preferences",
+                        icon: LineIcons.cog,
+                        onTap: () =>
+                            NavigationMethods.navigateToAppSettings(context),
                       ),
                     ],
                   ),

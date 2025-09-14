@@ -16,6 +16,7 @@ import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/setting/bottom_sheets/bottom_sheet_manager.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/bottom_sheets/app_settings_bottom_sheet.dart';
 
 class NavigationMethods {
   static void navigateToProfile(BuildContext context) {
@@ -77,6 +78,15 @@ class NavigationMethods {
         type: PageTransitionType.rightToLeft,
         child: const AppInfoPage(),
       ),
+    );
+  }
+
+  static void navigateToAppSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AppSettingsBottomSheet(),
     );
   }
 
