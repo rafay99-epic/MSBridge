@@ -24,10 +24,4 @@ class PlatformStubs {
     _bugfender3.setMockMethodCallHandler((call) async => null);
   }
 
-  static Future<void> reset() async {
-    await _crashlytics.setMockMethodCallHandler(null);
-    await _bugfender1.setMockMethodCallHandler(null);
-    await _bugfender2.setMockMethodCallHandler(null);
-    await _bugfender3.setMockMethodCallHandler(null);
-  }
 }

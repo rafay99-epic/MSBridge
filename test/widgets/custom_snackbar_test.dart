@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/widgets/custom_snackbar.dart' as under_test;
 
 // Adjust this import if your CustomSnackBar file is in a different location.
 // We attempt the common path "lib/widgets/custom_snackbar.dart".
-import 'package:msbridge//home/jailuser/git/lib/widgets/custom_snackbar.dart' as under_test;
 
 void main() {
   group('CustomSnackBar.show', () {
@@ -36,7 +36,7 @@ void main() {
         matching: find.byWidgetPredicate((w) {
           if (w is Container) {
             final d = w.decoration;
-            return d is BoxDecoration && d.borderRadius \!= null;
+            return d is BoxDecoration && d.borderRadius != null;
           }
           return false;
         }),
@@ -53,7 +53,8 @@ void main() {
       required under_test.SnackBarType type,
       ThemeData? theme,
     }) async {
-      final ThemeData effectiveTheme = theme ?? ThemeData.from(colorScheme: const ColorScheme.light());
+      final ThemeData effectiveTheme =
+          theme ?? ThemeData.from(colorScheme: const ColorScheme.light());
       await tester.pumpWidget(
         _appWithScaffold(effectiveTheme, child: Builder(
           builder: (context) {
@@ -72,10 +73,13 @@ void main() {
       // Tap to trigger show
       await tester.tap(find.text('Show'));
       await tester.pump(); // start animation
-      await tester.pump(const Duration(milliseconds: 100)); // settle initial frames
+      await tester
+          .pump(const Duration(milliseconds: 100)); // settle initial frames
     }
 
-    testWidgets('renders floating transparent SnackBar with expected base props', (tester) async {
+    testWidgets(
+        'renders floating transparent SnackBar with expected base props',
+        (tester) async {
       await _showSnackBar(
         tester,
         message: 'Hello world',
@@ -84,7 +88,7 @@ void main() {
 
       final sb = _locateSnackBar(tester);
       expect(sb, isNotNull);
-      expect(sb\!.backgroundColor, Colors.transparent);
+      expect(sb!.backgroundColor, Colors.transparent);
       expect(sb.behavior, SnackBarBehavior.floating);
       expect(sb.elevation, 0);
       expect(sb.duration, const Duration(seconds: 3));
@@ -100,18 +104,22 @@ void main() {
       expect(radii.topLeft.y, 20);
     });
 
-    testWidgets('shows message text with center alignment, max 2 lines and ellipsis', (tester) async {
-      const longMsg = 'A' * 300;
+    testWidgets(
+        'shows message text with center alignment, max 2 lines and ellipsis',
+        (tester) async {
+      late String longMsg = 'A' * 300;
       await _showSnackBar(
         tester,
         message: longMsg,
         type: under_test.SnackBarType.info,
       );
 
-      final textFinder = find.descendant(
-        of: find.byType(SnackBar),
-        matching: find.byType(Text),
-      ).first;
+      final textFinder = find
+          .descendant(
+            of: find.byType(SnackBar),
+            matching: find.byType(Text),
+          )
+          .first;
 
       final textWidget = tester.widget<Text>(textFinder);
       expect(textWidget.data, longMsg);
@@ -120,19 +128,21 @@ void main() {
       expect(textWidget.overflow, TextOverflow.ellipsis);
       // font weight and size are set; we can't guarantee font is available in test env,
       // but we can still verify the numeric values if style exists.
-      final style = textWidget.style\!;
+      final style = textWidget.style!;
       expect(style.fontSize, 15);
       expect(style.fontWeight, FontWeight.w600);
     });
 
-    testWidgets('success type uses expected icon and themed colors', (tester) async {
-      final theme = ThemeData.from(colorScheme: const ColorScheme.light(
+    testWidgets('success type uses expected icon and themed colors',
+        (tester) async {
+      final theme = ThemeData.from(
+          colorScheme: const ColorScheme.light(
         primary: Colors.green,
         onPrimary: Colors.white,
       ));
       await _showSnackBar(
         tester,
-        message: 'Saved\!',
+        message: 'Saved!',
         type: under_test.SnackBarType.success,
         theme: theme,
       );
@@ -140,7 +150,8 @@ void main() {
       // Icon should be LineIcons.checkCircle with iconColor onPrimary
       final iconFinder = find.descendant(
         of: find.byType(SnackBar),
-        matching: find.byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.checkCircle),
+        matching: find.byWidgetPredicate(
+            (w) => w is Icon && w.icon == LineIcons.checkCircle),
       );
       expect(iconFinder, findsOneWidget);
       final icon = tester.widget<Icon>(iconFinder);
@@ -149,34 +160,37 @@ void main() {
       // Background color on main decorated container is primary.withOpacity(0.95)
       final deco = _snackContentDecoration(tester);
       expect(deco, isNotNull);
-      expect(deco\!.color, theme.colorScheme.primary.withOpacity(0.95));
+      expect(deco!.color, theme.colorScheme.primary.withOpacity(0.95));
 
       // Border color is primary with 0.15 opacity
       final border = deco.border as Border?;
       expect(border, isNotNull);
-      expect(border\!.top.color, theme.colorScheme.primary.withOpacity(0.15));
+      expect(border!.top.color, theme.colorScheme.primary.withOpacity(0.15));
       // Border radius 20 as well (inner container)
       final br = deco.borderRadius as BorderRadius?;
       expect(br, isNotNull);
-      expect(br\!.topLeft.x, 20);
+      expect(br!.topLeft.x, 20);
     });
 
-    testWidgets('error type uses expected icon and themed colors', (tester) async {
-      final theme = ThemeData.from(colorScheme: const ColorScheme.light(
+    testWidgets('error type uses expected icon and themed colors',
+        (tester) async {
+      final theme = ThemeData.from(
+          colorScheme: const ColorScheme.light(
         error: Colors.red,
         errorContainer: Color(0xFFFFCDD2),
         onErrorContainer: Colors.black,
       ));
       await _showSnackBar(
         tester,
-        message: 'Failed\!',
+        message: 'Failed!',
         type: under_test.SnackBarType.error,
         theme: theme,
       );
 
       final iconFinder = find.descendant(
         of: find.byType(SnackBar),
-        matching: find.byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.exclamationTriangle),
+        matching: find.byWidgetPredicate(
+            (w) => w is Icon && w.icon == LineIcons.exclamationTriangle),
       );
       expect(iconFinder, findsOneWidget);
       final icon = tester.widget<Icon>(iconFinder);
@@ -184,24 +198,26 @@ void main() {
 
       final deco = _snackContentDecoration(tester);
       expect(deco, isNotNull);
-      expect(deco\!.color, theme.colorScheme.errorContainer.withOpacity(0.95));
+      expect(deco!.color, theme.colorScheme.errorContainer.withOpacity(0.95));
 
       final border = deco.border as Border?;
       expect(border, isNotNull);
-      expect(border\!.top.color, theme.colorScheme.error.withOpacity(0.15));
+      expect(border!.top.color, theme.colorScheme.error.withOpacity(0.15));
     });
 
-    testWidgets('warning type uses expected icon and fixed colors', (tester) async {
+    testWidgets('warning type uses expected icon and fixed colors',
+        (tester) async {
       // warning uses Colors.orange + white, not theme-derived
       await _showSnackBar(
         tester,
-        message: 'Beware\!',
+        message: 'Beware!',
         type: under_test.SnackBarType.warning,
       );
 
       final iconFinder = find.descendant(
         of: find.byType(SnackBar),
-        matching: find.byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.exclamationCircle),
+        matching: find.byWidgetPredicate(
+            (w) => w is Icon && w.icon == LineIcons.exclamationCircle),
       );
       expect(iconFinder, findsOneWidget);
       final icon = tester.widget<Icon>(iconFinder);
@@ -209,15 +225,17 @@ void main() {
 
       final deco = _snackContentDecoration(tester);
       expect(deco, isNotNull);
-      expect(deco\!.color, Colors.orange.withOpacity(0.95));
+      expect(deco!.color, Colors.orange.withOpacity(0.95));
 
       final border = deco.border as Border?;
       expect(border, isNotNull);
-      expect(border\!.top.color, Colors.orange.withOpacity(0.15));
+      expect(border!.top.color, Colors.orange.withOpacity(0.15));
     });
 
-    testWidgets('info type uses expected icon and themed secondary colors', (tester) async {
-      final theme = ThemeData.from(colorScheme: const ColorScheme.light(
+    testWidgets('info type uses expected icon and themed secondary colors',
+        (tester) async {
+      final theme = ThemeData.from(
+          colorScheme: const ColorScheme.light(
         secondary: Colors.blue,
         onSecondary: Colors.white,
       ));
@@ -230,7 +248,8 @@ void main() {
 
       final iconFinder = find.descendant(
         of: find.byType(SnackBar),
-        matching: find.byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.infoCircle),
+        matching: find.byWidgetPredicate(
+            (w) => w is Icon && w.icon == LineIcons.infoCircle),
       );
       expect(iconFinder, findsOneWidget);
       final icon = tester.widget<Icon>(iconFinder);
@@ -238,14 +257,15 @@ void main() {
 
       final deco = _snackContentDecoration(tester);
       expect(deco, isNotNull);
-      expect(deco\!.color, theme.colorScheme.secondary.withOpacity(0.95));
+      expect(deco!.color, theme.colorScheme.secondary.withOpacity(0.95));
 
       final border = deco.border as Border?;
       expect(border, isNotNull);
-      expect(border\!.top.color, theme.colorScheme.secondary.withOpacity(0.15));
+      expect(border!.top.color, theme.colorScheme.secondary.withOpacity(0.15));
     });
 
-    testWidgets('close button hides the currently visible SnackBar', (tester) async {
+    testWidgets('close button hides the currently visible SnackBar',
+        (tester) async {
       await _showSnackBar(
         tester,
         message: 'Dismiss me',
@@ -255,7 +275,8 @@ void main() {
       // Click the close button (LineIcons.times) and ensure the SnackBar hides
       final closeIconFinder = find.descendant(
         of: find.byType(SnackBar),
-        matching: find.byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.times),
+        matching: find
+            .byWidgetPredicate((w) => w is Icon && w.icon == LineIcons.times),
       );
       expect(closeIconFinder, findsOneWidget);
 

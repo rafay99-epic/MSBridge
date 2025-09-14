@@ -30,7 +30,7 @@ void main() {
 
   tearDownAll(() async {
     // Close any remaining boxes and delete from disk
-    for (final name in Hive.boxNames.toList()) {
+      for (final name in Hive.boxNames.toList()) {
       final b = Hive.box(name);
       await b.clear();
       await b.close();

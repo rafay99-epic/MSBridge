@@ -9,10 +9,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-// Adjust these imports to match actual library paths in the project.
-import 'package:app/features/voice_notes/widgets/voice_player_widget.dart';
-import 'package:app/features/voice_notes/models/voice_note_model.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
+import 'package:voice_note_kit/player/audio_player_widget.dart';
 
 Widget _wrapWithTheme(Widget child) {
   return MaterialApp(
@@ -39,13 +38,15 @@ VoiceNoteModel _makeVoiceNote({
     description: description,
     createdAt: createdAt ?? DateTime.now().subtract(const Duration(hours: 1)),
     audioFilePath: audioPath,
-    duration: duration,
-    fileSizeBytes: fileBytes,
+    durationInSeconds: duration.inSeconds,
+    fileSizeInBytes: fileBytes,
+    userId: '',
   );
 }
 
 Future<File> _createTempFile() async {
-  final dir = await Directory.systemTemp.createTemp('voice_player_widget_test_');
+  final dir =
+      await Directory.systemTemp.createTemp('voice_player_widget_test_');
   final f = File('${dir.path}/sound.aac');
   await f.writeAsBytes(const [0, 1, 2, 3, 4]); // dummy content
   return f;
@@ -60,7 +61,8 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('renders main player UI when audio file exists', (tester) async {
+    testWidgets('renders main player UI when audio file exists',
+        (tester) async {
       final file = await _createTempFile();
       final vn = _makeVoiceNote(audioPath: file.path);
 
@@ -80,7 +82,8 @@ void main() {
       expect(find.byType(AudioPlayerWidget), findsOneWidget);
     });
 
-    testWidgets('shows not-found container when audio file is missing', (tester) async {
+    testWidgets('shows not-found container when audio file is missing',
+        (tester) async {
       final vn = _makeVoiceNote(audioPath: '/path/does/not/exist.aac');
 
       await tester.pumpWidget(_wrapWithTheme(VoicePlayerWidget(voiceNote: vn)));
@@ -90,7 +93,8 @@ void main() {
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
     });
 
-    testWidgets('respects flags: hide title and metadata; compact layout', (tester) async {
+    testWidgets('respects flags: hide title and metadata; compact layout',
+        (tester) async {
       final file = await _createTempFile();
       final vn = _makeVoiceNote(audioPath: file.path);
 
@@ -113,7 +117,8 @@ void main() {
       expect(find.byType(AudioPlayerWidget), findsOneWidget);
     });
 
-    testWidgets('forwards onPlay/onPause via child AudioPlayerWidget', (tester) async {
+    testWidgets('forwards onPlay/onPause via child AudioPlayerWidget',
+        (tester) async {
       final file = await _createTempFile();
       final vn = _makeVoiceNote(audioPath: file.path);
 
@@ -143,7 +148,8 @@ void main() {
       expect(paused, isTrue);
     });
 
-    testWidgets('forwards onError and attempts to show snackbar', (tester) async {
+    testWidgets('forwards onError and attempts to show snackbar',
+        (tester) async {
       final file = await _createTempFile();
       final vn = _makeVoiceNote(audioPath: file.path);
 

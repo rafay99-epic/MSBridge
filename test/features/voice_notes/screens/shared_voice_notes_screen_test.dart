@@ -3,15 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/core/repo/voice_note_share_repo.dart';
+import 'package:msbridge/widgets/custom_snackbar.dart';
 
 // These package imports should match the app's actual structure.
 // Adjust the import paths below if your project uses different file locations.
-import 'package:your_app/features/voice_notes/screens/shared_voice_notes_screen.dart';
-import 'package:your_app/features/voice_notes/models/shared_voice_note_meta.dart';
-import 'package:your_app/features/voice_notes/models/voice_note_model.dart';
-import 'package:your_app/common/ui/custom_snackbar.dart';
-import 'package:your_app/features/voice_notes/data/voice_note_share_repository.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// NOTE: Testing library/framework
@@ -83,13 +81,12 @@ class _DI extends InheritedWidget {
     required this.showSnack,
     required this.shareFn,
     required super.child,
-    super.key,
   });
 
   static _DI of(BuildContext context) {
     final di = context.dependOnInheritedWidgetOfExactType<_DI>();
-    assert(di \!= null, 'DI not found in context');
-    return di\!;
+    assert(di != null, 'DI not found in context');
+    return di!;
   }
 
   @override
@@ -101,25 +98,25 @@ class _DI extends InheritedWidget {
 extension _RepoShims on BuildContext {
   Future<List<SharedVoiceNoteMeta>> getSharedShim() async {
     final di = contextDepend<_DI>(this);
-    if (di \!= null) return di.getShared();
+    if (di != null) return di.getShared();
     return VoiceNoteShareRepository.getSharedVoiceNotes();
   }
 
   Future<void> disableShareShim(VoiceNoteModel m) async {
     final di = contextDepend<_DI>(this);
-    if (di \!= null) return di.disableShare(m);
+    if (di != null) return di.disableShare(m);
     return VoiceNoteShareRepository.disableShare(m);
   }
 
   void showSnackShim(String message, SnackBarType t) {
     final di = contextDepend<_DI>(this);
-    if (di \!= null) return di.showSnack(this, message, t);
+    if (di != null) return di.showSnack(this, message, t);
     CustomSnackBar.show(this, message, t);
   }
 
   Future<void> shareShim(String text, {String? subject}) {
     final di = contextDepend<_DI>(this);
-    if (di \!= null) return di.shareFn(text, subject: subject);
+    if (di != null) return di.shareFn(text, subject: subject);
     return Share.share(text, subject: subject);
   }
 }
@@ -142,13 +139,14 @@ class SharedVoiceNotesScreenTestable extends StatelessWidget {
 
 // --- Fake Data ---------------------------------------------------------------
 
-SharedVoiceNoteMeta _meta(String id, String title, String url) => SharedVoiceNoteMeta(
-  shareId: 'share_$id',
-  voiceNoteId: id,
-  title: title,
-  shareUrl: url,
-  // add other fields if required by the model
-);
+SharedVoiceNoteMeta _meta(String id, String title, String url) =>
+    SharedVoiceNoteMeta(
+      shareId: 'share_$id',
+      voiceNoteId: id,
+      title: title,
+      shareUrl: url, audioUrl: 'msbridge://voice_note/$id',
+      // add other fields if required by the model
+    );
 
 // --- Finders ----------------------------------------------------------------
 Finder _searchField() => find.byType(TextField);
@@ -187,7 +185,8 @@ void main() {
     clipboard.uninstall();
   });
 
-  Widget _wrapWithApp(Widget child, {
+  Widget _wrapWithApp(
+    Widget child, {
     required GetSharedVoiceNotesFn getShared,
     required DisableShareFn disableShare,
   }) {
@@ -202,7 +201,8 @@ void main() {
     );
   }
 
-  testWidgets('shows loading spinner initially, then renders list on success', (tester) async {
+  testWidgets('shows loading spinner initially, then renders list on success',
+      (tester) async {
     final notes = [
       _meta('1', 'Meeting Notes', 'https://example.com/s1'),
       _meta('2', 'Daily Standup', 'https://example.com/s2'),
@@ -253,7 +253,8 @@ void main() {
     expect(callCount, 2);
   });
 
-  testWidgets('search filters by title (case-insensitive, trims)', (tester) async {
+  testWidgets('search filters by title (case-insensitive, trims)',
+      (tester) async {
     final notes = [
       _meta('1', 'Project Alpha', 'u1'),
       _meta('2', 'alpha beta', 'u2'),
@@ -324,7 +325,8 @@ void main() {
     expect(_noResultsTitle(), findsOneWidget);
   });
 
-  testWidgets('empty state message when no shared notes and not searching', (tester) async {
+  testWidgets('empty state message when no shared notes and not searching',
+      (tester) async {
     await tester.pumpWidget(
       _wrapWithApp(
         const SharedVoiceNotesScreenTestable(),
@@ -356,7 +358,9 @@ void main() {
     expect(_deleteShareAction(), findsOneWidget);
   });
 
-  testWidgets('View Share Link shows dialog with URL, supports copy and share via app', (tester) async {
+  testWidgets(
+      'View Share Link shows dialog with URL, supports copy and share via app',
+      (tester) async {
     final url = 'https://example.com/share';
     final note = _meta('1', 'Title X', url);
 
@@ -393,12 +397,14 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => shareSpy.share(
-      any(that: contains('Title X')),
-      subject: any(named: 'subject'),
-    )).called(1);
+          any(that: contains('Title X')),
+          subject: any(named: 'subject'),
+        )).called(1);
   });
 
-  testWidgets('Delete Share: confirm -> shows loading -> disables share -> removes item -> success snackbar', (tester) async {
+  testWidgets(
+      'Delete Share: confirm -> shows loading -> disables share -> removes item -> success snackbar',
+      (tester) async {
     final notes = [
       _meta('1', 'A', 'u1'),
       _meta('2', 'B', 'u2'),
@@ -465,7 +471,8 @@ void main() {
     );
   });
 
-  testWidgets('delete failure dismisses loading and shows error snackbar', (tester) async {
+  testWidgets('delete failure dismisses loading and shows error snackbar',
+      (tester) async {
     final note = _meta('1', 'A', 'u');
 
     await tester.pumpWidget(

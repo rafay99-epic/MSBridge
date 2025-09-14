@@ -247,11 +247,11 @@ void main() {
       expect(m.isDeleted, false);
       expect(const ListEquality().equals(m.tags, ['one','two']), true);
       expect(m.description, 'details');
-      expect(m.deletedAt\!.toIso8601String(), data['deletedAt']);
+      expect(m.deletedAt!.toIso8601String(), data['deletedAt']);
       expect(m.deletedBy, 'usr');
       expect(m.deviceId, 'dev-2');
       expect(m.isDeletionSynced, true);
-      expect(m.lastSyncAt\!.toIso8601String(), data['lastSyncAt']);
+      expect(m.lastSyncAt!.toIso8601String(), data['lastSyncAt']);
       expect(m.versionNumber, 7);
     });
 

@@ -15,7 +15,7 @@ import 'package:flutter_bugfender/flutter_bugfender.dart';
 // Assuming the implementation resides at lib/core/services/upload/uploadthing_service.dart
 import '../../../../lib/core/services/upload/uploadthing_service.dart';
 
-import '../../test_helpers/platform_stubs.dart';
+import '../../../../test/test_helpers/platform_stubs.dart';
 
 // A small spy to count Crashlytics and Bugfender invocations via MethodChannel handlers.
 class _CallCounter {
@@ -54,10 +54,10 @@ void main() {
     });
 
     tearDown(() async {
-      await crash.setMockMethodCallHandler(null);
-      await bug1.setMockMethodCallHandler(null);
-      await bug2.setMockMethodCallHandler(null);
-      await bug3.setMockMethodCallHandler(null);
+      crash.setMockMethodCallHandler(null);
+      bug1.setMockMethodCallHandler(null);
+      bug2.setMockMethodCallHandler(null);
+      bug3.setMockMethodCallHandler(null);
     });
 
     test('constructor accepts raw sk_ key without logging', () {
@@ -68,25 +68,33 @@ void main() {
       expect(() => UploadThingService(apiKey: key), returnsNormally);
 
       // Assert
-      expect(counter.crashlyticsCalls, 0, reason: 'No Crashlytics logs expected for valid key');
+      expect(counter.crashlyticsCalls, 0,
+          reason: 'No Crashlytics logs expected for valid key');
     });
 
-    test('constructor normalizes base64-encoded apiKey json without logging', () {
+    test('constructor normalizes base64-encoded apiKey json without logging',
+        () {
       // {"apiKey":"sk_BASE64_OK"}
-      final payload = base64.encode(utf8.encode(jsonEncode({'apiKey': 'sk_BASE64_OK'})));
+      final payload =
+          base64.encode(utf8.encode(jsonEncode({'apiKey': 'sk_BASE64_OK'})));
 
       expect(() => UploadThingService(apiKey: payload), returnsNormally);
-      expect(counter.crashlyticsCalls, 0, reason: 'No Crashlytics logs expected for valid normalized key');
+      expect(counter.crashlyticsCalls, 0,
+          reason: 'No Crashlytics logs expected for valid normalized key');
     });
 
-    test('constructor with invalid base64 logs to Crashlytics but does not throw', () {
+    test(
+        'constructor with invalid base64 logs to Crashlytics but does not throw',
+        () {
       final invalid = 'not-base64\!\!\!';
 
       expect(() => UploadThingService(apiKey: invalid), returnsNormally);
-      expect(counter.crashlyticsCalls, greaterThanOrEqualTo(1), reason: 'Crashlytics should be notified on normalization failure');
+      expect(counter.crashlyticsCalls, greaterThanOrEqualTo(1),
+          reason: 'Crashlytics should be notified on normalization failure');
     });
 
-    test('uploadImageFile rethrows on client failure and logs to Bugfender', () async {
+    test('uploadImageFile rethrows on client failure and logs to Bugfender',
+        () async {
       // This test exercises the catch block; since we cannot inject a fake client,
       // we rely on the underlying client throwing with an invalid/nonexistent file or key.
       final svc = UploadThingService(apiKey: 'invalid-key');
@@ -94,26 +102,36 @@ void main() {
       // Create a temp file reference that likely does not exist to trigger failure.
       final file = File('/path/does/not/exist/image.png');
 
-      await expectLater(() => svc.uploadImageFile(file), throwsA(isA<Exception>()));
-      expect(counter.bugfenderCalls, greaterThanOrEqualTo(1), reason: 'Bugfender.error should be called on failure');
+      await expectLater(
+          () => svc.uploadImageFile(file), throwsA(isA<Exception>()));
+      expect(counter.bugfenderCalls, greaterThanOrEqualTo(1),
+          reason: 'Bugfender.error should be called on failure');
     });
 
-    test('uploadAudioFile rethrows on client failure and logs to Bugfender', () async {
+    test('uploadAudioFile rethrows on client failure and logs to Bugfender',
+        () async {
       final svc = UploadThingService(apiKey: 'invalid-key');
       final file = File('/path/does/not/exist/audio.mp3');
 
-      await expectLater(() => svc.uploadAudioFile(file), throwsA(isA<Exception>()));
-      expect(counter.bugfenderCalls, greaterThanOrEqualTo(1), reason: 'Bugfender.error should be called on failure');
+      await expectLater(
+          () => svc.uploadAudioFile(file), throwsA(isA<Exception>()));
+      expect(counter.bugfenderCalls, greaterThanOrEqualTo(1),
+          reason: 'Bugfender.error should be called on failure');
     });
 
-    test('listRecent rethrows on client failure and records Crashlytics error', () async {
+    test('listRecent rethrows on client failure and records Crashlytics error',
+        () async {
       final svc = UploadThingService(apiKey: 'invalid-key');
 
-      await expectLater(() => svc.listRecent(limit: 3), throwsA(isA<Exception>()));
-      expect(counter.crashlyticsCalls, greaterThanOrEqualTo(1), reason: 'Crashlytics.recordError should be called on failure');
+      await expectLater(
+          () => svc.listRecent(limit: 3), throwsA(isA<Exception>()));
+      expect(counter.crashlyticsCalls, greaterThanOrEqualTo(1),
+          reason: 'Crashlytics.recordError should be called on failure');
     });
 
-    test('listRecent maps responses to expected shape (key, name, url) when client succeeds [integration-light]', () async {
+    test(
+        'listRecent maps responses to expected shape (key, name, url) when client succeeds [integration-light]',
+        () async {
       // This test demonstrates expected mapping shape. Because we cannot inject the client,
       // we only assert that when called with a small limit it returns a list or throws.
       final svc = UploadThingService(apiKey: 'sk_FAKE');

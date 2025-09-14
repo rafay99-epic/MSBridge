@@ -7,10 +7,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
 
 // Adjust imports to match actual project structure.
-import 'package:app/features/voice_notes/widgets/voice_note_card.dart';
-import 'package:app/features/voice_notes/models/voice_note_model.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
       theme: ThemeData(
@@ -33,14 +33,16 @@ VoiceNoteModel _note({
     description: description,
     createdAt: createdAt ?? DateTime.now().subtract(const Duration(hours: 2)),
     audioFilePath: '/tmp/unused.aac',
-    duration: duration,
-    fileSizeBytes: fileBytes,
+    durationInSeconds: duration.inSeconds,
+    fileSizeInBytes: fileBytes,
+    userId: '',
   );
 }
 
 void main() {
   group('VoiceNoteCard', () {
-    testWidgets('renders title, chips, and description when present', (tester) async {
+    testWidgets('renders title, chips, and description when present',
+        (tester) async {
       final vn = _note();
       await tester.pumpWidget(_wrap(VoiceNoteCard(voiceNote: vn)));
 
@@ -50,7 +52,7 @@ void main() {
       // File size chip text
       expect(find.text(vn.formattedFileSize), findsOneWidget);
       // Description appears when provided
-      expect(find.text(vn.description\!), findsOneWidget);
+      expect(find.text(vn.description!), findsOneWidget);
     });
 
     testWidgets('hides description when null or empty', (tester) async {
@@ -58,7 +60,8 @@ void main() {
       await tester.pumpWidget(_wrap(VoiceNoteCard(voiceNote: vnEmpty)));
       expect(find.text('Tap to view'), findsOneWidget);
       // Ensure description container not rendered
-      expect(find.byType(Text), isNot(findsNothing)); // ensure widget tree rendered
+      expect(find.byType(Text),
+          isNot(findsNothing)); // ensure widget tree rendered
       expect(find.text(''), findsNothing);
 
       final vnNull = _note(description: null);
@@ -72,7 +75,8 @@ void main() {
       int tapCount = 0;
       final onTap = () => tapCount++;
 
-      await tester.pumpWidget(_wrap(VoiceNoteCard(voiceNote: vn, onTap: onTap)));
+      await tester
+          .pumpWidget(_wrap(VoiceNoteCard(voiceNote: vn, onTap: onTap)));
 
       // Tap anywhere on card (InkWell)
       await tester.tap(find.byType(VoiceNoteCard));
@@ -86,8 +90,10 @@ void main() {
       expect(tapCount, 2);
     });
 
-    testWidgets('relative date string appears for recent notes', (tester) async {
-      final vn = _note(createdAt: DateTime.now().subtract(const Duration(minutes: 45)));
+    testWidgets('relative date string appears for recent notes',
+        (tester) async {
+      final vn = _note(
+          createdAt: DateTime.now().subtract(const Duration(minutes: 45)));
       await tester.pumpWidget(_wrap(VoiceNoteCard(voiceNote: vn)));
 
       // Expect something like "45m ago" in the tree.
