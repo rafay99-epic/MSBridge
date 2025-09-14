@@ -398,10 +398,8 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row with play button and title
                 Row(
                   children: [
-                    // Enhanced play button
                     Container(
                       width: 56,
                       height: 56,

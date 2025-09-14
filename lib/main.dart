@@ -37,6 +37,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
+import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'package:msbridge/core/services/update_manager.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -129,6 +130,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
           ChangeNotifierProvider(create: (_) => UploadThingProvider()),
+          ChangeNotifierProvider(create: (_) => VoiceNoteSettingsProvider()),
           ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),

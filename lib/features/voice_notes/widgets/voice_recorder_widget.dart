@@ -7,6 +7,8 @@ import 'package:msbridge/core/services/voice_note_service.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'dart:io';
 
 class VoiceRecorderWidget extends StatefulWidget {
@@ -91,12 +93,17 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       final directory = await getTemporaryDirectory();
       final filePath =
           '${directory.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      // Get settings from provider
+      final settingsProvider =
+          Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
+      final settings = settingsProvider.settings;
+
       await _audioRecorder.start(
         RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          sampleRate: 44100,
-          bitRate: 128000,
-          numChannels: 1, // Mono for voice recording
+          encoder: settings.encoder.toRecordEncoder(),
+          sampleRate: settings.sampleRate,
+          bitRate: settings.bitRate,
+          numChannels: settings.numChannels,
         ),
         path: filePath,
       );

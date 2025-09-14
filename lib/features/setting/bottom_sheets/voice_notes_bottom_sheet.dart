@@ -4,6 +4,7 @@ import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 import 'package:msbridge/features/voice_notes/screens/shared_voice_notes_screen.dart';
+import 'package:msbridge/features/voice_notes/screens/voice_note_settings_screen.dart';
 import 'package:page_transition/page_transition.dart';
 
 class VoiceNotesBottomSheet extends StatelessWidget {
@@ -50,24 +51,11 @@ class VoiceNotesBottomSheet extends StatelessWidget {
           subtitle: "Configure voice recording and sharing preferences",
           icon: LineIcons.cog,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Voice Note Settings coming soon!'),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 12),
-
-        SettingActionTile(
-          title: "Audio Quality",
-          subtitle: "Adjust recording quality and compression settings",
-          icon: LineIcons.volumeUp,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Audio Quality Settings coming soon!'),
+            Navigator.push(
+              context,
+              PageTransition(
+                type: PageTransitionType.rightToLeft,
+                child: const VoiceNoteSettingsScreen(),
               ),
             );
           },
