@@ -8,6 +8,31 @@ import 'package:msbridge/core/repo/voice_note_share_repo.dart';
 import 'package:line_icons/line_icons.dart';
 import 'dart:io';
 
+/// Formats a date relative to now, handling future dates as 'Just now'
+String formatRelativeDate(DateTime date) {
+  final now = DateTime.now();
+  final difference = now.difference(date);
+
+  // Handle future dates
+  if (difference.isNegative) {
+    return 'Just now';
+  }
+
+  if (difference.inDays == 0) {
+    if (difference.inHours == 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return '${difference.inHours}h ago';
+    }
+  } else if (difference.inDays == 1) {
+    return 'Yesterday';
+  } else if (difference.inDays < 7) {
+    return '${difference.inDays}d ago';
+  } else {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
 class VoicePlayerWidget extends StatefulWidget {
   final VoiceNoteModel voiceNote;
   final bool showTitle;
@@ -153,7 +178,7 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                   ),
                   const SizedBox(width: 4.0),
                   Text(
-                    _formatDate(widget.voiceNote.createdAt),
+                    formatRelativeDate(widget.voiceNote.createdAt),
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
@@ -363,25 +388,6 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
       return false;
     }
   }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
-      } else {
-        return '${difference.inHours}h ago';
-      }
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
 }
 
 // Compact voice note card for lists
@@ -588,7 +594,7 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                               const SizedBox(width: 12.0),
                               _buildEnhancedInfoChip(
                                 LineIcons.calendar,
-                                _formatDate(widget.voiceNote.createdAt),
+                                formatRelativeDate(widget.voiceNote.createdAt),
                                 theme,
                               ),
                             ],
@@ -737,24 +743,5 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
-      } else {
-        return '${difference.inHours}h ago';
-      }
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
   }
 }

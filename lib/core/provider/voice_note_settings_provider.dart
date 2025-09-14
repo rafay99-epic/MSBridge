@@ -158,10 +158,21 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
   }
 
   // Helper methods for UI
+  VoiceNoteAudioEncoder _getExpectedEncoderForQuality(AudioQuality quality) {
+    switch (quality) {
+      case AudioQuality.lossless:
+        return VoiceNoteAudioEncoder.flac;
+      default:
+        return VoiceNoteAudioEncoder.aacLc;
+    }
+  }
+
   AudioQuality getCurrentQualityPreset() {
     for (final quality in AudioQuality.values) {
+      final expectedEncoder = _getExpectedEncoderForQuality(quality);
       if (_settings.sampleRate == quality.sampleRate &&
-          _settings.bitRate == quality.bitRate) {
+          _settings.bitRate == quality.bitRate &&
+          _settings.encoder == expectedEncoder) {
         return quality;
       }
     }
@@ -169,8 +180,12 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
   }
 
   bool isUsingPreset() {
-    return getCurrentQualityPreset() != AudioQuality.medium ||
-        _settings.bitRate != 128000 ||
-        _settings.sampleRate != 44100;
+    final currentPreset = getCurrentQualityPreset();
+    final expectedEncoder = _getExpectedEncoderForQuality(currentPreset);
+
+    return (currentPreset != AudioQuality.medium ||
+            _settings.bitRate != 128000 ||
+            _settings.sampleRate != 44100) &&
+        _settings.encoder == expectedEncoder;
   }
 }
