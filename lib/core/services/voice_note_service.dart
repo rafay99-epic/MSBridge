@@ -70,11 +70,14 @@ class VoiceNoteService {
     required String userId,
     String? description,
     List<String>? tags,
+    String? fileExtension,
   }) async {
     try {
       final voiceNotesDir = await getVoiceNotesDirectory();
       final voiceNoteId = _uuid.v4();
-      final fileName = '$voiceNoteId.m4a';
+      final extension =
+          fileExtension ?? 'm4a'; // Default to m4a for backward compatibility
+      final fileName = '$voiceNoteId.$extension';
       final destinationPath = '${voiceNotesDir.path}/$fileName';
 
       final sourceFile = File(audioFilePath);

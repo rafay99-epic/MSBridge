@@ -89,14 +89,15 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         return;
       }
 
-      // Get the temporary directory for recording
       final directory = await getTemporaryDirectory();
-      final filePath =
-          '${directory.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      // Get settings from provider
+
       final settingsProvider =
           Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
       final settings = settingsProvider.settings;
+
+      final fileExtension = settings.encoder.getFileExtension();
+      final filePath =
+          '${directory.path}/voice_note_${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
       await _audioRecorder.start(
         RecordConfig(
@@ -268,6 +269,12 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           ? 'Voice Note ${DateTime.now().millisecondsSinceEpoch}'
           : _titleController.text.trim();
 
+      // Get the current settings to determine file extension
+      final settingsProvider =
+          Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
+      final settings = settingsProvider.settings;
+      final fileExtension = settings.encoder.getFileExtension();
+
       final voiceNote = await _voiceNoteService.saveVoiceNote(
         audioFilePath: _recordedFilePath!,
         title: title,
@@ -275,6 +282,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
+        fileExtension: fileExtension,
       );
 
       if (widget.onRecordingComplete != null) {

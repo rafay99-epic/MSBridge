@@ -135,6 +135,22 @@ enum VoiceNoteAudioEncoder {
         return VoiceNoteAudioEncoder.wav; // PCM16 is closest to WAV
     }
   }
+
+  // Get the appropriate file extension for the encoder
+  String getFileExtension() {
+    switch (this) {
+      case VoiceNoteAudioEncoder.aacLc:
+      case VoiceNoteAudioEncoder.aacEld:
+      case VoiceNoteAudioEncoder.aacHe:
+        return 'm4a';
+      case VoiceNoteAudioEncoder.opus:
+        return 'opus';
+      case VoiceNoteAudioEncoder.flac:
+        return 'flac';
+      case VoiceNoteAudioEncoder.wav:
+        return 'wav';
+    }
+  }
 }
 
 // Audio quality presets
