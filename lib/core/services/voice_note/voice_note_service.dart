@@ -192,11 +192,9 @@ class VoiceNoteService {
       }
 
       if (!audioFileExists && !metadataExists) {
-        FlutterBugfender.sendCrash(
-            'Both audio file and metadata successfully deleted',
-            StackTrace.current.toString());
-
-        throw Exception('Both audio file and metadata successfully deleted');
+        FlutterBugfender.log(
+            'Both audio file and metadata successfully deleted');
+        return;
       } else {
         FlutterBugfender.sendCrash('Some data still exists after deletion',
             StackTrace.current.toString());
