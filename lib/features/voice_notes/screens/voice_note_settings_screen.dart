@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'package:msbridge/core/models/voice_note_settings_model.dart';
@@ -20,26 +21,10 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            LineIcons.arrowLeft,
-            color: theme.colorScheme.onSurface,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Voice Note Settings',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
+      appBar: CustomAppBar(
+        title: 'Voice Note Settings',
+        backbutton: true,
+        showTitle: true,
       ),
       body: Consumer<VoiceNoteSettingsProvider>(
         builder: (context, settingsProvider, child) {

@@ -144,14 +144,36 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
 
       if (path != null) {
         await _testRecordedFile(path);
+
+        // Check auto-save setting
+        final settingsProvider =
+            Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
+        final settings = settingsProvider.settings;
+
+        if (settings.autoSaveEnabled) {
+          // Auto-save is enabled, save immediately
+          await _saveVoiceNote();
+        }
       }
 
       if (mounted) {
-        CustomSnackBar.show(
-          context,
-          'Recording completed! File saved.',
-          SnackBarType.success,
-        );
+        final settingsProvider =
+            Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
+        final settings = settingsProvider.settings;
+
+        if (settings.autoSaveEnabled) {
+          CustomSnackBar.show(
+            context,
+            'Recording completed and saved automatically!',
+            SnackBarType.success,
+          );
+        } else {
+          CustomSnackBar.show(
+            context,
+            'Recording completed! File saved.',
+            SnackBarType.success,
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -539,89 +561,171 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               ),
             )
           else ...[
-            // Recording completed - show save options
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.mic,
-                    size: 48,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    'Recording Complete!',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Save button
-                      ElevatedButton.icon(
-                        onPressed: _isSaving ? null : _saveVoiceNote,
-                        icon: _isSaving
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    theme.colorScheme.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : const Icon(Icons.save),
-                        label: Text(
-                          _isSaving ? 'Saving...' : 'Save',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
-                      ),
+            // Recording completed - show save options or auto-save status
+            Consumer<VoiceNoteSettingsProvider>(
+              builder: (context, settingsProvider, child) {
+                final settings = settingsProvider.settings;
 
-                      // Re-record button
-                      OutlinedButton.icon(
-                        onPressed: _isSaving ? null : _resetForm,
-                        icon: const Icon(Icons.refresh),
-                        label: Text(
-                          'Re-record',
+                if (settings.autoSaveEnabled) {
+                  // Auto-save enabled - show saving status or completion
+                  return Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          _isSaving
+                              ? Icons.hourglass_empty
+                              : Icons.check_circle,
+                          size: 48,
+                          color: _isSaving
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8.0),
+                        Text(
+                          _isSaving ? 'Auto-Saving...' : 'Recording Saved!',
                           style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             fontFamily: 'Poppins',
                           ),
                         ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
-                          side: BorderSide(color: theme.colorScheme.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
+                        if (_isSaving) ...[
+                          const SizedBox(height: 8.0),
+                          Text(
+                            'Your voice note is being saved automatically',
+                            style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: 14,
+                              fontFamily: 'Poppins',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 16.0),
+                        if (!_isSaving)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _resetForm,
+                              icon: const Icon(Icons.refresh),
+                              label: Text(
+                                'Record Another',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                                side: BorderSide(
+                                    color: theme.colorScheme.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                } else {
+                  // Auto-save disabled - show manual save options
+                  return Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.mic,
+                          size: 48,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8.0),
+                        Text(
+                          'Recording Complete!',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                        const SizedBox(height: 16.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Save button
+                            ElevatedButton.icon(
+                              onPressed: _isSaving ? null : _saveVoiceNote,
+                              icon: _isSaving
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                    )
+                                  : const Icon(Icons.save),
+                              label: Text(
+                                _isSaving ? 'Saving...' : 'Save',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                            ),
+
+                            // Re-record button
+                            OutlinedButton.icon(
+                              onPressed: _isSaving ? null : _resetForm,
+                              icon: const Icon(Icons.refresh),
+                              label: Text(
+                                'Re-record',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                                side: BorderSide(
+                                    color: theme.colorScheme.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ],
