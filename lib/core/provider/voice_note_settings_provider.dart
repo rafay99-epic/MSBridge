@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/core/models/voice_note_settings_model.dart';
 
@@ -54,32 +55,67 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
   Future<void> updateEncoder(VoiceNoteAudioEncoder encoder) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_encoderKey, encoder.name);
+      final writeResult = await prefs.setString(_encoderKey, encoder.name);
+
+      if (!writeResult) {
+        debugPrint('Failed to persist encoder to SharedPreferences');
+        return;
+      }
 
       _settings = _settings.copyWith(encoder: encoder);
       notifyListeners();
     } catch (e) {
-      // Handle error silently or log it
       debugPrint('Failed to update encoder: $e');
     }
   }
 
   Future<void> updateSampleRate(int sampleRate) async {
+    // Validate sample rate against allowed values
+    const allowedSampleRates = [22050, 44100, 48000, 96000];
+    if (!allowedSampleRates.contains(sampleRate)) {
+      debugPrint(
+          'Invalid sample rate: $sampleRate. Allowed values: $allowedSampleRates');
+      return;
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_sampleRateKey, sampleRate);
+      final writeResult = await prefs.setInt(_sampleRateKey, sampleRate);
+
+      if (!writeResult) {
+        FlutterBugfender.error(
+            'Failed to persist sample rate to SharedPreferences');
+        return;
+      }
 
       _settings = _settings.copyWith(sampleRate: sampleRate);
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to update sample rate: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to update sample rate: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update sample rate: $e',
+      );
     }
   }
 
   Future<void> updateBitRate(int bitRate) async {
+    const allowedBitRates = [64000, 128000, 192000, 256000, 320000];
+    if (!allowedBitRates.contains(bitRate)) {
+      FlutterBugfender.error(
+          'Invalid bit rate: $bitRate. Allowed values: $allowedBitRates');
+      return;
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_bitRateKey, bitRate);
+      final writeResult = await prefs.setInt(_bitRateKey, bitRate);
+
+      if (!writeResult) {
+        FlutterBugfender.error(
+            'Failed to persist bit rate to SharedPreferences');
+        return;
+      }
 
       _settings = _settings.copyWith(bitRate: bitRate);
       notifyListeners();
@@ -89,26 +125,51 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
   }
 
   Future<void> updateNumChannels(int numChannels) async {
+    // Validate number of channels against allowed values
+    const allowedChannels = [1, 2];
+    if (!allowedChannels.contains(numChannels)) {
+      FlutterBugfender.error(
+          'Invalid number of channels: $numChannels. Allowed values: $allowedChannels');
+      return;
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_numChannelsKey, numChannels);
+      final writeResult = await prefs.setInt(_numChannelsKey, numChannels);
+
+      if (!writeResult) {
+        FlutterBugfender.error(
+            'Failed to persist number of channels to SharedPreferences');
+        return;
+      }
 
       _settings = _settings.copyWith(numChannels: numChannels);
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to update num channels: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to update num channels: $e', StackTrace.current.toString());
     }
   }
 
   Future<void> updateAutoSave(bool autoSaveEnabled) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_autoSaveKey, autoSaveEnabled);
+      final writeResult = await prefs.setBool(_autoSaveKey, autoSaveEnabled);
+
+      if (!writeResult) {
+        FlutterBugfender.error(
+            'Failed to persist auto save setting to SharedPreferences');
+        return;
+      }
 
       _settings = _settings.copyWith(autoSaveEnabled: autoSaveEnabled);
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to update auto save: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to update auto save: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update auto save: $e',
+      );
     }
   }
 
@@ -116,7 +177,6 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Update encoder based on quality
       VoiceNoteAudioEncoder encoder;
       switch (quality) {
         case AudioQuality.lossless:
@@ -137,7 +197,11 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
       );
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to apply quality preset: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to apply quality preset: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to apply quality preset: $e',
+      );
     }
   }
 
@@ -153,7 +217,11 @@ class VoiceNoteSettingsProvider with ChangeNotifier {
       _settings = const VoiceNoteSettingsModel();
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to reset to defaults: $e');
+      FlutterBugfender.sendCrash(
+          'Failed to reset to defaults: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to reset to defaults: $e',
+      );
     }
   }
 

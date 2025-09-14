@@ -259,8 +259,9 @@ class StreakNotificationService {
         showWhen: true,
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
-        icon: '@mipmap/launcher_icon',
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+        icon: '@mipmap/ic_stat_msbridge',
+        largeIcon:
+            const DrawableResourceAndroidBitmap('@mipmap/ic_stat_msbridge'),
         color: const Color(0xFFFF7043), // Warning color
         category: AndroidNotificationCategory.alarm,
       );

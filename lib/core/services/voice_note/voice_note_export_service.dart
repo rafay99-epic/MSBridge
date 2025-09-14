@@ -159,6 +159,7 @@ class VoiceNoteExportService {
       FlutterBugfender.error('Error exporting voice note: $e');
 
       onStatus?.call('Export failed: $e');
+      await cancelExportNotification();
       return false;
     }
   }

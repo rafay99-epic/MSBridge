@@ -144,35 +144,29 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       });
 
       if (path != null) {
-        await _testRecordedFile(path);
+        final isValidFile = await _testRecordedFile(path);
 
         // Check auto-save setting
         final settingsProvider =
             Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
         final settings = settingsProvider.settings;
 
-        if (settings.autoSaveEnabled) {
-          // Auto-save is enabled, save immediately
-          await _saveVoiceNote();
-        }
-      }
+        if (settings.autoSaveEnabled && isValidFile) {
+          // Auto-save is enabled and file is valid, save immediately
+          await _saveVoiceNote(showSuccessToast: false);
 
-      if (mounted) {
-        final settingsProvider =
-            Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
-        final settings = settingsProvider.settings;
-
-        if (settings.autoSaveEnabled) {
+          if (mounted) {
+            CustomSnackBar.show(
+              context,
+              'Recording completed and saved automatically!',
+              SnackBarType.success,
+            );
+          }
+        } else if (mounted) {
           CustomSnackBar.show(
             context,
-            'Recording completed and saved automatically!',
-            SnackBarType.success,
-          );
-        } else {
-          CustomSnackBar.show(
-            context,
-            'Recording completed! File saved.',
-            SnackBarType.success,
+            'Recording completed.',
+            SnackBarType.info,
           );
         }
       }
@@ -210,7 +204,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     return '$minutes:$seconds';
   }
 
-  Future<void> _testRecordedFile(String filePath) async {
+  Future<bool> _testRecordedFile(String filePath) async {
     try {
       final file = File(filePath);
       if (await file.exists()) {
@@ -224,6 +218,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               SnackBarType.warning,
             );
           }
+          return false;
         } else {
           if (mounted) {
             CustomSnackBar.show(
@@ -232,7 +227,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               SnackBarType.info,
             );
           }
-          return;
+          return true;
         }
       } else {
         if (mounted) {
@@ -242,15 +237,34 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
             SnackBarType.error,
           );
         }
+        return false;
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error checking file: $e', StackTrace.current.toString());
-      throw Exception('Error checking file: $e');
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Error checking recorded file: $e',
+          SnackBarType.error,
+        );
+      }
+      return false;
     }
   }
 
-  Future<void> _saveVoiceNote() async {
+  Future<void> _saveVoiceNoteWithValidation() async {
+    if (_recordedFilePath == null) return;
+
+    final isValidFile = await _testRecordedFile(_recordedFilePath!);
+    if (!isValidFile) {
+      return; // Don't save if file validation fails
+    }
+
+    await _saveVoiceNote();
+  }
+
+  Future<void> _saveVoiceNote({bool showSuccessToast = true}) async {
     if (_recordedFilePath == null) return;
 
     setState(() {
@@ -289,7 +303,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         widget.onRecordingComplete!(voiceNote);
       }
 
-      if (mounted) {
+      if (mounted && showSuccessToast) {
         CustomSnackBar.show(
           context,
           'Voice note saved successfully!',
@@ -679,7 +693,9 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                           children: [
                             // Save button
                             ElevatedButton.icon(
-                              onPressed: _isSaving ? null : _saveVoiceNote,
+                              onPressed: _isSaving
+                                  ? null
+                                  : _saveVoiceNoteWithValidation,
                               icon: _isSaving
                                   ? SizedBox(
                                       width: 16,

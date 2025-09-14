@@ -61,11 +61,25 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
   final VoiceNoteService _voiceNoteService = VoiceNoteService();
   bool _isFileExists = true;
   bool _isCheckingFile = true;
+  Future<bool>? _validateAudioFuture;
 
   @override
   void initState() {
     super.initState();
     _checkFileExists();
+    _initializeValidationFuture();
+  }
+
+  @override
+  void didUpdateWidget(VoicePlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.voiceNote.audioFilePath != widget.voiceNote.audioFilePath) {
+      _initializeValidationFuture();
+    }
+  }
+
+  void _initializeValidationFuture() {
+    _validateAudioFuture = _validateAudioFile();
   }
 
   Future<void> _checkFileExists() async {
@@ -76,6 +90,8 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
         _isFileExists = exists;
         _isCheckingFile = false;
       });
+      // Refresh validation future when file state changes
+      _initializeValidationFuture();
     }
   }
 
@@ -231,7 +247,7 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
 
   Widget _buildAudioPlayer(ThemeData theme) {
     return FutureBuilder<bool>(
-      future: _validateAudioFile(),
+      future: _validateAudioFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return SizedBox(

@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/repo/voice_note_repo.dart';
 import 'package:uuid/uuid.dart';
+import 'package:path/path.dart' as p;
 
 class VoiceNoteService {
   static const String _voiceNotesFolder = 'voice_notes';
@@ -19,7 +20,7 @@ class VoiceNoteService {
   Future<Directory> getVoiceNotesDirectory() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      final voiceNotesDir = Directory('${appDir.path}/$_voiceNotesFolder');
+      final voiceNotesDir = Directory(p.join(appDir.path, _voiceNotesFolder));
 
       if (!await voiceNotesDir.exists()) {
         await voiceNotesDir.create(recursive: true);
@@ -29,9 +30,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash('Error getting voice notes directory: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error getting voice notes directory: $e',
-      );
+
       throw Exception('Error getting voice notes directory: $e');
     }
   }
@@ -57,9 +56,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash('Error requesting microphone permission: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error requesting microphone permission: $e',
-      );
+
       return false;
     }
   }
@@ -75,26 +72,24 @@ class VoiceNoteService {
     try {
       final voiceNotesDir = await getVoiceNotesDirectory();
       final voiceNoteId = _uuid.v4();
+
       final extension =
-          fileExtension ?? 'm4a'; // Default to m4a for backward compatibility
+          fileExtension ?? p.extension(audioFilePath).substring(1);
       final fileName = '$voiceNoteId.$extension';
-      final destinationPath = '${voiceNotesDir.path}/$fileName';
+      final destinationPath = p.join(voiceNotesDir.path, fileName);
 
       final sourceFile = File(audioFilePath);
 
       if (await sourceFile.exists()) {
         File destinationFile;
 
-        // Try rename first for better performance
         try {
           await sourceFile.rename(destinationPath);
           destinationFile = File(destinationPath);
         } catch (e) {
-          // Fall back to copy if rename fails
           await sourceFile.copy(destinationPath);
           destinationFile = File(destinationPath);
 
-          // Best-effort delete of original file (don't throw if it fails)
           if (audioFilePath != destinationPath && await sourceFile.exists()) {
             try {
               await sourceFile.delete();
@@ -102,9 +97,6 @@ class VoiceNoteService {
               FlutterBugfender.sendCrash(
                   'Error deleting original audio file after copy: $deleteError',
                   StackTrace.current.toString());
-              FlutterBugfender.error(
-                'Error deleting original audio file after copy: $deleteError',
-              );
             }
           }
         }
@@ -136,9 +128,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error saving voice note: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error saving voice note: $e',
-      );
+
       throw Exception('Error saving voice note: $e');
     }
   }
@@ -149,13 +139,10 @@ class VoiceNoteService {
       final fileSize = await file.length();
 
       final estimatedDuration = (fileSize / (128 * 1024 / 8)).round();
-      return estimatedDuration.clamp(1, 3600);
+      return estimatedDuration.clamp(1, 24 * 3600).toInt();
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error getting audio duration: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error getting audio duration: $e',
-      );
 
       return 30;
     }
@@ -167,11 +154,8 @@ class VoiceNoteService {
       if (await audioFile.exists()) {
         await audioFile.delete();
       } else {
-        FlutterBugfender.sendCrash(
-            'Audio file does not exist at path: ${voiceNote.audioFilePath}',
-            StackTrace.current.toString());
-        throw Exception(
-            'Audio file does not exist at path: ${voiceNote.audioFilePath}');
+        FlutterBugfender.log(
+            'Audio file does not exist at path: ${voiceNote.audioFilePath} - proceeding with metadata cleanup');
       }
 
       await VoiceNoteRepo.deleteVoiceNote(voiceNote);
@@ -180,9 +164,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error deleting voice note: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error deleting voice note: $e',
-      );
+
       throw Exception('Error deleting voice note: $e');
     }
   }
@@ -198,18 +180,14 @@ class VoiceNoteService {
       if (audioFileExists) {
         FlutterBugfender.sendCrash('Audio file still exists after deletion!',
             StackTrace.current.toString());
-        FlutterBugfender.error(
-          'Audio file still exists after deletion!',
-        );
+
         throw Exception('Audio file still exists after deletion!');
       }
 
       if (metadataExists) {
         FlutterBugfender.sendCrash('Metadata still exists after deletion!',
             StackTrace.current.toString());
-        FlutterBugfender.error(
-          'Metadata still exists after deletion!',
-        );
+
         throw Exception('Metadata still exists after deletion!');
       }
 
@@ -217,25 +195,17 @@ class VoiceNoteService {
         FlutterBugfender.sendCrash(
             'Both audio file and metadata successfully deleted',
             StackTrace.current.toString());
-        FlutterBugfender.error(
-          'Both audio file and metadata successfully deleted',
-        );
+
         throw Exception('Both audio file and metadata successfully deleted');
       } else {
         FlutterBugfender.sendCrash('Some data still exists after deletion',
             StackTrace.current.toString());
-        FlutterBugfender.error(
-          'Some data still exists after deletion',
-        );
 
         throw Exception('Some data still exists after deletion');
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error during verification: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error during verification: $e',
-      );
 
       throw Exception('Error during verification: $e');
     }
@@ -259,9 +229,6 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash('Error updating voice note metadata: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error updating voice note metadata: $e',
-      );
 
       throw Exception('Error updating voice note metadata: $e');
     }
@@ -291,9 +258,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash('Error calculating total storage used: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error calculating total storage used: $e',
-      );
+
       return 0;
     }
   }
@@ -315,9 +280,6 @@ class VoiceNoteService {
               FlutterBugfender.sendCrash(
                   "Could not delete orphaned file ${entity.path}: $e",
                   StackTrace.current.toString());
-              FlutterBugfender.error(
-                "Could not delete orphaned file ${entity.path}: $e",
-              );
             }
           }
         }
@@ -325,9 +287,6 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash('Error cleaning up orphaned files: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error cleaning up orphaned files: $e',
-      );
     }
   }
 
@@ -357,9 +316,7 @@ class VoiceNoteService {
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error exporting voice note: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error exporting voice note: $e',
-      );
+
       throw Exception('Error exporting voice note: $e');
     }
   }
