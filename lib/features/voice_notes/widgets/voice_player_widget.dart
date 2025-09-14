@@ -6,6 +6,7 @@ import 'package:msbridge/core/services/voice_note_service.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
 import 'package:msbridge/core/repo/voice_note_share_repo.dart';
 import 'package:line_icons/line_icons.dart';
+import 'dart:io';
 
 class VoicePlayerWidget extends StatefulWidget {
   final VoiceNoteModel voiceNote;
@@ -196,8 +197,62 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
             const SizedBox(height: 16.0),
           ],
 
-          // Audio player
-          AudioPlayerWidget(
+          // Audio player with error handling
+          _buildAudioPlayer(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAudioPlayer(ThemeData theme) {
+    return FutureBuilder<bool>(
+      future: _validateAudioFile(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: widget.compact ? 40 : 50,
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError || !(snapshot.data ?? false)) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: theme.colorScheme.onErrorContainer,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Unable to load audio file',
+                    style: TextStyle(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        try {
+          return AudioPlayerWidget(
             audioPath: widget.voiceNote.audioFilePath,
             playerStyle:
                 widget.compact ? PlayerStyle.style3 : PlayerStyle.style5,
@@ -213,7 +268,8 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
             showTimer: true,
             audioSpeeds: const [0.5, 1.0, 1.25, 1.5, 2.0],
             autoPlay: false,
-            autoLoad: true,
+            autoLoad:
+                false, // Disable auto-load to prevent platform channel issues
             onPlay: (isPlaying) {
               if (isPlaying) {
                 widget.onPlay?.call(widget.voiceNote);
@@ -223,6 +279,10 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
             },
             onError: (message) {
               widget.onError?.call(widget.voiceNote);
+              FlutterBugfender.sendCrash(
+                'Audio player error: $message',
+                StackTrace.current.toString(),
+              );
               if (mounted) {
                 CustomSnackBar.show(
                   context,
@@ -232,13 +292,76 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
               }
             },
             onSpeedChange: (speed) {
-              // Optional: Handle speed change
               debugPrint('Playback speed changed to: ${speed}x');
             },
-          ),
-        ],
+          );
+        } catch (e) {
+          // Fallback to simple error display if AudioPlayerWidget fails
+          FlutterBugfender.sendCrash(
+            'AudioPlayerWidget initialization failed: $e',
+            StackTrace.current.toString(),
+          );
+          return _buildFallbackPlayer(theme);
+        }
+      },
+    );
+  }
+
+  Widget _buildFallbackPlayer(ThemeData theme) {
+    return Container(
+      height: widget.compact ? 40 : 50,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+        ),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.play_arrow,
+              color: theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Audio file ready',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontFamily: 'Poppins',
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<bool> _validateAudioFile() async {
+    try {
+      final file = File(widget.voiceNote.audioFilePath);
+      if (!await file.exists()) {
+        return false;
+      }
+
+      // Check if file is not empty
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+        'Audio file validation error: $e',
+        StackTrace.current.toString(),
+      );
+      return false;
+    }
   }
 
   String _formatDate(DateTime date) {
