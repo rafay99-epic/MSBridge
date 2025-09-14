@@ -922,7 +922,7 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
           ],
         ),
@@ -1041,7 +1041,7 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
           ],
         ),
@@ -1145,7 +1145,7 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             ),
                           ),
                           Text(
-                            '${channel} channel${channel > 1 ? 's' : ''}',
+                            '$channel channel${channel > 1 ? 's' : ''}',
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
@@ -1159,7 +1159,7 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
           ],
         ),

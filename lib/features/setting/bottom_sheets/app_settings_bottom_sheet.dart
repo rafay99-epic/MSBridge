@@ -277,7 +277,7 @@ class HapticFeedbackSettingsSection extends StatelessWidget {
                     },
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),
