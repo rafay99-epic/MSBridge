@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/services/update_service.dart';
-import 'package:msbridge/core/services/background_download_service.dart';
+import 'package:msbridge/core/services/update_app/update_service.dart';
+import 'package:msbridge/core/services/update_app/background_download_service.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
 class EnhancedUpdateDialog extends StatefulWidget {

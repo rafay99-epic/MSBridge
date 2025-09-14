@@ -4,7 +4,8 @@ import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/repo/voice_note_repo.dart';
-import 'package:msbridge/core/services/voice_note_service.dart';
+import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
+import 'package:msbridge/core/services/voice_note/voice_note_export_service.dart';
 import 'package:msbridge/features/voice_notes/widgets/voice_recorder_widget.dart';
 import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
@@ -737,6 +738,100 @@ class _VoiceNotesScreenState extends State<VoiceNotesScreen>
     }
   }
 
+  Future<void> _exportVoiceNote(VoiceNoteModel voiceNote) async {
+    final currentContext = context;
+    bool isDialogOpen = false;
+
+    try {
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: currentContext,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(dialogContext).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Exporting voice note to Downloads...',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Theme.of(dialogContext).colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+        isDialogOpen = true;
+      }
+
+      // Export the voice note
+      final success = await VoiceNoteExportService.exportVoiceNote(
+        currentContext,
+        voiceNote,
+        onProgress: (progress) {
+          // Could update progress indicator here if needed
+        },
+        onStatus: (status) {
+          // Could update status text here if needed
+        },
+      );
+
+      // Close loading dialog
+      if (mounted && isDialogOpen) {
+        Navigator.of(currentContext).pop();
+        isDialogOpen = false;
+      }
+
+      if (mounted) {
+        if (success) {
+          CustomSnackBar.show(
+            currentContext,
+            'Voice note exported successfully to Downloads folder',
+            SnackBarType.success,
+          );
+        } else {
+          CustomSnackBar.show(
+            currentContext,
+            'Failed to export voice note. Please check permissions and try again.',
+            SnackBarType.error,
+          );
+        }
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted && isDialogOpen) {
+        Navigator.of(currentContext).pop();
+        isDialogOpen = false;
+      }
+
+      FlutterBugfender.sendIssue(
+        e.toString(),
+        StackTrace.current.toString(),
+      );
+
+      if (mounted) {
+        CustomSnackBar.show(
+          currentContext,
+          'Error exporting voice note: $e',
+          SnackBarType.error,
+        );
+      }
+    }
+  }
+
   void _showVoiceNoteSettingsBottomSheet(
       BuildContext context, VoiceNoteModel voiceNote) {
     showModalBottomSheet(
@@ -850,6 +945,17 @@ class _VoiceNotesScreenState extends State<VoiceNotesScreen>
                         isDestructive: false,
                       ),
                     ],
+                    _buildSettingsOption(
+                      context,
+                      LineIcons.download,
+                      'Export Voice Note',
+                      'Download voice note to Downloads folder',
+                      () {
+                        Navigator.of(context).pop();
+                        _exportVoiceNote(voiceNote);
+                      },
+                      isDestructive: false,
+                    ),
                     _buildSettingsOption(
                       context,
                       LineIcons.trash,

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:msbridge/core/models/voice_note_settings_model.dart';
-import 'package:msbridge/core/services/voice_note_service.dart';
+import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
 
 void main() {
   group('Voice Note Service Tests', () {

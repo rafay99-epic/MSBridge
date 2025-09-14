@@ -3,7 +3,7 @@ import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:msbridge/core/services/voice_note_service.dart';
+import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';

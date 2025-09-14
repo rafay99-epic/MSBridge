@@ -22,7 +22,7 @@ class StreakNotificationService {
       tz.initializeTimeZones();
 
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/launcher_icon');
 
       const DarwinInitializationSettings initializationSettingsIOS =
           DarwinInitializationSettings(
@@ -176,8 +176,8 @@ class StreakNotificationService {
         showWhen: true,
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
-        icon: '@mipmap/ic_launcher',
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        icon: '@mipmap/launcher_icon',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
         color: Color(0xFF7AA2F7),
       );
 
@@ -259,8 +259,8 @@ class StreakNotificationService {
         showWhen: true,
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
-        icon: '@mipmap/ic_launcher',
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        icon: '@mipmap/launcher_icon',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
         color: const Color(0xFFFF7043), // Warning color
         category: AndroidNotificationCategory.alarm,
       );
@@ -336,7 +336,7 @@ class StreakNotificationService {
         showWhen: true,
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
-        icon: '@mipmap/ic_launcher',
+        icon: '@mipmap/launcher_icon',
         color: const Color(0xFFFF7043),
         category: AndroidNotificationCategory.alarm,
       );
@@ -389,8 +389,8 @@ class StreakNotificationService {
         showWhen: true,
         enableVibration: vibrationEnabled,
         playSound: soundEnabled,
-        icon: '@mipmap/ic_launcher',
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        icon: '@mipmap/launcher_icon',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
         color: const Color(0xFF4CAF50),
         category: AndroidNotificationCategory.status,
       );

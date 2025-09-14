@@ -39,7 +39,7 @@ import 'package:msbridge/core/services/background/scheduler_registration.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
-import 'package:msbridge/core/services/update_manager.dart';
+import 'package:msbridge/core/services/update_app/update_manager.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
