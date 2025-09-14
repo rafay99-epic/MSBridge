@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
@@ -80,9 +81,33 @@ class VoiceNoteService {
       final sourceFile = File(audioFilePath);
 
       if (await sourceFile.exists()) {
-        await sourceFile.copy(destinationPath);
+        File destinationFile;
 
-        final destinationFile = File(destinationPath);
+        // Try rename first for better performance
+        try {
+          await sourceFile.rename(destinationPath);
+          destinationFile = File(destinationPath);
+        } catch (e) {
+          // Fall back to copy if rename fails
+          await sourceFile.copy(destinationPath);
+          destinationFile = File(destinationPath);
+
+          // Best-effort delete of original file (don't throw if it fails)
+          if (audioFilePath != destinationPath && await sourceFile.exists()) {
+            try {
+              await sourceFile.delete();
+            } catch (deleteError) {
+              FirebaseCrashlytics.instance.recordError(
+                deleteError,
+                StackTrace.current,
+                reason:
+                    'Error deleting original audio file after copy: $deleteError',
+              );
+              // Don't rethrow - continue with saved state
+            }
+          }
+        }
+
         final fileStat = await destinationFile.stat();
         final fileSize = fileStat.size;
 
@@ -102,19 +127,6 @@ class VoiceNoteService {
         );
 
         await VoiceNoteRepo.addVoiceNote(voiceNote);
-
-        if (audioFilePath != destinationPath && await sourceFile.exists()) {
-          try {
-            await sourceFile.delete();
-          } catch (e) {
-            FirebaseCrashlytics.instance.recordError(
-              e,
-              StackTrace.current,
-              reason: 'Error deleting original audio file: $e',
-            );
-            throw Exception('Error deleting original audio file: $e');
-          }
-        }
 
         return voiceNote;
       } else {
@@ -153,13 +165,9 @@ class VoiceNoteService {
       if (await audioFile.exists()) {
         await audioFile.delete();
       } else {
-        FirebaseCrashlytics.instance.recordError(
-          Exception(
-              'Audio file does not exist at path: ${voiceNote.audioFilePath}'),
-          StackTrace.current,
-          reason:
-              'Audio file does not exist at path: ${voiceNote.audioFilePath}',
-        );
+        FlutterBugfender.sendCrash(
+            'Audio file does not exist at path: ${voiceNote.audioFilePath}',
+            StackTrace.current.toString());
         throw Exception(
             'Audio file does not exist at path: ${voiceNote.audioFilePath}');
       }
@@ -168,10 +176,10 @@ class VoiceNoteService {
 
       await _verifyDeletion(voiceNote);
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        StackTrace.current,
-        reason: 'Error deleting voice note: $e',
+      FlutterBugfender.sendCrash(
+          'Error deleting voice note: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Error deleting voice note: $e',
       );
       throw Exception('Error deleting voice note: $e');
     }

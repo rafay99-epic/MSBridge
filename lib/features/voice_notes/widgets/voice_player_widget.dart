@@ -290,9 +290,19 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
   }
 
   Future<void> _loadShareStatus() async {
+    final id = widget.voiceNote.voiceNoteId;
+    if (id == null) {
+      // Set safe default when voiceNoteId is null
+      if (mounted) {
+        setState(() {
+          _isShared = false;
+        });
+      }
+      return;
+    }
+
     try {
-      final shareStatus = await VoiceNoteShareRepository.getShareStatus(
-          widget.voiceNote.voiceNoteId!);
+      final shareStatus = await VoiceNoteShareRepository.getShareStatus(id);
       if (mounted) {
         setState(() {
           _isShared = shareStatus.enabled;

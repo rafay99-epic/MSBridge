@@ -19,7 +19,7 @@ class UploadThingService {
       final dynamic first = _client.uploadedFilesData.first;
       final String? url = first is Map<String, dynamic>
           ? (first['url'] as String?)
-          : first['url'];
+          : (first.url as String?);
       if (url == null || url.isEmpty) {
         throw Exception('Upload returned empty URL');
       }
@@ -41,7 +41,7 @@ class UploadThingService {
       final dynamic first = _client.uploadedFilesData.first;
       final String? url = first is Map<String, dynamic>
           ? (first['url'] as String?)
-          : first['url'];
+          : (first.url as String?);
       if (url == null || url.isEmpty) {
         throw Exception('Upload returned empty URL');
       }

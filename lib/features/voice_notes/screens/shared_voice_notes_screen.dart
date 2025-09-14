@@ -19,6 +19,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  BuildContext? _loadingDialogContext;
 
   @override
   void initState() {
@@ -212,29 +213,32 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Deleting shared voice note...',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
+          builder: (dialogContext) {
+            _loadingDialogContext = dialogContext;
+            return AlertDialog(
+              backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    color: Theme.of(dialogContext).colorScheme.error,
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Deleting shared voice note...',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(dialogContext).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
 
         // Create a dummy VoiceNoteModel for the delete operation
@@ -252,11 +256,16 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
         await VoiceNoteShareRepository.disableShare(dummyVoiceNote);
 
         // Dismiss loading dialog
-        Navigator.of(context).pop();
+        if (_loadingDialogContext != null) {
+          Navigator.of(_loadingDialogContext!).pop();
+          _loadingDialogContext = null;
+        }
 
-        // Remove from local list
+        // Remove from local lists
         setState(() {
           _sharedVoiceNotes
+              .removeWhere((note) => note.shareId == sharedNote.shareId);
+          _filteredVoiceNotes
               .removeWhere((note) => note.shareId == sharedNote.shareId);
         });
 
@@ -268,8 +277,9 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
       }
     } catch (e) {
       // Dismiss loading dialog if it's still open
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+      if (_loadingDialogContext != null) {
+        Navigator.of(_loadingDialogContext!).pop();
+        _loadingDialogContext = null;
       }
 
       CustomSnackBar.show(
