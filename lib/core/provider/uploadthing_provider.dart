@@ -75,6 +75,61 @@ class UploadThingProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> uploadAudio(File file) async {
+    if (_isUploading) {
+      _error = 'An upload is already in progress';
+      notifyListeners();
+      return null;
+    }
+
+    // Validate config/API key before starting upload
+    if (UploadThingConfig.apiKey.isEmpty) {
+      _error = 'Upload configuration is invalid';
+      FlutterBugfender.error('Upload configuration is invalid');
+      notifyListeners();
+      return null;
+    }
+
+    // Clear stale URL and set upload state
+    _lastUrl = null;
+    _isUploading = true;
+    _error = null;
+    _progress = 0.1; // Start indicator
+    notifyListeners();
+
+    try {
+      final url = await _service.uploadAudioFile(file);
+
+      // Validate that the returned URL is non-empty
+      if (url.isEmpty) {
+        _progress = 0.0;
+        _error = 'Upload failed: Empty URL returned from service';
+        _lastUrl = null;
+        FlutterBugfender.error(
+            'UploadThingProvider.uploadAudio failed: Empty URL returned');
+        return null;
+      }
+
+      _lastUrl = url;
+      _progress = 1.0;
+      notifyListeners();
+      return url;
+    } catch (e) {
+      _progress = 0.0;
+      _error = e.toString();
+      _lastUrl = null;
+      FlutterBugfender.error(
+        'UploadThingProvider.uploadAudio failed: $e',
+      );
+      FlutterBugfender.sendCrash('UploadThingProvider.uploadAudio failed: $e',
+          StackTrace.current.toString());
+      return null;
+    } finally {
+      _isUploading = false;
+      notifyListeners();
+    }
+  }
+
   void clear() {
     _isUploading = false;
     _progress = 0.0;

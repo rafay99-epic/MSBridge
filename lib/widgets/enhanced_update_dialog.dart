@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/services/update_service.dart';
-import 'package:msbridge/core/services/background_download_service.dart';
+import 'package:msbridge/core/services/update_app/update_service.dart';
+import 'package:msbridge/core/services/update_app/background_download_service.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
 class EnhancedUpdateDialog extends StatefulWidget {
@@ -8,10 +8,10 @@ class EnhancedUpdateDialog extends StatefulWidget {
   final VoidCallback? onDismiss;
 
   const EnhancedUpdateDialog({
-    Key? key,
+    super.key,
     required this.updateResult,
     this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   State<EnhancedUpdateDialog> createState() => _EnhancedUpdateDialogState();
@@ -52,7 +52,7 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
           borderRadius: BorderRadius.circular(20),
         ),
         contentPadding: EdgeInsets.zero,
-        content: Container(
+        content: SizedBox(
           width: double.maxFinite,
           child: Column(
             mainAxisSize: MainAxisSize.min,

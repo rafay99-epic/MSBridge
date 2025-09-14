@@ -124,6 +124,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         onTap: () => NavigationMethods.navigateToDataManagement(context),
       ),
       SearchableSetting(
+        title: "Voice Notes",
+        subtitle: "Manage shared voice notes and audio settings",
+        icon: LineIcons.microphone,
+        section: "Notes & Sharing",
+        onTap: () => NavigationMethods.navigateToVoiceNotesSettings(context),
+      ),
+      SearchableSetting(
         title: "Streak Settings",
         subtitle: "Track daily note creation and get motivated",
         icon: LineIcons.fire,
@@ -152,6 +159,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
         icon: LineIcons.history,
         section: "System",
         onTap: () => NavigationMethods.navigateToBackgroundSync(context),
+      ),
+      SearchableSetting(
+        title: "App Settings",
+        subtitle: "Haptic feedback and app preferences",
+        icon: LineIcons.cog,
+        section: "System",
+        onTap: () => NavigationMethods.navigateToAppSettings(context),
       ),
 
       // Danger Zone
@@ -410,6 +424,15 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         onTap: () =>
                             NavigationMethods.navigateToDataManagement(context),
                       ),
+                      SettingsTile(
+                        title: "Voice Notes",
+                        subtitle:
+                            "Manage shared voice notes and audio settings",
+                        icon: LineIcons.microphone,
+                        onTap: () =>
+                            NavigationMethods.navigateToVoiceNotesSettings(
+                                context),
+                      ),
                     ],
                   ),
 
@@ -455,6 +478,13 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
                         icon: LineIcons.history,
                         onTap: () =>
                             NavigationMethods.navigateToBackgroundSync(context),
+                      ),
+                      SettingsTile(
+                        title: "App Settings",
+                        subtitle: "Haptic feedback and app preferences",
+                        icon: LineIcons.cog,
+                        onTap: () =>
+                            NavigationMethods.navigateToAppSettings(context),
                       ),
                     ],
                   ),

@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:msbridge/core/permissions/permission.dart';
-import 'package:msbridge/core/services/update_service.dart';
+import 'package:msbridge/core/services/update_app/update_service.dart';
 
 class BackgroundDownloadService {
   static Dio? _dio;

@@ -1438,7 +1438,7 @@ packages:
     source: hosted
     version: "2.1.0"
   path:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
@@ -1742,7 +1742,7 @@ packages:
     source: hosted
     version: "3.2.2"
   record:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: record
       sha256: "9dbc6ff3e784612f90a9b001373c45ff76b7a08abd2bd9fdf72c242320c8911c"

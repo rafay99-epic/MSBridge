@@ -18,19 +18,19 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
     };
     return NoteTakingModel(
       noteId: fields[0] as String?,
-      noteTitle: (fields[1] as String?) ?? '',
-      noteContent: (fields[2] as String?) ?? '',
-      isSynced: (fields[3] as bool?) ?? false,
-      isDeleted: (fields[4] as bool?) ?? false,
+      noteTitle: fields[1] as String,
+      noteContent: fields[2] as String,
+      isSynced: fields[3] as bool,
+      isDeleted: fields[4] as bool,
       updatedAt: fields[5] as DateTime?,
-      userId: (fields[6] as String?) ?? '',
-      tags: (fields[7] as List?)?.cast<String>() ?? const [],
-      versionNumber: (fields[8] as int?) ?? 1,
-      createdAt: (fields[9] as DateTime?) ?? DateTime.now(),
+      userId: fields[6] as String,
+      tags: (fields[7] as List?)?.cast<String>(),
+      versionNumber: fields[8] as int,
+      createdAt: fields[9] as DateTime?,
       deletedAt: fields[10] as DateTime?,
       deletedBy: fields[11] as String?,
       deviceId: fields[12] as String?,
-      isDeletionSynced: (fields[13] as bool?) ?? false,
+      isDeletionSynced: fields[13] as bool,
       lastSyncAt: fields[14] as DateTime?,
     );
   }

@@ -12,6 +12,7 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
@@ -36,7 +37,9 @@ import 'package:workmanager/workmanager.dart';
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
-import 'package:msbridge/core/services/update_manager.dart';
+import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
+import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
+import 'package:msbridge/core/services/update_app/update_manager.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -92,6 +95,10 @@ void main() async {
     Hive.registerAdapter(NoteTemplateAdapter());
     await Hive.openBox<NoteTemplate>('note_templates');
 
+    // Register voice notes adapter
+    Hive.registerAdapter(VoiceNoteModelAdapter());
+    await Hive.openBox<VoiceNoteModel>('voice_notes');
+
     try {
       await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
       await SchedulerRegistration.registerAdaptive();
@@ -124,6 +131,9 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
           ChangeNotifierProvider(create: (_) => UploadThingProvider()),
+          ChangeNotifierProvider(create: (_) => VoiceNoteSettingsProvider()),
+          ChangeNotifierProvider(
+              create: (_) => HapticFeedbackSettingsProvider()),
           ChangeNotifierProvider(create: (_) => StreakProvider()),
         ],
         child: const MyApp(),

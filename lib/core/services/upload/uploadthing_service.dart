@@ -19,7 +19,7 @@ class UploadThingService {
       final dynamic first = _client.uploadedFilesData.first;
       final String? url = first is Map<String, dynamic>
           ? (first['url'] as String?)
-          : first['url'];
+          : (first.url as String?);
       if (url == null || url.isEmpty) {
         throw Exception('Upload returned empty URL');
       }
@@ -27,6 +27,27 @@ class UploadThingService {
     } catch (e) {
       FlutterBugfender.error('UploadThing uploadImageFile failed: $e');
 
+      rethrow;
+    }
+  }
+
+  // Add audio file upload method
+  Future<String> uploadAudioFile(File file) async {
+    try {
+      final bool ok = await _client.uploadFiles([file]);
+      if (!ok || _client.uploadedFilesData.isEmpty) {
+        throw Exception('Upload failed with no response');
+      }
+      final dynamic first = _client.uploadedFilesData.first;
+      final String? url = first is Map<String, dynamic>
+          ? (first['url'] as String?)
+          : (first.url as String?);
+      if (url == null || url.isEmpty) {
+        throw Exception('Upload returned empty URL');
+      }
+      return url;
+    } catch (e) {
+      FlutterBugfender.error('UploadThing uploadAudioFile failed: $e');
       rethrow;
     }
   }

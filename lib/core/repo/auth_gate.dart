@@ -5,7 +5,7 @@ import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
 import 'package:msbridge/core/permissions/notification_permission.dart';
-import 'package:msbridge/core/services/update_manager.dart';
+import 'package:msbridge/core/services/update_app/update_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AuthGate extends StatelessWidget {
