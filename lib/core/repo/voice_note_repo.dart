@@ -26,7 +26,11 @@ class VoiceNoteRepo {
   static Future<void> addVoiceNote(VoiceNoteModel voiceNote) async {
     try {
       final box = await getBox();
-      await box.put(voiceNote.voiceNoteId!, voiceNote);
+      final id = voiceNote.voiceNoteId;
+      if (id == null || id.isEmpty) {
+        throw ArgumentError('voiceNoteId is required to add a voice note');
+      }
+      await box.put(id, voiceNote);
     } catch (e) {
       FlutterBugfender.sendIssue(
         e.toString(),
