@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-class ReadContent extends StatelessWidget {
+class ReadContent extends StatefulWidget {
   const ReadContent({
     super.key,
     required this.renderQuill,
@@ -18,6 +18,52 @@ class ReadContent extends StatelessWidget {
   final Document Function(String) buildDocument;
 
   @override
+  State<ReadContent> createState() => _ReadContentState();
+}
+
+class _ReadContentState extends State<ReadContent> {
+  QuillController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.renderQuill) {
+      _initializeController();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ReadContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.renderQuill != oldWidget.renderQuill ||
+        widget.plainText != oldWidget.plainText) {
+      _disposeController();
+      if (widget.renderQuill) {
+        _initializeController();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeController();
+    super.dispose();
+  }
+
+  void _initializeController() {
+    final Document document = widget.buildDocument(widget.plainText);
+    _controller = QuillController(
+      document: document,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+  }
+
+  void _disposeController() {
+    _controller?.dispose();
+    _controller = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,28 +73,30 @@ class ReadContent extends StatelessWidget {
             Icon(
               Icons.menu_book_outlined,
               size: 20,
-              color: theme.colorScheme.primary.withOpacity(0.7),
+              color: widget.theme.colorScheme.primary.withOpacity(0.7),
             ),
             const SizedBox(width: 8),
             Text(
               'Content',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
+              style: widget.theme.textTheme.titleMedium?.copyWith(
+                color: widget.theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
         const SizedBox(height: 20),
-        renderQuill
-            ? _buildQuill(theme, context)
+        widget.renderQuill
+            ? _buildQuill()
             : SelectableText(
-                plainText.isEmpty ? 'No content available' : plainText,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface,
+                widget.plainText.isEmpty
+                    ? 'No content available'
+                    : widget.plainText,
+                style: widget.theme.textTheme.bodyLarge?.copyWith(
+                  color: widget.theme.colorScheme.onSurface,
                   height: 1.6,
                   fontFamily: 'Poppins',
-                  fontSize: 16 * textScale,
+                  fontSize: 16 * widget.textScale,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -56,18 +104,17 @@ class ReadContent extends StatelessWidget {
     );
   }
 
-  Widget _buildQuill(ThemeData theme, BuildContext context) {
-    final Document document = buildDocument(plainText);
-    final QuillController controller = QuillController(
-      document: document,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
+  Widget _buildQuill() {
+    if (_controller == null) {
+      return const SizedBox.shrink();
+    }
+
     final MediaQueryData base = MediaQuery.of(context);
     return MediaQuery(
-      data: base.copyWith(textScaler: TextScaler.linear(textScale)),
+      data: base.copyWith(textScaler: TextScaler.linear(widget.textScale)),
       child: AbsorbPointer(
         child: QuillEditor.basic(
-          controller: controller,
+          controller: _controller!,
           config: const QuillEditorConfig(
             placeholder: 'No content',
             padding: EdgeInsets.zero,
