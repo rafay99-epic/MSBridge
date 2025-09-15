@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
@@ -18,7 +19,6 @@ import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
-import 'package:msbridge/features/voice_notes/screens/voice_notes_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
@@ -77,6 +77,7 @@ class _NotetakingState extends State<Notetaking>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotes();
+      _prewarmFabOverlay();
     });
   }
 
@@ -84,6 +85,34 @@ class _NotetakingState extends State<Notetaking>
   void dispose() {
     _cachedNotes = null;
     super.dispose();
+  }
+
+  void _prewarmFabOverlay() {
+    try {
+      final OverlayState overlay = Overlay.of(context);
+      final OverlayEntry entry = OverlayEntry(
+        builder: (_) => Positioned.fill(
+          child: IgnorePointer(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      overlay.insert(entry);
+      Future.delayed(const Duration(milliseconds: 48), () {
+        try {
+          entry.remove();
+        } catch (e) {
+          FlutterBugfender.sendCrash(
+              "FAB blur prewarm failed: $e", StackTrace.current.toString());
+        }
+      });
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          "FAB blur prewarm failed: $e", StackTrace.current.toString());
+    }
   }
 
   Future<void> _loadLayoutPreference() async {
@@ -447,7 +476,6 @@ class _NotetakingState extends State<Notetaking>
   }
 
   Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
-    // Use RepaintBoundary to isolate painting operations
     return RepaintBoundary(
       child: GestureDetector(
         onTap: () async {
@@ -674,8 +702,8 @@ class _NotetakingState extends State<Notetaking>
       childrenAnimation: ExpandableFabAnimation.rotate,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: Colors.transparent,
-        blur: 0,
+        color: Colors.black.withOpacity(0.5),
+        blur: 12,
       ),
       children: [
         buildExpandableButton(
@@ -690,27 +718,6 @@ class _NotetakingState extends State<Notetaking>
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     const CreateNote(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 300),
-              ),
-            );
-          },
-        ),
-        buildExpandableButton(
-          context: context,
-          heroTag: "Record Voice Note",
-          icon: Icons.mic,
-          text: "Voice Note",
-          theme: theme,
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const VoiceNotesScreen(),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);

@@ -27,6 +27,7 @@ import 'package:flutter/services.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
+import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note, this.initialTemplate});
@@ -686,6 +687,25 @@ class _CreateNoteState extends State<CreateNote>
               _controller,
             ),
           ),
+          if (_currentNote != null)
+            IconButton(
+              tooltip: 'Read',
+              icon: const Icon(LineIcons.eye, size: 22),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        ReadNotePage(note: _currentNote!),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    transitionDuration: const Duration(milliseconds: 200),
+                  ),
+                );
+              },
+            ),
           IconButton(
             tooltip: 'Templates',
             icon: const Icon(LineIcons.clone, size: 22),
