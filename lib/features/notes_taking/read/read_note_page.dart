@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/is_quil_json.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/read_header.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/read_content.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class ReadNotePage extends StatefulWidget {
   const ReadNotePage({super.key, required this.note});
@@ -19,15 +23,31 @@ class ReadNotePage extends StatefulWidget {
 
 class _ReadNotePageState extends State<ReadNotePage> {
   static const String _textScalePrefKey = 'read_mode_text_scale';
+  static const String _keepAwakePrefKey = 'read_mode_keep_awake';
   double _textScale = 1.0;
+  bool _keepAwake = false;
+
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  double _scrollProgress = 0.0; // 0..1
 
   @override
   void initState() {
     super.initState();
-    _loadTextScale();
+    loadTextScale();
+    loadKeepAwake();
+    _scrollController.addListener(_updateScrollProgress);
   }
 
-  Future<void> _loadTextScale() async {
+  @override
+  void dispose() {
+    _scrollController.removeListener(_updateScrollProgress);
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadTextScale() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final double? saved = prefs.getDouble(_textScalePrefKey);
@@ -41,7 +61,23 @@ class _ReadNotePageState extends State<ReadNotePage> {
     }
   }
 
-  Future<void> _saveTextScale(double value) async {
+  Future<void> loadKeepAwake() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final bool? k = prefs.getBool(_keepAwakePrefKey);
+      if (!mounted) return;
+      setState(() {
+        _keepAwake = k ?? false;
+      });
+      await WakelockPlus.toggle(enable: _keepAwake);
+      FlutterBugfender.log('ReadMode: wakelock loaded -> $_keepAwake');
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Error loading keep awake: $e', StackTrace.current.toString());
+    }
+  }
+
+  Future<void> saveTextScale(double value) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(_textScalePrefKey, value);
@@ -51,20 +87,29 @@ class _ReadNotePageState extends State<ReadNotePage> {
     }
   }
 
-  bool _isQuillJson(String content) {
+  Future<void> saveKeepAwake(bool value) async {
     try {
-      final dynamic parsed = jsonDecode(content);
-      if (parsed is List) return true;
-      if (parsed is Map && parsed['ops'] is List) return true;
-      return false;
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keepAwakePrefKey, value);
+      await WakelockPlus.toggle(enable: value);
+      FlutterBugfender.log('ReadMode: wakelock saved and applied -> $value');
     } catch (e) {
-      FlutterBugfender.sendCrash('Error checking if content is quill json: $e',
-          StackTrace.current.toString());
-      return false;
+      FlutterBugfender.sendCrash(
+          'Error saving keep awake: $e', StackTrace.current.toString());
     }
   }
 
-  Document _buildDocument(String content) {
+  void _updateScrollProgress() {
+    if (!_scrollController.hasClients) return;
+    final double max = _scrollController.position.maxScrollExtent;
+    final double offset = _scrollController.offset.clamp(0, max);
+    final double progress = max > 0 ? offset / max : 0.0;
+    if (progress != _scrollProgress && mounted) {
+      setState(() => _scrollProgress = progress);
+    }
+  }
+
+  Document buildDocument(String content) {
     try {
       final dynamic parsed = jsonDecode(content);
       if (parsed is List) {
@@ -83,7 +128,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool renderQuill = _isQuillJson(widget.note.noteContent);
+    final bool renderQuill = isQuillJson(widget.note.noteContent);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -114,13 +159,20 @@ class _ReadNotePageState extends State<ReadNotePage> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeader(theme),
+                  ReadHeader(note: widget.note, theme: theme),
                   const SizedBox(height: 24),
-                  _buildContentCard(theme, renderQuill),
+                  ReadContent(
+                    renderQuill: renderQuill,
+                    theme: theme,
+                    textScale: _textScale,
+                    plainText: widget.note.noteContent,
+                    buildDocument: buildDocument,
+                  ),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -128,154 +180,8 @@ class _ReadNotePageState extends State<ReadNotePage> {
           ),
         ),
       ),
+      bottomNavigationBar: _buildProgressBar(theme),
     );
-  }
-
-  Widget _buildHeader(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                LineIcons.file,
-                size: 24,
-                color: theme.colorScheme.primary.withOpacity(0.8),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.note.noteTitle.isEmpty
-                      ? 'Untitled Note'
-                      : widget.note.noteTitle,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: theme.colorScheme.primary,
-                    letterSpacing: -0.5,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(
-                LineIcons.clock,
-                size: 16,
-                color: theme.colorScheme.secondary.withOpacity(0.7),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Updated ${_formatDate(widget.note.updatedAt)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.secondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          if (widget.note.tags.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final String tag in widget.note.tags)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary.withOpacity(0.1),
-                          theme.colorScheme.secondary.withOpacity(0.1),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          LineIcons.tag,
-                          size: 14,
-                          color: theme.colorScheme.primary.withOpacity(0.7),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          tag,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContentCard(ThemeData theme, bool renderQuill) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              LineIcons.readme,
-              size: 20,
-              color: theme.colorScheme.primary.withOpacity(0.7),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Content',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        renderQuill ? _buildQuillReadOnly(theme) : _buildPlainText(theme),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'today at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (difference.inDays == 1) {
-      return 'yesterday at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
   }
 
   void _showReadingSettings(BuildContext context, ThemeData theme) {
@@ -307,13 +213,27 @@ class _ReadNotePageState extends State<ReadNotePage> {
               ),
             ),
             const SizedBox(height: 20),
+            StatefulBuilder(builder: (context, setStateSheet) {
+              return SwitchListTile(
+                secondary:
+                    Icon(Icons.bolt_rounded, color: theme.colorScheme.primary),
+                title: const Text('Keep screen awake while reading'),
+                value: _keepAwake,
+                onChanged: (v) async {
+                  setStateSheet(() => _keepAwake = v);
+                  setState(() {});
+                  FlutterBugfender.log('ReadMode: keepAwake toggled -> $v');
+                  await saveKeepAwake(v);
+                },
+              );
+            }),
+            const SizedBox(height: 8),
             ListTile(
               leading:
                   Icon(LineIcons.textHeight, color: theme.colorScheme.primary),
               title: const Text('Font Size'),
               subtitle:
                   Text('Current: ${(16 * _textScale).toStringAsFixed(0)} pt'),
-              onTap: () {},
             ),
             StatefulBuilder(
               builder: (context, setStateSheet) {
@@ -326,22 +246,13 @@ class _ReadNotePageState extends State<ReadNotePage> {
                     setState(() {});
                   },
                   onChangeEnd: (v) async {
-                    await _saveTextScale(v);
+                    await saveTextScale(v);
                   },
                   min: 0.8,
                   max: 1.8,
                   divisions: 10,
-                  label: '${(16 * _textScale).toStringAsFixed(0)}',
+                  label: (16 * _textScale).toStringAsFixed(0),
                 );
-              },
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: Icon(LineIcons.moon, color: theme.colorScheme.primary),
-              title: const Text('Dark Mode'),
-              subtitle: const Text('Switch to dark theme for reading'),
-              onTap: () {
-                Navigator.pop(ctx);
               },
             ),
             const SizedBox(height: 20),
@@ -351,42 +262,16 @@ class _ReadNotePageState extends State<ReadNotePage> {
     );
   }
 
-  Widget _buildQuillReadOnly(ThemeData theme) {
-    final Document document = _buildDocument(widget.note.noteContent);
-    final QuillController controller = QuillController(
-      document: document,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
-    final MediaQueryData base = MediaQuery.of(context);
-    return MediaQuery(
-      data: base.copyWith(textScaler: TextScaler.linear(_textScale)),
-      child: AbsorbPointer(
-        child: QuillEditor.basic(
-          controller: controller,
-          config: QuillEditorConfig(
-            placeholder: 'No content',
-            padding: EdgeInsets.zero,
-            scrollable: true,
-            autoFocus: false,
-            expands: false,
-            showCursor: false,
-          ),
+  Widget _buildProgressBar(ThemeData theme) {
+    return SizedBox(
+      height: 4,
+      child: LinearProgressIndicator(
+        value: _scrollProgress.clamp(0, 1),
+        minHeight: 4,
+        backgroundColor: theme.colorScheme.outlineVariant.withOpacity(0.2),
+        valueColor: AlwaysStoppedAnimation<Color>(
+          theme.colorScheme.primary.withOpacity(0.9),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPlainText(ThemeData theme) {
-    return SelectableText(
-      widget.note.noteContent.isEmpty
-          ? 'No content available'
-          : widget.note.noteContent,
-      style: theme.textTheme.bodyLarge?.copyWith(
-        color: theme.colorScheme.onSurface,
-        height: 1.6,
-        fontFamily: 'Poppins',
-        fontSize: 16 * _textScale,
-        letterSpacing: 0.2,
       ),
     );
   }
