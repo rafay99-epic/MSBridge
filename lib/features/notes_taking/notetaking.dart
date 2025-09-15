@@ -18,6 +18,7 @@ import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
+import 'package:msbridge/features/voice_notes/screens/voice_notes_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
@@ -681,7 +682,7 @@ class _NotetakingState extends State<Notetaking>
           context: context,
           heroTag: "Add New Note",
           icon: Icons.note,
-          text: "New Note",
+          text: "Text Note",
           theme: theme,
           onPressed: () async {
             await Navigator.push(
@@ -689,6 +690,27 @@ class _NotetakingState extends State<Notetaking>
               PageRouteBuilder(
                 pageBuilder: (context, animation, secondaryAnimation) =>
                     const CreateNote(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+          },
+        ),
+        buildExpandableButton(
+          context: context,
+          heroTag: "Record Voice Note",
+          icon: Icons.mic,
+          text: "Voice Note",
+          theme: theme,
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const VoiceNotesScreen(),
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
