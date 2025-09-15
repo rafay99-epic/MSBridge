@@ -9,6 +9,7 @@ import 'package:msbridge/widgets/custom_snackbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
+import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import 'dart:io';
 
 class VoiceRecorderWidget extends StatefulWidget {
@@ -298,6 +299,14 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
             : _descriptionController.text.trim(),
         fileExtension: fileExtension,
       );
+
+      try {
+        await StreakIntegrationService.onVoiceNoteCreated(context);
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+            'Streak update failed on voice note creation: $e',
+            StackTrace.current.toString());
+      }
 
       if (widget.onRecordingComplete != null) {
         widget.onRecordingComplete!(voiceNote);

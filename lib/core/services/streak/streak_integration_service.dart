@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class StreakIntegrationService {
-  // Call this when a user creates a note to update their streak
   static Future<void> onNoteCreated(BuildContext context) async {
     try {
-      // Get the streak provider from the context
       final streakProvider =
           Provider.of<StreakProvider>(context, listen: false);
 
-      // Check if streak feature is enabled
       if (!streakProvider.streakEnabled) {
-        return; // Streak feature is disabled
+        return;
       }
 
       // Update the streak
@@ -24,15 +21,28 @@ class StreakIntegrationService {
 
       // Show success message (only for milestones)
       _showStreakUpdateMessage(context, streakProvider);
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to update streak on note creation',
-        information: [
-          'Context mounted: ${context.mounted}',
-        ],
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to update streak on note creation: $e',
+          StackTrace.current.toString());
+    }
+  }
+
+  // Call this when a user creates a voice note to update their streak
+  static Future<void> onVoiceNoteCreated(BuildContext context) async {
+    try {
+      final streakProvider =
+          Provider.of<StreakProvider>(context, listen: false);
+
+      if (!streakProvider.streakEnabled) {
+        return;
+      }
+
+      await streakProvider.updateStreakOnActivity();
+      _showStreakUpdateMessage(context, streakProvider);
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to update streak on voice note creation: $e',
+          StackTrace.current.toString());
     }
   }
 
@@ -76,12 +86,9 @@ class StreakIntegrationService {
         );
       }
       // No message for regular updates to avoid spam
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to show streak update message',
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to show streak update message: $e',
+          StackTrace.current.toString());
     }
   }
 
@@ -98,12 +105,10 @@ class StreakIntegrationService {
       }
 
       return streakProvider.needsAttention;
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to check if streak reminder is needed',
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to check if streak reminder is needed: $e',
+          StackTrace.current.toString());
       return false;
     }
   }
@@ -124,12 +129,9 @@ class StreakIntegrationService {
         'streakEnabled': streakProvider.streakEnabled,
         'notificationsEnabled': streakProvider.notificationsEnabled,
       };
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to get streak status',
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to get streak status: $e', StackTrace.current.toString());
       return {
         'currentStreak': 0,
         'longestStreak': 0,
@@ -199,11 +201,10 @@ class StreakIntegrationService {
           ],
         ),
       );
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to show streak reminder dialog',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+        'Failed to show streak reminder dialog: $e',
+        StackTrace.current.toString(),
       );
     }
   }
@@ -214,11 +215,10 @@ class StreakIntegrationService {
       final streakProvider =
           Provider.of<StreakProvider>(context, listen: false);
       return streakProvider.streakEnabled;
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to check if streak is available',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+        'Failed to check if streak is available: $e',
+        StackTrace.current.toString(),
       );
       return false;
     }
@@ -239,11 +239,10 @@ class StreakIntegrationService {
       }
 
       return "${streakProvider.currentStreakCount} day${streakProvider.currentStreakCount == 1 ? '' : 's'}";
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to get streak summary',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+        'Failed to get streak summary: $e',
+        StackTrace.current.toString(),
       );
       return "Error";
     }
@@ -255,11 +254,10 @@ class StreakIntegrationService {
       final streakProvider =
           Provider.of<StreakProvider>(context, listen: false);
       await streakProvider.refreshStreak();
-    } catch (e, stackTrace) {
-      FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to refresh streak data',
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+        'Failed to refresh streak data: $e',
+        StackTrace.current.toString(),
       );
     }
   }
