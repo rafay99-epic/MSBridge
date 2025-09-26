@@ -28,6 +28,8 @@ import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
+import 'package:msbridge/features/notes_taking/widget/custom_quill_toolbar.dart';
+import 'package:msbridge/core/services/note_linking/note_link_service.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note, this.initialTemplate});
@@ -84,6 +86,34 @@ class _CreateNoteState extends State<CreateNote>
           _saveNote();
         });
       }
+    }
+  }
+
+  void _insertNoteLink(String linkText) {
+    final selection = _controller.selection;
+    if (selection.isValid) {
+      _controller.replaceText(
+        selection.start,
+        selection.end - selection.start,
+        linkText,
+        null,
+      );
+      _controller.updateSelection(
+        TextSelection.collapsed(offset: selection.start + linkText.length),
+        ChangeSource.local,
+      );
+    } else {
+      _controller.replaceText(
+        _controller.document.length,
+        0,
+        linkText,
+        null,
+      );
+    }
+
+    // Update links after insertion
+    if (_currentNote != null) {
+      NoteLinkService.updateNoteLinks(_currentNote!);
     }
   }
 
@@ -333,6 +363,10 @@ class _CreateNoteState extends State<CreateNote>
           isSynced: false,
           tags: _tagsNotifier.value,
         );
+        // Update note links after saving
+        if (result.success && _currentNote != null) {
+          await NoteLinkService.updateNoteLinks(_currentNote!);
+        }
       } else {
         result = await NoteTakingActions.saveNote(
           title: title,
@@ -341,6 +375,8 @@ class _CreateNoteState extends State<CreateNote>
         );
         if (result.success && result.note != null) {
           _currentNote = result.note;
+          // Update note links after creating
+          await NoteLinkService.updateNoteLinks(_currentNote!);
           try {
             await _updateStreakOnNoteCreation();
           } catch (e) {
@@ -403,6 +439,8 @@ class _CreateNoteState extends State<CreateNote>
           tags: _tagsNotifier.value,
         );
         if (result.success) {
+          // Update note links after manual save
+          await NoteLinkService.updateNoteLinks(_currentNote!);
           CustomSnackBar.show(context, result.message, isSuccess: true);
           Navigator.pop(context);
         }
@@ -415,6 +453,10 @@ class _CreateNoteState extends State<CreateNote>
 
         if (result.success) {
           _currentNote = result.note ?? _currentNote;
+          // Update note links after manual save
+          if (_currentNote != null) {
+            await NoteLinkService.updateNoteLinks(_currentNote!);
+          }
           CustomSnackBar.show(context, result.message, isSuccess: true);
 
           // Update streak when note is created
@@ -480,7 +522,11 @@ class _CreateNoteState extends State<CreateNote>
         final selectedText = fullText.substring(start, end);
         await Clipboard.setData(ClipboardData(text: selectedText));
         if (mounted) {
-          CustomSnackBar.show(context, "Copied", isSuccess: true, );
+          CustomSnackBar.show(
+            context,
+            "Copied",
+            isSuccess: true,
+          );
         }
       }
     } catch (e) {
@@ -963,39 +1009,9 @@ class _CreateNoteState extends State<CreateNote>
                         FocusScope.of(context).requestFocus(_quillFocusNode);
                       }
                     },
-                    child: QuillSimpleToolbar(
+                    child: CustomQuillToolbar(
                       controller: _controller,
-                      config: const QuillSimpleToolbarConfig(
-                        multiRowsDisplay: false,
-                        toolbarSize: 44,
-                        showCodeBlock: true,
-                        showQuote: true,
-                        showLink: true,
-                        showFontSize: true,
-                        showFontFamily: true,
-                        showIndent: true,
-                        showDividers: true,
-                        showUnderLineButton: true,
-                        showLeftAlignment: true,
-                        showCenterAlignment: true,
-                        showRightAlignment: true,
-                        showJustifyAlignment: true,
-                        showHeaderStyle: true,
-                        showListNumbers: true,
-                        showListBullets: true,
-                        showListCheck: true,
-                        showStrikeThrough: true,
-                        showInlineCode: true,
-                        showColorButton: true,
-                        showBackgroundColorButton: true,
-                        showClearFormat: true,
-                        showAlignmentButtons: true,
-                        showUndo: true,
-                        showRedo: true,
-                        showDirection: false,
-                        showSearchButton: true,
-                        headerStyleType: HeaderStyleType.buttons,
-                      ),
+                      onInsertLink: _insertNoteLink,
                     ),
                   ),
                 ),

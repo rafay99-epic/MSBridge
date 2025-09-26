@@ -7,6 +7,7 @@ import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/read/widgets/is_quil_json.dart';
 import 'package:msbridge/features/notes_taking/read/widgets/read_header.dart';
 import 'package:msbridge/features/notes_taking/read/widgets/read_content.dart';
+import 'package:msbridge/features/notes_taking/widget/note_backlinks.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -174,6 +175,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
                     plainText: widget.note.noteContent,
                     buildDocument: buildDocument,
                   ),
+                  NoteBacklinks(noteId: widget.note.noteId!),
                   const SizedBox(height: 32),
                 ],
               ),

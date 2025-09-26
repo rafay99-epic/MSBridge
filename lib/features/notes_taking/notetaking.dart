@@ -21,6 +21,7 @@ import 'package:page_transition/page_transition.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
+import 'package:msbridge/features/notes_taking/graph/notes_graph_screen.dart';
 
 enum NoteLayoutMode { grid, list }
 
@@ -532,6 +533,11 @@ class _NotetakingState extends State<Notetaking>
               tooltip: 'Search notes',
             ),
             IconButton(
+              icon: const Icon(Icons.account_tree_outlined),
+              onPressed: _openGraphView,
+              tooltip: 'Graph view',
+            ),
+            IconButton(
               tooltip: 'Switch layout',
               icon: Icon(
                 _layoutMode == NoteLayoutMode.grid
@@ -541,6 +547,16 @@ class _NotetakingState extends State<Notetaking>
               onPressed: _toggleLayoutMode,
             ),
           ];
+  }
+
+  void _openGraphView() {
+    Navigator.push(
+      context,
+      PageTransition(
+        type: PageTransitionType.rightToLeft,
+        child: const NotesGraphScreen(),
+      ),
+    );
   }
 
   void _openSortBottomSheet() {

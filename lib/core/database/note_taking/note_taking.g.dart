@@ -32,13 +32,14 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       deviceId: fields[12] as String?,
       isDeletionSynced: fields[13] as bool,
       lastSyncAt: fields[14] as DateTime?,
+      outgoingLinkIds: (fields[15] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, NoteTakingModel obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.noteId)
       ..writeByte(1)
@@ -68,7 +69,9 @@ class NoteTakingModelAdapter extends TypeAdapter<NoteTakingModel> {
       ..writeByte(13)
       ..write(obj.isDeletionSynced)
       ..writeByte(14)
-      ..write(obj.lastSyncAt);
+      ..write(obj.lastSyncAt)
+      ..writeByte(15)
+      ..write(obj.outgoingLinkIds);
   }
 
   @override

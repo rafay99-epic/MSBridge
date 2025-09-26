@@ -50,6 +50,9 @@ class NoteTakingModel extends HiveObject {
   @HiveField(14)
   DateTime? lastSyncAt;
 
+  @HiveField(15)
+  List<String> outgoingLinkIds;
+
   NoteTakingModel({
     this.noteId,
     required this.noteTitle,
@@ -66,9 +69,11 @@ class NoteTakingModel extends HiveObject {
     this.deviceId,
     this.isDeletionSynced = false,
     this.lastSyncAt,
+    List<String>? outgoingLinkIds,
   })  : updatedAt = updatedAt ?? DateTime.now(),
         tags = tags ?? const [],
-        createdAt = createdAt ?? DateTime.now();
+        createdAt = createdAt ?? DateTime.now(),
+        outgoingLinkIds = outgoingLinkIds ?? const [];
 
   /// Mark note as deleted with proper tracking
   void markAsDeleted(String deviceId, String userId) {
@@ -120,6 +125,7 @@ class NoteTakingModel extends HiveObject {
       'deviceId': deviceId,
       'isDeletionSynced': isDeletionSynced,
       'lastSyncAt': lastSyncAt?.toIso8601String(),
+      'outgoingLinkIds': outgoingLinkIds,
     };
   }
 
@@ -147,6 +153,10 @@ class NoteTakingModel extends HiveObject {
       lastSyncAt: data['lastSyncAt'] != null
           ? DateTime.parse(data['lastSyncAt'])
           : null,
+      outgoingLinkIds: (data['outgoingLinkIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 
@@ -166,6 +176,7 @@ class NoteTakingModel extends HiveObject {
     String? deviceId,
     bool? isDeletionSynced,
     DateTime? lastSyncAt,
+    List<String>? outgoingLinkIds,
   }) {
     return NoteTakingModel(
       noteId: noteId ?? this.noteId,
@@ -183,6 +194,7 @@ class NoteTakingModel extends HiveObject {
       deviceId: deviceId ?? this.deviceId,
       isDeletionSynced: isDeletionSynced ?? this.isDeletionSynced,
       lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+      outgoingLinkIds: outgoingLinkIds ?? this.outgoingLinkIds,
     );
   }
 }
