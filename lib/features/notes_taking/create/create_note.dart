@@ -480,21 +480,7 @@ class _CreateNoteState extends State<CreateNote>
         final selectedText = fullText.substring(start, end);
         await Clipboard.setData(ClipboardData(text: selectedText));
         if (mounted) {
-          // Compact snackbar that doesn't take much space
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Copied',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSecondary)),
-              duration: const Duration(seconds: 1),
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(8),
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-          );
+          CustomSnackBar.show(context, "Copied", isSuccess: true, );
         }
       }
     } catch (e) {

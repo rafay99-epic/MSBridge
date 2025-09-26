@@ -77,19 +77,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // void _onItemTapped(int index) {
-  //   if (index != _selectedIndex) {
-  //     // Start fade out animation
-  //     _fadeController.reverse().then((_) {
-  //       setState(() {
-  //         _selectedIndex = index;
-  //       });
-  //       // Start fade in animation
-  //       _fadeController.forward();
-  //     });
-  //   }
-  // }
-
   bool _isTransitioning = false;
 
   Future<void> _onItemTapped(int index) async {
@@ -99,7 +86,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       return;
     }
 
-    // Trigger haptic feedback for navigation
     final hapticProvider =
         Provider.of<HapticFeedbackSettingsProvider>(context, listen: false);
     hapticProvider.triggerNavigationHaptic();

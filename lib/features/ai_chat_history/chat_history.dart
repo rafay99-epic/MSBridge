@@ -205,51 +205,96 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             ),
           ],
         ),
-        trailing: PopupMenuButton<String>(
+        trailing: IconButton(
+          tooltip: 'Actions',
           icon: Icon(
-            Icons.more_vert,
-            color: colorScheme.primary.withOpacity(0.6),
+            Icons.more_horiz,
+            color: colorScheme.primary.withOpacity(0.7),
           ),
-          onSelected: (value) async {
-            switch (value) {
-              case 'load':
-                await _loadChat(context, history);
-                break;
-              case 'delete':
-                _deleteChat(context, history);
-                break;
-            }
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: colorScheme.surface,
+              isScrollControlled: false,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (ctx) {
+                return SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 4),
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colorScheme.outline.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: colorScheme.primary.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(Icons.refresh,
+                              color: colorScheme.primary, size: 18),
+                        ),
+                        title: Text(
+                          'Load Chat',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await _loadChat(context, history);
+                        },
+                      ),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.error.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: colorScheme.error.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(LineIcons.trash,
+                              color: colorScheme.error, size: 18),
+                        ),
+                        title: Text(
+                          'Delete',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _deleteChat(context, history);
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                );
+              },
+            );
           },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'load',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.refresh,
-                    size: 16,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Load Chat'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(
-                    LineIcons.trash,
-                    size: 16,
-                    color: colorScheme.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Delete'),
-                ],
-              ),
-            ),
-          ],
         ),
         onTap: () async => await _loadChat(context, history),
       ),
