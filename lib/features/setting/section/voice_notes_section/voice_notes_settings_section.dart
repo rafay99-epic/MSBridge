@@ -32,40 +32,6 @@ class VoiceNotesSettingsSection extends StatelessWidget {
             );
           },
         ),
-
-        const SizedBox(height: 12),
-
-        buildSettingsTile(
-          context,
-          title: "Voice Note Settings",
-          subtitle: "Configure voice recording and sharing preferences",
-          icon: LineIcons.cog,
-          onTap: () {
-            // TODO: Navigate to voice note settings page
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Voice Note Settings coming soon!'),
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(height: 12),
-
-        buildSettingsTile(
-          context,
-          title: "Audio Quality",
-          subtitle: "Adjust recording quality and compression settings",
-          icon: LineIcons.volumeUp,
-          onTap: () {
-            // TODO: Navigate to audio quality settings
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Audio Quality Settings coming soon!'),
-              ),
-            );
-          },
-        ),
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
+import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
 
 class NoteCard extends StatefulWidget {
   const NoteCard({
@@ -112,6 +113,17 @@ class _NoteCardState extends State<NoteCard> {
                         ),
                         tooltip: 'History',
                       ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: () => _openRead(context),
+                        splashRadius: 20,
+                        icon: Icon(
+                          LineIcons.eye,
+                          size: 18,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        tooltip: 'Read',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -183,6 +195,20 @@ class _NoteCardState extends State<NoteCard> {
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
             VersionHistoryScreen(note: widget.note),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 200),
+      ),
+    );
+  }
+
+  void _openRead(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            ReadNotePage(note: widget.note),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

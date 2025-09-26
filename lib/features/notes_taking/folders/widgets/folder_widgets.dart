@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:intl/intl.dart';
 
@@ -122,137 +123,213 @@ class OptimizedNoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final updatedLabel = DateFormat('dd MMM yyyy').format(note.updatedAt);
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final cardHeight = isTablet ? 180.0 : 160.0;
+    final iconSize = isTablet ? 20.0 : 18.0;
+    final padding = isTablet ? 20.0 : 16.0;
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageTransition(
-            child: CreateNote(note: note),
-            type: PageTransitionType.rightToLeft,
-            duration: const Duration(milliseconds: 300),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: colorScheme.outline.withOpacity(0.35),
-            width: 1.8,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            PageTransition(
+              child: CreateNote(note: note),
+              type: PageTransitionType.rightToLeft,
+              duration: const Duration(milliseconds: 300),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.35),
-                        width: 1.2,
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: cardHeight,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: isTablet ? 44 : 40,
+                      height: isTablet ? 44 : 40,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(LineIcons.stickyNote,
+                          color: colorScheme.primary, size: iconSize),
+                    ),
+                    SizedBox(width: isTablet ? 16 : 12),
+                    Expanded(
+                      child: Text(
+                        note.noteTitle.isEmpty ? '(Untitled)' : note.noteTitle,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.primary,
+                          fontSize: isTablet ? 16 : 15,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    child: Icon(LineIcons.stickyNote,
-                        color: colorScheme.primary, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
+                    _buildReadButton(context, isTablet),
+                  ],
+                ),
+                SizedBox(height: isTablet ? 16 : 12),
+                Expanded(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
-                      note.noteTitle.isEmpty ? '(Untitled)' : note.noteTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colorScheme.primary,
-                        letterSpacing: 0.2,
+                      preview(note.noteContent),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.8),
+                        height: 1.4,
+                        fontSize: isTablet ? 14 : 13,
                       ),
-                      maxLines: 2,
+                      maxLines: isTablet ? 4 : 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                preview(note.noteContent),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.85),
-                  height: 1.45,
                 ),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 14),
-              if (note.tags.isNotEmpty) ...[
-                _buildTagsRow(note.tags, theme, colorScheme),
-                const SizedBox(height: 10),
-              ],
-              Row(
-                children: [
-                  Icon(Icons.schedule, size: 14, color: colorScheme.outline),
-                  const SizedBox(width: 6),
-                  Text(
-                    updatedLabel,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.outline,
+                SizedBox(height: isTablet ? 12 : 8),
+                if (note.tags.isNotEmpty) ...[
+                  _buildTagsRow(note.tags, theme, colorScheme, isTablet),
+                  SizedBox(height: isTablet ? 12 : 8),
+                ],
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: colorScheme.primary.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-                ],
-              ),
-            ],
+                  child: Row(
+                    children: [
+                      Icon(Icons.schedule,
+                          size: isTablet ? 16 : 14, color: colorScheme.primary),
+                      SizedBox(width: isTablet ? 8 : 6),
+                      Expanded(
+                        child: Text(
+                          updatedLabel,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontSize: isTablet ? 12 : 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTagsRow(
-      List<String> tags, ThemeData theme, ColorScheme colorScheme) {
-    final displayTags = tags.take(3).toList();
+  Widget _buildReadButton(BuildContext context, bool isTablet) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            PageTransition(
+              child: ReadNotePage(note: note),
+              type: PageTransitionType.rightToLeft,
+              duration: const Duration(milliseconds: 300),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: EdgeInsets.all(isTablet ? 12 : 10),
+          decoration: BoxDecoration(
+            color: colorScheme.secondary.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colorScheme.secondary.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Icon(
+            LineIcons.eye,
+            size: isTablet ? 18 : 16,
+            color: colorScheme.secondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTagsRow(List<String> tags, ThemeData theme,
+      ColorScheme colorScheme, bool isTablet) {
+    final displayTags = tags.take(2).toList();
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: isTablet ? 8 : 6,
+      runSpacing: isTablet ? 6 : 4,
       children: displayTags
-          .map((tag) => _buildTagChip(theme, colorScheme, tag))
+          .map((tag) => _buildTagChip(theme, colorScheme, tag, isTablet))
           .toList(),
     );
   }
 
-  Widget _buildTagChip(ThemeData theme, ColorScheme colorScheme, String text) {
+  Widget _buildTagChip(
+      ThemeData theme, ColorScheme colorScheme, String text, bool isTablet) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 14 : 12, vertical: isTablet ? 8 : 6),
       decoration: BoxDecoration(
-        color: colorScheme.secondary.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.secondary.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-            color: colorScheme.secondary.withOpacity(0.35), width: 1),
+            color: colorScheme.secondary.withOpacity(0.3), width: 1.5),
       ),
       child: Text(
         text,
         style: theme.textTheme.labelSmall?.copyWith(
           color: colorScheme.secondary,
           fontWeight: FontWeight.w600,
+          fontSize: isTablet ? 12 : 11,
         ),
       ),
     );
   }
 }
 
-// Legacy function for backward compatibility
 Widget buildNoteCard(
   BuildContext context,
   NoteTakingModel note,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
@@ -76,6 +77,7 @@ class _NotetakingState extends State<Notetaking>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadNotes();
+      _prewarmFabOverlay();
     });
   }
 
@@ -83,6 +85,34 @@ class _NotetakingState extends State<Notetaking>
   void dispose() {
     _cachedNotes = null;
     super.dispose();
+  }
+
+  void _prewarmFabOverlay() {
+    try {
+      final OverlayState overlay = Overlay.of(context);
+      final OverlayEntry entry = OverlayEntry(
+        builder: (_) => Positioned.fill(
+          child: IgnorePointer(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+      overlay.insert(entry);
+      Future.delayed(const Duration(milliseconds: 48), () {
+        try {
+          entry.remove();
+        } catch (e) {
+          FlutterBugfender.sendCrash(
+              "FAB blur prewarm failed: $e", StackTrace.current.toString());
+        }
+      });
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          "FAB blur prewarm failed: $e", StackTrace.current.toString());
+    }
   }
 
   Future<void> _loadLayoutPreference() async {
@@ -446,7 +476,6 @@ class _NotetakingState extends State<Notetaking>
   }
 
   Widget _buildNoteItem(NoteTakingModel note, BuildContext context) {
-    // Use RepaintBoundary to isolate painting operations
     return RepaintBoundary(
       child: GestureDetector(
         onTap: () async {
@@ -673,15 +702,15 @@ class _NotetakingState extends State<Notetaking>
       childrenAnimation: ExpandableFabAnimation.rotate,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: Colors.transparent,
-        blur: 0,
+        color: Colors.black.withOpacity(0.5),
+        blur: 12,
       ),
       children: [
         buildExpandableButton(
           context: context,
           heroTag: "Add New Note",
           icon: Icons.note,
-          text: "New Note",
+          text: "Text Note",
           theme: theme,
           onPressed: () async {
             await Navigator.push(
