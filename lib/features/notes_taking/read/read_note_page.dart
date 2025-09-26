@@ -44,7 +44,9 @@ class _ReadNotePageState extends State<ReadNotePage> {
     _scrollController.removeListener(_updateScrollProgress);
     _scrollController.dispose();
     _searchController.dispose();
-    WakelockPlus.disable();
+    if (_keepAwake) {
+      WakelockPlus.disable();
+    }
     super.dispose();
   }
 
