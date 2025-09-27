@@ -369,14 +369,14 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                             boxShadow: [
                               BoxShadow(
                                 color:
-                                    theme.colorScheme.shadow.withOpacity(0.06),
+                                    theme.colorScheme.shadow.withValues(alpha: 0.06),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
                             ],
                             border: Border.all(
                               color: theme.colorScheme.outlineVariant
-                                  .withOpacity(0.6),
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                           child: ClipRRect(

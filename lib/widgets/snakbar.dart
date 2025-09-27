@@ -13,8 +13,8 @@ class CustomSnackBar {
     // Determine colors based on success state
     final isSuccessMessage = isSuccess == true;
     final backgroundColor = isSuccessMessage
-        ? colorScheme.primary.withOpacity(0.95)
-        : colorScheme.errorContainer.withOpacity(0.95);
+        ? colorScheme.primary.withValues(alpha: 0.95)
+        : colorScheme.errorContainer.withValues(alpha: 0.95);
 
     final textColor =
         isSuccessMessage ? colorScheme.onPrimary : colorScheme.onErrorContainer;
@@ -43,12 +43,12 @@ class CustomSnackBar {
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: borderColor.withOpacity(0.15),
+            color: borderColor.withValues(alpha: 0.15),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 0,
@@ -66,8 +66,8 @@ class CustomSnackBar {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isSuccessMessage
-                      ? colorScheme.onPrimary.withOpacity(0.15)
-                      : colorScheme.onErrorContainer.withOpacity(0.15),
+                      ? colorScheme.onPrimary.withValues(alpha: 0.15)
+                      : colorScheme.onErrorContainer.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -114,8 +114,8 @@ class CustomSnackBar {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isSuccessMessage
-                          ? colorScheme.onPrimary.withOpacity(0.15)
-                          : colorScheme.onErrorContainer.withOpacity(0.15),
+                          ? colorScheme.onPrimary.withValues(alpha: 0.15)
+                          : colorScheme.onErrorContainer.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(

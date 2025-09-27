@@ -35,6 +35,7 @@ class _NotesSettingState extends State<NotesSetting> {
   Future<int?> _pickInterval(BuildContext context) async {
     final items = <int>[0, 15, 30, 60];
     int current = await AutoSyncScheduler.getIntervalMinutes();
+    if (!context.mounted) return null;
     return showModalBottomSheet<int>(
       context: context,
       builder: (ctx) {
@@ -95,13 +96,15 @@ class _NotesSettingState extends State<NotesSetting> {
                       await _setVersionHistoryEnabled(value);
                       if (mounted) {
                         setState(() {});
-                        CustomSnackBar.show(
-                          context,
-                          value
-                              ? 'Version History enabled'
-                              : 'Version History disabled',
-                          isSuccess: true,
-                        );
+                        if (context.mounted) {
+                          CustomSnackBar.show(
+                            context,
+                            value
+                                ? 'Version History enabled'
+                                : 'Version History disabled',
+                            isSuccess: true,
+                          );
+                        }
                       }
                     },
                   );
@@ -197,7 +200,7 @@ class _NotesSettingState extends State<NotesSetting> {
 
                     try {
                       await SyncService().syncLocalNotesToFirebase();
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(context, 'Synced successfully',
                             isSuccess: true);
                       }
@@ -207,7 +210,7 @@ class _NotesSettingState extends State<NotesSetting> {
                           StackTrace.current.toString());
                       FlutterBugfender.error(
                           'Failed to sync notes to cloud: $e');
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(context, 'Sync failed: $e',
                             isSuccess: false);
                       }
@@ -231,7 +234,7 @@ class _NotesSettingState extends State<NotesSetting> {
 
                     try {
                       await ReverseSyncService().syncDataFromFirebaseToHive();
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(
                             context, 'Notes downloaded from cloud successfully',
                             isSuccess: true);
@@ -242,7 +245,7 @@ class _NotesSettingState extends State<NotesSetting> {
                           StackTrace.current.toString());
                       FlutterBugfender.error(
                           'Failed to download notes from cloud: $e');
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(context, 'Download failed: $e',
                             isSuccess: false);
                       }
@@ -267,7 +270,7 @@ class _NotesSettingState extends State<NotesSetting> {
                     final minutes = await _pickInterval(context);
                     if (minutes == null) return;
                     await AutoSyncScheduler.setIntervalMinutes(minutes);
-                    if (mounted) {
+                    if (context.mounted) {
                       CustomSnackBar.show(
                           context,
                           minutes == 0
@@ -358,7 +361,7 @@ class _NotesSettingState extends State<NotesSetting> {
           onTap: () async {
             try {
               final filePath = await BackupService.exportAllNotes(context);
-              if (mounted) {
+              if (context.mounted) {
                 final detailedLocation =
                     BackupService.getDetailedFileLocation(filePath);
 
@@ -371,7 +374,7 @@ class _NotesSettingState extends State<NotesSetting> {
               FlutterBugfender.sendCrash(
                   'Backup failed: $e', StackTrace.current.toString());
               FlutterBugfender.error('Backup failed: $e');
-              if (mounted) {
+              if (context.mounted) {
                 CustomSnackBar.show(context, 'Backup failed: $e');
               }
             }
@@ -385,7 +388,7 @@ class _NotesSettingState extends State<NotesSetting> {
           icon: LineIcons.upload,
           onTap: () async {
             final report = await BackupService.importFromFile();
-            if (mounted) {
+            if (context.mounted) {
               CustomSnackBar.show(
                 context,
                 'Import: ${report.inserted} added, ${report.updated} updated, ${report.skipped} skipped',

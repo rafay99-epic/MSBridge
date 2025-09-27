@@ -44,11 +44,11 @@ class ErrorApp extends StatelessWidget {
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.primary.withOpacity(0.12),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -61,7 +61,8 @@ class ErrorApp extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary.withOpacity(0.12),
+                        color:
+                            theme.colorScheme.secondary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -83,7 +84,7 @@ class ErrorApp extends StatelessWidget {
                     Text(
                       "The app hit a snag during startup. You can copy the details below and try again.",
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: onBackgroundColor.withOpacity(0.75),
+                        color: onBackgroundColor.withValues(alpha: 0.75),
                         height: 1.35,
                       ),
                       textAlign: TextAlign.center,
@@ -96,7 +97,7 @@ class ErrorApp extends StatelessWidget {
                         color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: outlineVariantColor.withOpacity(0.5)),
+                            color: outlineVariantColor.withValues(alpha: 0.5)),
                       ),
                       child: SelectableText(
                         errorMessage,
@@ -122,8 +123,8 @@ class ErrorApp extends StatelessWidget {
                           ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
-                                color:
-                                    theme.colorScheme.primary.withOpacity(0.3)),
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.3)),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),

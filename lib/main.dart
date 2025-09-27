@@ -40,6 +40,7 @@ import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
 import 'package:msbridge/core/services/update_app/update_manager.dart';
+import 'package:msbridge/core/services/database_migration_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -76,31 +77,29 @@ void main() async {
           'Hive init failed: $e', StackTrace.current.toString());
     }
 
+    // Register all Hive adapters
     Hive.registerAdapter(MSNoteAdapter());
-    await Hive.openBox<MSNote>('notesBox');
     Hive.registerAdapter(NoteTakingModelAdapter());
-    await Hive.openBox<NoteTakingModel>('notes');
-    await Hive.openBox<NoteTakingModel>('deleted_notes');
-
-    // Register note version adapter
     Hive.registerAdapter(NoteVersionAdapter());
-    await Hive.openBox<NoteVersion>('note_versions');
-
-    // Register chat history adapters
     Hive.registerAdapter(ChatHistoryAdapter());
     Hive.registerAdapter(ChatHistoryMessageAdapter());
-    await Hive.openBox<ChatHistory>('chat_history');
-
-    // Register templates adapter
     Hive.registerAdapter(NoteTemplateAdapter());
-    await Hive.openBox<NoteTemplate>('note_templates');
-
-    // Register voice notes adapter
     Hive.registerAdapter(VoiceNoteModelAdapter());
-    await Hive.openBox<VoiceNoteModel>('voice_notes');
+
+    // Safely open all Hive boxes with error handling
+    await DatabaseMigrationService.safeOpenBox<MSNote>('notesBox');
+    await DatabaseMigrationService.safeOpenBox<NoteTakingModel>('notes');
+    await DatabaseMigrationService.safeOpenBox<NoteTakingModel>(
+        'deleted_notes');
+    await DatabaseMigrationService.safeOpenBox<NoteVersion>('note_versions');
+    await DatabaseMigrationService.safeOpenBox<ChatHistory>('chat_history');
+    await DatabaseMigrationService.safeOpenBox<NoteTemplate>('note_templates');
+    await DatabaseMigrationService.safeOpenBox<VoiceNoteModel>('voice_notes');
 
     try {
-      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+      await Workmanager().initialize(
+        callbackDispatcher,
+      );
       await SchedulerRegistration.registerAdaptive();
     } catch (e, st) {
       FlutterBugfender.log('Workmanager init failed: $e');

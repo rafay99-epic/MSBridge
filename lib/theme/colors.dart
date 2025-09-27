@@ -495,7 +495,9 @@ class AppThemes {
     scaffoldBackgroundColor: const Color(0xFF000000),
     cardColor: const Color(0xFF1A1A1A),
     canvasColor: const Color(0xFF000000),
-    dialogBackgroundColor: const Color(0xFF1A1A1A),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: Color(0xFF1A1A1A),
+    ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: Color(0xFF1A1A1A),
     ),

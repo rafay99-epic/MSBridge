@@ -139,7 +139,7 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: colorScheme.secondary.withOpacity(0.1),
+            color: colorScheme.secondary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
@@ -175,14 +175,14 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
   //     child: InkWell(
   //       onTap: onTap,
   //       borderRadius: BorderRadius.circular(12),
-  //       splashColor: colorScheme.primary.withOpacity(0.1),
-  //       highlightColor: colorScheme.primary.withOpacity(0.05),
+  //       splashColor: colorScheme.primary.withValues(alpha: 0.1),
+  //       highlightColor: colorScheme.primary.withValues(alpha: 0.05),
   //       child: Container(
   //         padding: const EdgeInsets.all(16),
   //         decoration: BoxDecoration(
   //           borderRadius: BorderRadius.circular(12),
   //           border: Border.all(
-  //             color: colorScheme.outline.withOpacity(0.1),
+  //             color: colorScheme.outline.withValues(alpha: 0.1),
   //             width: 1,
   //           ),
   //         ),
@@ -191,7 +191,7 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
   //             Container(
   //               padding: const EdgeInsets.all(10),
   //               decoration: BoxDecoration(
-  //                 color: colorScheme.primary.withOpacity(0.1),
+  //                 color: colorScheme.primary.withValues(alpha: 0.1),
   //                 borderRadius: BorderRadius.circular(10),
   //               ),
   //               child: Icon(
@@ -216,7 +216,7 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
   //                   Text(
   //                     subtitle,
   //                     style: theme.textTheme.bodySmall?.copyWith(
-  //                       color: colorScheme.primary.withOpacity(0.6),
+  //                       color: colorScheme.primary.withValues(alpha: 0.6),
   //                     ),
   //                   ),
   //                 ],
@@ -227,7 +227,7 @@ class _AdminSettingsSectionState extends State<AdminSettingsSection>
   //               Icon(
   //                 Icons.chevron_right,
   //                 size: 20,
-  //                 color: colorScheme.primary.withOpacity(0.5),
+  //                 color: colorScheme.primary.withValues(alpha: 0.5),
   //               ),
   //             ],
   //           ],

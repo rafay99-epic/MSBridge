@@ -76,7 +76,7 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -99,7 +99,7 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -174,7 +174,7 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
 
                   // Code blocks
                   code: TextStyle(
-                    backgroundColor: colorScheme.primary.withOpacity(0.1),
+                    backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
                     color: colorScheme.primary,
                     fontSize: 14,
                     fontFamily: 'monospace',
@@ -183,10 +183,10 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
 
                   // Code blocks decoration
                   codeblockDecoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.05),
+                    color: colorScheme.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.2),
+                      color: colorScheme.primary.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -209,14 +209,14 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
                   // Blockquotes
                   blockquote: TextStyle(
                     fontStyle: FontStyle.italic,
-                    color: colorScheme.primary.withOpacity(0.8),
+                    color: colorScheme.primary.withValues(alpha: 0.8),
                     fontSize: 16,
                     height: 1.5,
                   ),
 
                   // Blockquote decoration
                   blockquoteDecoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.05),
+                    color: colorScheme.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                     border: Border(
                       left: BorderSide(
@@ -228,7 +228,7 @@ class _AiSummaryDisplayState extends State<AiSummaryDisplay> {
 
                   // Horizontal rules
                   horizontalRuleDecoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),

@@ -254,6 +254,7 @@ class NavigationMethods {
   }
 
   static void navigateToResetTheme(BuildContext context) async {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -277,8 +278,6 @@ class NavigationMethods {
 
     if (confirm == true) {
       try {
-        final themeProvider =
-            Provider.of<ThemeProvider>(context, listen: false);
         themeProvider.resetTheme();
         if (context.mounted) {
           CustomSnackBar.show(

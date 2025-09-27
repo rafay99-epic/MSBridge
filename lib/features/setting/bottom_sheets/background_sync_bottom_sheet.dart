@@ -121,7 +121,7 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
             Text(
               'Last run: ${_lastEndedAt != null ? _lastEndedAt!.toLocal().toString() : 'unknown'}',
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: cs.primary.withOpacity(0.7)),
+                  ?.copyWith(color: cs.primary.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 4),
             Text(
@@ -131,14 +131,14 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
                     ? Colors.green
                     : (_lastStatus == 'error'
                         ? Colors.red
-                        : cs.primary.withOpacity(0.7)),
+                        : cs.primary.withValues(alpha: 0.7)),
               ),
             ),
             if (_lastMessage != null) ...[
               const SizedBox(height: 2),
               Text(_lastMessage!,
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: cs.primary.withOpacity(0.7))),
+                      ?.copyWith(color: cs.primary.withValues(alpha: 0.7))),
             ],
             const SizedBox(height: 12),
           ],
@@ -168,9 +168,9 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
       label: Text(label),
       selected: selected,
       onSelected: (_) => _applyFrequency(d),
-      selectedColor: cs.secondary.withOpacity(0.15),
+      selectedColor: cs.secondary.withValues(alpha: 0.15),
       labelStyle: TextStyle(color: cs.primary),
-      side: BorderSide(color: cs.outline.withOpacity(0.3)),
+      side: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
     );
   }
 }

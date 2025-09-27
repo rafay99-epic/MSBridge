@@ -32,15 +32,15 @@ class EmptyNotesMessage extends StatelessWidget {
                   width: 160,
                   height: 160,
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.08),
+                    color: colorScheme.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.25),
+                      color: colorScheme.primary.withValues(alpha: 0.25),
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.08),
+                        color: colorScheme.shadow.withValues(alpha: 0.08),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -68,12 +68,12 @@ class EmptyNotesMessage extends StatelessWidget {
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.outline.withOpacity(0.25),
+                      color: colorScheme.outline.withValues(alpha: 0.25),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.06),
+                        color: colorScheme.shadow.withValues(alpha: 0.06),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -94,7 +94,7 @@ class EmptyNotesMessage extends StatelessWidget {
                       Text(
                         description,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.75),
+                          color: colorScheme.onSurface.withValues(alpha: 0.75),
                           height: 1.45,
                         ),
                         textAlign: TextAlign.center,
@@ -105,7 +105,7 @@ class EmptyNotesMessage extends StatelessWidget {
                       Container(
                         height: 1,
                         width: 120,
-                        color: colorScheme.outline.withOpacity(0.18),
+                        color: colorScheme.outline.withValues(alpha: 0.18),
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -115,7 +115,8 @@ class EmptyNotesMessage extends StatelessWidget {
                           color: colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colorScheme.outlineVariant.withOpacity(0.40),
+                            color: colorScheme.outlineVariant
+                                .withValues(alpha: 0.40),
                             width: 1,
                           ),
                         ),

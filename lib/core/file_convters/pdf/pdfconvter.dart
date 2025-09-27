@@ -65,13 +65,21 @@ class PdfExporter {
       }
 
       if (downloadsDirectory == null) {
-        CustomSnackBar.show(context, "Could not find the downloads directory.",
-            isSuccess: false);
+        if (context.mounted) {
+          CustomSnackBar.show(
+              context, "Could not find the downloads directory.",
+              isSuccess: false);
+        }
         return;
       }
 
       // Ensure the downloads directory exists
       if (!downloadsDirectory.existsSync()) {
+        if (context.mounted) {
+          CustomSnackBar.show(
+              context, "Could not find the downloads directory.",
+              isSuccess: false);
+        }
         downloadsDirectory.createSync(recursive: true);
       }
 
@@ -97,21 +105,28 @@ class PdfExporter {
 
       final pw.Document? doc = await pdfConverter.createDocument();
       if (doc == null) {
-        CustomSnackBar.show(context, "Failed to generate PDF document",
-            isSuccess: false);
+        if (context.mounted) {
+          CustomSnackBar.show(context, "Failed to generate PDF document",
+              isSuccess: false);
+        }
         return;
       }
       await file.writeAsBytes(await doc.save());
 
-      CustomSnackBar.show(context, "PDF saved to ${file.path}",
-          isSuccess: true);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "PDF saved to ${file.path}",
+            isSuccess: true);
+      }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error creating PDF: $e', StackTrace.current.toString());
       FlutterBugfender.error(
         'Error creating PDF: $e',
       );
-      CustomSnackBar.show(context, "Error creating PDF: $e", isSuccess: false);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "Error creating PDF: $e",
+            isSuccess: false);
+      }
     }
   }
 }

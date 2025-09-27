@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:msbridge/core/services/update_app/update_service.dart';
 import 'package:msbridge/core/services/update_app/background_download_service.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -44,8 +45,8 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return WillPopScope(
-      onWillPop: () async => !_isDownloading,
+    return PopScope(
+      canPop: !_isDownloading,
       child: AlertDialog(
         backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(
@@ -64,8 +65,8 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      colorScheme.primary.withOpacity(0.1),
-                      colorScheme.primary.withOpacity(0.05),
+                      colorScheme.primary.withValues(alpha: 0.1),
+                      colorScheme.primary.withValues(alpha: 0.05),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -81,10 +82,10 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.15),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -106,7 +107,7 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
                     Text(
                       'A new version of MS Bridge is ready',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -156,7 +157,7 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
+          color: colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -167,17 +168,17 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
               Text(
                 'Current Version',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colorScheme.error.withOpacity(0.1),
+                  color: colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: colorScheme.error.withOpacity(0.3),
+                    color: colorScheme.error.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -197,17 +198,17 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
               Text(
                 'Latest Version',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -254,7 +255,7 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.2),
+              color: colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Text(
@@ -273,10 +274,10 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.05),
+        color: colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.2),
+          color: colorScheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -301,14 +302,14 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: _downloadProgress,
-            backgroundColor: colorScheme.primary.withOpacity(0.2),
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
           ),
           const SizedBox(height: 8),
           Text(
             '${(_downloadProgress * 100).toInt()}% - $_downloadStatus',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -329,7 +330,7 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
                   widget.onDismiss?.call();
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.onSurface.withOpacity(0.7),
+                  foregroundColor: colorScheme.onSurface.withValues(alpha: 0.7),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: const Text('Later'),
@@ -412,18 +413,24 @@ class _EnhancedUpdateDialogState extends State<EnhancedUpdateDialog> {
       );
 
       if (!success) {
+        if (context.mounted) {
+          CustomSnackBar.show(
+            context,
+            'Failed to start download. Please try again.',
+            isSuccess: false,
+          );
+        }
+      }
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to start download: $e', StackTrace.current.toString());
+      if (context.mounted) {
         CustomSnackBar.show(
           context,
-          'Failed to start download. Please try again.',
+          'Download error: $e',
           isSuccess: false,
         );
       }
-    } catch (e) {
-      CustomSnackBar.show(
-        context,
-        'Download error: $e',
-        isSuccess: false,
-      );
     }
   }
 

@@ -72,12 +72,12 @@ void showLogoutDialog(BuildContext context) {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.2),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, 8),
               spreadRadius: 0,
@@ -93,7 +93,7 @@ void showLogoutDialog(BuildContext context) {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.error.withOpacity(0.1),
+                  color: colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -120,7 +120,7 @@ void showLogoutDialog(BuildContext context) {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 15,
-                  color: colorScheme.primary.withOpacity(0.7),
+                  color: colorScheme.primary.withValues(alpha: 0.7),
                   height: 1.4,
                   letterSpacing: 0.1,
                 ),
@@ -138,7 +138,7 @@ void showLogoutDialog(BuildContext context) {
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.outline.withOpacity(0.3),
+                          color: colorScheme.outline.withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                       ),
@@ -153,7 +153,8 @@ void showLogoutDialog(BuildContext context) {
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: colorScheme.primary.withOpacity(0.8),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.8),
                               ),
                             ),
                           ),
@@ -171,7 +172,7 @@ void showLogoutDialog(BuildContext context) {
                         gradient: LinearGradient(
                           colors: [
                             colorScheme.error,
-                            colorScheme.error.withOpacity(0.8),
+                            colorScheme.error.withValues(alpha: 0.8),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -179,7 +180,7 @@ void showLogoutDialog(BuildContext context) {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.error.withOpacity(0.3),
+                            color: colorScheme.error.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                             spreadRadius: 0,
@@ -250,12 +251,12 @@ void handleLogout(BuildContext context) async {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.2),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, 8),
               spreadRadius: 0,
@@ -271,7 +272,7 @@ void handleLogout(BuildContext context) async {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.secondary.withOpacity(0.1),
+                  color: colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SizedBox(
@@ -301,7 +302,7 @@ void handleLogout(BuildContext context) async {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
-                  color: colorScheme.primary.withOpacity(0.6),
+                  color: colorScheme.primary.withValues(alpha: 0.6),
                   height: 1.3,
                 ),
               ),
@@ -314,6 +315,7 @@ void handleLogout(BuildContext context) async {
 
   final error = await authRepo.logout();
 
+  if (!context.mounted) return;
   Navigator.pop(context);
 
   if (error == null) {
@@ -322,6 +324,7 @@ void handleLogout(BuildContext context) async {
       await _clearAllSecureStorage();
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      if (!context.mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         PageTransition(

@@ -171,10 +171,10 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: action.color.withOpacity(0.1),
+        color: action.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: action.color.withOpacity(0.2),
+          color: action.color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -326,10 +326,10 @@ class QuickActionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(disabled ? 0.05 : 0.1),
+            color: color.withValues(alpha: disabled ? 0.05 : 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: color.withOpacity(disabled ? 0.1 : 0.2),
+              color: color.withValues(alpha: disabled ? 0.1 : 0.2),
               width: 1,
             ),
           ),

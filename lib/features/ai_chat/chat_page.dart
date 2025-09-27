@@ -64,7 +64,7 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.outline.withOpacity(0.5),
+                    color: colorScheme.outline.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -94,7 +94,8 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.primary.withOpacity(0.1),
+                                  color: colorScheme.primary
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -117,7 +118,7 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                 value: consent.enabled,
                                 onChanged:
                                     onConsentToggleChanged, // Use the callback from parent
-                                activeColor: colorScheme.primary,
+                                activeThumbColor: colorScheme.primary,
                               ),
                             ],
                           );
@@ -141,11 +142,11 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                           if (isEnabled) {
                             return chipSelected
                                 ? colorScheme.primary // Active and selected
-                                : colorScheme.onSurface
-                                    .withOpacity(0.7); // Active but unselected
+                                : colorScheme.onSurface.withValues(
+                                    alpha: 0.7); // Active but unselected
                           } else {
                             return colorScheme.onSurface
-                                .withOpacity(0.4); // Disabled
+                                .withValues(alpha: 0.4); // Disabled
                           }
                         }
 
@@ -155,11 +156,11 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                           if (isEnabled) {
                             return chipSelected
                                 ? colorScheme.primary // Active and selected
-                                : colorScheme.outline
-                                    .withOpacity(0.3); // Active but unselected
+                                : colorScheme.outline.withValues(
+                                    alpha: 0.3); // Active but unselected
                           } else {
                             return colorScheme.onSurface
-                                .withOpacity(0.2); // Disabled
+                                .withValues(alpha: 0.2); // Disabled
                           }
                         }
 
@@ -169,7 +170,8 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                             Text(
                               'Include in AI responses:',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.7),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -187,7 +189,8 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                       : null, // Disable interaction if global consent is off
                                   selectedColor: isGlobalConsentEnabled &&
                                           includePersonal
-                                      ? colorScheme.primary.withOpacity(0.1)
+                                      ? colorScheme.primary
+                                          .withValues(alpha: 0.1)
                                       : Colors
                                           .transparent, // Muted/transparent when unselected or disabled
                                   checkmarkColor: isGlobalConsentEnabled &&
@@ -219,7 +222,8 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                       : null, // Disable interaction if global consent is off
                                   selectedColor: isGlobalConsentEnabled &&
                                           includeMsNotes
-                                      ? colorScheme.primary.withOpacity(0.1)
+                                      ? colorScheme.primary
+                                          .withValues(alpha: 0.1)
                                       : Colors
                                           .transparent, // Muted/transparent when unselected or disabled
                                   checkmarkColor: isGlobalConsentEnabled &&
@@ -263,7 +267,8 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                             Text(
                               'Session Status:',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.7),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -273,11 +278,12 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                   horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: chatProvider.hasError
-                                    ? colorScheme.error.withOpacity(0.1)
+                                    ? colorScheme.error.withValues(alpha: 0.1)
                                     : chatProvider.isLoading
-                                        ? colorScheme.primary.withOpacity(0.1)
+                                        ? colorScheme.primary
+                                            .withValues(alpha: 0.1)
                                         : colorScheme.secondary
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: chatProvider.hasError
@@ -368,7 +374,7 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                       color: chatProvider.messages.isNotEmpty
                                           ? colorScheme.error
                                           : colorScheme.onSurface
-                                              .withOpacity(0.3),
+                                              .withValues(alpha: 0.3),
                                     ),
                                     label: Text(
                                       'Clear Chat',
@@ -376,7 +382,7 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                         color: chatProvider.messages.isNotEmpty
                                             ? colorScheme.error
                                             : colorScheme.onSurface
-                                                .withOpacity(0.3),
+                                                .withValues(alpha: 0.3),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -385,7 +391,7 @@ class ChatSettingsBottomSheet extends StatelessWidget {
                                         color: chatProvider.messages.isNotEmpty
                                             ? colorScheme.error
                                             : colorScheme.outline
-                                                .withOpacity(0.3),
+                                                .withValues(alpha: 0.3),
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
@@ -596,7 +602,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -617,7 +623,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           Text(
             'Ask questions about your notes, get summaries,\nor have a general conversation',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -625,10 +631,10 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colorScheme.primary.withOpacity(0.2),
+                color: colorScheme.primary.withValues(alpha: 0.2),
               ),
             ),
             child: Text(
@@ -668,13 +674,13 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: message.isError
-                          ? colorScheme.error.withOpacity(0.15)
-                          : colorScheme.primary.withOpacity(0.15),
+                          ? colorScheme.error.withValues(alpha: 0.15)
+                          : colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: message.isError
-                            ? colorScheme.error.withOpacity(0.3)
-                            : colorScheme.primary.withOpacity(0.3),
+                            ? colorScheme.error.withValues(alpha: 0.3)
+                            : colorScheme.primary.withValues(alpha: 0.3),
                         width: 1.5,
                       ),
                     ),
@@ -715,15 +721,15 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                             ? colorScheme.primary
                             : message.isError
                                 ? colorScheme.error
-                                : colorScheme.primary.withOpacity(0.4),
+                                : colorScheme.primary.withValues(alpha: 0.4),
                         width: message.isError ? 2 : 2.0,
                       ),
                       // Simplify shadow for better performance
                       boxShadow: [
                         BoxShadow(
                           color: isUser
-                              ? colorScheme.primary.withOpacity(0.2)
-                              : colorScheme.primary.withOpacity(0.1),
+                              ? colorScheme.primary.withValues(alpha: 0.2)
+                              : colorScheme.primary.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -738,10 +744,10 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.15),
+                      color: colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.3),
+                        color: colorScheme.primary.withValues(alpha: 0.3),
                         width: 1.5,
                       ),
                     ),
@@ -780,7 +786,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                       if (loadingProgress == null) return child;
                       return Container(
                         height: 180,
-                        color: colorScheme.primary.withOpacity(0.1),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
                         child: Center(
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
@@ -897,16 +903,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             fontWeight: FontWeight.w600,
           ),
           code: theme.textTheme.bodyMedium?.copyWith(
-            backgroundColor: colorScheme.primary.withOpacity(0.15),
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
             color: colorScheme.onSurface,
             fontFamily: 'monospace',
             fontWeight: FontWeight.w600,
           ),
           codeblockDecoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.15),
+            color: colorScheme.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -925,7 +931,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
@@ -943,7 +949,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 bottomLeft: const Radius.circular(4),
               ),
               border: Border.all(
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -978,7 +984,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         width: 8,
         height: 8,
         decoration: BoxDecoration(
-          color: colorScheme.primary.withOpacity(0.6),
+          color: colorScheme.primary.withValues(alpha: 0.6),
           shape: BoxShape.circle,
         ),
       ),
@@ -995,7 +1001,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           color: colorScheme.surface,
           border: Border(
             top: BorderSide(
-              color: colorScheme.outline.withOpacity(0.1),
+              color: colorScheme.outline.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -1060,12 +1066,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                       color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.4),
+                        color: colorScheme.primary.withValues(alpha: 0.4),
                         width: 2.0,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.15),
+                          color: colorScheme.primary.withValues(alpha: 0.15),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1081,7 +1087,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                             ? 'Sending message...'
                             : 'Ask AI anything...',
                         hintStyle: TextStyle(
-                          color: colorScheme.primary.withOpacity(0.7),
+                          color: colorScheme.primary.withValues(alpha: 0.7),
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                         ),
@@ -1104,12 +1110,12 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 Container(
                   decoration: BoxDecoration(
                     color: _isSending
-                        ? colorScheme.primary.withOpacity(0.5)
+                        ? colorScheme.primary.withValues(alpha: 0.5)
                         : colorScheme.primary,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
+                        color: colorScheme.primary.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -1168,19 +1174,19 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
       if (url != null) {
         chat.addPendingImageUrl(url);
-        if (mounted) {
+        if (context.mounted) {
           CustomSnackBar.show(
               context, 'Image attached. Type your question and send.',
               isSuccess: true);
         }
       } else {
-        if (mounted) {
+        if (context.mounted) {
           CustomSnackBar.show(context, 'Image upload failed', isSuccess: false);
         }
       }
     } catch (e) {
       FlutterBugfender.error('Image upload failed: $e');
-      if (mounted) {
+      if (context.mounted) {
         CustomSnackBar.show(context, 'Image upload failed: $e',
             isSuccess: false);
       }
@@ -1190,7 +1196,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         chat.messages.removeLast();
       }
 
-      if (mounted) {
+      if (context.mounted) {
         setState(() {
           _isTyping = false;
         });
@@ -1231,14 +1237,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             includeMsNotes: shouldIncludeMsNotes,
           );
 
-          if (chat.hasError) {
+          if (chat.hasError && context.mounted) {
             CustomSnackBar.show(context,
                 chat.lastErrorMessage ?? 'Failed to start chat session');
             return;
           }
         } catch (e) {
           FlutterBugfender.error('Error starting session: $e');
-          CustomSnackBar.show(context, 'Error starting session: $e');
+          if (context.mounted) {
+            CustomSnackBar.show(context, 'Error starting session: $e');
+          }
           return;
         }
       }
@@ -1251,13 +1259,15 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
       if (response != null) {
         _controller.clear();
-      } else if (chat.hasError) {
+      } else if (chat.hasError && context.mounted) {
         CustomSnackBar.show(context,
             'Failed to get AI response. You can retry using the retry button.');
       }
     } catch (e) {
       FlutterBugfender.error('Unexpected error: $e');
-      CustomSnackBar.show(context, 'Unexpected error: $e');
+      if (context.mounted) {
+        CustomSnackBar.show(context, 'Unexpected error: $e');
+      }
     } finally {
       // Always reset both flags in finally block
       if (mounted) {
@@ -1280,14 +1290,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     try {
       final response = await chat.retryLastQuestion();
 
-      if (response != null) {
+      if (response != null && context.mounted) {
         CustomSnackBar.show(context, 'Retry successful!', isSuccess: true);
-      } else if (chat.hasError) {
+      } else if (chat.hasError && context.mounted) {
         CustomSnackBar.show(context, 'Retry failed: ${chat.lastErrorMessage}');
       }
     } catch (e) {
       FlutterBugfender.error('Error during retry: $e');
-      CustomSnackBar.show(context, 'Error during retry: $e');
+      if (context.mounted) {
+        CustomSnackBar.show(context, 'Error during retry: $e');
+      }
     } finally {
       setState(() {
         _isTyping = false;
@@ -1298,7 +1310,9 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   void _clearChat(BuildContext context) {
     final chat = Provider.of<ChatProvider>(context, listen: false);
     chat.clearChat();
-    CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
+    if (context.mounted) {
+      CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
+    }
   }
 
   void _showChatHistory(BuildContext context) {

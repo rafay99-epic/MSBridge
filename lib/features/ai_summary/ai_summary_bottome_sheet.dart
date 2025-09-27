@@ -39,7 +39,7 @@ void showAiSummaryBottomSheet(BuildContext context) {
                           color: Theme.of(context)
                               .colorScheme
                               .outline
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -72,7 +72,7 @@ void showAiSummaryBottomSheet(BuildContext context) {
                               color: Theme.of(context)
                                   .colorScheme
                                   .outline
-                                  .withOpacity(0.1),
+                                  .withValues(alpha: 0.1),
                               width: 1,
                             ),
                           ),

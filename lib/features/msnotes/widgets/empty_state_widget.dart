@@ -26,7 +26,7 @@ class EmptyStateWidget extends StatelessWidget {
           Icon(
             icon,
             size: 80,
-            color: colorScheme.secondary.withOpacity(0.6),
+            color: colorScheme.secondary.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 24),
           Text(
@@ -42,7 +42,7 @@ class EmptyStateWidget extends StatelessWidget {
             description,
             style: TextStyle(
               fontSize: 16,
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -50,10 +50,10 @@ class EmptyStateWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colorScheme.primary.withOpacity(0.3),
+                color: colorScheme.primary.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),

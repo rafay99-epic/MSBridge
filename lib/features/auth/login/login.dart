@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text("Seamlessly access and sync your MS Notes.",
                       style: TextStyle(
                           fontSize: 16,
-                          color: theme.onSurface.withOpacity(0.7))),
+                          color: theme.onSurface.withValues(alpha: 0.7))),
                   const SizedBox(height: 32),
                   AutofillGroup(
                     child: Column(
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text("Don't have an account?",
                           style: TextStyle(
                               fontSize: 16,
-                              color: theme.onSurface.withOpacity(0.8))),
+                              color: theme.onSurface.withValues(alpha: 0.8))),
                       TextButton(
                         onPressed: () {
                           Navigator.push(

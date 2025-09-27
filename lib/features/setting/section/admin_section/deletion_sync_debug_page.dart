@@ -145,7 +145,7 @@ class _DeletionSyncDebugPageState extends State<DeletionSyncDebugPage> {
             Text(
               'This triggers your existing Workmanager task ("${BgTasks.taskPeriodicAll}") which includes notes/templates/settings/streak sync and the deletion sync layer integrated in the dispatcher.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -169,7 +169,7 @@ class _InfoTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border:
-            Border.all(color: colorScheme.outline.withOpacity(0.1), width: 1),
+            Border.all(color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

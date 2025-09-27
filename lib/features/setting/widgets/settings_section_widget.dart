@@ -35,7 +35,7 @@ class SettingsSectionWidget extends StatelessWidget {
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
+                color: colorScheme.outline.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -52,7 +52,7 @@ class SettingsSectionWidget extends StatelessWidget {
                       Divider(
                         height: 1,
                         thickness: 1,
-                        color: colorScheme.outline.withOpacity(0.1),
+                        color: colorScheme.outline.withValues(alpha: 0.1),
                         indent: 16,
                         endIndent: 16,
                       ),
@@ -98,7 +98,7 @@ class SettingsTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -123,7 +123,7 @@ class SettingsTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary.withOpacity(0.6),
+                        color: colorScheme.primary.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -134,7 +134,7 @@ class SettingsTile extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 20,
-                  color: colorScheme.primary.withOpacity(0.5),
+                  color: colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ],
             ],

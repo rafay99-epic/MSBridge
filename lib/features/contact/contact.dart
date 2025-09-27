@@ -44,7 +44,7 @@ class ContactPage extends StatelessWidget {
           content: Text(
             "There was an error sending your message. Please try again later.",
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
           actions: <Widget>[
@@ -115,7 +115,7 @@ class ContactPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 35),

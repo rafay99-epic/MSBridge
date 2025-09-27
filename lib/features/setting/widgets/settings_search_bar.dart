@@ -28,10 +28,10 @@ class SettingsSearchBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: cs.primary.withOpacity(0.15), width: 1),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.15), width: 1),
           boxShadow: [
             BoxShadow(
-              color: cs.shadow.withOpacity(0.04),
+              color: cs.shadow.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             )
@@ -40,7 +40,7 @@ class SettingsSearchBar extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: 8),
-            Icon(Icons.search, size: 20, color: cs.primary.withOpacity(0.6)),
+            Icon(Icons.search, size: 20, color: cs.primary.withValues(alpha: 0.6)),
             const SizedBox(width: 4),
             Expanded(
               child: TextField(

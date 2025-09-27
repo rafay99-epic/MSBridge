@@ -33,7 +33,9 @@ class UpdateManager {
       final isLive = await UpdateService.isSystemLive();
 
       if (!isLive) {
-        _showServerDownDialog(context);
+        if (context.mounted) {
+          _showServerDownDialog(context);
+        }
         return;
       }
 
@@ -51,7 +53,9 @@ class UpdateManager {
       if (updateResult.updateAvailable) {
         FlutterBugfender.log(
             'Update available: ${updateResult.latestVersion?.version}');
-        _showEnhancedUpdateDialog(context, updateResult);
+        if (context.mounted) {
+          _showEnhancedUpdateDialog(context, updateResult);
+        }
       } else {
         FlutterBugfender.log('App is up to date');
         // Don't show anything if app is up to date
@@ -85,37 +89,53 @@ class UpdateManager {
       // First check if system is live
       final isLive = await UpdateService.isSystemLive();
       if (!isLive) {
-        Navigator.of(context).pop();
-        _showServerDownDialog(context);
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          _showServerDownDialog(context);
+        }
         return;
       }
 
       // Check for updates
       final updateResult = await UpdateService.checkForUpdates();
 
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
       if (updateResult.hasError) {
-        _showErrorDialog(context, updateResult.error!);
+        if (context.mounted) {
+          _showErrorDialog(context, updateResult.error!);
+        }
         return;
       }
 
       if (updateResult.updateAvailable) {
-        _showEnhancedUpdateDialog(context, updateResult);
+        if (context.mounted) {
+          _showEnhancedUpdateDialog(context, updateResult);
+        }
       } else {
         // Check if user has a newer version than server
         if (updateResult.message?.contains('newer version') == true) {
-          _showNewerVersionDialog(context, updateResult.message!);
+          if (context.mounted) {
+            _showNewerVersionDialog(context, updateResult.message!);
+          }
         } else {
-          _showNoUpdateDialog(
-              context, updateResult.message ?? 'You are  up to date!');
+          if (context.mounted) {
+            _showNoUpdateDialog(
+                context, updateResult.message ?? 'You are  up to date!');
+          }
         }
       }
 
       _lastCheck = DateTime.now();
     } catch (e) {
-      Navigator.of(context).pop();
-      _showErrorDialog(context, 'Error checking for updates: $e');
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      if (context.mounted) {
+        _showErrorDialog(context, 'Error checking for updates: $e');
+      }
     } finally {
       _isChecking = false;
     }
@@ -157,7 +177,7 @@ class UpdateManager {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -217,7 +237,7 @@ class UpdateManager {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.secondary.withOpacity(0.1),
+                color: colorScheme.secondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -277,7 +297,7 @@ class UpdateManager {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorScheme.error.withOpacity(0.1),
+                color: colorScheme.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -339,7 +359,7 @@ class UpdateManager {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorScheme.error.withOpacity(0.1),
+                  color: colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -376,7 +396,7 @@ class UpdateManager {
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.2),
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
@@ -395,7 +415,7 @@ class UpdateManager {
               Text(
                 'This ensures the app and server work together continuously.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -409,7 +429,7 @@ class UpdateManager {
                 SystemNavigator.pop();
               },
               style: TextButton.styleFrom(
-                foregroundColor: colorScheme.onSurface.withOpacity(0.7),
+                foregroundColor: colorScheme.onSurface.withValues(alpha: 0.7),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
@@ -446,7 +466,7 @@ class UpdateManager {
       child: Text(
         text,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withOpacity(0.8),
+          color: colorScheme.onSurface.withValues(alpha: 0.8),
         ),
       ),
     );
@@ -488,24 +508,34 @@ class UpdateManager {
       FlutterBugfender.log('Retry health check result: $isLive');
 
       // Close loading dialog
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
       if (isLive) {
-        // Server is back up, show success and continue with update check
-        _showConnectionRestoredDialog(context);
+        if (context.mounted) {
+          // Server is back up, show success and continue with update check
+          _showConnectionRestoredDialog(context);
+        }
       } else {
         // Still down, show server down dialog again
-        _showServerDownDialog(context);
+        if (context.mounted) {
+          _showServerDownDialog(context);
+        }
       }
     } catch (e) {
       FlutterBugfender.error('Retry health check error: $e');
 
       // Close loading dialog
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
       // Show error dialog instead of server down dialog
-      _showErrorDialog(
-          context, 'Connection check failed. Please try again later.');
+      if (context.mounted) {
+        _showErrorDialog(
+            context, 'Connection check failed. Please try again later.');
+      }
     }
   }
 
@@ -525,7 +555,7 @@ class UpdateManager {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -556,7 +586,9 @@ class UpdateManager {
             onPressed: () {
               Navigator.of(context).pop();
               // Continue with update check
-              checkForUpdatesOnStartup(context);
+              if (context.mounted) {
+                checkForUpdatesOnStartup(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,

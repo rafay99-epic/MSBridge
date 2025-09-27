@@ -44,7 +44,7 @@ class SectionHeaderWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 16,
-              color: colorScheme.onSurface.withOpacity(0.7),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],

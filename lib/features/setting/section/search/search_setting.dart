@@ -263,7 +263,7 @@ class _SettingState extends State<Setting> with AutomaticKeepAliveClientMixin {
           backgroundColor: colorScheme.surface,
           foregroundColor: colorScheme.primary,
           elevation: 1,
-          shadowColor: colorScheme.shadow.withOpacity(0.2),
+          shadowColor: colorScheme.shadow.withValues(alpha: 0.2),
           centerTitle: true,
           actions: [
             IconButton(

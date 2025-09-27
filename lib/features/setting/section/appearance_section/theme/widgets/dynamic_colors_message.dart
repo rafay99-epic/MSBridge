@@ -12,10 +12,10 @@ class DynamicColorsMessage extends StatelessWidget {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.2),
+          color: colorScheme.primary.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -38,7 +38,7 @@ class DynamicColorsMessage extends StatelessWidget {
           Text(
             "Your app colors automatically adapt to your wallpaper. Disable this to use custom themes.",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.8),
+              color: colorScheme.primary.withValues(alpha: 0.8),
             ),
             textAlign: TextAlign.center,
           ),

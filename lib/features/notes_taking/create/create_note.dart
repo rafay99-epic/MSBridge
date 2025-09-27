@@ -415,6 +415,7 @@ class _CreateNoteState extends State<CreateNote>
 
         if (result.success) {
           _currentNote = result.note ?? _currentNote;
+          if (!mounted) return;
           CustomSnackBar.show(context, result.message, isSuccess: true);
 
           // Update streak when note is created
@@ -424,9 +425,8 @@ class _CreateNoteState extends State<CreateNote>
             FlutterBugfender.sendCrash(
                 'Streak update failed on note creation: $e',
                 StackTrace.current.toString());
-            FlutterBugfender.error('Streak update failed on note creation: $e');
           }
-
+          if (!mounted) return;
           Navigator.pop(context);
         }
       }
@@ -480,7 +480,11 @@ class _CreateNoteState extends State<CreateNote>
         final selectedText = fullText.substring(start, end);
         await Clipboard.setData(ClipboardData(text: selectedText));
         if (mounted) {
-          CustomSnackBar.show(context, "Copied", isSuccess: true, );
+          CustomSnackBar.show(
+            context,
+            "Copied",
+            isSuccess: true,
+          );
         }
       }
     } catch (e) {
@@ -777,7 +781,7 @@ class _CreateNoteState extends State<CreateNote>
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: theme.colorScheme.primary
-                                            .withOpacity(0.85),
+                                            .withValues(alpha: 0.85),
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -787,12 +791,12 @@ class _CreateNoteState extends State<CreateNote>
                                       Icons.close,
                                       size: 18,
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.75),
+                                          .withValues(alpha: 0.75),
                                     ),
                                     shape: StadiumBorder(
                                       side: BorderSide(
                                         color: theme.colorScheme.outlineVariant
-                                            .withOpacity(0.15),
+                                            .withValues(alpha: 0.15),
                                       ),
                                     ),
                                     onDeleted: () {
@@ -855,16 +859,16 @@ class _CreateNoteState extends State<CreateNote>
                                   hintStyle: TextStyle(
                                       fontSize: 12,
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.5)),
+                                          .withValues(alpha: 0.5)),
                                   prefixIcon: Icon(Icons.tag,
                                       size: 16,
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.7)),
+                                          .withValues(alpha: 0.7)),
                                   suffixIcon: IconButton(
                                     icon: Icon(Icons.add,
                                         size: 18,
                                         color: theme.colorScheme.primary
-                                            .withOpacity(0.8)),
+                                            .withValues(alpha: 0.8)),
                                     tooltip: 'Add tag',
                                     onPressed: () {
                                       final v = _tagInputController.text.trim();
@@ -883,13 +887,13 @@ class _CreateNoteState extends State<CreateNote>
                                     borderRadius: BorderRadius.circular(18),
                                     borderSide: BorderSide(
                                         color: theme.colorScheme.outlineVariant
-                                            .withOpacity(0.15)),
+                                            .withValues(alpha: 0.15)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(18),
                                     borderSide: BorderSide(
                                         color: theme.colorScheme.outlineVariant
-                                            .withOpacity(0.15)),
+                                            .withValues(alpha: 0.15)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(18),
@@ -944,17 +948,18 @@ class _CreateNoteState extends State<CreateNote>
                 top: false,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: theme.cardColor.withOpacity(0.98),
+                    color: theme.cardColor.withValues(alpha: 0.98),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
                     ],
                     border: Border.all(
-                      color: theme.colorScheme.outlineVariant.withOpacity(0.2),
+                      color: theme.colorScheme.outlineVariant
+                          .withValues(alpha: 0.2),
                     ),
                   ),
                   child: Listener(
@@ -1022,12 +1027,12 @@ class _CreateNoteState extends State<CreateNote>
                             decoration: BoxDecoration(
                               color: isSaving
                                   ? theme.colorScheme.secondary
-                                      .withOpacity(0.95)
-                                  : Colors.green.withOpacity(0.95),
+                                      .withValues(alpha: 0.95)
+                                  : Colors.green.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 )
@@ -1115,7 +1120,7 @@ class _CreateNoteState extends State<CreateNote>
                           : Text(t.tags.join(' · '),
                               style: TextStyle(
                                   color: theme.colorScheme.primary
-                                      .withOpacity(0.7))),
+                                      .withValues(alpha: 0.7))),
                       onTap: () async {
                         Navigator.pop(context);
                         await _applyTemplateInEditor(t);
@@ -1261,7 +1266,7 @@ class _CreateNoteState extends State<CreateNote>
     String? currentUrl = status.shareUrl.isNotEmpty ? status.shareUrl : null;
     bool enabled = status.enabled;
 
-    // ignore: use_build_context_synchronously
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
@@ -1291,7 +1296,7 @@ class _CreateNoteState extends State<CreateNote>
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.secondary
-                                    .withOpacity(0.12),
+                                    .withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Padding(
@@ -1302,7 +1307,7 @@ class _CreateNoteState extends State<CreateNote>
                                     theme.colorScheme.secondary,
                                   ),
                                   backgroundColor: theme.colorScheme.secondary
-                                      .withOpacity(0.20),
+                                      .withValues(alpha: 0.20),
                                 ),
                               ),
                             ),
@@ -1330,7 +1335,7 @@ class _CreateNoteState extends State<CreateNote>
                                         enabled = true;
                                         currentUrl = url;
                                       });
-                                      if (mounted) {
+                                      if (context.mounted) {
                                         CustomSnackBar.show(
                                             context, 'Share link enabled',
                                             isSuccess: true);
@@ -1341,7 +1346,7 @@ class _CreateNoteState extends State<CreateNote>
                                         enabled = false;
                                         currentUrl = null;
                                       });
-                                      if (mounted) {
+                                      if (context.mounted) {
                                         CustomSnackBar.show(
                                             context, 'Share link disabled',
                                             isSuccess: false);
@@ -1353,7 +1358,7 @@ class _CreateNoteState extends State<CreateNote>
                                         StackTrace.current.toString());
                                     FlutterBugfender.error(
                                         'Failed to enable/disable share: $e');
-                                    if (mounted) {
+                                    if (context.mounted) {
                                       CustomSnackBar.show(context, e.toString(),
                                           isSuccess: false);
                                     }
@@ -1374,7 +1379,8 @@ class _CreateNoteState extends State<CreateNote>
                   SelectableText(
                     currentUrl!,
                     style: TextStyle(
-                        color: theme.colorScheme.primary.withOpacity(0.9)),
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.9)),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -1383,7 +1389,7 @@ class _CreateNoteState extends State<CreateNote>
                         onPressed: () async {
                           await Clipboard.setData(
                               ClipboardData(text: currentUrl!));
-                          if (mounted) {
+                          if (context.mounted) {
                             CustomSnackBar.show(context, 'Link copied',
                                 isSuccess: true);
                           }
@@ -1393,7 +1399,8 @@ class _CreateNoteState extends State<CreateNote>
                       ),
                       const SizedBox(width: 12),
                       OutlinedButton.icon(
-                        onPressed: () => Share.share(currentUrl!),
+                        onPressed: () => SharePlus.instance
+                            .share(currentUrl! as ShareParams),
                         icon: const Icon(LineIcons.share),
                         label: const Text('Share'),
                       ),
@@ -1403,7 +1410,8 @@ class _CreateNoteState extends State<CreateNote>
                   Text(
                     'Enable to generate a view-only link anyone can open.',
                     style: TextStyle(
-                        color: theme.colorScheme.primary.withOpacity(0.7)),
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.7)),
                   ),
                 ]
               ],

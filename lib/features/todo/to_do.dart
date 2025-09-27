@@ -40,7 +40,7 @@ class _ToDOState extends State<ToDO> {
                 dividerColor: Colors.transparent,
                 labelColor: theme.colorScheme.primary,
                 unselectedLabelColor:
-                    theme.colorScheme.primary.withOpacity(0.6),
+                    theme.colorScheme.primary.withValues(alpha: 0.6),
                 indicatorColor: theme.colorScheme.secondary,
                 indicatorWeight: 3.0,
                 labelStyle: const TextStyle(
@@ -144,7 +144,8 @@ class _ToDOState extends State<ToDO> {
                     child: Text(
                       task.description!,
                       style: TextStyle(
-                          color: theme.colorScheme.primary.withOpacity(0.8),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.8),
                           fontSize: 14),
                     ),
                   ),
@@ -161,7 +162,7 @@ class _ToDOState extends State<ToDO> {
                   child: Text(
                     'Created: ${DateFormat('yyyy-MM-dd').format(task.createdAt)}',
                     style: TextStyle(
-                        color: theme.colorScheme.primary.withOpacity(0.6),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
                         fontSize: 12),
                   ),
                 ),
@@ -182,8 +183,10 @@ class _ToDOState extends State<ToDO> {
                     } catch (e) {
                       FlutterBugfender.sendCrash('Failed to toggle task.',
                           StackTrace.current.toString());
-                      FlutterBugfender.error('Failed to toggle task.');
-                      CustomSnackBar.show(context, e.toString());
+                      if (context.mounted) {
+                        CustomSnackBar.show(context, e.toString(),
+                            isSuccess: false);
+                      }
                     }
                   },
                 ),
@@ -197,8 +200,10 @@ class _ToDOState extends State<ToDO> {
                     } catch (e) {
                       FlutterBugfender.sendCrash('Failed to remove task.',
                           StackTrace.current.toString());
-                      FlutterBugfender.error('Failed to remove task.');
-                      CustomSnackBar.show(context, e.toString());
+                      if (context.mounted) {
+                        CustomSnackBar.show(context, e.toString(),
+                            isSuccess: false);
+                      }
                     }
                   },
                 ),

@@ -79,8 +79,9 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error loading selected model: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Error loading selected model: $e');
-      CustomSnackBar.show(context, "Error loading selected model: $e");
+      if (mounted) {
+        CustomSnackBar.show(context, "Error loading selected model: $e");
+      }
       setState(() {
         selectedModelName = AIModelsConfig.models.first.name;
       });
@@ -97,12 +98,15 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           AIModelsConfig.selectedModelKey, selectedModel.modelName);
-      CustomSnackBar.show(context, "Selected model: ${selectedModel.name}");
+      if (mounted) {
+        CustomSnackBar.show(context, "Selected model: ${selectedModel.name}");
+      }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error saving selected model: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Error saving selected model: $e');
-      CustomSnackBar.show(context, "Error saving selected model: $e");
+      if (mounted) {
+        CustomSnackBar.show(context, "Error saving selected model: $e");
+      }
     }
   }
 
@@ -156,13 +160,13 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primary.withOpacity(0.05),
-            colorScheme.secondary.withOpacity(0.02),
+            colorScheme.primary.withValues(alpha: 0.05),
+            colorScheme.secondary.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -172,7 +176,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -200,7 +204,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
           Text(
             "Select the AI model that best fits your needs. Each model has different capabilities and performance characteristics.",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -253,13 +257,13 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
               child: Container(
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? colorScheme.primary.withOpacity(0.05)
+                      ? colorScheme.primary.withValues(alpha: 0.05)
                       : colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
                         ? colorScheme.primary
-                        : colorScheme.outline.withOpacity(0.1),
+                        : colorScheme.outline.withValues(alpha: 0.1),
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: [
@@ -267,7 +271,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                       color: (isSelected
                               ? colorScheme.primary
                               : colorScheme.shadow)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       blurRadius: isSelected ? 12 : 8,
                       offset: const Offset(0, 4),
                     ),
@@ -286,8 +290,8 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? colorScheme.primary.withOpacity(0.2)
-                                  : colorScheme.primary.withOpacity(0.1),
+                                  ? colorScheme.primary.withValues(alpha: 0.2)
+                                  : colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -295,7 +299,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                               size: 24,
                               color: isSelected
                                   ? colorScheme.primary
-                                  : colorScheme.primary.withOpacity(0.7),
+                                  : colorScheme.primary.withValues(alpha: 0.7),
                             ),
                           ),
 
@@ -320,7 +324,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? colorScheme.primary
-                                  : colorScheme.outline.withOpacity(0.2),
+                                  : colorScheme.outline.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -342,7 +346,7 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                       Text(
                         model.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.primary.withOpacity(0.7),
+                          color: colorScheme.primary.withValues(alpha: 0.7),
                           height: 1.5,
                         ),
                       ),
@@ -353,10 +357,10 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.05),
+                          color: colorScheme.primary.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -364,13 +368,14 @@ class _AIModelSelectionPageState extends State<AIModelSelectionPage>
                             Icon(
                               LineIcons.infoCircle,
                               size: 16,
-                              color: colorScheme.primary.withOpacity(0.6),
+                              color: colorScheme.primary.withValues(alpha: 0.6),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               "Model ID: ${model.modelName}",
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.primary.withOpacity(0.6),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.6),
                                 fontFamily: 'monospace',
                               ),
                             ),

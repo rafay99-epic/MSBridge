@@ -66,7 +66,7 @@ class _RegisterState extends State<Register> {
                     "Fill in the details to sign up.",
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.onSurface.withOpacity(0.7),
+                      color: theme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 32),

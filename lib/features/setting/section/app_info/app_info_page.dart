@@ -31,7 +31,7 @@ class AppInfoPage extends StatelessWidget {
                   '© Syntax Lab Technology ${DateTime.now().year}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                   textAlign: TextAlign.center,
                 ),

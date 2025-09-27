@@ -91,24 +91,20 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? colorScheme.secondary.withOpacity(0.08)
+              ? colorScheme.secondary.withValues(alpha: 0.08)
               : colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? colorScheme.secondary
-                : colorScheme.outline.withOpacity(0.2),
+                : colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           children: [
-            Radio<int>(
-              value: value,
-              groupValue: _selectedInterval,
-              activeColor: colorScheme.secondary,
-              onChanged: (v) {
-                if (v != null) setState(() => _selectedInterval = v);
-              },
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: selected ? colorScheme.secondary : colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 8),
             Expanded(

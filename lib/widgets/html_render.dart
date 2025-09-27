@@ -31,19 +31,19 @@ Widget buildHtmlContent(
             return {
               'font-family': 'monospace',
               'background-color': theme.colorScheme.secondary
-                  .withOpacity(0.1)
-                  .value
+                  .withValues(alpha: 0.1)
+                  .toARGB32()
                   .toRadixString(16),
               'padding': '2px 5px',
-              'color': theme.colorScheme.secondary.value.toRadixString(16),
+              'color': theme.colorScheme.secondary.toARGB32().toRadixString(16),
               'font-size': '0.9em',
             };
           case 'pre':
             return {
               'font-family': 'monospace',
               'background-color': theme.colorScheme.onSurface
-                  .withOpacity(0.05)
-                  .value
+                  .withValues(alpha: 0.05)
+                  .toARGB32()
                   .toRadixString(16),
               'padding': '12px',
               'margin': '10px 0',
@@ -53,7 +53,7 @@ Widget buildHtmlContent(
           case 'table':
             return {
               'border':
-                  '1px solid ${Colors.grey.shade400.value.toRadixString(16)}',
+                  '1px solid ${Colors.grey.shade400.toARGB32().toRadixString(16)}',
               'border-collapse': 'collapse',
               'margin': '10px 0',
               'width': 'auto',
@@ -62,12 +62,12 @@ Widget buildHtmlContent(
           case 'td':
             return {
               'border':
-                  '1px solid ${Colors.grey.shade400.value.toRadixString(16)}',
+                  '1px solid ${Colors.grey.shade400.toARGB32().toRadixString(16)}',
               'padding': '8px',
             };
           case 'a':
             return {
-              'color': theme.colorScheme.secondary.value.toRadixString(16),
+              'color': theme.colorScheme.secondary.toARGB32().toRadixString(16),
               'text-decoration': 'underline',
             };
         }
@@ -79,21 +79,25 @@ Widget buildHtmlContent(
           await launchUrl(uri, mode: LaunchMode.externalApplication);
           return true;
         } else {
-          CustomSnackBar.show(
-            context,
-            'Invalid URL: $url',
-            isSuccess: false,
-          );
+          if (context.mounted) {
+            CustomSnackBar.show(
+              context,
+              'Invalid URL: $url',
+              isSuccess: false,
+            );
+          }
 
           return false;
         }
       },
       onTapImage: (ImageMetadata imageMetadata) {
-        CustomSnackBar.show(
-          context,
-          'Image tapped: ${imageMetadata.sources.first.url}',
-          isSuccess: true,
-        );
+        if (context.mounted) {
+          CustomSnackBar.show(
+            context,
+            'Image tapped: ${imageMetadata.sources.first.url}',
+            isSuccess: true,
+          );
+        }
       },
       buildAsync: true,
       enableCaching: true,

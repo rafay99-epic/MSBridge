@@ -48,6 +48,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
         () {
           NoteTakingActions.permanentlyDeleteSelectedNotes(_selectedNoteIds)
               .then((result) {
+            if (!mounted) return;
             CustomSnackBar.show(context, result.message);
             exitSelectionMode();
           });
@@ -59,6 +60,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
     } else {
       NoteTakingActions.permanentlyDeleteSelectedNotes(_selectedNoteIds)
           .then((result) {
+        if (!mounted) return;
         CustomSnackBar.show(context, result.message);
         exitSelectionMode();
       });
@@ -94,6 +96,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
                   onPressed: () {
                     NoteTakingActions.restoreSelectedNotes(_selectedNoteIds)
                         .then((result) {
+                      if (!context.mounted) return;
                       CustomSnackBar.show(context, result.message);
                       exitSelectionMode();
                     });
@@ -155,7 +158,7 @@ class _DeletedNotesState extends State<DeletedNotes> {
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary.withOpacity(0.1)
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
               : theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [

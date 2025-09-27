@@ -152,7 +152,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
             end: Alignment.bottomCenter,
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surface.withOpacity(0.95),
+              theme.colorScheme.surface.withValues(alpha: 0.95),
             ],
           ),
         ),
@@ -202,7 +202,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -270,9 +270,9 @@ class _ReadNotePageState extends State<ReadNotePage> {
       child: LinearProgressIndicator(
         value: _scrollProgress.clamp(0, 1),
         minHeight: 4,
-        backgroundColor: theme.colorScheme.outlineVariant.withOpacity(0.2),
+        backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
         valueColor: AlwaysStoppedAnimation<Color>(
-          theme.colorScheme.primary.withOpacity(0.9),
+          theme.colorScheme.primary.withValues(alpha: 0.9),
         ),
       ),
     );

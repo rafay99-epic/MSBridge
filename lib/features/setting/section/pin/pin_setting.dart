@@ -32,91 +32,104 @@ class PinSetup extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Switch(
-                    value: pinProvider.enabled,
-                    onChanged: (v) async {
-                      if (v) {
-                        if (!await pinProvider.hasPin()) {
-                          // Show warning dialog before creating PIN
-                          bool? proceed = await showDialog<bool>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              final theme = Theme.of(context);
-                              final colorScheme = theme.colorScheme;
-                              return AlertDialog(
-                                backgroundColor: colorScheme.surface,
-                                title: Text(
-                                  'Important: PIN Security',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                content: Text(
-                                  '⚠️ Warning: There is no "forgot PIN" option.\n\n'
-                                  'If you forget your PIN, you can only change it in Settings.\n\n'
-                                  'Make sure to remember your PIN or keep it in a secure place.',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
-                                    child: Text(
-                                      'Cancel',
-                                      style:
-                                          TextStyle(color: colorScheme.primary),
+                      value: pinProvider.enabled,
+                      onChanged: (v) async {
+                        if (v) {
+                          if (!await pinProvider.hasPin()) {
+                            if (context.mounted) {
+                              // Show warning dialog before creating PIN
+                              bool? proceed = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  final theme = Theme.of(context);
+                                  final colorScheme = theme.colorScheme;
+                                  return AlertDialog(
+                                    backgroundColor: colorScheme.surface,
+                                    title: Text(
+                                      'Important: PIN Security',
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colorScheme.primary,
-                                      foregroundColor: colorScheme.onPrimary,
+                                    content: Text(
+                                      '⚠️ Warning: There is no "forgot PIN" option.\n\n'
+                                      'If you forget your PIN, you can only change it in Settings.\n\n'
+                                      'Make sure to remember your PIN or keep it in a secure place.',
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        height: 1.4,
+                                      ),
                                     ),
-                                    child: const Text('I Understand'),
-                                  ),
-                                ],
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: Text(
+                                          'Cancel',
+                                          style: TextStyle(
+                                              color: colorScheme.primary),
+                                        ),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: colorScheme.primary,
+                                          foregroundColor:
+                                              colorScheme.onPrimary,
+                                        ),
+                                        child: const Text('I Understand'),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
-                            },
-                          );
 
-                          if (proceed == true) {
-                            final sheetContext = context;
-                            Navigator.push(
-                              context,
-                              PageTransition(
-                                duration: const Duration(milliseconds: 300),
-                                type: PageTransitionType.rightToLeft,
-                                child: PinLockScreen(
-                                  isCreating: true,
-                                  onConfirmed: (pin) async {
-                                    await pinProvider.savePin(
-                                        pin); // ✅ Use savePin for new PINs
-                                    await pinProvider.setEnabled(true);
-                                    Navigator.maybePop(context);
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      Navigator.of(sheetContext).pop();
-                                    });
-                                  },
-                                ),
-                              ),
-                            );
+                              if (proceed == true) {
+                                final sheetContext = context;
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    PageTransition(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      type: PageTransitionType.rightToLeft,
+                                      child: PinLockScreen(
+                                        isCreating: true,
+                                        onConfirmed: (pin) async {
+                                          await pinProvider.savePin(
+                                              pin); // ✅ Use savePin for new PINs
+                                          await pinProvider.setEnabled(true);
+                                          if (context.mounted) {
+                                            Navigator.maybePop(context);
+                                          }
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            if (context.mounted) {
+                                              Navigator.of(sheetContext).pop();
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                await pinProvider.setEnabled(true);
+                                if (context.mounted) {
+                                  Navigator.of(context).maybePop();
+                                }
+                              }
+                            } else {
+                              await pinProvider.setEnabled(false);
+                              if (context.mounted) {
+                                Navigator.of(context).maybePop();
+                              }
+                            }
                           }
-                        } else {
-                          await pinProvider.setEnabled(true);
-                          if (context.mounted) Navigator.of(context).maybePop();
                         }
-                      } else {
-                        await pinProvider.setEnabled(false);
-                        if (context.mounted) Navigator.of(context).maybePop();
-                      }
-                    },
-                  ),
+                      }),
                   if (pinProvider.enabled) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -125,7 +138,7 @@ class PinSetup extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.6),
+                                .withValues(alpha: 0.6),
                             fontSize: 10,
                           ),
                     ),
@@ -154,29 +167,34 @@ class PinSetup extends StatelessWidget {
                     final currentPin = await pinProvider.readPin();
                     if (currentPin != null) {
                       final sheetContext = context;
-                      Navigator.push(
-                        context,
-                        PageTransition(
-                          type: PageTransitionType.rightToLeft,
-                          child: PinLockScreen(
-                            isChanging: true,
-                            existingPin: currentPin,
-                            onConfirmed: (newPin) async {
-                              await pinProvider
-                                  .updatePin(newPin); // ✅ Use updatePin method
-                              CustomSnackBar.show(
-                                context,
-                                'PIN changed successfully!',
-                                isSuccess: true,
-                              );
-                              Navigator.maybePop(context);
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                Navigator.of(sheetContext).pop();
-                              });
-                            },
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.rightToLeft,
+                            child: PinLockScreen(
+                              isChanging: true,
+                              existingPin: currentPin,
+                              onConfirmed: (newPin) async {
+                                await pinProvider.updatePin(
+                                    newPin); // ✅ Use updatePin method
+                                if (context.mounted) {
+                                  CustomSnackBar.show(
+                                    context,
+                                    'PIN changed successfully!',
+                                    isSuccess: true,
+                                  );
+                                  Navigator.maybePop(context);
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    Navigator.of(sheetContext).pop();
+                                  });
+                                }
+                              },
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     }
                   },
                 ),
@@ -234,12 +252,16 @@ class PinSetup extends StatelessWidget {
                     if (confirm == true) {
                       await pinProvider.clearPin();
                       await pinProvider.setEnabled(false);
-                      CustomSnackBar.show(
-                        context,
-                        'PIN lock has been reset!',
-                        isSuccess: true,
-                      );
-                      if (context.mounted) Navigator.of(context).maybePop();
+                      if (context.mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          'PIN lock has been reset!',
+                          isSuccess: true,
+                        );
+                      }
+                      if (context.mounted) {
+                        Navigator.of(context).maybePop();
+                      }
                     }
                   },
                 ),
@@ -269,8 +291,10 @@ class PinSetup extends StatelessWidget {
                           if (authenticated) {
                             fingerprintProvider.setFingerprintEnabled(true);
                           } else {
-                            CustomSnackBar.show(
-                                context, "Fingerprint authentication failed.");
+                            if (context.mounted) {
+                              CustomSnackBar.show(context,
+                                  "Fingerprint authentication failed.");
+                            }
                           }
                         } else {
                           fingerprintProvider.setFingerprintEnabled(false);
@@ -296,7 +320,7 @@ class PinSetup extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: colorScheme.secondary.withOpacity(0.1),
+            color: colorScheme.secondary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(
@@ -333,14 +357,14 @@ class PinSetup extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        splashColor: colorScheme.primary.withOpacity(0.1),
-        highlightColor: colorScheme.primary.withOpacity(0.05),
+        splashColor: colorScheme.primary.withValues(alpha: 0.1),
+        highlightColor: colorScheme.primary.withValues(alpha: 0.05),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.1),
+              color: colorScheme.outline.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -349,7 +373,7 @@ class PinSetup extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -374,7 +398,7 @@ class PinSetup extends StatelessWidget {
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary.withOpacity(0.6),
+                        color: colorScheme.primary.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -388,7 +412,7 @@ class PinSetup extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 20,
-                  color: colorScheme.primary.withOpacity(0.5),
+                  color: colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ],
             ],

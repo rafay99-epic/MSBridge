@@ -38,7 +38,9 @@ class AuthGate extends StatelessWidget {
 
                 // Check for updates after permissions are set up
                 if (UpdateManager.shouldCheckForUpdates()) {
-                  await UpdateManager.checkForUpdatesOnStartup(context);
+                  if (context.mounted) {
+                    await UpdateManager.checkForUpdatesOnStartup(context);
+                  }
                 }
               });
               return const Home();

@@ -341,7 +341,7 @@ class _NotetakingState extends State<Notetaking>
             backgroundColor: theme.colorScheme.surface,
             foregroundColor: theme.colorScheme.primary,
             elevation: 1,
-            shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
+            shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.2),
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.settings),
@@ -361,17 +361,18 @@ class _NotetakingState extends State<Notetaking>
                 child: Container(
                   height: 40,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: TabBar(
                     dividerColor: Colors.transparent,
                     splashFactory: NoSplash.splashFactory,
-                    overlayColor: const MaterialStatePropertyAll<Color>(
-                        Colors.transparent),
+                    overlayColor:
+                        const WidgetStatePropertyAll<Color>(Colors.transparent),
                     indicator: UnderlineTabIndicator(
                       borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withOpacity(0.8),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
                         width: 3,
                       ),
                       insets: const EdgeInsets.symmetric(horizontal: 24),
@@ -379,7 +380,7 @@ class _NotetakingState extends State<Notetaking>
                     indicatorSize: TabBarIndicatorSize.label,
                     labelColor: theme.colorScheme.primary,
                     unselectedLabelColor:
-                        theme.colorScheme.primary.withOpacity(0.55),
+                        theme.colorScheme.primary.withValues(alpha: 0.55),
                     labelStyle: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,
@@ -443,7 +444,7 @@ class _NotetakingState extends State<Notetaking>
           Text(
             'Loading notes...',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -702,7 +703,7 @@ class _NotetakingState extends State<Notetaking>
       childrenAnimation: ExpandableFabAnimation.rotate,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         blur: 12,
       ),
       children: [

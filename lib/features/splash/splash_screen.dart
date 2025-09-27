@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: theme.colorScheme.onSurface
-                                          .withOpacity(0.7),
+                                          .withValues(alpha: 0.7),
                                       height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
@@ -139,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: theme.colorScheme.surface,
                 border: Border(
                   top: BorderSide(
-                    color: theme.colorScheme.outline.withOpacity(0.1),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -221,12 +221,12 @@ class _SplashScreenState extends State<SplashScreen> {
       decoration: BoxDecoration(
         color: isActive
             ? theme.colorScheme.primary
-            : theme.colorScheme.outline.withOpacity(0.3),
+            : theme.colorScheme.outline.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(4),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

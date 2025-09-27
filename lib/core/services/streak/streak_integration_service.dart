@@ -18,7 +18,7 @@ class StreakIntegrationService {
 
       // Update the streak
       await streakProvider.updateStreakOnActivity();
-
+      if (!context.mounted) return;
       // Show success message (only for milestones)
       _showStreakUpdateMessage(context, streakProvider);
     } catch (e) {
@@ -38,6 +38,7 @@ class StreakIntegrationService {
       }
 
       await streakProvider.updateStreakOnActivity();
+      if (!context.mounted) return;
       _showStreakUpdateMessage(context, streakProvider);
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -55,6 +56,7 @@ class StreakIntegrationService {
       // Only show messages for significant milestones, not every note
       if (currentStreak == 1) {
         // First streak - show once
+        if (!context.mounted) return;
         CustomSnackBar.show(
           context,
           "🎉 First note of the day! Your streak begins!",

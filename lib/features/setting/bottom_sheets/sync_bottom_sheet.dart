@@ -36,6 +36,8 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
   }
 
   Widget _buildContent(BuildContext context) {
+    final userSettings = context.read<UserSettingsProvider>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,7 +57,6 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                   try {
                     // Persist toggle first (UI state follows provider)
                     await syncSettings.setCloudSyncEnabled(value);
-                    final userSettings = context.read<UserSettingsProvider>();
                     await userSettings.setCloudSyncEnabled(value);
 
                     // Start/stop services atomically
@@ -67,7 +68,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                       await SyncService().stopListening();
                     }
 
-                    if (mounted) {
+                    if (context.mounted) {
                       CustomSnackBar.show(
                         context,
                         value ? "Cloud sync enabled" : "Cloud sync disabled",
@@ -81,7 +82,6 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                     FlutterBugfender.error('Toggle cloud sync failed: $e');
                     try {
                       await syncSettings.setCloudSyncEnabled(prevEnabled);
-                      final userSettings = context.read<UserSettingsProvider>();
                       await userSettings.setCloudSyncEnabled(prevEnabled);
 
                       if (prevEnabled) {
@@ -98,7 +98,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                       FlutterBugfender.error('Failed to update cloud sync: $e');
                     }
 
-                    if (mounted) {
+                    if (context.mounted) {
                       CustomSnackBar.show(
                         context,
                         'Failed to update cloud sync. Please try again.',
@@ -188,10 +188,10 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.05),
+        color: theme.colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.1),
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -200,7 +200,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -225,7 +225,7 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary.withOpacity(0.6),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -305,10 +305,28 @@ class _SyncBottomSheetState extends State<SyncBottomSheet> {
   }
 
   Future<void> _showAutoSyncIntervalDialog(BuildContext context) async {
-    final minutes = await SyncIntervalDialog.show(context);
+    final current = await AutoSyncScheduler.getIntervalMinutes();
+    if (!context.mounted) return;
+    final minutes = await SyncIntervalDialog.show(
+      context,
+      initialMinutes: current,
+      title: 'Auto sync interval',
+    );
 
     if (minutes != null) {
       await AutoSyncScheduler.setIntervalMinutes(minutes);
+      if (minutes > 0) {
+        try {
+          await SyncService().syncLocalNotesToFirebase();
+        } catch (e) {
+          // Log error but continue
+          FlutterBugfender.sendCrash(
+              'Failed to sync notes after setting interval: $e',
+              StackTrace.current.toString());
+          FlutterBugfender.error(
+              'Failed to sync notes after setting interval: $e');
+        }
+      }
       if (context.mounted) {
         CustomSnackBar.show(
           context,

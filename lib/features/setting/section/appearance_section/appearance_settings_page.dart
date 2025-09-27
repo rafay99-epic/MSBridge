@@ -33,7 +33,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.2),
+                  color: colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -56,7 +56,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                   Text(
                     'Choose themes, colors, and visual preferences',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -75,7 +75,7 @@ class AppearanceSettingsPage extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -87,7 +87,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.1),
+                          color: colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -112,7 +112,7 @@ class AppearanceSettingsPage extends StatelessWidget {
                             Text(
                               "Select your preferred app appearance",
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.primary.withOpacity(0.6),
+                                color: colorScheme.primary.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
@@ -141,7 +141,7 @@ class AppearanceSettingsPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(

@@ -38,17 +38,17 @@ class _NoteCardState extends State<NoteCard> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: widget.isSelected
-            ? theme.colorScheme.primary.withOpacity(0.08)
+            ? theme.colorScheme.primary.withValues(alpha: 0.08)
             : theme.cardColor,
         border: widget.isSelected
             ? Border.all(color: theme.colorScheme.primary, width: 2)
             : Border.all(
-                color: theme.colorScheme.outlineVariant.withOpacity(0.25),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
               ),
         boxShadow: widget.isSelected
             ? [
                 BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8)
               ]
             : [],
@@ -73,7 +73,7 @@ class _NoteCardState extends State<NoteCard> {
                         width: 6,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.35),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -130,7 +130,7 @@ class _NoteCardState extends State<NoteCard> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
                   ),
                 ],
               ),
@@ -169,7 +169,7 @@ class _NoteCardState extends State<NoteCard> {
               Divider(
                 height: 1,
                 thickness: 1,
-                color: theme.colorScheme.outlineVariant.withOpacity(0.12),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.12),
               ),
 
               const SizedBox(height: 12),

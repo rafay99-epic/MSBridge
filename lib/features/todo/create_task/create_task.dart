@@ -110,8 +110,8 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
           style: TextStyle(color: theme.colorScheme.primary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle:
-                TextStyle(color: theme.colorScheme.primary.withOpacity(0.4)),
+            hintStyle: TextStyle(
+                color: theme.colorScheme.primary.withValues(alpha: 0.4)),
             filled: true,
             fillColor: theme.colorScheme.surface,
             border: OutlineInputBorder(
@@ -195,14 +195,23 @@ class _TaskEntryScreenState extends State<TaskEntryScreen> {
             _descriptionController.text,
             _selectedDueDate,
           );
-          CustomSnackBar.show(context, 'Task added successfully!',
-              isSuccess: true);
-          Navigator.pop(context);
+          if (context.mounted) {
+            CustomSnackBar.show(context, 'Task added successfully!',
+                isSuccess: true);
+          }
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
         } catch (e) {
           FlutterBugfender.sendCrash(
               'Failed to add task.', StackTrace.current.toString());
           FlutterBugfender.error('Failed to add task.');
-          CustomSnackBar.show(context, e.toString());
+          if (context.mounted) {
+            CustomSnackBar.show(context, e.toString(), isSuccess: false);
+          }
+          if (context.mounted) {
+            CustomSnackBar.show(context, e.toString(), isSuccess: false);
+          }
         }
       },
       child: Text('Add Task',

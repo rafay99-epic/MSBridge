@@ -37,6 +37,7 @@ class _FingerprintAuthWrapperState extends State<FingerprintAuthWrapper> {
         setState(() {
           _isAuthenticating = true;
         });
+        if (!context.mounted) return;
         bool authenticated = await fingerprintProvider.authenticate(context);
         setState(() {
           _isAuthenticated = authenticated;

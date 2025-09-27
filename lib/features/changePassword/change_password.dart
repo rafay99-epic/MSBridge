@@ -146,13 +146,13 @@ class ChangepasswordState extends State<Changepassword>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  colorScheme.primary.withOpacity(0.1),
-                  colorScheme.secondary.withOpacity(0.05),
+                  colorScheme.primary.withValues(alpha: 0.1),
+                  colorScheme.secondary.withValues(alpha: 0.05),
                 ],
               ),
               shape: BoxShape.circle,
               border: Border.all(
-                color: colorScheme.primary.withOpacity(0.2),
+                color: colorScheme.primary.withValues(alpha: 0.2),
                 width: 2,
               ),
             ),
@@ -183,7 +183,7 @@ class ChangepasswordState extends State<Changepassword>
         Text(
           "Enter your email address and we'll send you a link to reset your password securely.",
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: colorScheme.primary.withOpacity(0.7),
+            color: colorScheme.primary.withValues(alpha: 0.7),
             height: 1.5,
           ),
           textAlign: TextAlign.center,
@@ -200,12 +200,12 @@ class ChangepasswordState extends State<Changepassword>
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -220,7 +220,7 @@ class ChangepasswordState extends State<Changepassword>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -256,7 +256,7 @@ class ChangepasswordState extends State<Changepassword>
           Text(
             "We'll send a password reset link to this email address",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary.withOpacity(0.6),
+              color: colorScheme.primary.withValues(alpha: 0.6),
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -278,7 +278,7 @@ class ChangepasswordState extends State<Changepassword>
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
               elevation: 0,
-              shadowColor: colorScheme.primary.withOpacity(0.3),
+              shadowColor: colorScheme.primary.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -359,7 +359,7 @@ class ChangepasswordState extends State<Changepassword>
             Navigator.pop(context);
           },
           style: TextButton.styleFrom(
-            foregroundColor: colorScheme.primary.withOpacity(0.7),
+            foregroundColor: colorScheme.primary.withValues(alpha: 0.7),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
           child: Text(
@@ -378,10 +378,10 @@ class ChangepasswordState extends State<Changepassword>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.05),
+        color: colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -412,7 +412,7 @@ class ChangepasswordState extends State<Changepassword>
             "• Create a new strong password\n"
             "• Sign in with your new password",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
               height: 1.6,
             ),
           ),

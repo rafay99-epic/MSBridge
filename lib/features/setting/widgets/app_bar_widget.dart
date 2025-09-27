@@ -27,7 +27,7 @@ class AppBarWidgets {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -44,13 +44,13 @@ class AppBarWidgets {
                 decoration: InputDecoration(
                   hintText: 'Search settings...',
                   hintStyle: TextStyle(
-                    color: theme.colorScheme.primary.withOpacity(0.6),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.6),
                     fontFamily: 'Poppins',
                     fontSize: 16,
                   ),
                   prefixIcon: Icon(
                     Icons.search,
-                    color: theme.colorScheme.primary.withOpacity(0.6),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.6),
                     size: 20,
                   ),
                   border: InputBorder.none,

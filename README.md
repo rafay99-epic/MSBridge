@@ -1,5 +1,3 @@
-
-
 # MS Bridge  
 
 **MS Bridge** is a powerful cross-platform mobile application built with Flutter, designed to revolutionize the way students, professionals, and lifelong learners manage lecture notes, personal thoughts, and study materials.  
@@ -130,6 +128,11 @@ Contributions are welcome. To participate:
 1. Fork the repository  
 2. Create a feature branch (`feature/new-module`)  
 3. Submit a Pull Request with a clear description  
+
+For more detail information please checkout 
+- [Developer Docs](/DEVELOPER_DOCS.md)
+- [Future Features](/FUTURE_PLANS.md)
+- [Code of Conduct](/CODE_OF_CONDUCT.md)
 
 ## License  
 

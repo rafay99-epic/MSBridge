@@ -70,7 +70,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.3),
+                    color: colorScheme.outline.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -95,7 +95,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                           Text(
                             "Environment",
                             style: theme.textTheme.titleSmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -120,10 +120,10 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.secondary.withOpacity(0.1),
+                  color: colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.secondary.withOpacity(0.3),
+                    color: colorScheme.secondary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -148,7 +148,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                           Text(
                             "App Version",
                             style: theme.textTheme.titleSmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -173,10 +173,10 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -201,7 +201,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
                           Text(
                             "Build Number",
                             style: theme.textTheme.titleSmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -232,7 +232,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.3),
+              color: colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: Column(
@@ -258,7 +258,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               // Divider
               Divider(
                 height: 1,
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 indent: 16,
                 endIndent: 16,
               ),
@@ -286,7 +286,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               // Divider
               Divider(
                 height: 1,
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 indent: 16,
                 endIndent: 16,
               ),
@@ -314,7 +314,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
               // Divider
               Divider(
                 height: 1,
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 indent: 16,
                 endIndent: 16,
               ),
@@ -360,7 +360,7 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
@@ -379,13 +379,13 @@ class _AppInfoSettingsSectionState extends State<AppInfoSettingsSection>
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withOpacity(0.6),
+          color: colorScheme.onSurface.withValues(alpha: 0.6),
           fontSize: 12,
         ),
       ),
       trailing: Icon(
         LineIcons.angleRight,
-        color: colorScheme.onSurface.withOpacity(0.4),
+        color: colorScheme.onSurface.withValues(alpha: 0.4),
         size: 18,
       ),
       onTap: onTap,

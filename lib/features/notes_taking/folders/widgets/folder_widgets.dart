@@ -13,10 +13,10 @@ Widget buildFolderHeader(BuildContext context, ColorScheme colorScheme,
     margin: const EdgeInsets.all(20),
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: colorScheme.primary.withOpacity(0.05),
+      color: colorScheme.primary.withValues(alpha: 0.05),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(
-        color: colorScheme.outline.withOpacity(0.35),
+        color: colorScheme.outline.withValues(alpha: 0.35),
         width: 1.8,
       ),
     ),
@@ -25,7 +25,7 @@ Widget buildFolderHeader(BuildContext context, ColorScheme colorScheme,
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -47,7 +47,7 @@ Widget buildFolderHeader(BuildContext context, ColorScheme colorScheme,
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
@@ -76,7 +76,7 @@ Widget buildEmptyState(
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -97,7 +97,7 @@ Widget buildEmptyState(
         Text(
           'This folder is empty. Create some notes to get started!',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.primary.withOpacity(0.7),
+            color: colorScheme.primary.withValues(alpha: 0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -149,12 +149,12 @@ class OptimizedNoteCard extends StatelessWidget {
             color: colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.15),
+                color: colorScheme.shadow.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -171,10 +171,10 @@ class OptimizedNoteCard extends StatelessWidget {
                       width: isTablet ? 44 : 40,
                       height: isTablet ? 44 : 40,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.15),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.primary.withOpacity(0.4),
+                          color: colorScheme.primary.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                       ),
@@ -203,13 +203,13 @@ class OptimizedNoteCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface.withOpacity(0.5),
+                      color: colorScheme.surface.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       preview(note.noteContent),
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.8),
+                        color: colorScheme.onSurface.withValues(alpha: 0.8),
                         height: 1.4,
                         fontSize: isTablet ? 14 : 13,
                       ),
@@ -227,10 +227,10 @@ class OptimizedNoteCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.05),
+                    color: colorScheme.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.2),
+                      color: colorScheme.primary.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -278,10 +278,10 @@ class OptimizedNoteCard extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(isTablet ? 12 : 10),
           decoration: BoxDecoration(
-            color: colorScheme.secondary.withOpacity(0.15),
+            color: colorScheme.secondary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: colorScheme.secondary.withOpacity(0.3),
+              color: colorScheme.secondary.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -313,10 +313,10 @@ class OptimizedNoteCard extends StatelessWidget {
       padding: EdgeInsets.symmetric(
           horizontal: isTablet ? 14 : 12, vertical: isTablet ? 8 : 6),
       decoration: BoxDecoration(
-        color: colorScheme.secondary.withOpacity(0.15),
+        color: colorScheme.secondary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-            color: colorScheme.secondary.withOpacity(0.3), width: 1.5),
+            color: colorScheme.secondary.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Text(
         text,

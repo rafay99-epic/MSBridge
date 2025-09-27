@@ -111,7 +111,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: cs.outline.withOpacity(0.3),
+                          color: cs.outline.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -137,10 +137,10 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.outline.withOpacity(0.15), width: 1),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.15), width: 1),
         boxShadow: [
           BoxShadow(
-            color: cs.shadow.withOpacity(0.04),
+            color: cs.shadow.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -149,7 +149,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
       child: Row(
         children: [
           const SizedBox(width: 8),
-          Icon(LineIcons.search, size: 20, color: cs.primary.withOpacity(0.7)),
+          Icon(LineIcons.search, size: 20, color: cs.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 4),
           Expanded(
             child: TextField(
@@ -212,7 +212,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
           const SizedBox(height: 40),
           Center(
             child: Icon(LineIcons.search,
-                size: 64, color: theme.colorScheme.primary.withOpacity(0.3)),
+                size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
           ),
         ],
       );
@@ -224,7 +224,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LineIcons.search,
-                size: 64, color: theme.colorScheme.primary.withOpacity(0.3)),
+                size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
             Text('No settings found',
                 style: theme.textTheme.titleMedium
@@ -243,7 +243,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
             color: theme.colorScheme.surface,
             border: Border(
               bottom: BorderSide(
-                color: theme.colorScheme.outline.withOpacity(0.1),
+                color: theme.colorScheme.outline.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -288,10 +288,10 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cs.outline.withOpacity(0.1)),
+            border: Border.all(color: cs.outline.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: cs.shadow.withOpacity(0.03),
+                color: cs.shadow.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -309,7 +309,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
             subtitle: Text(
               s.subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withOpacity(0.7),
+                color: cs.onSurface.withValues(alpha: 0.7),
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -331,14 +331,14 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outline.withOpacity(0.1)),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: cs.primary.withOpacity(0.1),
+              color: cs.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: cs.primary, size: 18),
@@ -355,7 +355,7 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
                 Text(
                   description,
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: cs.onSurface.withOpacity(0.7)),
+                      ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
                 ),
               ],
             ),

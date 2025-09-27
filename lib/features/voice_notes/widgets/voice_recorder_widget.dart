@@ -61,6 +61,11 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
 
   Future<void> _startRecording() async {
     try {
+      // Get settings before any async operations
+      final settingsProvider =
+          Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
+      final settings = settingsProvider.settings;
+
       // Check microphone permission
       final hasPermission = await _audioRecorder.hasPermission();
       if (!hasPermission) {
@@ -91,10 +96,6 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       }
 
       final directory = await getTemporaryDirectory();
-
-      final settingsProvider =
-          Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
-      final settings = settingsProvider.settings;
 
       final fileExtension = settings.encoder.getFileExtension();
       final filePath =
@@ -147,6 +148,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       if (path != null) {
         final isValidFile = await _testRecordedFile(path);
 
+        if (!mounted) return;
         // Check auto-save setting
         final settingsProvider =
             Provider.of<VoiceNoteSettingsProvider>(context, listen: false);
@@ -301,7 +303,9 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       );
 
       try {
-        await StreakIntegrationService.onVoiceNoteCreated(context);
+        if (mounted) {
+          await StreakIntegrationService.onVoiceNoteCreated(context);
+        }
       } catch (e) {
         FlutterBugfender.sendCrash(
             'Streak update failed on voice note creation: $e',
@@ -363,7 +367,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -434,13 +438,13 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               padding: const EdgeInsets.all(32.0),
               decoration: BoxDecoration(
                 color: _isRecording
-                    ? theme.colorScheme.errorContainer.withOpacity(0.1)
-                    : theme.colorScheme.primaryContainer.withOpacity(0.1),
+                    ? theme.colorScheme.errorContainer.withValues(alpha: 0.1)
+                    : theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20.0),
                 border: Border.all(
                   color: _isRecording
-                      ? theme.colorScheme.error.withOpacity(0.2)
-                      : theme.colorScheme.primary.withOpacity(0.2),
+                      ? theme.colorScheme.error.withValues(alpha: 0.2)
+                      : theme.colorScheme.primary.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -456,7 +460,8 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.error.withOpacity(0.3),
+                            color:
+                                theme.colorScheme.error.withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 4),
                           ),
@@ -483,7 +488,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.error.withOpacity(0.1),
+                        color: theme.colorScheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -529,7 +534,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -553,7 +558,8 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                       'Tap the button below to start recording your voice note',
                       style: TextStyle(
                         fontSize: 14,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         fontFamily: 'Poppins',
                         height: 1.4,
                       ),
@@ -602,10 +608,10 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                   return Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -634,8 +640,8 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                           Text(
                             'Your voice note is being saved automatically',
                             style: TextStyle(
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
                               fontSize: 14,
                               fontFamily: 'Poppins',
                             ),
@@ -673,10 +679,10 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                   return Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(

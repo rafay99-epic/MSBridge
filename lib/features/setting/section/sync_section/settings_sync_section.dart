@@ -158,7 +158,7 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -199,7 +199,7 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -234,13 +234,13 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
     try {
       final success = await _syncService.syncSettingsBidirectional();
 
-      if (success) {
+      if (success && mounted) {
         CustomSnackBar.show(
           context,
           "Settings synced successfully!",
           isSuccess: true,
         );
-      } else {
+      } else if (mounted) {
         CustomSnackBar.show(
           context,
           "Failed to sync settings",
@@ -251,11 +251,13 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
       FlutterBugfender.sendCrash(
           'Error syncing settings: $e', StackTrace.current.toString());
       FlutterBugfender.error('Error syncing settings: $e');
-      CustomSnackBar.show(
-        context,
-        "Error syncing settings: $e",
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "Error syncing settings: $e",
+          isSuccess: false,
+        );
+      }
     } finally {
       setState(() {
         if (!mounted) {
@@ -273,28 +275,32 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
     try {
       final success = await _syncService.forceSyncAllSettings();
 
-      if (success) {
+      if (success && mounted) {
         CustomSnackBar.show(
           context,
           "Settings force synced successfully!",
           isSuccess: true,
         );
       } else {
-        CustomSnackBar.show(
-          context,
-          "Failed to force sync settings",
-          isSuccess: false,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Failed to force sync settings",
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error force syncing settings: $e', StackTrace.current.toString());
       FlutterBugfender.error('Error force syncing settings: $e');
-      CustomSnackBar.show(
-        context,
-        "Error force syncing settings: $e",
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "Error force syncing settings: $e",
+          isSuccess: false,
+        );
+      }
     } finally {
       setState(() {
         _isSyncing = false;
@@ -397,14 +403,14 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 18),
@@ -425,7 +431,7 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -446,28 +452,32 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
     try {
       final success = await _syncService.syncSettingsToFirebase();
 
-      if (success) {
+      if (success && mounted) {
         CustomSnackBar.show(
           context,
           "Settings uploaded to cloud successfully!",
           isSuccess: true,
         );
       } else {
-        CustomSnackBar.show(
-          context,
-          "Failed to upload settings to cloud",
-          isSuccess: false,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Failed to upload settings to cloud",
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error uploading settings: $e', StackTrace.current.toString());
       FlutterBugfender.error('Error uploading settings: $e');
-      CustomSnackBar.show(
-        context,
-        "Error uploading settings: $e",
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "Error uploading settings: $e",
+          isSuccess: false,
+        );
+      }
     } finally {
       setState(() {
         _isSyncing = false;
@@ -483,28 +493,32 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
     try {
       final success = await _syncService.syncSettingsFromFirebase();
 
-      if (success) {
+      if (success && mounted) {
         CustomSnackBar.show(
           context,
           "Settings downloaded from cloud successfully!",
           isSuccess: true,
         );
       } else {
-        CustomSnackBar.show(
-          context,
-          "Failed to download settings from cloud",
-          isSuccess: false,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Failed to download settings from cloud",
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error downloading settings: $e', StackTrace.current.toString());
       FlutterBugfender.error('Error downloading settings: $e');
-      CustomSnackBar.show(
-        context,
-        "Error downloading settings: $e",
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "Error downloading settings: $e",
+          isSuccess: false,
+        );
+      }
     } finally {
       setState(() {
         _isSyncing = false;
@@ -514,6 +528,8 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
 
   Future<void> _exportSettings() async {
     try {
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
       // Request storage permission (Android)
       bool hasPermission = true;
       try {
@@ -532,8 +548,6 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
         throw Exception('Storage permission denied.');
       }
 
-      final userSettings =
-          Provider.of<UserSettingsProvider>(context, listen: false);
       final backup = await userSettings.exportSettings();
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(backup);
@@ -584,6 +598,8 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
 
   Future<void> _importSettings() async {
     try {
+      final userSettings =
+          Provider.of<UserSettingsProvider>(context, listen: false);
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
@@ -595,10 +611,9 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
       final content = await File(path).readAsString();
       final Map<String, dynamic> backup = json.decode(content);
 
-      final userSettings =
-          Provider.of<UserSettingsProvider>(context, listen: false);
       final success = await userSettings.importSettings(backup);
 
+      if (!mounted) return;
       CustomSnackBar.show(
         context,
         success ? 'Settings imported successfully!' : 'Import failed',
@@ -608,6 +623,7 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
       FlutterBugfender.sendCrash(
           'Import failed: $e', StackTrace.current.toString());
       FlutterBugfender.error('Import failed: $e');
+      if (!mounted) return;
       CustomSnackBar.show(
         context,
         'Import failed: $e',
@@ -617,6 +633,7 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
   }
 
   void _showResetDialog() {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -655,28 +672,32 @@ class _SettingsSyncSectionState extends State<SettingsSyncSection> {
           Provider.of<UserSettingsProvider>(context, listen: false);
       final success = await userSettings.resetToDefault();
 
-      if (success) {
+      if (success && mounted) {
         CustomSnackBar.show(
           context,
           "Settings reset to default successfully!",
           isSuccess: true,
         );
       } else {
-        CustomSnackBar.show(
-          context,
-          "Failed to reset settings",
-          isSuccess: false,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Failed to reset settings",
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Reset failed: $e', StackTrace.current.toString());
       FlutterBugfender.error('Reset failed: $e');
-      CustomSnackBar.show(
-        context,
-        "Error resetting settings: $e",
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "Error resetting settings: $e",
+          isSuccess: false,
+        );
+      }
     } finally {
       setState(() {
         _isSyncing = false;

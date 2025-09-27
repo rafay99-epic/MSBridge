@@ -53,25 +53,31 @@ class MarkdownExporter {
       }
 
       if (downloadsDirectory == null) {
-        CustomSnackBar.show(context, "Could not find the downloads directory.",
-            isSuccess: false);
+        if (context.mounted) {
+          CustomSnackBar.show(
+              context, "Could not find the downloads directory.",
+              isSuccess: false);
+        }
         return;
       }
 
       final safeFileName = _safeFileName(title);
       final file = File('${downloadsDirectory.path}/$safeFileName.md');
       await file.writeAsString(content);
-
-      CustomSnackBar.show(context, "Markdown saved to ${file.path}",
-          isSuccess: true);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "Markdown saved to ${file.path}",
+            isSuccess: true);
+      }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error creating Markdown: $e', StackTrace.current.toString());
       FlutterBugfender.error(
         'Error creating Markdown: $e',
       );
-      CustomSnackBar.show(context, "Error creating Markdown: $e",
-          isSuccess: false);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "Error creating Markdown: $e",
+            isSuccess: false);
+      }
     }
   }
 }

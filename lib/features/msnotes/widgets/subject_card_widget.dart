@@ -22,15 +22,15 @@ class SubjectCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:
-                colorScheme.shadow.withOpacity(0.2), // Increased shadow opacity
+            color: colorScheme.shadow
+                .withValues(alpha: 0.2), // Increased shadow opacity
             blurRadius: 12, // Increased blur for better depth
             offset: const Offset(0, 6), // Increased offset for better elevation
           ),
         ],
         border: Border.all(
           color: colorScheme.primary
-              .withOpacity(0.3), // Match search screen border color
+              .withValues(alpha: 0.3), // Match search screen border color
           width: 2, // Match search screen border width
         ),
       ),
@@ -47,11 +47,11 @@ class SubjectCardWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: colorScheme.primary
-                        .withOpacity(0.15), // Slightly more prominent
+                        .withValues(alpha: 0.15), // Slightly more prominent
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       // Add border to icon container
-                      color: colorScheme.primary.withOpacity(0.4),
+                      color: colorScheme.primary.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                   ),
@@ -80,8 +80,9 @@ class SubjectCardWidget extends StatelessWidget {
                         "Tap to view lectures",
                         style: TextStyle(
                           fontSize: 14,
-                          color: colorScheme.onSurface.withOpacity(
-                              0.7), // Increased opacity for better readability
+                          color: colorScheme.onSurface.withValues(
+                              alpha:
+                                  0.7), // Increased opacity for better readability
                         ),
                       ),
                     ],
@@ -91,10 +92,10 @@ class SubjectCardWidget extends StatelessWidget {
                   // Wrap arrow icon in styled container
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.15),
+                    color: colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.4),
+                      color: colorScheme.primary.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                   ),

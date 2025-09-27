@@ -19,7 +19,7 @@ class ErrorDialog extends StatelessWidget {
       ),
       content: Text(
         message,
-        style: TextStyle(fontSize: 16, color: theme.primary.withOpacity(0.8)),
+        style: TextStyle(fontSize: 16, color: theme.primary.withValues(alpha: 0.8)),
       ),
       actions: [
         TextButton(

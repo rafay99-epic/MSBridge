@@ -85,7 +85,7 @@ class VoiceNoteExportService {
   }) async {
     try {
       await initialize();
-
+      if (!context.mounted) return false;
       // Check permissions first
       bool hasPermission =
           await PermissionHandler.checkAndRequestFilePermission(context);

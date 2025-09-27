@@ -42,7 +42,7 @@ class ForgetPassword extends StatelessWidget {
                     "Enter your email to reset your password.",
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.onSurface.withOpacity(0.7),
+                      color: theme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 32),

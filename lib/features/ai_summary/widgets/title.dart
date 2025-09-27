@@ -14,13 +14,13 @@ Widget buildTitle(BuildContext context) {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primary.withOpacity(0.1),
-              colorScheme.secondary.withOpacity(0.05),
+              colorScheme.primary.withValues(alpha: 0.1),
+              colorScheme.secondary.withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.primary.withOpacity(0.2),
+            color: colorScheme.primary.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -47,7 +47,7 @@ Widget buildTitle(BuildContext context) {
             Text(
               'Intelligent analysis of your notes',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.primary.withOpacity(0.7),
+                color: colorScheme.primary.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
