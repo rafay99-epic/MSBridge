@@ -215,7 +215,7 @@ class _RegisterState extends State<Register> {
       _fullnameController.text,
       _phoneNumberController.text,
     );
-
+    if (!context.mounted) return;
     Navigator.pop(context);
 
     if (result.isSuccess) {
@@ -230,6 +230,7 @@ class _RegisterState extends State<Register> {
 
       // Navigate back after delay to let user read the message
       Future.delayed(const Duration(seconds: 4), () {
+        if (!context.mounted) return;
         Navigator.pop(context);
       });
     } else {

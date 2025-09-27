@@ -402,7 +402,7 @@ class _CreateNoteState extends State<CreateNote>
           isSynced: false,
           tags: _tagsNotifier.value,
         );
-        if (result.success) {
+        if (result.success && mounted) {
           CustomSnackBar.show(context, result.message, isSuccess: true);
           Navigator.pop(context);
         }
@@ -433,7 +433,7 @@ class _CreateNoteState extends State<CreateNote>
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to save note: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to save note: $e');
+      if (!mounted) return;
       CustomSnackBar.show(context, "Error saving note: $e", isSuccess: false);
     }
   }

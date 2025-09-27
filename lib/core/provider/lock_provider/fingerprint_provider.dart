@@ -177,6 +177,7 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
 
         // If authentication was cancelled and we can go back, go back
         if (canGoBack) {
+          if (!context.mounted) return false;
           Navigator.pop(context);
         }
       }

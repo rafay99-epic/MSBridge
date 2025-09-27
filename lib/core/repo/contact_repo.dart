@@ -17,6 +17,7 @@ class ContactService {
           'message': message,
         },
       );
+      if (!context.mounted) return;
       CustomSnackBar.show(
         context,
         'Thank you for the Feedback',

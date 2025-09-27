@@ -29,7 +29,7 @@ class ContactPage extends StatelessWidget {
     } catch (e) {
       FlutterBugfender.sendCrash(
           "Failed to send message: $e", StackTrace.current.toString());
-      FlutterBugfender.error("Failed to send message: $e");
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -44,7 +44,10 @@ class ContactPage extends StatelessWidget {
           content: Text(
             "There was an error sending your message. Please try again later.",
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.8),
             ),
           ),
           actions: <Widget>[
@@ -114,8 +117,10 @@ class ContactPage extends StatelessWidget {
                 'We\'d love to hear from you',
                 style: TextStyle(
                   fontSize: 16,
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 35),

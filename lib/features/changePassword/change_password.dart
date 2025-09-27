@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
@@ -299,11 +300,15 @@ class ChangepasswordState extends State<Changepassword>
 
                     if (result.isSuccess) {
                       emailController.clear();
+                      if (!context.mounted) return;
                       CustomSnackBar.show(context,
                           "Password reset successful. Check your inbox.");
                     } else {
+                      if (!context.mounted) return;
                       CustomSnackBar.show(
                           context, result.error ?? "Password reset failed.");
+                      FlutterBugfender.error(
+                          "Password reset failed: ${result.error}");
                     }
                   },
             child: _isLoading

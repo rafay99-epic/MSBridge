@@ -45,12 +45,10 @@ List<NoteTakingModel> applyDateFilter(
 ) {
   if (sel.filter == DateFilter.all) return notes;
   final range = computeRange(sel, DateTime.now());
-  return notes
-      .where((n) {
-        final ts = n.updatedAt;
-        return !ts.isBefore(range.start) && ts.isBefore(range.end);
-      })
-      .toList();
+  return notes.where((n) {
+    final ts = n.updatedAt;
+    return !ts.isBefore(range.start) && ts.isBefore(range.end);
+  }).toList();
 }
 
 Future<DateFilterSelection?> showDateFilterSheet(
@@ -79,7 +77,7 @@ Future<DateFilterSelection?> showDateFilterSheet(
                 end: DateTime(now.year, now.month, now.day),
               ),
         );
-        if (picked != null) {
+        if (picked != null && ctx.mounted) {
           Navigator.pop(
               ctx,
               DateFilterSelection(

@@ -1152,13 +1152,13 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   }
 
   Future<void> _attachImage(BuildContext context) async {
+    final prov = Provider.of<UploadThingProvider>(context, listen: false);
+    final chat = Provider.of<ChatProvider>(context, listen: false);
+
     final picker = ImagePicker();
     final x =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (x == null) return;
-
-    final prov = Provider.of<UploadThingProvider>(context, listen: false);
-    final chat = Provider.of<ChatProvider>(context, listen: false);
 
     final placeholder = ChatMessage(true, 'Uploading image...');
 

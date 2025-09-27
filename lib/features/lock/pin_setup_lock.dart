@@ -550,6 +550,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
       // Update the PIN using the provider
       pinProvider.updatePin(pin).then((_) {
         if (pinProvider.hasError) {
+          if (!mounted) return;
           CustomSnackBar.show(
             context,
             pinProvider.getErrorMessage(),
@@ -562,6 +563,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
         }
 
         // Show success message
+        if (!mounted) return;
         CustomSnackBar.show(
           context,
           'New PIN confirmed! PIN changed successfully!',
@@ -582,7 +584,9 @@ class _PinLockScreenState extends State<PinLockScreen> {
         if (!mounted) return;
         FlutterBugfender.sendCrash(
             "Failed to update PIN. Please try again.", e.toString());
+        if (!mounted) return;
         FlutterBugfender.error("Failed to update PIN. Please try again.");
+        if (!mounted) return;
         CustomSnackBar.show(
           context,
           'Failed to update PIN. Please try again.',

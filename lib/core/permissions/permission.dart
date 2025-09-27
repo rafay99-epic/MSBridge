@@ -40,7 +40,7 @@ class PermissionHandler {
       }
 
       if (status.isGranted) return true;
-
+      if (!context.mounted) return false;
       CustomSnackBar.show(
         context,
         "Storage access denied. Unable to save to Downloads without permission.",
@@ -50,9 +50,7 @@ class PermissionHandler {
     } catch (e) {
       FlutterBugfender.sendCrash('Error requesting Android permissions: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error requesting Android permissions: $e',
-      );
+      if (!context.mounted) return false;
       CustomSnackBar.show(context, "Error requesting Android permissions: $e",
           isSuccess: false);
       return false;

@@ -48,3 +48,6 @@ app.*.map.json
 /android/app/google-services.json
 
 /README_REPORT.md
+
+.venv/
+reports/*

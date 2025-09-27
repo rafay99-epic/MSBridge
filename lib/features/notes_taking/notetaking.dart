@@ -562,41 +562,56 @@ class _NotetakingState extends State<Notetaking>
                     style: theme.textTheme.titleMedium
                         ?.copyWith(color: theme.colorScheme.primary)),
               ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.updatedAt,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.updatedAt
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.updatedAt
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Last updated'),
-              ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.createdAt,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.updatedAt);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.createdAt
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.createdAt
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Date created'),
-              ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.tag,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.createdAt);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.tag
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.tag
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Tag (A→Z)'),
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.tag);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
               ),
               const Divider(height: 8),
               ListTile(
@@ -604,29 +619,39 @@ class _NotetakingState extends State<Notetaking>
                     style: theme.textTheme.titleMedium
                         ?.copyWith(color: theme.colorScheme.primary)),
               ),
-              RadioListTile<NoteSortOrder>(
-                value: NoteSortOrder.desc,
-                groupValue: _sortOrder,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortOrder = v);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
+              ListTile(
+                leading: Icon(
+                  _sortOrder == NoteSortOrder.desc
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortOrder == NoteSortOrder.desc
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Descending'),
-              ),
-              RadioListTile<NoteSortOrder>(
-                value: NoteSortOrder.asc,
-                groupValue: _sortOrder,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortOrder = v);
+                onTap: () {
+                  setState(() => _sortOrder = NoteSortOrder.desc);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortOrder == NoteSortOrder.asc
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortOrder == NoteSortOrder.asc
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Ascending'),
+                onTap: () {
+                  setState(() => _sortOrder = NoteSortOrder.asc);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
               ),
               const SizedBox(height: 8),
             ],

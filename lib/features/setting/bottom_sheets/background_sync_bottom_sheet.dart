@@ -76,7 +76,7 @@ class _BackgroundSyncBottomSheetState extends State<BackgroundSyncBottomSheet> {
             : (success
                 ? 'Background sync completed'
                 : 'Background sync failed'));
-    if (mounted) {
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg),

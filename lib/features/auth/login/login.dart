@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/forget/forget_password.dart';
@@ -35,10 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final isVerified = await authRepo.isEmailVerified();
 
       if (isVerified) {
+        if (!mounted) return;
         CustomSnackBar.show(context, "✅ Welcome ${result.user!.displayName}!",
             isSuccess: true);
 
         Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             PageTransition(
@@ -49,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         });
       } else {
+        if (!mounted) return;
         CustomSnackBar.show(context, "❌ Please verify your email first.",
             isSuccess: false);
         Navigator.pushReplacement(
@@ -61,7 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
+      if (!mounted) return;
       CustomSnackBar.show(context, "❌ ${result.error}", isSuccess: false);
+      FlutterBugfender.error("Login failed: ${result.error}");
     }
   }
 

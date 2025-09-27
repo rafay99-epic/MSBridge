@@ -80,6 +80,7 @@ class ForgetPassword extends StatelessWidget {
                           final result = await authRepo.resetPassword(email);
                           if (result.isSuccess) {
                             emailController.clear();
+                            if (!context.mounted) return;
                             CustomSnackBar.show(
                               context,
                               "Password reset email sent. Check your inbox.",
@@ -89,8 +90,7 @@ class ForgetPassword extends StatelessWidget {
                             FlutterBugfender.sendCrash(
                                 "Password reset failed: $result.error",
                                 StackTrace.current.toString());
-                            FlutterBugfender.error(
-                                "Password reset failed: $result.error");
+                            if (!context.mounted) return;
                             CustomSnackBar.show(
                               context,
                               result.error ?? "Password reset failed.",
@@ -101,7 +101,7 @@ class ForgetPassword extends StatelessWidget {
                           FlutterBugfender.sendCrash(
                               "Password reset failed: $e",
                               StackTrace.current.toString());
-                          FlutterBugfender.error("Password reset failed: $e");
+                          if (!context.mounted) return;
                           CustomSnackBar.show(
                             context,
                             "Password reset failed.",

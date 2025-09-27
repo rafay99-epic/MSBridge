@@ -117,7 +117,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     try {
       final result = await context.read<AuthRepo>().resendVerificationEmail();
 
-      if (result.isSuccess) {
+      if (result.isSuccess && mounted) {
         CustomSnackBar.show(context, "Verification email sent!",
             isSuccess: true);
 
@@ -125,11 +125,13 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         if (_resendCount >= _maxResendAttempts) {
           // Start 24-hour cooldown for max attempts reached
           _startCooldownTimer(const Duration(hours: 24));
-          CustomSnackBar.show(
-            context,
-            "Maximum resend attempts reached. Please wait 24 hours or contact support.",
-            isSuccess: false,
-          );
+          if (mounted) {
+            CustomSnackBar.show(
+              context,
+              "Maximum resend attempts reached. Please wait 24 hours or contact support.",
+              isSuccess: false,
+            );
+          }
         } else {
           // Start normal short cooldown for successful sends
           _startCooldownTimer(_resendCooldown);
@@ -167,16 +169,24 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             });
           }
         }
-
-        CustomSnackBar.show(context, errorMessage, isSuccess: false);
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            errorMessage,
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
-      CustomSnackBar.show(
-          context, "An unexpected error occurred. Please try again later.");
-      FlutterBugfender.error("Error in resend verification email $e");
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "An unexpected error occurred. Please try again later.",
+          isSuccess: false,
+        );
+      }
       FlutterBugfender.sendCrash("Error in resend verification email $e",
           StackTrace.current.toString());
-      // For unexpected errors, re-enable immediately for retry
       if (mounted) {
         setState(() {
           _isResending = false;
@@ -184,7 +194,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         });
       }
     } finally {
-      // Ensure _isResending is always reset, regardless of the path taken
       if (mounted && _isResending) {
         setState(() {
           _isResending = false;
@@ -302,7 +311,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                             Text(
                               "Firebase emails often go to spam. Check your spam/junk folder!",
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.7),
                                 height: 1.4,
                               ),
                             ),
