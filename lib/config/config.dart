@@ -55,3 +55,9 @@ class UpdateConfig {
 
   static const String mode = "development";
 }
+
+class LinkShortenerConfig {
+  static const String devBaseUrl = 'http://192.168.100.163:3000';
+  static const String prodBaseUrl = 'https://msbridge.rafay99.com';
+  static const String shortenEndpoint = '/api/shorten';
+}
