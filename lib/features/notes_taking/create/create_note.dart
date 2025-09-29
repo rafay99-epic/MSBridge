@@ -1262,7 +1262,7 @@ class _CreateNoteState extends State<CreateNote>
     }
 
     final note = _currentNote!;
-    final status = await ShareRepository.getShareStatus(note.noteId!);
+    final status = await DynamicLink.getShareStatus(note.noteId!);
     String? currentUrl = status.shareUrl.isNotEmpty ? status.shareUrl : null;
     bool enabled = status.enabled;
 
@@ -1329,8 +1329,7 @@ class _CreateNoteState extends State<CreateNote>
                                   try {
                                     if (value) {
                                       final url =
-                                          await ShareRepository.enableShare(
-                                              note);
+                                          await DynamicLink.enableShare(note);
                                       setStateSheet(() {
                                         enabled = true;
                                         currentUrl = url;
@@ -1341,7 +1340,7 @@ class _CreateNoteState extends State<CreateNote>
                                             isSuccess: true);
                                       }
                                     } else {
-                                      await ShareRepository.disableShare(note);
+                                      await DynamicLink.disableShare(note);
                                       setStateSheet(() {
                                         enabled = false;
                                         currentUrl = null;

@@ -20,13 +20,13 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
   final Set<String> _disableInProgressNoteIds = <String>{};
 
   Future<List<SharedNoteMeta>> _loadSharedNotes() async {
-    return await ShareRepository.getSharedNotes();
+    return await DynamicLink.getSharedNotes();
   }
 
   Future<void> _disableSharing(String noteId, NoteTakingModel? note) async {
     final n = note ?? (await _getNote(noteId));
     if (n == null) return;
-    await ShareRepository.disableShare(n);
+    await DynamicLink.disableShare(n);
     if (mounted) {
       CustomSnackBar.show(context, 'Sharing disabled');
       setState(() {});

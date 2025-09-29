@@ -323,7 +323,7 @@ class _NotesSettingState extends State<NotesSetting> {
                   },
                 );
                 if (confirm != true) return;
-                await ShareRepository.disableAllShares();
+                await DynamicLink.disableAllShares();
               }
               shareProvider.shareLinksEnabled = value;
             },

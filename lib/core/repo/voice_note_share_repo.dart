@@ -7,7 +7,8 @@ import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/services/upload/uploadthing_service.dart';
 import 'package:msbridge/config/config.dart';
 import 'package:msbridge/utils/uuid.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+import 'package:msbridge/config/config.dart' as config;
 
 class VoiceNoteShareRepository {
   static const String _shareCollection = 'shared_voice_notes';
@@ -19,35 +20,18 @@ class VoiceNoteShareRepository {
   }
 
   static String _buildDefaultShareUrl(String shareId) {
-    return 'https://msbridge.rafay99.com/voice/$shareId';
+    final String base = config.UpdateConfig.mode == 'production'
+        ? config.LinkShortenerConfig.prodBaseUrl
+        : config.LinkShortenerConfig.devBaseUrl;
+    return '$base/voice/$shareId';
   }
 
-  static Future<String> _buildDynamicLink(String shareId) async {
-    try {
-      final DynamicLinkParameters params = DynamicLinkParameters(
-        link: Uri.parse('https://msbridge.rafay99.com/voice/$shareId'),
-        uriPrefix: 'https://msbridge.rafay99.com',
-        androidParameters: const AndroidParameters(
-          packageName: 'com.syntaxlab.msbridge',
-          minimumVersion: 1,
-        ),
-        iosParameters: const IOSParameters(
-          bundleId: 'com.syntaxlab.msbridge',
-          minimumVersion: '1.0.0',
-        ),
-      );
-
-      final ShortDynamicLink short =
-          await FirebaseDynamicLinks.instance.buildShortLink(params);
-
-      final String shortUrl = short.shortUrl.toString();
-      return shortUrl;
-    } catch (e) {
-      FlutterBugfender.error('Failed to build dynamic link: $e');
-      FlutterBugfender.sendCrash(
-          'Failed to build dynamic link: $e', StackTrace.current.toString());
-      return _buildDefaultShareUrl(shareId);
-    }
+  static Future<String> _buildShortLink(String shareId) async {
+    return ShortLinkService.generateShortLink(
+      type: 'voice',
+      shareId: shareId,
+      originalUrl: _buildDefaultShareUrl(shareId),
+    );
   }
 
   static Future<String> enableShare(VoiceNoteModel voiceNote) async {
@@ -90,7 +74,7 @@ class VoiceNoteShareRepository {
 
       final String audioUrl = await uploadService.uploadAudioFile(audioFile);
 
-      final String shareUrl = await _buildDynamicLink(shareId);
+      final String shareUrl = await _buildShortLink(shareId);
 
       // Create payload for Firebase
       final Map<String, dynamic> payloadWithoutCreatedAt = {
@@ -116,12 +100,12 @@ class VoiceNoteShareRepository {
       try {
         await docRef.update(payloadWithoutCreatedAt);
       } on FirebaseException catch (e, s) {
-        FlutterBugfender.error(
-            'Failed to update voice note share: ${e.code} ${e.message}');
-        FlutterBugfender.sendCrash('enableShare update failed', s.toString());
         if (e.code == 'not-found') {
           await docRef.set(payloadWithCreatedAt, SetOptions(merge: true));
         } else {
+          FlutterBugfender.error(
+              'Failed to update voice note share: ${e.code} ${e.message}');
+          FlutterBugfender.sendCrash('enableShare update failed', s.toString());
           rethrow;
         }
       }

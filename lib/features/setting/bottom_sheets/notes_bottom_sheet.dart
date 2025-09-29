@@ -183,7 +183,7 @@ class NotesBottomSheet extends StatelessWidget {
       );
       if (confirm != true) return;
       try {
-        await ShareRepository.disableAllShares();
+        await DynamicLink.disableAllShares();
       } catch (e) {
         FlutterBugfender.sendCrash('Failed to disable existing shares: $e',
             StackTrace.current.toString());
