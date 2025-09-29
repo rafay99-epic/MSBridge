@@ -294,6 +294,8 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
 
         try {
           return AudioPlayerWidget(
+            key: ValueKey<String>(
+                widget.voiceNote.voiceNoteId ?? widget.voiceNote.audioFilePath),
             audioPath: widget.voiceNote.audioFilePath,
             playerStyle:
                 widget.compact ? PlayerStyle.style3 : PlayerStyle.style5,
@@ -560,7 +562,8 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -633,7 +636,8 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -668,14 +672,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                   Container(
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       widget.voiceNote.description!,
                       style: TextStyle(
                         fontSize: 14,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         fontFamily: 'Poppins',
                         height: 1.4,
                       ),
@@ -695,8 +701,8 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -705,15 +711,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           Icon(
                             Icons.storage_outlined,
                             size: 12,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             widget.voiceNote.formattedFileSize,
                             style: TextStyle(
                               fontSize: 11,
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
@@ -736,14 +743,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           Icon(
                             LineIcons.chevronRight,
                             size: 12,
-                            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.7),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Tap to view',
                             style: TextStyle(
                               fontSize: 11,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.7),
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
