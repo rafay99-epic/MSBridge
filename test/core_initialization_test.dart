@@ -15,22 +15,26 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
 
       // Mock SharedPreferences
-      const MethodChannel('plugins.flutter.io/shared_preferences')
-          .setMockMethodCallHandler((methodCall) async {
-        if (methodCall.method == 'getAll') {
-          return <String, dynamic>{};
-        }
-        return null;
-      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/shared_preferences'),
+        (methodCall) async {
+          if (methodCall.method == 'getAll') {
+            return <String, dynamic>{};
+          }
+          return null;
+        },
+      );
 
       // Mock device orientation
-      const MethodChannel('flutter/platform')
-          .setMockMethodCallHandler((methodCall) async {
-        if (methodCall.method == 'SystemChrome.setPreferredOrientations') {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('flutter/platform'),
+        (methodCall) async {
+          if (methodCall.method == 'SystemChrome.setPreferredOrientations') {
+            return null;
+          }
           return null;
-        }
-        return null;
-      });
+        },
+      );
 
       // Initialize Hive once for all tests
       Hive.init('./test_core_init');
@@ -119,10 +123,12 @@ void main() {
 
     test('Database migration service can safely open boxes', () async {
       // Mock FlutterBugfender to avoid MissingPluginException
-      const MethodChannel('flutter_bugfender')
-          .setMockMethodCallHandler((methodCall) async {
-        return null;
-      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('flutter_bugfender'),
+        (methodCall) async {
+          return null;
+        },
+      );
 
       expect(() async {
         await DatabaseMigrationService.safeOpenBox<NoteTakingModel>(
@@ -132,10 +138,12 @@ void main() {
 
     test('All core Hive boxes can be opened without errors', () async {
       // Mock FlutterBugfender to avoid MissingPluginException
-      const MethodChannel('flutter_bugfender')
-          .setMockMethodCallHandler((methodCall) async {
-        return null;
-      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('flutter_bugfender'),
+        (methodCall) async {
+          return null;
+        },
+      );
 
       // Test opening all core boxes (adapters are already registered in setUpAll)
       final boxes = [
