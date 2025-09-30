@@ -25,7 +25,7 @@ jobs:
             - name: Check import sorting
               run: |
                   echo "🔎 Checking import order..."
-                  if ! flutter pub global run import_sorter:main --no-comments --exit-if-changed; then
+                  if ! flutter pub global run import_sorter:main; then
                     echo ""
                     echo "❌ Import check failed!"
                     echo "👉 Please fix by running locally:"
