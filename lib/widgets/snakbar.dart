@@ -115,7 +115,8 @@ class CustomSnackBar {
                     decoration: BoxDecoration(
                       color: isSuccessMessage
                           ? colorScheme.onPrimary.withValues(alpha: 0.15)
-                          : colorScheme.onErrorContainer.withValues(alpha: 0.15),
+                          : colorScheme.onErrorContainer
+                              .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(

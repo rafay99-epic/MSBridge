@@ -147,8 +147,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor:
-                  widget.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              backgroundColor: widget.theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -274,7 +274,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: widget.theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: widget.theme.colorScheme.primary
+                          .withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     )
@@ -300,7 +301,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
                         ? widget.theme.colorScheme.primary
-                        : widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                        : widget.theme.colorScheme.onSurface
+                            .withValues(alpha: 0.8),
                   ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: isSelected ? TextAlign.left : TextAlign.center,
@@ -334,7 +336,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
-                  color: widget.theme.colorScheme.outline.withValues(alpha: 0.3),
+                  color:
+                      widget.theme.colorScheme.outline.withValues(alpha: 0.3),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -343,7 +346,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  color:
+                      widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),

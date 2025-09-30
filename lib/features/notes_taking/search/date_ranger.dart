@@ -69,7 +69,9 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
 
   void _selectDate(DateTime date) {
     // Selecting start date (no start yet or previous range completed)
-    if (_selectedFromDate == null || _selectedToDate != null || !_isSelectingEndDate) {
+    if (_selectedFromDate == null ||
+        _selectedToDate != null ||
+        !_isSelectingEndDate) {
       setState(() {
         _selectedFromDate = date;
         _selectedToDate = null;
@@ -400,8 +402,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color:
-                            widget.theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: widget.theme.colorScheme.onSurface
+                            .withValues(alpha: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -514,7 +516,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
-                  color: widget.theme.colorScheme.outline.withValues(alpha: 0.3),
+                  color:
+                      widget.theme.colorScheme.outline.withValues(alpha: 0.3),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -523,7 +526,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  color:
+                      widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),

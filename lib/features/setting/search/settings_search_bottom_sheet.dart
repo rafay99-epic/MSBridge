@@ -149,7 +149,8 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
       child: Row(
         children: [
           const SizedBox(width: 8),
-          Icon(LineIcons.search, size: 20, color: cs.primary.withValues(alpha: 0.7)),
+          Icon(LineIcons.search,
+              size: 20, color: cs.primary.withValues(alpha: 0.7)),
           const SizedBox(width: 4),
           Expanded(
             child: TextField(
@@ -212,7 +213,8 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
           const SizedBox(height: 40),
           Center(
             child: Icon(LineIcons.search,
-                size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                size: 64,
+                color: theme.colorScheme.primary.withValues(alpha: 0.3)),
           ),
         ],
       );
@@ -224,7 +226,8 @@ class _SettingsSearchBottomSheetState extends State<SettingsSearchBottomSheet>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LineIcons.search,
-                size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                size: 64,
+                color: theme.colorScheme.primary.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
             Text('No settings found',
                 style: theme.textTheme.titleMedium

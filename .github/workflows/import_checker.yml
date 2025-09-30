@@ -1,0 +1,19 @@
+name: Import Sort Check
+
+on:
+    pull_request:
+    push:
+
+jobs:
+    import-sort:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dart-lang/setup-dart@v1
+            - run: dart pub get
+            - run: dart pub global activate import_sorter
+            - run: |
+                  if ! dart pub global run import_sorter:main --no-comments --exit-if-changed; then
+                    echo "❌ Imports need sorting. Run: dart pub global run import_sorter:main"
+                    exit 1
+                  fi

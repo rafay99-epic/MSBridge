@@ -368,8 +368,8 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                    theme.colorScheme.shadow.withValues(alpha: 0.06),
+                                color: theme.colorScheme.shadow
+                                    .withValues(alpha: 0.06),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),

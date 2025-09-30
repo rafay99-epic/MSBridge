@@ -226,7 +226,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                 backgroundImage: isValidAvatarUrl || avatar.startsWith('/')
                     ? NetworkImage(fullAvatarUrl)
                     : null,
-                backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                backgroundColor:
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
                 child: (isValidAvatarUrl || avatar.startsWith('/'))
                     ? null
                     : Icon(
@@ -268,7 +269,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.8),
                           height: 1.3,
                         ),
                       ),
@@ -468,7 +470,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.08),
+                      color:
+                          theme.colorScheme.secondary.withValues(alpha: 0.08),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -630,7 +633,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         height: 1.3,
                       ),
                     ),
@@ -700,10 +704,12 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.secondary
+                                .withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
@@ -780,7 +786,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                 radius: 25,
                 backgroundImage:
                     isValidAvatarUrl ? NetworkImage(avatarUrl) : null,
-                backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                backgroundColor:
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
                 child: isValidAvatarUrl
                     ? null
                     : Icon(
@@ -808,7 +815,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         height: 1.3,
                       ),
                     ),
@@ -823,7 +831,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                           size: 20,
                           color: index < rating
                               ? Colors.amber
-                              : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.3),
                         )),
               ),
             ],
@@ -862,7 +871,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1022,10 +1032,12 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.secondary
+                                .withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(

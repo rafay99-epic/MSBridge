@@ -288,8 +288,8 @@ class NoteVersionProvider with ChangeNotifier {
       return await NoteVersionRepo.getTotalVersionCount();
     } catch (e) {
       _error = 'Error getting total version count: $e';
-      FlutterBugfender.sendCrash(
-          'Error getting total version count: $e', StackTrace.current.toString());
+      FlutterBugfender.sendCrash('Error getting total version count: $e',
+          StackTrace.current.toString());
       FlutterBugfender.error(
         'Error getting total version count: $e',
       );

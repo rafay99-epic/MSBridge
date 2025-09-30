@@ -27,8 +27,8 @@ class LectureCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:
-                colorScheme.shadow.withValues(alpha: 0.2), // Increased shadow opacity
+            color: colorScheme.shadow
+                .withValues(alpha: 0.2), // Increased shadow opacity
             blurRadius: 12, // Increased blur for better depth
             offset: const Offset(0, 6), // Increased offset for better elevation
           ),

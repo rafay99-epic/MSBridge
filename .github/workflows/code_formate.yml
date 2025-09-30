@@ -1,0 +1,38 @@
+name: Code Format Check
+
+on:
+    pull_request:
+    push:
+
+jobs:
+    format-check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Dart
+              uses: dart-lang/setup-dart@v1
+              with:
+                  sdk: stable
+
+            - name: Get dependencies
+              run: dart pub get
+
+            - name: Check code formatting
+              run: |
+                  echo "Checking Dart code formatting..."
+
+                  # Check if code needs formatting (dry run)
+                  if ! dart format --output=none --set-exit-if-changed .; then
+                    echo "❌ Code formatting check failed!"
+                    echo ""
+                    echo "Your code is not properly formatted. Please run the following command:"
+                    echo "  dart format ."
+                    echo ""
+                    echo "Then commit and push the formatted code."
+                    exit 1
+                  else
+                    echo "✅ All Dart code is properly formatted!"
+                  fi

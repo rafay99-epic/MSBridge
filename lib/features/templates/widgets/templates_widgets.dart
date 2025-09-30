@@ -14,8 +14,8 @@ class TemplatesSearchField extends StatelessWidget {
         style: TextStyle(color: theme.colorScheme.primary),
         decoration: InputDecoration(
           hintText: 'Search templates...',
-          hintStyle:
-              TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.6)),
+          hintStyle: TextStyle(
+              color: theme.colorScheme.primary.withValues(alpha: 0.6)),
           prefixIcon: Icon(Icons.search,
               color: theme.colorScheme.primary.withValues(alpha: 0.8)),
           filled: true,
@@ -247,7 +247,8 @@ class TagChipsRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               shape: StadiumBorder(
                 side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                  color:
+                      theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -321,13 +322,15 @@ class TagInputField extends StatelessWidget {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                    color: theme.colorScheme.outlineVariant
+                        .withValues(alpha: 0.15),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                    color: theme.colorScheme.outlineVariant
+                        .withValues(alpha: 0.15),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(

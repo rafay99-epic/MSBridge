@@ -18,7 +18,7 @@ class NoteTakingRepo {
   static Box<NoteTakingModel> get _deletedBox =>
       Hive.box<NoteTakingModel>(_deletedBoxName);
 
-/// Add a new note
+  /// Add a new note
   static Future<void> addNote(NoteTakingModel note) async {
     try {
       final deviceId = await DeviceIdService.getDeviceId();

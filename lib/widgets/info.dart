@@ -31,7 +31,8 @@ class InfoTile extends StatelessWidget {
               children: [
                 Text(label,
                     style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.7))),
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.7))),
                 const SizedBox(height: 2),
                 Text(value,
                     style: theme.textTheme.bodyMedium

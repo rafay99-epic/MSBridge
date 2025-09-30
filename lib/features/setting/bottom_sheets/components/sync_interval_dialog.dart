@@ -103,8 +103,12 @@ class _SyncIntervalDialogState extends State<SyncIntervalDialog> {
         child: Row(
           children: [
             Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: selected ? colorScheme.secondary : colorScheme.onSurface.withValues(alpha: 0.6),
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: selected
+                  ? colorScheme.secondary
+                  : colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: 8),
             Expanded(

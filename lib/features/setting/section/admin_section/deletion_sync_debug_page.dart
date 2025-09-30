@@ -168,8 +168,8 @@ class _InfoTile extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
+        border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

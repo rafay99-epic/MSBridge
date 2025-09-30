@@ -395,7 +395,8 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondary.withValues(alpha: 0.1),
+                              color:
+                                  colorScheme.secondary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -519,10 +520,12 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colorScheme.secondary.withValues(alpha: 0.05),
+                            color:
+                                colorScheme.secondary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: colorScheme.secondary.withValues(alpha: 0.2),
+                              color:
+                                  colorScheme.secondary.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Column(

@@ -188,7 +188,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -341,8 +342,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -354,7 +355,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                         fontFamily: 'Poppins',
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -504,7 +506,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -718,12 +721,14 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                                  ? theme.colorScheme.primary
+                                      .withValues(alpha: 0.1)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                                    ? theme.colorScheme.primary
+                                        .withValues(alpha: 0.3)
                                     : Colors.transparent,
                                 width: 1,
                               ),
@@ -888,7 +893,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                                 : LineIcons.circle,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -912,8 +918,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -1007,7 +1013,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                                 : LineIcons.circle,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -1031,8 +1038,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -1129,7 +1136,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                                 : LineIcons.circle,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -1149,8 +1157,8 @@ class _VoiceNoteSettingsScreenState extends State<VoiceNoteSettingsScreen> {
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 12,
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                         ],

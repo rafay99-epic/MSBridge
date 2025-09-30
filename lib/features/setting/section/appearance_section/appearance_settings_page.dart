@@ -112,7 +112,8 @@ class AppearanceSettingsPage extends StatelessWidget {
                             Text(
                               "Select your preferred app appearance",
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.primary.withValues(alpha: 0.6),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.6),
                               ),
                             ),
                           ],

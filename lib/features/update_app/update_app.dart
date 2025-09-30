@@ -132,14 +132,14 @@ class _UpdateAppState extends State<UpdateApp> {
                     .surfaceContainerHighest, // Match search screen color
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color:
-                      colorScheme.primary.withValues(alpha: 0.3), // Prominent border
+                  color: colorScheme.primary
+                      .withValues(alpha: 0.3), // Prominent border
                   width: 2, // Thicker border
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        colorScheme.shadow.withValues(alpha: 0.2), // Enhanced shadow
+                    color: colorScheme.shadow
+                        .withValues(alpha: 0.2), // Enhanced shadow
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -218,14 +218,16 @@ class _UpdateAppState extends State<UpdateApp> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: colorScheme.primary.withValues(alpha: 0.3),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: colorScheme.primary.withValues(alpha: 0.3),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),

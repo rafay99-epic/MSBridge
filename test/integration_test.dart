@@ -49,7 +49,8 @@ void main() {
       );
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
-        const MethodChannel('dexterous.com/flutter/local_notifications_schedule'),
+        const MethodChannel(
+            'dexterous.com/flutter/local_notifications_schedule'),
         (_) async => true,
       );
 

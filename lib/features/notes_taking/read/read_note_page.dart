@@ -270,7 +270,8 @@ class _ReadNotePageState extends State<ReadNotePage> {
       child: LinearProgressIndicator(
         value: _scrollProgress.clamp(0, 1),
         minHeight: 4,
-        backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+        backgroundColor:
+            theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
         valueColor: AlwaysStoppedAnimation<Color>(
           theme.colorScheme.primary.withValues(alpha: 0.9),
         ),

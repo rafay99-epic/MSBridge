@@ -73,7 +73,8 @@ class _NoteCardState extends State<NoteCard> {
                         width: 6,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -130,7 +131,8 @@ class _NoteCardState extends State<NoteCard> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                    color: theme.colorScheme.outlineVariant
+                        .withValues(alpha: 0.15),
                   ),
                 ],
               ),

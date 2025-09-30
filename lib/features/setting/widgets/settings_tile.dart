@@ -45,7 +45,8 @@ class SettingsTile extends StatelessWidget {
                       Text(
                         versionNumber!,
                         style: TextStyle(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.7),
                           fontSize: 14,
                         ),
                       ),

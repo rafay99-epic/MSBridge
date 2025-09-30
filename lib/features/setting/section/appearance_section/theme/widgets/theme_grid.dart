@@ -68,21 +68,26 @@ class ThemeGrid extends StatelessWidget {
             Icon(
               Icons.search_off,
               size: 32,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
               "No themes found",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.5),
                   ),
             ),
             Text(
               "Try a different search term",
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.4),
                   ),
             ),
           ],

@@ -91,7 +91,8 @@ class ReadHeader extends StatelessWidget {
                         Icon(
                           LineIcons.tag,
                           size: 14,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 6),
                         Text(
