@@ -9,7 +9,6 @@ MSBridge is a cross-platform Flutter application for lecture note reading and no
 ## Common Commands
 
 ### Development
-```bash
 # Install dependencies
 flutter pub get
 
