@@ -12,9 +12,8 @@ class ShortLinkService {
   static const Duration _timeout = Duration(seconds: 8);
   static const int _maxAttempts = 2;
 
-  static String get _baseUrl => config.UpdateConfig.mode == 'production'
-      ? config.LinkShortenerConfig.prodBaseUrl
-      : config.LinkShortenerConfig.devBaseUrl;
+  static String get _baseUrl => config.LinkShortenerConfig.prodBaseUrl;
+
   static String get _endpoint => config.LinkShortenerConfig.shortenEndpoint;
 
   static Future<String> generateShortLink({

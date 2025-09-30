@@ -19,9 +19,7 @@ class DynamicLink {
   }
 
   static String _buildDefaultShareUrl(String shareId) {
-    final String base = config.UpdateConfig.mode == 'production'
-        ? config.LinkShortenerConfig.prodBaseUrl
-        : config.LinkShortenerConfig.devBaseUrl;
+    final String base = config.LinkShortenerConfig.prodBaseUrl;
     return '$base/s/$shareId';
   }
 
