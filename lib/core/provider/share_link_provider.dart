@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,5 +1,6 @@
-import 'package:hive_flutter/hive_flutter.dart';
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class DatabaseMigrationService {
   static const List<String> _boxNames = [

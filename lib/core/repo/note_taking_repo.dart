@@ -1,10 +1,13 @@
+// Package imports:
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive/hive.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/services/delete/deletion_sync_service.dart';
 import 'package:msbridge/core/services/device_ID/device_id_service.dart';
-import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class NoteTakingRepo {
   static const String _boxName = 'notes';

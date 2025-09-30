@@ -1,12 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+// Project imports:
+import 'package:msbridge/core/permissions/notification_permission.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
+import 'package:msbridge/core/services/update_app/update_manager.dart';
 import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
-import 'package:msbridge/core/permissions/notification_permission.dart';
-import 'package:msbridge/core/services/update_app/update_manager.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});

@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+
+// Project imports:
 import 'package:msbridge/core/models/streak_model.dart';
 import 'package:msbridge/core/models/streak_settings_model.dart';
 import 'package:msbridge/core/repo/streak_repo.dart';
 import 'package:msbridge/core/repo/streak_settings_repo.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
-import 'package:msbridge/core/services/telemetry/telemetry.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/core/services/telemetry/telemetry.dart';
 
 class StreakProvider extends ChangeNotifier {
   StreakModel _currentStreak = StreakModel.initial();

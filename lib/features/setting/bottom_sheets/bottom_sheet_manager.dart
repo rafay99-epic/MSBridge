@@ -1,14 +1,18 @@
 // features/setting/bottom_sheet_manager.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/bottom_sheets/ai_features_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/appearance_bottom_sheet.dart';
+import 'package:msbridge/features/setting/bottom_sheets/background_sync_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/data_management_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/notes_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/profile_management_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/security_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/sync_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/templates_bottom_sheet.dart';
-import 'package:msbridge/features/setting/bottom_sheets/background_sync_bottom_sheet.dart';
 import 'package:msbridge/features/setting/bottom_sheets/voice_notes_bottom_sheet.dart';
 
 class BottomSheetManager {

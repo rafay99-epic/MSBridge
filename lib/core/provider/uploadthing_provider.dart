@@ -1,8 +1,15 @@
+// Dart imports:
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/services/upload/uploadthing_service.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/services/upload/uploadthing_service.dart';
 
 class UploadThingProvider extends ChangeNotifier {
   UploadThingProvider()

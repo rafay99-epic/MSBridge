@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/widgets/snakbar.dart';
 
 class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _isFingerprintEnabled = false;

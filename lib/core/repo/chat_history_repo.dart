@@ -1,6 +1,9 @@
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/database/chat_history/chat_history.dart';
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/chat_history/chat_history.dart';
 
 class ChatHistoryRepo {
   static const String _boxName = 'chat_history';

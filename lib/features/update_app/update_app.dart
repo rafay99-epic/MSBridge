@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:line_icons/line_icons.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
+
+// Project imports:
+import 'package:msbridge/config/config.dart';
 import 'package:msbridge/core/repo/update_app_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/config/config.dart';
 
 class UpdateApp extends StatefulWidget {
   const UpdateApp({super.key});

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
 
 class SearchResultsWidget extends StatelessWidget {

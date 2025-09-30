@@ -1,6 +1,9 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:msbridge/theme/colors.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
+import 'package:msbridge/theme/colors.dart';
 import 'theme_card.dart';
 
 class ThemeGrid extends StatelessWidget {

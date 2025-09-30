@@ -1,11 +1,17 @@
 // features/setting/bottom_sheets/appearance_bottom_sheet.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/section/appearance_section/appearance_settings_page.dart';
 import 'package:msbridge/features/setting/section/appearance_section/font_selection_page.dart';
-import 'package:page_transition/page_transition.dart';
 
 class AppearanceBottomSheet extends StatelessWidget {
   const AppearanceBottomSheet({super.key});

@@ -1,7 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+
 // import 'package:restart_app/restart_app.dart';
 
 class ErrorApp extends StatelessWidget {

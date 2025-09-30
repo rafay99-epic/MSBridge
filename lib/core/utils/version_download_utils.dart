@@ -1,7 +1,12 @@
+// Dart imports:
 import 'dart:convert';
 import 'dart:io';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:path_provider/path_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 
 class VersionDownloadUtils {

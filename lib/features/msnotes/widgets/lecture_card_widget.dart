@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 
 class LectureCardWidget extends StatelessWidget {

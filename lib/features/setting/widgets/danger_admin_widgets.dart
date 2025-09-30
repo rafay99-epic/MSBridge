@@ -1,6 +1,9 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:msbridge/features/setting/section/danger_section/danger_settings_section.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/section/admin_section/admin_settings_section.dart';
+import 'package:msbridge/features/setting/section/danger_section/danger_settings_section.dart';
 
 class DangerAdminWidgets {
   static Widget buildDangerSection(

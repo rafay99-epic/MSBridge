@@ -1,4 +1,4 @@
-name: Import Sort Check
+name: Flutter Import Sort Check
 
 on:
     pull_request:
@@ -9,15 +9,26 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - name: Set up Flutter 3.35.0
+
+            - name: Set up Flutter
               uses: subosito/flutter-action@v2
               with:
                   flutter-version: "3.35.0"
                   channel: "stable"
-            - run: flutter pub get
-            - run: dart pub global activate import_sorter
-            - run: |
-                  if ! dart pub global run import_sorter:main --no-comments --exit-if-changed; then
-                    echo "❌ Imports need sorting. Run: dart pub global run import_sorter:main"
+
+            - name: Install dependencies
+              run: flutter pub get
+
+            - name: Activate import_sorter
+              run: flutter pub global activate import_sorter
+
+            - name: Check import sorting
+              run: |
+                  if ! flutter pub global run import_sorter:main --no-comments --exit-if-changed; then
+                    echo "❌ Some imports need sorting."
+                    echo "Run locally to fix:"
+                    echo "   flutter pub global run import_sorter:main"
                     exit 1
+                  else
+                    echo "✅ All imports are sorted correctly."
                   fi

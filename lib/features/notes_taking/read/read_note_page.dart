@@ -1,16 +1,22 @@
+// Dart imports:
 import 'dart:convert';
 
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/features/notes_taking/read/widgets/is_quil_json.dart';
-import 'package:msbridge/features/notes_taking/read/widgets/read_header.dart';
-import 'package:msbridge/features/notes_taking/read/widgets/read_content.dart';
-import 'package:msbridge/widgets/appbar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/is_quil_json.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/read_content.dart';
+import 'package:msbridge/features/notes_taking/read/widgets/read_header.dart';
+import 'package:msbridge/widgets/appbar.dart';
 
 class ReadNotePage extends StatefulWidget {
   const ReadNotePage({super.key, required this.note});

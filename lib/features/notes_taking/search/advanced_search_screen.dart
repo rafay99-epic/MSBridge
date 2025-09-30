@@ -1,6 +1,16 @@
+// Dart imports:
+import 'dart:async';
+
+// Flutter imports:
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/services/advance_search/advanced_note_search_service.dart';
@@ -8,9 +18,6 @@ import 'package:msbridge/features/msnotes/notes_detail.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/search/date_ranger.dart';
 import 'package:msbridge/features/notes_taking/search/tag_selector.dart';
-import 'package:page_transition/page_transition.dart';
-import 'dart:async';
-import 'package:flutter/foundation.dart';
 
 class UnifiedSearchResult {
   final dynamic note; // Can be NoteTakingModel or MSNote

@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/features/lock/fingerprint_lock_screen.dart';
-import 'package:provider/provider.dart';
 
 class FingerprintAuthWrapper extends StatefulWidget {
   final Widget child;

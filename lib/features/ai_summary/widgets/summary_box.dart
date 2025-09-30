@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/features/ai_summary/ai_summary_display.dart';
 
 Widget buildSummaryText(

@@ -1,9 +1,16 @@
 // Testing Uploadthing UI
 
+// Dart imports:
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/widgets/appbar.dart';
 

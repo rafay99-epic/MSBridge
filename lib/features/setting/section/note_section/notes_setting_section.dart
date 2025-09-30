@@ -1,23 +1,28 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
-import 'package:msbridge/widgets/build_modern_settings_tile.dart';
-import 'package:msbridge/widgets/build_subsection_header.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
-import 'package:msbridge/features/setting/section/note_section/shared_notes_page.dart';
+import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/core/services/backup/backup_service.dart';
-import 'package:msbridge/core/provider/sync_settings_provider.dart';
-import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
+import 'package:msbridge/features/setting/section/note_section/shared_notes_page.dart';
 import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
+import 'package:msbridge/widgets/build_modern_settings_tile.dart';
+import 'package:msbridge/widgets/build_subsection_header.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class NotesSetting extends StatefulWidget {
   const NotesSetting({super.key});

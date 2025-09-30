@@ -1,4 +1,6 @@
+// Package imports:
 import 'package:hive/hive.dart';
+
 part 'notes_model.g.dart';
 
 @HiveType(typeId: 0)

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
 
 class DynamicColorsToggle extends StatelessWidget {

@@ -1,6 +1,11 @@
+// Dart imports:
 import 'dart:convert';
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 

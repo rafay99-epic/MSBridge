@@ -1,15 +1,22 @@
+// Dart imports:
 import 'dart:async';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:msbridge/core/ai/notes_context_builder.dart';
-import 'package:msbridge/config/ai_model_choice.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+// Project imports:
+import 'package:msbridge/config/ai_model_choice.dart';
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/ai/notes_context_builder.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/repo/chat_history_repo.dart';
-import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
 
 class ChatMessage {
   final bool fromUser;

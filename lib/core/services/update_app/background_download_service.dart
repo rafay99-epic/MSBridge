@@ -1,10 +1,17 @@
+// Dart imports:
 import 'dart:io';
 import 'dart:typed_data';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+
+// Package imports:
 import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:path_provider/path_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/permissions/permission.dart';
 import 'package:msbridge/core/services/update_app/update_service.dart';
 

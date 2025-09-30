@@ -1,11 +1,16 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/repo/auth_gate.dart';
 import 'package:msbridge/core/wrapper/main_wrapper.dart';
 import 'package:msbridge/main.dart';
 import 'package:msbridge/theme/colors.dart';
-import 'package:provider/provider.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

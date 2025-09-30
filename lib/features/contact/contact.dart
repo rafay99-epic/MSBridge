@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_svg/svg.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/contact_repo.dart';
 import 'package:msbridge/utils/img.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/theme/colors.dart';
 
 class ColorShowcase extends StatelessWidget {

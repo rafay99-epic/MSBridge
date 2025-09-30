@@ -1,13 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+// Dart imports:
 import 'dart:convert';
+
+// Flutter imports:
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/features/notes_taking/folders/utils/date_filter.dart';
 import 'package:msbridge/features/notes_taking/folders/widgets/folder_widgets.dart';
+import 'package:msbridge/widgets/appbar.dart';
 
 class TagFolderPage extends StatefulWidget {
   final String? tag;

@@ -1,8 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/features/setting/section/appearance_section/theme/theme_selector.dart';
-import 'package:provider/provider.dart';
 
 class AppearanceSettingsSection extends StatelessWidget {
   const AppearanceSettingsSection({super.key});

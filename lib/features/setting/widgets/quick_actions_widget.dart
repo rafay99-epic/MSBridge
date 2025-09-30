@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class QuickActionsWidget extends StatefulWidget {
   final ThemeData theme;

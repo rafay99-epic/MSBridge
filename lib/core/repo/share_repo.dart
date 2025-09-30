@@ -1,11 +1,14 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/utils/uuid.dart';
-import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart' as config;
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+import 'package:msbridge/utils/uuid.dart';
 
 class DynamicLink {
   static const String _shareCollection = 'shared_notes';

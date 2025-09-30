@@ -1,10 +1,14 @@
+// Dart imports:
 import 'dart:async';
 
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
-import 'package:msbridge/core/services/sync/templates_sync.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/core/services/sync/templates_sync.dart';
 import 'package:msbridge/core/services/telemetry/telemetry.dart';
 
 class AutoSyncScheduler {

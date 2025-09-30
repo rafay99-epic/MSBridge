@@ -1,17 +1,24 @@
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/features/ai_chat/optimzed_markdown.dart';
 import 'package:msbridge/features/ai_chat_history/chat_history.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:provider/provider.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:msbridge/core/provider/uploadthing_provider.dart';
 
 class ChatSettingsBottomSheet extends StatelessWidget {
   const ChatSettingsBottomSheet({

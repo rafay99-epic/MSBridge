@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:line_icons/line_icons.dart';
 

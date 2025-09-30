@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/repo/note_version_repo.dart';
+import 'package:msbridge/core/utils/version_download_utils.dart';
 import 'package:msbridge/widgets/build_modern_settings_tile.dart';
 import 'package:msbridge/widgets/build_section_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/utils/version_download_utils.dart';
-import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class VersionHistorySettings extends StatefulWidget {
   const VersionHistorySettings({super.key});

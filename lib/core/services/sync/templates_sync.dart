@@ -1,10 +1,13 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/template_repo.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Syncs local templates with Firebase under users/{uid}/templates/{templateId}
 class TemplatesSyncService {

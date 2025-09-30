@@ -1,17 +1,23 @@
+// Dart imports:
 import 'dart:convert';
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+// Package imports:
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:file_selector/file_selector.dart' as fsel;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/permissions/permission.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 class BackupReport {
   final int total;

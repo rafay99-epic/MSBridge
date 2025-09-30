@@ -1,6 +1,9 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/models/user_settings_model.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 

@@ -1,11 +1,16 @@
+// Dart imports:
 import 'dart:io';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/repo/voice_note_repo.dart';
-import 'package:uuid/uuid.dart';
-import 'package:path/path.dart' as p;
 
 class VoiceNoteService {
   static const String _voiceNotesFolder = 'voice_notes';

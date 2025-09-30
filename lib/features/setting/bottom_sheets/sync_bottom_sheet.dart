@@ -1,6 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
@@ -9,11 +16,9 @@ import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/sync_interval_dialog.dart';
+import 'package:msbridge/features/setting/pages/settings_sync_page.dart';
 import 'package:msbridge/widgets/build_subsection_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/features/setting/pages/settings_sync_page.dart';
-import 'package:page_transition/page_transition.dart';
 
 class SyncBottomSheet extends StatefulWidget {
   const SyncBottomSheet({super.key});

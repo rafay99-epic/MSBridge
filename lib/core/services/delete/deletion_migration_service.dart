@@ -1,9 +1,14 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/services/device_ID/device_id_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DeletionMigrationService {
   static const String _boxName = 'notes';

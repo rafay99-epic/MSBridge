@@ -1,11 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+// Dart imports:
 import 'dart:async';
+
+// Flutter imports:
+import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/appbar.dart';
-import 'package:provider/provider.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({

@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/font_provider.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 
 class FontSelectionPage extends StatefulWidget {
   const FontSelectionPage({super.key});

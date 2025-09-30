@@ -1,19 +1,26 @@
+// Dart imports:
 import 'dart:convert';
-import 'package:flutter/material.dart';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
+import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/utils/uuid.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/widgets/warning_dialog_box.dart';
-import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
 
 class TemplatesHubPage extends StatefulWidget {
   const TemplatesHubPage({super.key});

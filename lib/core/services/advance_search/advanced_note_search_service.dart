@@ -1,5 +1,10 @@
+// Dart imports:
 import 'dart:convert';
+
+// Package imports:
 import 'package:flutter_quill/flutter_quill.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 
 class AdvancedNoteSearchService {

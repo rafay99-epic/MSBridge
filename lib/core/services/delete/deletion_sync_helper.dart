@@ -1,9 +1,14 @@
-import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
-import 'package:msbridge/core/services/delete/deletion_migration_service.dart';
-import 'package:msbridge/core/services/device_ID/device_id_service.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/services/delete/deletion_migration_service.dart';
+import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
+import 'package:msbridge/core/services/device_ID/device_id_service.dart';
 
 /// Simple helper service for integrating deletion sync with existing operations
 class DeletionSyncHelper {

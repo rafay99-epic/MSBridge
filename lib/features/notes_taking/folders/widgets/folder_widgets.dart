@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:intl/intl.dart';
 
 Widget buildFolderHeader(BuildContext context, ColorScheme colorScheme,
     ThemeData theme, String title, int noteCount,

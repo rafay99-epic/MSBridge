@@ -1,10 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
-import 'widgets/theme_header.dart';
-import 'widgets/dynamic_colors_toggle.dart';
-import 'widgets/theme_search_bar.dart';
-import 'widgets/theme_grid.dart';
 import 'widgets/dynamic_colors_message.dart';
+import 'widgets/dynamic_colors_toggle.dart';
+import 'widgets/theme_grid.dart';
+import 'widgets/theme_header.dart';
+import 'widgets/theme_search_bar.dart';
 
 class ThemeSelector extends StatefulWidget {
   const ThemeSelector({super.key, required this.themeProvider});

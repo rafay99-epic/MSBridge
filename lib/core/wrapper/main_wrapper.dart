@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/core/wrapper/app_pin_lock_wrapper.dart';
 import 'package:msbridge/core/wrapper/fingerprint_wrapper.dart';
-import 'package:provider/provider.dart';
 
 class SecurityWrapper extends StatelessWidget {
   final Widget child;

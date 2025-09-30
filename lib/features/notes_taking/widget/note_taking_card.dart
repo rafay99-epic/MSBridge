@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/features/notes_taking/widget/build_content.dart';
-import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
+import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
+import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 
 class NoteCard extends StatefulWidget {
   const NoteCard({

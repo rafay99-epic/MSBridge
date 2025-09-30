@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+// Project imports:
 import 'package:msbridge/core/api/about_author_api.dart';
 
 class AboutAuthorSection extends StatefulWidget {

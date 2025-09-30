@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
-import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/utils/empty_ui.dart';
 
 class NoteList extends StatelessWidget {
   const NoteList({

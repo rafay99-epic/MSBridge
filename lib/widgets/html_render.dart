@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// Project imports:
+import 'package:msbridge/widgets/snakbar.dart';
 
 Widget buildHtmlContent(
     String? htmlData, ThemeData theme, BuildContext context) {

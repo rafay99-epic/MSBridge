@@ -1,16 +1,23 @@
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:record/record.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
-import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
-import 'package:msbridge/widgets/custom_snackbar.dart';
+
+// Package imports:
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
-import 'dart:io';
+import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
+import 'package:msbridge/widgets/custom_snackbar.dart';
 
 class VoiceRecorderWidget extends StatefulWidget {
   final Function(VoiceNoteModel)? onRecordingComplete;

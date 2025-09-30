@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:hive_flutter/hive_flutter.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
 

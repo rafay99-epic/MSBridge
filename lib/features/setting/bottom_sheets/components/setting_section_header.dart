@@ -1,4 +1,6 @@
 // features/setting/components/setting_section_header.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class SettingSectionHeader extends StatelessWidget {

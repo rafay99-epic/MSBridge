@@ -1,12 +1,19 @@
+// Dart imports:
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_to_pdf/flutter_quill_to_pdf.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+
+// Project imports:
 import 'package:msbridge/core/permissions/permission.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class PdfExporter {
   /// Sanitizes a filename by trimming, replacing invalid characters with underscores,

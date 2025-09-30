@@ -1,9 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:msbridge/features/auth/login/login.dart';
 
-import 'package:msbridge/utils/img.dart';
+// Package imports:
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:page_transition/page_transition.dart';
+
+// Project imports:
+import 'package:msbridge/features/auth/login/login.dart';
+import 'package:msbridge/utils/img.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

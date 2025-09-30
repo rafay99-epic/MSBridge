@@ -1,29 +1,36 @@
-import 'package:workmanager/workmanager.dart';
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
+import 'package:flutter/widgets.dart';
+
+// Package imports:
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
-import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
-import 'package:flutter/widgets.dart';
-import 'package:msbridge/core/services/sync/streak_sync_service.dart';
-import 'package:msbridge/core/services/sync/templates_sync.dart';
-import 'package:msbridge/core/services/sync/note_taking_sync.dart';
-import 'package:msbridge/core/services/sync/version_sync_service.dart';
-import 'package:msbridge/core/services/sync/settings_sync_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
-import 'package:msbridge/core/services/device_ID/device_id_service.dart';
 import 'package:msbridge/core/repo/streak_repo.dart';
 import 'package:msbridge/core/repo/streak_settings_repo.dart';
+import 'package:msbridge/core/services/delete/deletion_sync_integration_service.dart';
+import 'package:msbridge/core/services/device_ID/device_id_service.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/services/sync/note_taking_sync.dart';
+import 'package:msbridge/core/services/sync/reverse_sync.dart';
+import 'package:msbridge/core/services/sync/settings_sync_service.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/core/services/sync/templates_sync.dart';
+import 'package:msbridge/core/services/sync/version_sync_service.dart';
 
 class BgTasks {
   static const String taskPeriodicAll = 'msbridge.periodic.all';

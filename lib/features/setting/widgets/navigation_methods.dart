@@ -1,22 +1,26 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/features/splash/splash_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/theme_provider.dart';
-import 'package:msbridge/features/setting/section/app_info/app_info_page.dart';
-import 'package:msbridge/features/setting/section/streak_section/streak_settings_page.dart';
-import 'package:msbridge/features/update_app/update_app.dart';
 
-import 'package:msbridge/features/ai_chat/chat_page.dart';
+// Package imports:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/theme_provider.dart';
+import 'package:msbridge/core/services/backup/backup_service.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
-import 'package:msbridge/core/services/backup/backup_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/features/setting/bottom_sheets/bottom_sheet_manager.dart';
-import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
+import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/bottom_sheets/app_settings_bottom_sheet.dart';
+import 'package:msbridge/features/setting/bottom_sheets/bottom_sheet_manager.dart';
+import 'package:msbridge/features/setting/section/app_info/app_info_page.dart';
+import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
+import 'package:msbridge/features/setting/section/streak_section/streak_settings_page.dart';
+import 'package:msbridge/features/splash/splash_screen.dart';
+import 'package:msbridge/features/update_app/update_app.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class NavigationMethods {
   static void navigateToProfile(BuildContext context) {

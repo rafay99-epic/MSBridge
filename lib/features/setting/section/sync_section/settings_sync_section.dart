@@ -1,17 +1,24 @@
+// Dart imports:
 import 'dart:convert';
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/permissions/permission.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
+import 'package:msbridge/core/services/sync/settings_sync_service.dart';
 import 'package:msbridge/widgets/build_modern_settings_tile.dart';
 import 'package:msbridge/widgets/build_subsection_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/core/services/sync/settings_sync_service.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:msbridge/core/permissions/permission.dart';
 
 class SettingsSyncSection extends StatefulWidget {
   const SettingsSyncSection({super.key});

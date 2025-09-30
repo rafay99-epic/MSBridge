@@ -1,16 +1,21 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
+import 'package:msbridge/core/services/delete/deletion_sync_helper.dart';
+import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/msnotes/msnotes.dart';
 import 'package:msbridge/features/notes_taking/notetaking.dart';
-import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
 import 'package:msbridge/features/voice_notes/screens/voice_notes_screen.dart';
-import 'package:msbridge/core/services/delete/deletion_sync_helper.dart';
-import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

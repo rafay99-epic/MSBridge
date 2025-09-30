@@ -1,14 +1,19 @@
+// Dart imports:
 import 'dart:io';
+
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
-import 'package:msbridge/core/services/upload/uploadthing_service.dart';
-import 'package:msbridge/config/config.dart';
-import 'package:msbridge/utils/uuid.dart';
-import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart' as config;
+import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+import 'package:msbridge/core/services/upload/uploadthing_service.dart';
+import 'package:msbridge/utils/uuid.dart';
 
 class VoiceNoteShareRepository {
   static const String _shareCollection = 'shared_voice_notes';

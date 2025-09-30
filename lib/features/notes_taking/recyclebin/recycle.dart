@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:line_icons/line_icons.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 import 'package:msbridge/utils/empty_ui.dart';

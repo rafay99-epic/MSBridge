@@ -1,6 +1,9 @@
+// Dart imports:
+import 'dart:math';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:math';
 
 class DeviceIdService {
   static const String _deviceIdKey = 'device_id';

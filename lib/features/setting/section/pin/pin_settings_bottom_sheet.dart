@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/features/lock/pin_setup_lock.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:provider/provider.dart';
 
 class PinSettingsBottomSheet extends StatefulWidget {
   const PinSettingsBottomSheet({super.key});

@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/services/update_app/update_service.dart';
-import 'package:msbridge/core/services/update_app/background_download_service.dart';
-import 'package:msbridge/widgets/enhanced_update_dialog.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/services/update_app/background_download_service.dart';
+import 'package:msbridge/core/services/update_app/update_service.dart';
+import 'package:msbridge/widgets/enhanced_update_dialog.dart';
 
 class UpdateManager {
   static const Duration _checkInterval = UpdateConfig.checkInterval;

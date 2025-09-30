@@ -1,9 +1,12 @@
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/utils/version_diff_utils.dart';
 import 'package:msbridge/utils/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class NoteVersionRepo {
   static const String _boxName = 'note_versions';

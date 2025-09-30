@@ -1,16 +1,21 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/widgets/appbar.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/streak_provider.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/build_section_header.dart';
 import 'package:msbridge/widgets/build_settings_tile.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/streak_display_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
 class StreakSettingsPage extends StatefulWidget {
   const StreakSettingsPage({super.key});

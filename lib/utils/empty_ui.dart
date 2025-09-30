@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/theme_provider.dart';
 
 class EmptyNotesMessage extends StatelessWidget {
   final String message;

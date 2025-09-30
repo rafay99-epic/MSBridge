@@ -1,15 +1,21 @@
 // features/setting/bottom_sheets/ai_features_bottom_sheet.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/auto_save_note_provider.dart';
+import 'package:msbridge/core/provider/chat_history_provider.dart';
+import 'package:msbridge/features/ai_chat/chat_page.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_toggle_tile.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/auto_save_note_provider.dart';
-import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/features/setting/section/note_section/ai_model_selection.dart';
-import 'package:msbridge/features/ai_chat/chat_page.dart';
-import 'package:page_transition/page_transition.dart';
 
 class AIFeaturesBottomSheet extends StatelessWidget {
   const AIFeaturesBottomSheet({super.key});

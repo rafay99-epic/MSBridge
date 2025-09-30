@@ -1,13 +1,18 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:share_plus/share_plus.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:flutter/services.dart';
 
 class SharedNotesPage extends StatefulWidget {
   const SharedNotesPage({super.key});

@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});

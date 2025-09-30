@@ -1,12 +1,18 @@
 // Chat History Bottom Sheet
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});

@@ -1,5 +1,9 @@
 // features/setting/components/sync_interval_dialog.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 

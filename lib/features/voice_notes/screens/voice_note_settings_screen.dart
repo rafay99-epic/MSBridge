@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/models/voice_note_settings_model.dart';
+import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
 
 class VoiceNoteSettingsScreen extends StatefulWidget {

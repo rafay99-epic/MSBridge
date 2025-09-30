@@ -1,8 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/build_settings_tile.dart';
 import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/features/voice_notes/screens/shared_voice_notes_screen.dart';
+import 'package:msbridge/widgets/build_settings_tile.dart';
 
 class VoiceNotesSettingsSection extends StatelessWidget {
   const VoiceNotesSettingsSection({super.key});

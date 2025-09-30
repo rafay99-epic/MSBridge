@@ -1,9 +1,14 @@
-import 'package:flutter/material.dart';
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_version.dart';
-import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
+import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/services/sync/version_sync_service.dart';
 
 class NoteVersionProvider with ChangeNotifier {

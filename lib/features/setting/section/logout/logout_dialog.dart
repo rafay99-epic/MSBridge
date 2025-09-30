@@ -1,14 +1,18 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/splash/splash_screen.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:line_icons/line_icons.dart';
-
-import 'package:page_transition/page_transition.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Fast parallel clearing of all Hive boxes
 Future<void> _clearAllHiveBoxesFast() async {

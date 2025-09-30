@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
 import 'package:msbridge/features/ai_summary/widgets/copy_and_close_row.dart';
 import 'package:msbridge/features/ai_summary/widgets/summary_box.dart';
 import 'package:msbridge/features/ai_summary/widgets/title.dart';
-import 'package:provider/provider.dart';
 
 void showAiSummaryBottomSheet(BuildContext context) {
   showCupertinoModalBottomSheet(

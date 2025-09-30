@@ -1,17 +1,22 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/config/feature_flag.dart';
-import 'package:msbridge/features/setting/widgets/search_results_widget.dart';
+import 'package:msbridge/core/provider/streak_provider.dart';
+import 'package:msbridge/features/setting/search/settings_search_bottom_sheet.dart';
+import 'package:msbridge/features/setting/widgets/danger_admin_widgets.dart';
+import 'package:msbridge/features/setting/widgets/navigation_methods.dart';
 import 'package:msbridge/features/setting/widgets/profile_header_widget.dart';
 import 'package:msbridge/features/setting/widgets/quick_actions_widget.dart';
+import 'package:msbridge/features/setting/widgets/search_results_widget.dart';
 import 'package:msbridge/features/setting/widgets/settings_section_widget.dart';
-import 'package:msbridge/features/setting/widgets/danger_admin_widgets.dart';
-import 'package:msbridge/features/setting/search/settings_search_bottom_sheet.dart';
-import 'package:msbridge/features/setting/widgets/navigation_methods.dart';
 import 'package:msbridge/widgets/streak_display_widget.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/core/provider/streak_provider.dart';
 
 // Searchable setting item model
 class SearchableSetting {

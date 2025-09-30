@@ -1,5 +1,10 @@
+// Dart imports:
 import 'dart:convert';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/quill_delta.dart';
 

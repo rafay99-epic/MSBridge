@@ -1,11 +1,16 @@
+// Dart imports:
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
+
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/models/user_model.dart';
-import 'package:msbridge/core/utils/rate_limiter.dart';
 import 'package:workmanager/workmanager.dart';
+
+// Project imports:
+import 'package:msbridge/core/models/user_model.dart';
 import 'package:msbridge/core/services/background/scheduler_registration.dart';
+import 'package:msbridge/core/utils/rate_limiter.dart';
 
 class AuthResult {
   final User? user;

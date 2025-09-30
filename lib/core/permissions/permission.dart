@@ -1,8 +1,15 @@
-import 'package:flutter/material.dart';
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 class PermissionHandler {

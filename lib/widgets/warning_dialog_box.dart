@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 // Modern, theme-aware confirmation dialog used across the app.

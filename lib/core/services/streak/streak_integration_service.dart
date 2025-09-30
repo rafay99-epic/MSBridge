@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/streak_provider.dart';
+import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
 class StreakIntegrationService {

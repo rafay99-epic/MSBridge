@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:pinput/pinput.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class PinLockScreen extends StatefulWidget {
   final bool isCreating;

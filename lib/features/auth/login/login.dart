@@ -1,7 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/forget/forget_password.dart';
 import 'package:msbridge/features/auth/register/register.dart';
@@ -9,7 +15,6 @@ import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

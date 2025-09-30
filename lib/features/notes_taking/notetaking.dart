@@ -1,26 +1,33 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:ui';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/folders/folders_page.dart';
+import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
+import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
-import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/features/templates/templates_hub.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
 enum NoteLayoutMode { grid, list }
 

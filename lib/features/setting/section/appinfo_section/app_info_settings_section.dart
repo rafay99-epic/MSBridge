@@ -1,14 +1,18 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/core/repo/webview_repo.dart';
-import 'package:msbridge/features/contact/contact.dart';
-import 'package:msbridge/features/setting/widgets/settings_section.dart';
-
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart';
+import 'package:msbridge/core/repo/webview_repo.dart';
+import 'package:msbridge/features/contact/contact.dart';
 import 'package:msbridge/features/setting/section/appinfo_section/about_author_page.dart';
+import 'package:msbridge/features/setting/widgets/settings_section.dart';
 
 class AppInfoSettingsSection extends StatefulWidget {
   const AppInfoSettingsSection({super.key});

@@ -1,33 +1,40 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:convert';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// Package imports:
+import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+// Project imports:
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
+import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
+import 'package:msbridge/core/repo/share_repo.dart';
+import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
+import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
-import 'package:msbridge/widgets/appbar.dart';
-import 'package:msbridge/core/database/templates/note_template.dart';
-import 'package:msbridge/core/repo/template_repo.dart';
-import 'package:msbridge/features/templates/templates_hub.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/core/repo/share_repo.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:flutter/services.dart';
-import 'package:msbridge/core/provider/share_link_provider.dart';
-import 'package:msbridge/core/services/streak/streak_integration_service.dart';
-import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
+import 'package:msbridge/widgets/appbar.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key, this.note, this.initialTemplate});

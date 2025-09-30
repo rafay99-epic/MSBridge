@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+
+// Project imports:
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_toggle_tile.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class BackgroundSyncBottomSheet extends StatefulWidget {
   const BackgroundSyncBottomSheet({super.key});

@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:permission_handler/permission_handler.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 class NotificationPermissionHandler {

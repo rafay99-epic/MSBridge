@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/models/haptic_feedback_settings_model.dart';
 
 class HapticFeedbackSettingsProvider with ChangeNotifier {

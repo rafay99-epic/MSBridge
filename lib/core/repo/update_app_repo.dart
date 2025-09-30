@@ -1,8 +1,15 @@
+// Dart imports:
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:msbridge/core/permissions/permission.dart';
-import 'package:path_provider/path_provider.dart';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/permissions/permission.dart';
 
 class UpdateAppRepo {
   final String apkUrl;

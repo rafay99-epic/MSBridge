@@ -1,12 +1,16 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
+
 import 'package:msbridge/core/models/user_settings_model.dart'; // Added import for UserSettingsModel
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ReverseSyncService {
   final AuthRepo _authRepo = AuthRepo();

@@ -1,8 +1,15 @@
+// Dart imports:
 import 'dart:convert';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/models/streak_settings_model.dart';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/models/streak_settings_model.dart';
 
 class StreakSettingsRepo {
   static const String _settingsKey = 'streak_settings_data';

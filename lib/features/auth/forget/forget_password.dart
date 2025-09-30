@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
 import 'package:msbridge/widgets/snakbar.dart';

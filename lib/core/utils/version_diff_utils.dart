@@ -1,3 +1,4 @@
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 
 class VersionDiffUtils {

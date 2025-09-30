@@ -1,7 +1,12 @@
+// Flutter imports:
+import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:flutter/foundation.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class HiveNoteTakingRepo {

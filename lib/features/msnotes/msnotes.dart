@@ -1,21 +1,26 @@
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/features/msnotes/lectures_screen.dart';
-import 'package:msbridge/features/msnotes/widgets/loading_state_widget.dart';
 import 'package:msbridge/features/msnotes/widgets/empty_state_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/loading_state_widget.dart';
 import 'package:msbridge/features/msnotes/widgets/section_header_widget.dart';
 import 'package:msbridge/features/msnotes/widgets/subject_card_widget.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
 
 class Msnotes extends StatefulWidget {
   const Msnotes({super.key});
