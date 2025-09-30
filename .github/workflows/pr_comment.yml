@@ -1,0 +1,40 @@
+name: PR Context Comment
+
+on:
+    pull_request:
+        types: [opened, reopened, synchronize]
+
+jobs:
+    comment:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Generate PR summary
+              id: summary
+              run: |
+                  echo "PR_TITLE<<EOF" >> $GITHUB_OUTPUT
+                  echo "${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+                  echo "PR_BODY<<EOF" >> $GITHUB_OUTPUT
+                  echo "${{ github.event.pull_request.body }}" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+
+            - name: Post comment
+              uses: marocchino/sticky-pull-request-comment@v2
+              with:
+                  recreate: true
+                  message: |
+                      ### CI Summary for PR #${{ github.event.pull_request.number }}
+
+                      - Title: `${{ steps.summary.outputs.PR_TITLE }}`
+                      - Author: `${{ github.actor }}`
+                      - Base: `${{ github.base_ref }}` ← Head: `${{ github.head_ref }}`
+
+                      This PR will run:
+                      - `flutter pub get`
+                      - `flutter analyze`
+                      - `flutter test`
+
+                      Please ensure:
+                      - Tests are added/updated for changes
+                      - Docs updated where applicable
+                      - No hard-coded colors; use theme values
