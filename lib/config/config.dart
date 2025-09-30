@@ -53,7 +53,7 @@ class UpdateConfig {
   static const Duration healthCheckTimeout = Duration(seconds: 10);
   static const Duration updateCheckTimeout = Duration(seconds: 15);
 
-  static const String mode = "development";
+  static const String mode = "production";
 }
 
 class LinkShortenerConfig {
