@@ -9,8 +9,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: dart-lang/setup-dart@v1
-            - run: dart pub get
+            - name: Set up Flutter 3.35.0
+              uses: subosito/flutter-action@v2
+              with:
+                  flutter-version: "3.35.0"
+                  channel: "stable"
+            - run: flutter pub get
             - run: dart pub global activate import_sorter
             - run: |
                   if ! dart pub global run import_sorter:main --no-comments --exit-if-changed; then
