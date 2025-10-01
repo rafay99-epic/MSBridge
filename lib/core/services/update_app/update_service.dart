@@ -1,7 +1,12 @@
+// Dart imports:
 import 'dart:convert';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+
+// Project imports:
 import 'package:msbridge/config/config.dart';
 
 class UpdateService {

@@ -1,17 +1,22 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/template_settings_provider.dart';
+import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_toggle_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/sync_interval_dialog.dart';
-import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class TemplatesBottomSheet extends StatefulWidget {
   const TemplatesBottomSheet({super.key});
@@ -76,18 +81,21 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                     if (!provider.enabled ||
                         !provider.cloudSyncEnabled ||
                         !global) {
-                      CustomSnackBar.show(
-                        context,
-                        'Templates sync is disabled',
-                        isSuccess: false,
-                      );
+                      if (context.mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          'Templates sync is disabled',
+                          isSuccess: false,
+                        );
+                      }
+
                       return;
                     }
                     setState(() => _isSyncing = true);
                     try {
                       await TemplatesSyncService()
                           .syncLocalTemplatesToFirebase();
-                      if (mounted) {
+                      if (context.mounted) {
                         Navigator.of(context).pop();
                         CustomSnackBar.show(
                           context,
@@ -102,7 +110,7 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                       FlutterBugfender.error(
                           'Failed to sync templates to cloud: $e');
                     } finally {
-                      if (mounted) setState(() => _isSyncing = false);
+                      if (context.mounted) setState(() => _isSyncing = false);
                     }
                   },
                   isLoading: _isSyncing,
@@ -119,18 +127,20 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                     if (!provider.enabled ||
                         !provider.cloudSyncEnabled ||
                         !global) {
-                      CustomSnackBar.show(
-                        context,
-                        'Templates sync is disabled',
-                        isSuccess: false,
-                      );
+                      if (context.mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          'Templates sync is disabled',
+                          isSuccess: false,
+                        );
+                      }
                       return;
                     }
                     setState(() => _isPulling = true);
                     try {
                       final count =
                           await TemplatesSyncService().pullTemplatesFromCloud();
-                      if (mounted) {
+                      if (context.mounted) {
                         Navigator.of(context).pop();
                         CustomSnackBar.show(
                           context,
@@ -161,6 +171,7 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                   onTap: () async {
                     final current =
                         await AutoSyncScheduler.getTemplatesIntervalMinutes();
+                    if (!context.mounted) return;
                     final choice = await SyncIntervalDialog.show(
                       context,
                       initialMinutes: current,
@@ -169,7 +180,7 @@ class _TemplatesBottomSheetState extends State<TemplatesBottomSheet> {
                     if (choice != null) {
                       await AutoSyncScheduler.setTemplatesIntervalMinutes(
                           choice);
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       CustomSnackBar.show(
                         context,
                         choice == 0

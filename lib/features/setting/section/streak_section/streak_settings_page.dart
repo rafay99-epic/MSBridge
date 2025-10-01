@@ -1,16 +1,21 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/widgets/appbar.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/streak_provider.dart';
+import 'package:msbridge/core/services/sync/streak_sync_service.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/build_section_header.dart';
 import 'package:msbridge/widgets/build_settings_tile.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/streak_display_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 
 class StreakSettingsPage extends StatefulWidget {
   const StreakSettingsPage({super.key});
@@ -200,11 +205,13 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                               await Provider.of<StreakProvider>(context,
                                       listen: false)
                                   .refreshStreak();
-                              CustomSnackBar.show(
-                                context,
-                                'Streak cloud sync enabled and synced',
-                                isSuccess: true,
-                              );
+                              if (context.mounted) {
+                                CustomSnackBar.show(
+                                  context,
+                                  'Streak cloud sync enabled and synced',
+                                  isSuccess: true,
+                                );
+                              }
                             }
                             FlutterBugfender.log(
                                 'Streak sync toggle ON and synced');
@@ -219,7 +226,6 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                             FlutterBugfender.log('Streak sync toggle OFF');
                           }
                         } catch (e) {
-                          // Roll back pref on failure
                           try {
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setBool(
@@ -290,13 +296,15 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                     if (context.mounted) {
                       await Provider.of<StreakProvider>(context, listen: false)
                           .refreshStreak();
-                      CustomSnackBar.show(
-                        context,
-                        ok
-                            ? 'Streak synced with cloud'
-                            : 'Sync disabled or no changes',
-                        isSuccess: ok,
-                      );
+                      if (context.mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          ok
+                              ? 'Streak synced with cloud'
+                              : 'Sync disabled or no changes',
+                          isSuccess: ok,
+                        );
+                      }
                     }
                     FirebaseCrashlytics.instance.log('Streak syncNow success');
                   } catch (e) {
@@ -321,17 +329,18 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
                     if (context.mounted) {
                       await Provider.of<StreakProvider>(context, listen: false)
                           .refreshStreak();
-                      CustomSnackBar.show(
-                        context,
-                        'Streak pulled from cloud',
-                        isSuccess: true,
-                      );
+                      if (context.mounted) {
+                        CustomSnackBar.show(
+                          context,
+                          'Streak pulled from cloud',
+                          isSuccess: true,
+                        );
+                      }
                     }
                     FirebaseCrashlytics.instance.log('Streak pull success');
                   } catch (e) {
                     FlutterBugfender.sendCrash('Streak pull failed: $e',
                         StackTrace.current.toString());
-                    FlutterBugfender.error('Streak pull failed: $e');
                     if (context.mounted) {
                       CustomSnackBar.show(
                         context,
@@ -363,7 +372,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -391,7 +401,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -413,7 +424,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -439,7 +451,8 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -460,12 +473,12 @@ class _StreakSettingsPageState extends State<StreakSettingsPage> {
   }
 
   void _showTimePicker(BuildContext context) async {
+    final streakProvider = Provider.of<StreakProvider>(context, listen: false);
     final time =
         await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (time != null) {
       setState(() => _selectedTime = time);
-      final streakProvider =
-          Provider.of<StreakProvider>(context, listen: false);
+
       streakProvider.setNotificationTime(time);
     }
   }

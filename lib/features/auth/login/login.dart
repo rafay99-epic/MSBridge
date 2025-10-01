@@ -1,6 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/auth/forget/forget_password.dart';
 import 'package:msbridge/features/auth/register/register.dart';
@@ -8,7 +15,6 @@ import 'package:msbridge/features/auth/verify/verify_email.dart';
 import 'package:msbridge/features/home/home.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,10 +41,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final isVerified = await authRepo.isEmailVerified();
 
       if (isVerified) {
+        if (!mounted) return;
         CustomSnackBar.show(context, "✅ Welcome ${result.user!.displayName}!",
             isSuccess: true);
 
         Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             PageTransition(
@@ -49,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         });
       } else {
+        if (!mounted) return;
         CustomSnackBar.show(context, "❌ Please verify your email first.",
             isSuccess: false);
         Navigator.pushReplacement(
@@ -61,7 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
+      if (!mounted) return;
       CustomSnackBar.show(context, "❌ ${result.error}", isSuccess: false);
+      FlutterBugfender.error("Login failed: ${result.error}");
     }
   }
 
@@ -93,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text("Seamlessly access and sync your MS Notes.",
                       style: TextStyle(
                           fontSize: 16,
-                          color: theme.onSurface.withOpacity(0.7))),
+                          color: theme.onSurface.withValues(alpha: 0.7))),
                   const SizedBox(height: 32),
                   AutofillGroup(
                     child: Column(
@@ -178,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text("Don't have an account?",
                           style: TextStyle(
                               fontSize: 16,
-                              color: theme.onSurface.withOpacity(0.8))),
+                              color: theme.onSurface.withValues(alpha: 0.8))),
                       TextButton(
                         onPressed: () {
                           Navigator.push(

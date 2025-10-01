@@ -48,3 +48,17 @@ app.*.map.json
 /android/app/google-services.json
 
 /README_REPORT.md
+
+.venv/
+reports/*
+
+test_core_init/*
+test_hive_db/*
+test_note_reading/*
+test_note_taking/*
+test_notification/*
+test_provider_state/*
+test_theme_engine/*
+test_ui_rendering/*
+test_voice_note/*
+test_integration/*

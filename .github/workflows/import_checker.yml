@@ -1,0 +1,37 @@
+name: Flutter Import Sort Check
+
+on:
+    pull_request: # Runs for PRs to any branch
+    workflow_dispatch: # Optional: allow manual run from Actions tab
+
+jobs:
+    import-sort:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Flutter
+              uses: subosito/flutter-action@v2
+              with:
+                  flutter-version: "3.35.0"
+                  channel: stable
+
+            - name: Install dependencies
+              run: flutter pub get
+
+            - name: Activate import_sorter
+              run: flutter pub global activate import_sorter
+
+            - name: Check import sorting
+              run: |
+                  echo "🔎 Checking import order..."
+                  if ! flutter pub global run import_sorter:main; then
+                    echo ""
+                    echo "❌ Import check failed!"
+                    echo "👉 Please fix by running locally:"
+                    echo "   flutter pub global run import_sorter:main"
+                    echo ""
+                    exit 1
+                  else
+                    echo "✅ All imports are sorted correctly!"
+                  fi

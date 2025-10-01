@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -42,7 +47,7 @@ class ForgetPassword extends StatelessWidget {
                     "Enter your email to reset your password.",
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.onSurface.withOpacity(0.7),
+                      color: theme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -80,6 +85,7 @@ class ForgetPassword extends StatelessWidget {
                           final result = await authRepo.resetPassword(email);
                           if (result.isSuccess) {
                             emailController.clear();
+                            if (!context.mounted) return;
                             CustomSnackBar.show(
                               context,
                               "Password reset email sent. Check your inbox.",
@@ -89,8 +95,7 @@ class ForgetPassword extends StatelessWidget {
                             FlutterBugfender.sendCrash(
                                 "Password reset failed: $result.error",
                                 StackTrace.current.toString());
-                            FlutterBugfender.error(
-                                "Password reset failed: $result.error");
+                            if (!context.mounted) return;
                             CustomSnackBar.show(
                               context,
                               result.error ?? "Password reset failed.",
@@ -101,7 +106,7 @@ class ForgetPassword extends StatelessWidget {
                           FlutterBugfender.sendCrash(
                               "Password reset failed: $e",
                               StackTrace.current.toString());
-                          FlutterBugfender.error("Password reset failed: $e");
+                          if (!context.mounted) return;
                           CustomSnackBar.show(
                             context,
                             "Password reset failed.",

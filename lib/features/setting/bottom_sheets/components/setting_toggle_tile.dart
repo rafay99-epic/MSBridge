@@ -1,4 +1,6 @@
 // setting_toggle_tile.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class SettingToggleTile extends StatelessWidget {
@@ -28,7 +30,7 @@ class SettingToggleTile extends StatelessWidget {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -37,7 +39,7 @@ class SettingToggleTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -62,7 +64,7 @@ class SettingToggleTile extends StatelessWidget {
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.6),
+                    color: colorScheme.primary.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -71,7 +73,7 @@ class SettingToggleTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.primary,
           ),
         ],
       ),

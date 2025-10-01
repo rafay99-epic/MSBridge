@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 Widget buildSectionHeader(BuildContext context, String title, IconData icon,
@@ -11,8 +12,8 @@ Widget buildSectionHeader(BuildContext context, String title, IconData icon,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDanger
-              ? Colors.red.withOpacity(0.1)
-              : colorScheme.primary.withOpacity(0.1),
+              ? Colors.red.withValues(alpha: 0.1)
+              : colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(

@@ -1,7 +1,12 @@
+// Dart imports:
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/models/streak_model.dart';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/models/streak_model.dart';
 
 class StreakRepo {
   static const String _streakKey = 'user_streak_data';

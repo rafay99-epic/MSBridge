@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/custom_markdown_renderer.dart';
 
 class ContentSectionWidget extends StatelessWidget {
@@ -21,7 +26,7 @@ class ContentSectionWidget extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.1),
+            color: colorScheme.outline.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -62,7 +67,7 @@ class ContentSectionWidget extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.1),
+            color: colorScheme.outline.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -71,7 +76,7 @@ class ContentSectionWidget extends StatelessWidget {
             Icon(
               LineIcons.exclamationTriangle,
               size: 64,
-              color: colorScheme.error.withOpacity(0.6),
+              color: colorScheme.error.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 16),
             Text(
@@ -87,7 +92,7 @@ class ContentSectionWidget extends StatelessWidget {
               "This lecture doesn't have any content yet",
               style: TextStyle(
                 fontSize: 16,
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),

@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class QuickActionsWidget extends StatefulWidget {
   final ThemeData theme;
@@ -171,10 +176,10 @@ class _QuickActionsWidgetState extends State<QuickActionsWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: action.color.withOpacity(0.1),
+        color: action.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: action.color.withOpacity(0.2),
+          color: action.color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -326,10 +331,10 @@ class QuickActionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
-            color: color.withOpacity(disabled ? 0.05 : 0.1),
+            color: color.withValues(alpha: disabled ? 0.05 : 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: color.withOpacity(disabled ? 0.1 : 0.2),
+              color: color.withValues(alpha: disabled ? 0.1 : 0.2),
               width: 1,
             ),
           ),

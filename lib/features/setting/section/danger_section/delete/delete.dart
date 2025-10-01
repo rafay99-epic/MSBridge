@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -65,13 +70,13 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.error.withOpacity(0.05),
-            colorScheme.error.withOpacity(0.02),
+            colorScheme.error.withValues(alpha: 0.05),
+            colorScheme.error.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.error.withOpacity(0.1),
+          color: colorScheme.error.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -81,7 +86,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: colorScheme.error.withOpacity(0.1),
+              color: colorScheme.error.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -109,7 +114,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
           Text(
             "This action will permanently remove your account and all associated data.",
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: colorScheme.error.withOpacity(0.8),
+              color: colorScheme.error.withValues(alpha: 0.8),
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -125,10 +130,10 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.error.withOpacity(0.05),
+        color: colorScheme.error.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.error.withOpacity(0.1),
+          color: colorScheme.error.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -195,7 +200,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: colorScheme.error.withOpacity(0.1),
+              color: colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
@@ -209,7 +214,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
             child: Text(
               text,
               style: TextStyle(
-                color: colorScheme.error.withOpacity(0.8),
+                color: colorScheme.error.withValues(alpha: 0.8),
                 fontSize: 14,
               ),
             ),
@@ -256,7 +261,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                shadowColor: colorScheme.error.withOpacity(0.3),
+                shadowColor: colorScheme.error.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -271,7 +276,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: colorScheme.primary,
                 side: BorderSide(
-                  color: colorScheme.primary.withOpacity(0.3),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                   width: 1,
                 ),
                 padding:
@@ -310,7 +315,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorScheme.error.withOpacity(0.1),
+                  color: colorScheme.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -346,7 +351,7 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
               Text(
                 'This action is irreversible and will permanently delete all of your data, notes, and account information.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.primary.withOpacity(0.7),
+                  color: colorScheme.primary.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -431,11 +436,12 @@ class DeleteAccountScreenState extends State<DeleteAccountScreen> {
       _isLoading = false;
     });
 
-    if (result.error == null) {
+    if (result.error == null && mounted) {
       CustomSnackBar.show(context, "Account deleted successfully.");
 
       showLogoutDialog(context);
     } else {
+      if (!mounted) return;
       CustomSnackBar.show(context, "Failed to delete account: ${result.error}");
     }
   }

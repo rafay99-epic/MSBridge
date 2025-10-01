@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/repo/chat_history_repo.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class ChatHistoryProvider extends ChangeNotifier {
   static const String _historyEnabledKey = 'chat_history_enabled';

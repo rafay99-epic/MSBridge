@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/custom_text_field.dart';
 import 'package:msbridge/widgets/error_dialog.dart';
@@ -66,7 +71,7 @@ class _RegisterState extends State<Register> {
                     "Fill in the details to sign up.",
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.onSurface.withOpacity(0.7),
+                      color: theme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -215,7 +220,7 @@ class _RegisterState extends State<Register> {
       _fullnameController.text,
       _phoneNumberController.text,
     );
-
+    if (!context.mounted) return;
     Navigator.pop(context);
 
     if (result.isSuccess) {
@@ -230,6 +235,7 @@ class _RegisterState extends State<Register> {
 
       // Navigate back after delay to let user read the message
       Future.delayed(const Duration(seconds: 4), () {
+        if (!context.mounted) return;
         Navigator.pop(context);
       });
     } else {

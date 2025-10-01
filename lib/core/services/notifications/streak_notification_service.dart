@@ -1,8 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+// Project imports:
 import 'package:msbridge/core/permissions/notification_permission.dart';
 
 class StreakNotificationService {

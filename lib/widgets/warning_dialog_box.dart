@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 // Modern, theme-aware confirmation dialog used across the app.
@@ -18,14 +19,14 @@ void showConfirmationDialog(
 
   showDialog(
     context: context,
-    barrierColor: colors.shadow.withOpacity(0.4),
+    barrierColor: colors.shadow.withValues(alpha: 0.4),
     builder: (BuildContext context) {
       return AlertDialog(
         backgroundColor: colors.surface,
         elevation: 6,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colors.outline.withOpacity(0.12)),
+          side: BorderSide(color: colors.outline.withValues(alpha: 0.12)),
         ),
         titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
         contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
@@ -38,7 +39,7 @@ void showConfirmationDialog(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -65,7 +66,7 @@ void showConfirmationDialog(
           description,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurface.withOpacity(0.8),
+            color: colors.onSurface.withValues(alpha: 0.8),
             height: 1.4,
           ),
         ),

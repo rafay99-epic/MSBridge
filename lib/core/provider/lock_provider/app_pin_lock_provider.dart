@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/widgets.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/repo/pin_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/repo/pin_repo.dart';
 
 class AppPinLockProvider extends ChangeNotifier with WidgetsBindingObserver {
   final PinRepository _repository;

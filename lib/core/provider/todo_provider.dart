@@ -1,8 +1,15 @@
+// Dart imports:
 import 'dart:convert';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/models/todo_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/models/todo_model.dart';
 
 class TodoProvider with ChangeNotifier {
   List<TodoItem> _tasks = [];

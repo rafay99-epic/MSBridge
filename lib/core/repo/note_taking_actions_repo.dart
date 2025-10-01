@@ -1,12 +1,15 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/utils/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class NoteTakingActions {
   static Future<SaveNoteResult> saveNote({

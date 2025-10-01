@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
@@ -170,7 +175,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
               Text(
                 'Loading profile...',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.primary.withOpacity(0.7),
+                  color: colorScheme.primary.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -231,13 +236,13 @@ class _ProfileEditPageState extends State<ProfileEditPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primary.withOpacity(0.05),
-            colorScheme.primary.withOpacity(0.02),
+            colorScheme.primary.withValues(alpha: 0.05),
+            colorScheme.primary.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -250,8 +255,8 @@ class _ProfileEditPageState extends State<ProfileEditPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  colorScheme.primary.withOpacity(0.15),
-                  colorScheme.primary.withOpacity(0.05),
+                  colorScheme.primary.withValues(alpha: 0.15),
+                  colorScheme.primary.withValues(alpha: 0.05),
                 ],
               ),
               shape: BoxShape.circle,
@@ -274,7 +279,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
           Text(
             'Update your personal information below',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -291,12 +296,12 @@ class _ProfileEditPageState extends State<ProfileEditPage>
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
+          color: colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -351,12 +356,12 @@ class _ProfileEditPageState extends State<ProfileEditPage>
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
+          color: colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -424,7 +429,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
             ? []
             : [
                 BoxShadow(
-                  color: colorScheme.primary.withOpacity(0.3),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -471,7 +476,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
 
         return Positioned.fill(
           child: Container(
-            color: colorScheme.surface.withOpacity(0.9),
+            color: colorScheme.surface.withValues(alpha: 0.9),
             child: Center(
               child: Transform.scale(
                 scale: _successScaleAnimation.value,
@@ -483,12 +488,12 @@ class _ProfileEditPageState extends State<ProfileEditPage>
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.2),
+                        color: colorScheme.primary.withValues(alpha: 0.2),
                         width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.shadow.withOpacity(0.2),
+                          color: colorScheme.shadow.withValues(alpha: 0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -500,7 +505,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -521,7 +526,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
                         Text(
                           'Your changes have been saved successfully',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.7),
+                            color: colorScheme.primary.withValues(alpha: 0.7),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -553,7 +558,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -562,7 +567,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -575,7 +580,7 @@ class _ProfileEditPageState extends State<ProfileEditPage>
                 Text(
                   label,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.7),
+                    color: colorScheme.primary.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -628,25 +633,25 @@ class _ProfileEditPageState extends State<ProfileEditPage>
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: colorScheme.primary.withOpacity(0.5),
+              color: colorScheme.primary.withValues(alpha: 0.5),
             ),
             prefixIcon: Icon(
               icon,
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
             filled: true,
             fillColor: colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),

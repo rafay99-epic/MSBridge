@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+// Package imports:
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
+
+// Project imports:
 import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
 
 class DeletionSyncDebugPage extends StatefulWidget {
@@ -145,7 +150,7 @@ class _DeletionSyncDebugPageState extends State<DeletionSyncDebugPage> {
             Text(
               'This triggers your existing Workmanager task ("${BgTasks.taskPeriodicAll}") which includes notes/templates/settings/streak sync and the deletion sync layer integrated in the dispatcher.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -168,8 +173,8 @@ class _InfoTile extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: colorScheme.outline.withOpacity(0.1), width: 1),
+        border: Border.all(
+            color: colorScheme.outline.withValues(alpha: 0.1), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

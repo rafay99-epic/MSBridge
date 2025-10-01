@@ -1,6 +1,9 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:msbridge/theme/colors.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
+import 'package:msbridge/theme/colors.dart';
 import 'theme_card.dart';
 
 class ThemeGrid extends StatelessWidget {
@@ -57,7 +60,7 @@ class ThemeGrid extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -68,21 +71,26 @@ class ThemeGrid extends StatelessWidget {
             Icon(
               Icons.search_off,
               size: 32,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
               "No themes found",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.5),
                   ),
             ),
             Text(
               "Try a different search term",
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.4),
                   ),
             ),
           ],

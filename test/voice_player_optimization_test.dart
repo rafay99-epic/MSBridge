@@ -1,6 +1,9 @@
+// Package imports:
 import 'package:flutter_test/flutter_test.dart';
-import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/features/voice_notes/widgets/voice_player_widget.dart';
 
 void main() {
   group('Voice Player Widget Optimization Tests', () {

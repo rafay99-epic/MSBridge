@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class TagSelectorBottomSheet extends StatefulWidget {
@@ -86,7 +87,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 24,
                 offset: const Offset(0, -6),
               ),
@@ -118,7 +119,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
           width: 40,
           height: 4,
           decoration: BoxDecoration(
-            color: widget.theme.colorScheme.onSurface.withOpacity(0.15),
+            color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -143,12 +144,12 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.close,
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+              color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor:
-                  widget.theme.colorScheme.surfaceVariant.withOpacity(0.5),
+              backgroundColor: widget.theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.5),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -165,7 +166,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
           'No tags selected',
           style: TextStyle(
             fontSize: 14,
-            color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
+            color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.6),
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -184,10 +185,10 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: widget.theme.colorScheme.primary.withOpacity(0.12),
+              color: widget.theme.colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                color: widget.theme.colorScheme.primary.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -262,19 +263,20 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? widget.theme.colorScheme.primary.withOpacity(0.12)
+                ? widget.theme.colorScheme.primary.withValues(alpha: 0.12)
                 : widget.theme.colorScheme.surface,
             border: Border.all(
               color: isSelected
                   ? widget.theme.colorScheme.primary
-                  : widget.theme.colorScheme.outline.withOpacity(0.3),
+                  : widget.theme.colorScheme.outline.withValues(alpha: 0.3),
               width: 1.5,
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: widget.theme.colorScheme.primary.withOpacity(0.1),
+                      color: widget.theme.colorScheme.primary
+                          .withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     )
@@ -300,7 +302,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
                         ? widget.theme.colorScheme.primary
-                        : widget.theme.colorScheme.onSurface.withOpacity(0.8),
+                        : widget.theme.colorScheme.onSurface
+                            .withValues(alpha: 0.8),
                   ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: isSelected ? TextAlign.left : TextAlign.center,
@@ -320,7 +323,7 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
         color: widget.theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, -4),
           ),
@@ -334,7 +337,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
-                  color: widget.theme.colorScheme.outline.withOpacity(0.3),
+                  color:
+                      widget.theme.colorScheme.outline.withValues(alpha: 0.3),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -343,7 +347,8 @@ class TagSelectorBottomSheetState extends State<TagSelectorBottomSheet>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+                  color:
+                      widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),

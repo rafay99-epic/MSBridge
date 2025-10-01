@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class SettingsTile extends StatelessWidget {
@@ -27,8 +28,8 @@ class SettingsTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        splashColor: theme.colorScheme.secondary.withOpacity(0.2),
-        highlightColor: theme.colorScheme.secondary.withOpacity(0.1),
+        splashColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
+        highlightColor: theme.colorScheme.secondary.withValues(alpha: 0.1),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Column(
@@ -45,7 +46,8 @@ class SettingsTile extends StatelessWidget {
                       Text(
                         versionNumber!,
                         style: TextStyle(
-                          color: theme.colorScheme.primary.withOpacity(0.7),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.7),
                           fontSize: 14,
                         ),
                       ),

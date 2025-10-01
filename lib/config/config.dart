@@ -52,4 +52,12 @@ class UpdateConfig {
   static const Duration checkInterval = Duration(hours: 6);
   static const Duration healthCheckTimeout = Duration(seconds: 10);
   static const Duration updateCheckTimeout = Duration(seconds: 15);
+
+  static const String mode = "production";
+}
+
+class LinkShortenerConfig {
+  static const String devBaseUrl = 'http://192.168.100.163:3000';
+  static const String prodBaseUrl = 'https://msbridge.rafay99.com';
+  static const String shortenEndpoint = '/api/shorten';
 }

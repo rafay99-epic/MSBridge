@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 
 class LectureCardWidget extends StatelessWidget {
@@ -27,15 +32,15 @@ class LectureCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:
-                colorScheme.shadow.withOpacity(0.2), // Increased shadow opacity
+            color: colorScheme.shadow
+                .withValues(alpha: 0.2), // Increased shadow opacity
             blurRadius: 12, // Increased blur for better depth
             offset: const Offset(0, 6), // Increased offset for better elevation
           ),
         ],
         border: Border.all(
           color: colorScheme.primary
-              .withOpacity(0.3), // Match search screen border color
+              .withValues(alpha: 0.3), // Match search screen border color
           width: 2, // Match search screen border width
         ),
       ),
@@ -55,11 +60,11 @@ class LectureCardWidget extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: colorScheme.primary
-                            .withOpacity(0.15), // Slightly more prominent
+                            .withValues(alpha: 0.15), // Slightly more prominent
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           // Add border to lecture number container
-                          color: colorScheme.primary.withOpacity(0.4),
+                          color: colorScheme.primary.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                       ),
@@ -89,10 +94,10 @@ class LectureCardWidget extends StatelessWidget {
                       // Wrap arrow icon in styled container
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.15),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.primary.withOpacity(0.4),
+                          color: colorScheme.primary.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                       ),
@@ -110,10 +115,10 @@ class LectureCardWidget extends StatelessWidget {
                     // Wrap description in styled container
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface.withOpacity(0.7),
+                      color: colorScheme.surface.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.2),
+                        color: colorScheme.outline.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -121,7 +126,7 @@ class LectureCardWidget extends StatelessWidget {
                       lecture.lectureDescription,
                       style: TextStyle(
                         fontSize: 14,
-                        color: colorScheme.onSurface.withOpacity(0.9),
+                        color: colorScheme.onSurface.withValues(alpha: 0.9),
                         height: 1.4,
                       ),
                       maxLines: 3,
@@ -136,10 +141,10 @@ class LectureCardWidget extends StatelessWidget {
                       // Wrap calendar icon in styled container
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: colorScheme.secondary.withOpacity(0.2),
+                        color: colorScheme.secondary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: colorScheme.secondary.withOpacity(0.4),
+                          color: colorScheme.secondary.withValues(alpha: 0.4),
                           width: 1,
                         ),
                       ),
@@ -164,11 +169,11 @@ class LectureCardWidget extends StatelessWidget {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: colorScheme.primary
-                            .withOpacity(0.15), // Slightly more prominent
+                            .withValues(alpha: 0.15), // Slightly more prominent
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           // Add border to "Tap to read" container
-                          color: colorScheme.primary.withOpacity(0.4),
+                          color: colorScheme.primary.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                       ),

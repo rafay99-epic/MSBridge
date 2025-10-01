@@ -1,8 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:hive/hive.dart';
+
+// Project imports:
 import 'package:msbridge/core/api/ms_notes_api.dart';
 import '../database/note_reading/notes_model.dart';
-import 'package:hive/hive.dart';
 
 class LectureNotesProvider with ChangeNotifier {
   List<MSNote> _notes = [];

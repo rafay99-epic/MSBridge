@@ -1,10 +1,15 @@
-import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:http/http.dart' as http;
-import 'package:msbridge/config/config.dart';
+// Dart imports:
 import 'dart:convert';
-import '../database/note_reading/notes_model.dart';
-import 'package:hive/hive.dart';
 import 'dart:io';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:hive/hive.dart';
+import 'package:http/http.dart' as http;
+
+// Project imports:
+import 'package:msbridge/config/config.dart';
+import '../database/note_reading/notes_model.dart';
 
 class ApiException implements Exception {
   final String message;

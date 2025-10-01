@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 
 enum DateFilter { all, today, last7, last30, thisMonth, custom }
@@ -45,12 +48,10 @@ List<NoteTakingModel> applyDateFilter(
 ) {
   if (sel.filter == DateFilter.all) return notes;
   final range = computeRange(sel, DateTime.now());
-  return notes
-      .where((n) {
-        final ts = n.updatedAt;
-        return !ts.isBefore(range.start) && ts.isBefore(range.end);
-      })
-      .toList();
+  return notes.where((n) {
+    final ts = n.updatedAt;
+    return !ts.isBefore(range.start) && ts.isBefore(range.end);
+  }).toList();
 }
 
 Future<DateFilterSelection?> showDateFilterSheet(
@@ -79,7 +80,7 @@ Future<DateFilterSelection?> showDateFilterSheet(
                 end: DateTime(now.year, now.month, now.day),
               ),
         );
-        if (picked != null) {
+        if (picked != null && ctx.mounted) {
           Navigator.pop(
               ctx,
               DateFilterSelection(

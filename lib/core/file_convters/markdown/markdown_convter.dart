@@ -1,11 +1,18 @@
+// Dart imports:
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:markdown_quill/markdown_quill.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:path_provider/path_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/permissions/permission.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class MarkdownExporter {
   static String _safeFileName(String title) {
@@ -53,25 +60,31 @@ class MarkdownExporter {
       }
 
       if (downloadsDirectory == null) {
-        CustomSnackBar.show(context, "Could not find the downloads directory.",
-            isSuccess: false);
+        if (context.mounted) {
+          CustomSnackBar.show(
+              context, "Could not find the downloads directory.",
+              isSuccess: false);
+        }
         return;
       }
 
       final safeFileName = _safeFileName(title);
       final file = File('${downloadsDirectory.path}/$safeFileName.md');
       await file.writeAsString(content);
-
-      CustomSnackBar.show(context, "Markdown saved to ${file.path}",
-          isSuccess: true);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "Markdown saved to ${file.path}",
+            isSuccess: true);
+      }
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Error creating Markdown: $e', StackTrace.current.toString());
       FlutterBugfender.error(
         'Error creating Markdown: $e',
       );
-      CustomSnackBar.show(context, "Error creating Markdown: $e",
-          isSuccess: false);
+      if (context.mounted) {
+        CustomSnackBar.show(context, "Error creating Markdown: $e",
+            isSuccess: false);
+      }
     }
   }
 }

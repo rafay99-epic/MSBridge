@@ -1,0 +1,48 @@
+name: Label PR with Version & Build
+
+on:
+  pull_request:
+
+jobs:
+  label-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract pubspec version
+        id: extract
+        run: |
+          RAW_VERSION=$(grep '^version:' pubspec.yaml | sed 's/version:[ ]*//')
+          VERSION="${RAW_VERSION%%+*}"   # part before +
+          BUILD="${RAW_VERSION##*+}"    # part after +
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "full=$RAW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Add PR labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = "${{ steps.extract.outputs.version }}";
+            const build   = "${{ steps.extract.outputs.build }}";
+            const full    = "${{ steps.extract.outputs.full }}";
+
+            const labels = [
+              `version: ${version}`,
+              `build: ${build}`,
+              `pubspec: ${full}`,
+            ];
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: labels,
+            });

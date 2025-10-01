@@ -1,48 +1,34 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/utils/uuid.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
-class ShareRepository {
+// Project imports:
+import 'package:msbridge/config/config.dart' as config;
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
+import 'package:msbridge/core/services/dynamic_link/dynamic_link.dart';
+import 'package:msbridge/utils/uuid.dart';
+
+class DynamicLink {
   static const String _shareCollection = 'shared_notes';
   static const String _shareMetaBoxName = 'note_share_meta';
-  static bool _isOperationInProgress =
-      false; // Added to prevent multiple simultaneous operations
-
+  static bool _isOperationInProgress = false;
   static Future<Box> _getShareMetaBox() async {
     return await Hive.openBox(_shareMetaBoxName);
   }
 
   static String _buildDefaultShareUrl(String shareId) {
-    // Use custom domain for sharing
-    return 'https://msbridge.rafay99.com/s/$shareId';
+    final String base = config.LinkShortenerConfig.prodBaseUrl;
+    return '$base/s/$shareId';
   }
 
-  static Future<String> _buildDynamicLink(String shareId) async {
-    try {
-      final DynamicLinkParameters params = DynamicLinkParameters(
-        link: Uri.parse(_buildDefaultShareUrl(shareId)),
-        uriPrefix: 'https://msbridge.rafay99.com',
-        androidParameters: const AndroidParameters(
-          packageName: 'com.syntaxlab.msbridge',
-          minimumVersion: 1,
-        ),
-        iosParameters: const IOSParameters(
-          bundleId: 'com.syntaxlab.msbridge',
-          minimumVersion: '1.0.0',
-        ),
-      );
-      final ShortDynamicLink short =
-          await FirebaseDynamicLinks.instance.buildShortLink(params);
-      return short.shortUrl.toString();
-    } catch (e) {
-      FlutterBugfender.error('Failed to build dynamic link: $e');
-      // Fallback to default hosting URL
-      return _buildDefaultShareUrl(shareId);
-    }
+  static Future<String> _buildShortLink(String shareId) async {
+    return ShortLinkService.generateShortLink(
+      type: 'note',
+      shareId: shareId,
+      originalUrl: _buildDefaultShareUrl(shareId),
+    );
   }
 
   static Future<String> enableShare(NoteTakingModel note) async {
@@ -75,7 +61,7 @@ class ShareRepository {
           ? existing['shareId'] as String
           : generateUuid();
 
-      final String shareUrl = await _buildDynamicLink(shareId);
+      final String shareUrl = await _buildShortLink(shareId);
 
       // Create payload without createdAt for updates
       final Map<String, dynamic> payloadWithoutCreatedAt = {
@@ -100,11 +86,12 @@ class ShareRepository {
       try {
         await docRef.update(payloadWithoutCreatedAt);
       } on FirebaseException catch (e, s) {
-        FlutterBugfender.error('Failed to update share: ${e.code} ${e.message}');
-        FlutterBugfender.sendCrash('enableShare update failed', s.toString());
         if (e.code == 'not-found') {
           await docRef.set(payloadWithCreatedAt, SetOptions(merge: true));
         } else {
+          FlutterBugfender.error(
+              'Failed to update share: ${e.code} ${e.message}');
+          FlutterBugfender.sendCrash('enableShare update failed', s.toString());
           rethrow;
         }
       }

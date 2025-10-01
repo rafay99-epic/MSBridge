@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:permission_handler/permission_handler.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 class NotificationPermissionHandler {
@@ -16,15 +21,19 @@ class NotificationPermissionHandler {
     status = await Permission.notification.request();
 
     if (status.isGranted) {
-      CustomSnackBar.show(
-        context,
-        "Notification permission granted! You'll now receive daily streak reminders.",
-        isSuccess: true,
-      );
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context,
+          "Notification permission granted! You'll now receive daily streak reminders.",
+          isSuccess: true,
+        );
+      }
       return true;
     } else {
-      // Show dialog explaining why notification permission is needed
-      _showPermissionExplanationDialog(context);
+      if (context.mounted) {
+        // Show dialog explaining why notification permission is needed
+        _showPermissionExplanationDialog(context);
+      }
       return false;
     }
   }

@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/features/msnotes/notes_detail.dart';
 import 'package:msbridge/features/msnotes/widgets/empty_state_widget.dart';
-import 'package:msbridge/features/msnotes/widgets/section_header_widget.dart';
 import 'package:msbridge/features/msnotes/widgets/lecture_card_widget.dart';
+import 'package:msbridge/features/msnotes/widgets/section_header_widget.dart';
 import 'package:msbridge/widgets/appbar.dart';
-import 'package:page_transition/page_transition.dart';
 
 class LecturesScreen extends StatelessWidget {
   final String subject;

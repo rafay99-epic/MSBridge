@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/section/sync_section/settings_sync_section.dart';
 import 'package:msbridge/widgets/appbar.dart';
 

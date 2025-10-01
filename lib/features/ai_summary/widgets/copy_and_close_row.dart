@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 Widget buildButtonRow(
@@ -19,13 +24,13 @@ Widget buildButtonRow(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                colorScheme.primary.withOpacity(0.1),
-                colorScheme.secondary.withOpacity(0.05),
+                colorScheme.primary.withValues(alpha: 0.1),
+                colorScheme.secondary.withValues(alpha: 0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -50,7 +55,7 @@ Widget buildButtonRow(
                     Icon(
                       LineIcons.copy,
                       color: aiSummary == null || isGeneratingSummary
-                          ? colorScheme.primary.withOpacity(0.4)
+                          ? colorScheme.primary.withValues(alpha: 0.4)
                           : colorScheme.primary,
                       size: 20,
                     ),
@@ -59,7 +64,7 @@ Widget buildButtonRow(
                       'Copy Summary',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: aiSummary == null || isGeneratingSummary
-                            ? colorScheme.primary.withOpacity(0.4)
+                            ? colorScheme.primary.withValues(alpha: 0.4)
                             : colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -81,7 +86,7 @@ Widget buildButtonRow(
           color: colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.error.withOpacity(0.3),
+            color: colorScheme.error.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),

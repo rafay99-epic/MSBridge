@@ -1,4 +1,6 @@
 // features/setting/components/setting_section_header.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class SettingSectionHeader extends StatelessWidget {
@@ -21,7 +23,7 @@ class SettingSectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(

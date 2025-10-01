@@ -1,16 +1,23 @@
+// Dart imports:
 import 'dart:convert';
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+// Package imports:
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:file_selector/file_selector.dart' as fsel;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/permissions/permission.dart';
+import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 
 class BackupReport {
   final int total;
@@ -54,23 +61,16 @@ class BackupService {
           '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}_${timestamp.hour.toString().padLeft(2, '0')}-${timestamp.minute.toString().padLeft(2, '0')}';
       final String fileName = 'msbridge-notes-backup-$formattedDate.json';
 
-      // Save to Downloads folder with proper permissions
+      if (!context.mounted) return '';
       final filePath =
           await _saveToDownloadsWithPermissions(fileName, bytes, context);
 
       // Log successful backup
-      await FirebaseCrashlytics.instance.log(
-        'Backup created successfully: $fileName',
-      );
-
+      FlutterBugfender.log('Backup created successfully: $filePath');
       return filePath;
     } catch (e) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        null,
-        reason: 'Failed to export notes',
-        information: ['Method: exportAllNotes'],
-      );
+      FlutterBugfender.sendCrash(
+          'Failed to export notes: $e', StackTrace.current.toString());
       throw Exception('Failed to export notes: $e');
     }
   }

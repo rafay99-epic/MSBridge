@@ -1,10 +1,16 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:share_plus/share_plus.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
 import 'package:msbridge/core/repo/voice_note_share_repo.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
-import 'package:share_plus/share_plus.dart';
 
 class SharedVoiceNotesScreen extends StatefulWidget {
   const SharedVoiceNotesScreen({super.key});
@@ -100,7 +106,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .error
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -141,8 +150,8 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context)
                       .colorScheme
-                      .surfaceVariant
-                      .withOpacity(0.3),
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -171,8 +180,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                 '• The share link will stop working\n• The audio file will be deleted from UploadThing\n• The Firebase metadata will be removed\n• The local voice note will remain unchanged',
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.8),
                   fontSize: 14,
                 ),
               ),
@@ -186,8 +197,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -208,7 +221,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
         ),
       );
 
-      if (confirmed == true) {
+      if (confirmed == true && mounted) {
         // Show loading dialog
         showDialog(
           context: context,
@@ -269,24 +282,28 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
               .removeWhere((note) => note.shareId == sharedNote.shareId);
         });
 
-        CustomSnackBar.show(
-          context,
-          'Shared voice note deleted successfully',
-          SnackBarType.success,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            'Shared voice note deleted successfully',
+            SnackBarType.success,
+          );
+        }
       }
     } catch (e) {
-      // Dismiss loading dialog if it's still open
+      FlutterBugfender.sendCrash('Failed to delete shared voice note: $e',
+          StackTrace.current.toString());
       if (_loadingDialogContext != null) {
         Navigator.of(_loadingDialogContext!).pop();
         _loadingDialogContext = null;
       }
-
-      CustomSnackBar.show(
-        context,
-        'Failed to delete shared voice note: $e',
-        SnackBarType.error,
-      );
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          'Failed to delete shared voice note: $e',
+          SnackBarType.error,
+        );
+      }
     }
   }
 
@@ -312,7 +329,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
               width: 48,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -329,7 +349,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                       color: Theme.of(context)
                           .colorScheme
                           .primary
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -408,10 +428,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.05),
+              color: color.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -420,7 +440,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -449,7 +469,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 14,
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           height: 1.3,
                         ),
                       ),
@@ -458,7 +478,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                 ),
                 Icon(
                   LineIcons.chevronRight,
-                  color: colorScheme.onSurface.withOpacity(0.4),
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                   size: 16,
                 ),
               ],
@@ -482,7 +502,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -515,8 +538,8 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context)
                     .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.3),
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -560,11 +583,14 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context)
                     .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.3),
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -578,7 +604,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.8),
+                            .withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -587,7 +613,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                     onPressed: () async {
                       await Clipboard.setData(
                           ClipboardData(text: sharedNote.shareUrl));
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(
                           context,
                           'Link copied to clipboard!',
@@ -634,9 +660,9 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                     LineIcons.share,
                     () async {
                       Navigator.of(context).pop();
-                      await Share.share(
-                        '🎤 Check out my voice note: "${sharedNote.title}"\n\n${sharedNote.shareUrl}',
-                        subject: 'Voice Note: ${sharedNote.title}',
+                      await SharePlus.instance.share(
+                        '🎤 Check out my voice note: "${sharedNote.title}"\n\n${sharedNote.shareUrl}'
+                            as ShareParams,
                       );
                     },
                   ),
@@ -648,15 +674,19 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                     'Copy Link',
                     LineIcons.copy,
                     () async {
+                      final navigator = Navigator.of(context);
+                      final scaffoldContext = context;
                       await Clipboard.setData(
                           ClipboardData(text: sharedNote.shareUrl));
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                        CustomSnackBar.show(
-                          context,
-                          'Link copied to clipboard!',
-                          SnackBarType.success,
-                        );
+                      if (context.mounted) {
+                        navigator.pop();
+                        if (context.mounted) {
+                          CustomSnackBar.show(
+                            scaffoldContext,
+                            'Link copied to clipboard!',
+                            SnackBarType.success,
+                          );
+                        }
                       }
                     },
                   ),
@@ -669,8 +699,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor:
-                  Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              foregroundColor: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.6),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: Text(
@@ -694,10 +726,10 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
         ),
       ),
       child: Material(
@@ -764,7 +796,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
           IconButton(
             icon: Icon(
               LineIcons.redo,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             onPressed: _loadSharedVoiceNotes,
             tooltip: 'Refresh',
@@ -783,26 +815,28 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                    theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                    theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.4),
+                    theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.2),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isSearching
-                      ? theme.colorScheme.primary.withOpacity(0.3)
-                      : theme.colorScheme.outline.withOpacity(0.1),
+                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                      : theme.colorScheme.outline.withValues(alpha: 0.1),
                   width: _isSearching ? 2 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.shadow.withOpacity(0.05),
+                    color: theme.colorScheme.shadow.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                   if (_isSearching)
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -820,7 +854,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                   hintText: 'Search shared voice notes...',
                   hintStyle: TextStyle(
                     fontFamily: 'Poppins',
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
@@ -830,7 +864,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                       LineIcons.search,
                       color: _isSearching
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withOpacity(0.6),
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       size: 22,
                     ),
                   ),
@@ -846,7 +880,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.primary
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
@@ -881,13 +915,13 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          theme.colorScheme.primary.withOpacity(0.1),
-                          theme.colorScheme.primary.withOpacity(0.05),
+                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                          theme.colorScheme.primary.withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.2),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -932,7 +966,8 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -953,16 +988,16 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                     end: Alignment.bottomRight,
                                     colors: [
                                       theme.colorScheme.primary
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                       theme.colorScheme.primary
-                                          .withOpacity(0.05),
+                                          .withValues(alpha: 0.05),
                                     ],
                                   ),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
@@ -997,7 +1032,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   color: theme.colorScheme.onSurface
-                                      .withOpacity(0.7),
+                                      .withValues(alpha: 0.7),
                                   fontSize: 16,
                                   height: 1.4,
                                 ),
@@ -1010,11 +1045,11 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                       horizontal: 16, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary
-                                        .withOpacity(0.1),
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.2),
+                                          .withValues(alpha: 0.2),
                                       width: 1,
                                     ),
                                   ),
@@ -1057,25 +1092,25 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                       colors: [
                                         theme.colorScheme.surface,
                                         theme.colorScheme.surface
-                                            .withOpacity(0.95),
+                                            .withValues(alpha: 0.95),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(20.0),
                                     border: Border.all(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                       width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: theme.colorScheme.shadow
-                                            .withOpacity(0.08),
+                                            .withValues(alpha: 0.08),
                                         blurRadius: 16,
                                         offset: const Offset(0, 4),
                                       ),
                                       BoxShadow(
                                         color: theme.colorScheme.primary
-                                            .withOpacity(0.05),
+                                            .withValues(alpha: 0.05),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -1099,7 +1134,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                 colors: [
                                                   theme.colorScheme.primary,
                                                   theme.colorScheme.primary
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                 ],
                                               ),
                                               borderRadius:
@@ -1108,7 +1143,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                 BoxShadow(
                                                   color: theme
                                                       .colorScheme.primary
-                                                      .withOpacity(0.4),
+                                                      .withValues(alpha: 0.4),
                                                   blurRadius: 12,
                                                   offset: const Offset(0, 4),
                                                 ),
@@ -1155,10 +1190,12 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                       colors: [
                                                         theme
                                                             .colorScheme.primary
-                                                            .withOpacity(0.1),
+                                                            .withValues(
+                                                                alpha: 0.1),
                                                         theme
                                                             .colorScheme.primary
-                                                            .withOpacity(0.05),
+                                                            .withValues(
+                                                                alpha: 0.05),
                                                       ],
                                                     ),
                                                     borderRadius:
@@ -1167,7 +1204,8 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                     border: Border.all(
                                                       color: theme
                                                           .colorScheme.primary
-                                                          .withOpacity(0.3),
+                                                          .withValues(
+                                                              alpha: 0.3),
                                                       width: 1,
                                                     ),
                                                   ),
@@ -1207,7 +1245,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                             height: 44,
                                             decoration: BoxDecoration(
                                               color: theme.colorScheme.primary
-                                                  .withOpacity(0.1),
+                                                  .withValues(alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
@@ -1238,7 +1276,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                 horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
                                               color: theme.colorScheme.primary
-                                                  .withOpacity(0.1),
+                                                  .withValues(alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
@@ -1250,7 +1288,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                   size: 12,
                                                   color: theme
                                                       .colorScheme.primary
-                                                      .withOpacity(0.7),
+                                                      .withValues(alpha: 0.7),
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
@@ -1259,7 +1297,7 @@ class _SharedVoiceNotesScreenState extends State<SharedVoiceNotesScreen> {
                                                     fontSize: 11,
                                                     color: theme
                                                         .colorScheme.primary
-                                                        .withOpacity(0.7),
+                                                        .withValues(alpha: 0.7),
                                                     fontFamily: 'Poppins',
                                                     fontWeight: FontWeight.w500,
                                                   ),

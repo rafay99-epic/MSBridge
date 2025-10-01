@@ -1,11 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bugfender/flutter_bugfender.dart';
+// Dart imports:
 import 'dart:async';
+
+// Flutter imports:
+import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:msbridge/widgets/appbar.dart';
-import 'package:provider/provider.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
@@ -117,7 +124,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     try {
       final result = await context.read<AuthRepo>().resendVerificationEmail();
 
-      if (result.isSuccess) {
+      if (result.isSuccess && mounted) {
         CustomSnackBar.show(context, "Verification email sent!",
             isSuccess: true);
 
@@ -125,11 +132,13 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         if (_resendCount >= _maxResendAttempts) {
           // Start 24-hour cooldown for max attempts reached
           _startCooldownTimer(const Duration(hours: 24));
-          CustomSnackBar.show(
-            context,
-            "Maximum resend attempts reached. Please wait 24 hours or contact support.",
-            isSuccess: false,
-          );
+          if (mounted) {
+            CustomSnackBar.show(
+              context,
+              "Maximum resend attempts reached. Please wait 24 hours or contact support.",
+              isSuccess: false,
+            );
+          }
         } else {
           // Start normal short cooldown for successful sends
           _startCooldownTimer(_resendCooldown);
@@ -167,16 +176,24 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             });
           }
         }
-
-        CustomSnackBar.show(context, errorMessage, isSuccess: false);
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            errorMessage,
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
-      CustomSnackBar.show(
-          context, "An unexpected error occurred. Please try again later.");
-      FlutterBugfender.error("Error in resend verification email $e");
+      if (mounted) {
+        CustomSnackBar.show(
+          context,
+          "An unexpected error occurred. Please try again later.",
+          isSuccess: false,
+        );
+      }
       FlutterBugfender.sendCrash("Error in resend verification email $e",
           StackTrace.current.toString());
-      // For unexpected errors, re-enable immediately for retry
       if (mounted) {
         setState(() {
           _isResending = false;
@@ -184,7 +201,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         });
       }
     } finally {
-      // Ensure _isResending is always reset, regardless of the path taken
       if (mounted && _isResending) {
         setState(() {
           _isResending = false;
@@ -220,10 +236,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                   width: 140,
                   height: 140,
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.3),
+                      color: colorScheme.primary.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -252,7 +268,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                 Text(
                   "We've sent a verification link to your email address.\nPlease check your inbox and spam folder to complete the verification.",
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.8),
+                    color: colorScheme.onSurface.withValues(alpha: 0.8),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -265,10 +281,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondary.withOpacity(0.08),
+                    color: colorScheme.secondary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.secondary.withOpacity(0.2),
+                      color: colorScheme.secondary.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -277,7 +293,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: colorScheme.secondary.withOpacity(0.15),
+                          color: colorScheme.secondary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -302,7 +318,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                             Text(
                               "Firebase emails often go to spam. Check your spam/junk folder!",
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.7),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.7),
                                 height: 1.4,
                               ),
                             ),
@@ -328,10 +345,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                       backgroundColor:
                           _canResend && _resendCount < _maxResendAttempts
                               ? colorScheme.secondary
-                              : colorScheme.surface.withOpacity(0.5),
+                              : colorScheme.surface.withValues(alpha: 0.5),
                       foregroundColor: colorScheme.onSecondary,
                       elevation: 4,
-                      shadowColor: colorScheme.shadow.withOpacity(0.3),
+                      shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -369,17 +386,17 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.2),
+                        color: colorScheme.primary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
                     child: Text(
                       "Attempts: $_resendCount/$_maxResendAttempts",
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary.withOpacity(0.8),
+                        color: colorScheme.primary.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -392,17 +409,17 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: colorScheme.secondary.withOpacity(0.1),
+                      color: colorScheme.secondary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colorScheme.secondary.withOpacity(0.2),
+                        color: colorScheme.secondary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
                     child: Text(
                       "Please wait ${_formatDuration(_remaining)} before requesting another email",
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.secondary.withOpacity(0.8),
+                        color: colorScheme.secondary.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

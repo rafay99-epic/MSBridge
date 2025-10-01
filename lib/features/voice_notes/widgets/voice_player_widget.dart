@@ -1,12 +1,19 @@
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:line_icons/line_icons.dart';
 import 'package:voice_note_kit/voice_note_kit.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/core/repo/voice_note_share_repo.dart';
 import 'package:msbridge/core/services/voice_note/voice_note_service.dart';
 import 'package:msbridge/widgets/custom_snackbar.dart';
-import 'package:msbridge/core/repo/voice_note_share_repo.dart';
-import 'package:line_icons/line_icons.dart';
-import 'dart:io';
 
 /// Formats a date relative to now, handling future dates as 'Just now'
 String formatRelativeDate(DateTime date) {
@@ -177,7 +184,7 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                     widget.voiceNote.formattedDuration,
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -190,14 +197,14 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                   Icon(
                     Icons.schedule,
                     size: 14,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4.0),
                   Text(
                     formatRelativeDate(widget.voiceNote.createdAt),
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -205,14 +212,14 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                   Icon(
                     Icons.storage,
                     size: 14,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4.0),
                   Text(
                     widget.voiceNote.formattedFileSize,
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       fontFamily: 'Poppins',
                     ),
                   ),
@@ -227,7 +234,7 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                 widget.voiceNote.description!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontFamily: 'Poppins',
                   fontStyle: FontStyle.italic,
                 ),
@@ -294,6 +301,8 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
 
         try {
           return AudioPlayerWidget(
+            key: ValueKey<String>(
+                widget.voiceNote.voiceNoteId ?? widget.voiceNote.audioFilePath),
             audioPath: widget.voiceNote.audioFilePath,
             playerStyle:
                 widget.compact ? PlayerStyle.style3 : PlayerStyle.style5,
@@ -302,7 +311,7 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
             backgroundColor: theme.colorScheme.primary,
             progressBarColor: theme.colorScheme.secondary,
             progressBarBackgroundColor:
-                theme.colorScheme.outline.withOpacity(0.3),
+                theme.colorScheme.outline.withValues(alpha: 0.3),
             iconColor: theme.colorScheme.onPrimary,
             progressBarHeight: widget.compact ? 3 : 4,
             showProgressBar: true,
@@ -352,10 +361,10 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
     return Container(
       height: widget.compact ? 40 : 50,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Center(
@@ -465,13 +474,13 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.surfaceVariant.withOpacity(0.4),
-            theme.colorScheme.surfaceVariant.withOpacity(0.2),
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
           ],
         ),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -481,14 +490,14 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
           Icon(
             icon,
             size: 14,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
           const SizedBox(width: 6.0),
           Text(
             text,
             style: TextStyle(
               fontSize: 12,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w600,
             ),
@@ -519,22 +528,22 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                 end: Alignment.bottomRight,
                 colors: [
                   theme.colorScheme.surface,
-                  theme.colorScheme.surface.withOpacity(0.95),
+                  theme.colorScheme.surface.withValues(alpha: 0.95),
                 ],
               ),
               borderRadius: BorderRadius.circular(20.0),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.shadow.withOpacity(0.08),
+                  color: theme.colorScheme.shadow.withValues(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.05),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -554,13 +563,14 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           end: Alignment.bottomRight,
                           colors: [
                             theme.colorScheme.primary,
-                            theme.colorScheme.primary.withOpacity(0.8),
+                            theme.colorScheme.primary.withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.4),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -627,13 +637,14 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              theme.colorScheme.primary.withOpacity(0.1),
-                              theme.colorScheme.primary.withOpacity(0.05),
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                              theme.colorScheme.primary.withValues(alpha: 0.05),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -668,14 +679,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                   Container(
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       widget.voiceNote.description!,
                       style: TextStyle(
                         fontSize: 14,
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         fontFamily: 'Poppins',
                         height: 1.4,
                       ),
@@ -695,8 +708,8 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -705,15 +718,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           Icon(
                             Icons.storage_outlined,
                             size: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             widget.voiceNote.formattedFileSize,
                             style: TextStyle(
                               fontSize: 11,
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),
@@ -727,7 +741,7 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -736,14 +750,16 @@ class _VoiceNoteCardState extends State<VoiceNoteCard> {
                           Icon(
                             LineIcons.chevronRight,
                             size: 12,
-                            color: theme.colorScheme.primary.withOpacity(0.7),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.7),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Tap to view',
                             style: TextStyle(
                               fontSize: 11,
-                              color: theme.colorScheme.primary.withOpacity(0.7),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.7),
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w500,
                             ),

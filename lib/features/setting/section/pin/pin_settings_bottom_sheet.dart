@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/features/lock/pin_setup_lock.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:provider/provider.dart';
 
 class PinSettingsBottomSheet extends StatefulWidget {
   const PinSettingsBottomSheet({super.key});
@@ -37,7 +42,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.outline.withOpacity(0.3),
+                  color: colorScheme.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -50,7 +55,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.1),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -75,7 +80,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                           Text(
                             "Manage your app security",
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.primary.withOpacity(0.7),
+                              color: colorScheme.primary.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -126,7 +131,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                                                 context, pinProvider);
                                           }
                                         },
-                                  activeColor: colorScheme.primary,
+                                  activeThumbColor: colorScheme.primary,
                                 ),
                                 isDisabled: fingerprintProvider
                                     .isFingerprintEnabled, // UI disable check
@@ -149,7 +154,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                                           fingerprintProvider
                                               .setFingerprintEnabled(value);
                                         },
-                                  activeColor: colorScheme.primary,
+                                  activeThumbColor: colorScheme.primary,
                                 ),
                                 isDisabled:
                                     pinProvider.enabled, // UI disable check
@@ -165,10 +170,12 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.error.withOpacity(0.1),
+                                    color: colorScheme.error
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: colorScheme.error.withOpacity(0.3),
+                                      color: colorScheme.error
+                                          .withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -231,15 +238,19 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                                   color: (pinProvider.enabled ||
                                           fingerprintProvider
                                               .isFingerprintEnabled)
-                                      ? colorScheme.primary.withOpacity(0.1)
-                                      : colorScheme.outline.withOpacity(0.1),
+                                      ? colorScheme.primary
+                                          .withValues(alpha: 0.1)
+                                      : colorScheme.outline
+                                          .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: (pinProvider.enabled ||
                                             fingerprintProvider
                                                 .isFingerprintEnabled)
-                                        ? colorScheme.primary.withOpacity(0.3)
-                                        : colorScheme.outline.withOpacity(0.3),
+                                        ? colorScheme.primary
+                                            .withValues(alpha: 0.3)
+                                        : colorScheme.outline
+                                            .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -319,14 +330,14 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
           child: InkWell(
             onTap: isDisabled ? null : onTap,
             borderRadius: BorderRadius.circular(12),
-            splashColor: colorScheme.primary.withOpacity(0.1),
-            highlightColor: colorScheme.primary.withOpacity(0.05),
+            splashColor: colorScheme.primary.withValues(alpha: 0.1),
+            highlightColor: colorScheme.primary.withValues(alpha: 0.05),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.1),
+                  color: colorScheme.outline.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -336,10 +347,10 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isDestructive
-                          ? colorScheme.error.withOpacity(0.1)
+                          ? colorScheme.error.withValues(alpha: 0.1)
                           : isDisabled
-                              ? colorScheme.outline.withOpacity(0.1)
-                              : colorScheme.primary.withOpacity(0.1),
+                              ? colorScheme.outline.withValues(alpha: 0.1)
+                              : colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -374,7 +385,7 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDisabled
                                 ? colorScheme.outline
-                                : colorScheme.primary.withOpacity(0.6),
+                                : colorScheme.primary.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -464,7 +475,9 @@ class _PinSettingsBottomSheetState extends State<PinSettingsBottomSheet> {
             onPressed: () async {
               await pinProvider.clearPin();
               await pinProvider.setEnabled(false);
-              Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             child: const Text("Reset"),
           ),

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
 
 enum SnackBarType {
@@ -26,28 +29,28 @@ class CustomSnackBar {
 
     switch (type) {
       case SnackBarType.success:
-        backgroundColor = colorScheme.primary.withOpacity(0.95);
+        backgroundColor = colorScheme.primary.withValues(alpha: 0.95);
         textColor = colorScheme.onPrimary;
         iconColor = colorScheme.onPrimary;
         borderColor = colorScheme.primary;
         icon = LineIcons.checkCircle;
         break;
       case SnackBarType.error:
-        backgroundColor = colorScheme.errorContainer.withOpacity(0.95);
+        backgroundColor = colorScheme.errorContainer.withValues(alpha: 0.95);
         textColor = colorScheme.onErrorContainer;
         iconColor = colorScheme.onErrorContainer;
         borderColor = colorScheme.error;
         icon = LineIcons.exclamationTriangle;
         break;
       case SnackBarType.warning:
-        backgroundColor = Colors.orange.withOpacity(0.95);
+        backgroundColor = Colors.orange.withValues(alpha: 0.95);
         textColor = Colors.white;
         iconColor = Colors.white;
         borderColor = Colors.orange;
         icon = LineIcons.exclamationCircle;
         break;
       case SnackBarType.info:
-        backgroundColor = colorScheme.secondary.withOpacity(0.95);
+        backgroundColor = colorScheme.secondary.withValues(alpha: 0.95);
         textColor = colorScheme.onSecondary;
         iconColor = colorScheme.onSecondary;
         borderColor = colorScheme.secondary;
@@ -73,12 +76,12 @@ class CustomSnackBar {
           color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: borderColor.withOpacity(0.15),
+            color: borderColor.withValues(alpha: 0.15),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 0,
@@ -95,7 +98,7 @@ class CustomSnackBar {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -140,7 +143,7 @@ class CustomSnackBar {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.15),
+                      color: iconColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(

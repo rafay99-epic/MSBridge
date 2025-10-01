@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/theme_provider.dart';
 
 class DynamicColorsToggle extends StatelessWidget {
@@ -21,12 +24,12 @@ class DynamicColorsToggle extends StatelessWidget {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -37,7 +40,7 @@ class DynamicColorsToggle extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -62,7 +65,7 @@ class DynamicColorsToggle extends StatelessWidget {
                 Text(
                   "Automatically adapt colors to your wallpaper (Material You)",
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary.withOpacity(0.7),
+                    color: colorScheme.primary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -73,7 +76,7 @@ class DynamicColorsToggle extends StatelessWidget {
             onChanged: (value) {
               themeProvider.setDynamicColors(value);
             },
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.primary,
           ),
         ],
       ),

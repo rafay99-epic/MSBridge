@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:markdown_widget/markdown_widget.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/mermaid_diagram_widget.dart';
 
 class CustomMarkdownRenderer extends StatelessWidget {

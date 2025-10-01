@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
 
 class TemplatesSearchField extends StatelessWidget {
@@ -14,25 +17,25 @@ class TemplatesSearchField extends StatelessWidget {
         style: TextStyle(color: theme.colorScheme.primary),
         decoration: InputDecoration(
           hintText: 'Search templates...',
-          hintStyle:
-              TextStyle(color: theme.colorScheme.primary.withOpacity(0.6)),
+          hintStyle: TextStyle(
+              color: theme.colorScheme.primary.withValues(alpha: 0.6)),
           prefixIcon: Icon(Icons.search,
-              color: theme.colorScheme.primary.withOpacity(0.8)),
+              color: theme.colorScheme.primary.withValues(alpha: 0.8)),
           filled: true,
-          fillColor: theme.colorScheme.surface.withOpacity(0.9),
+          fillColor: theme.colorScheme.surface.withValues(alpha: 0.9),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
             ),
           ),
           focusedBorder: OutlineInputBorder(
@@ -79,17 +82,17 @@ class TemplateListItem extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected
-                ? theme.colorScheme.secondary.withOpacity(0.08)
+                ? theme.colorScheme.secondary.withValues(alpha: 0.08)
                 : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.secondary
-                  : theme.colorScheme.outlineVariant.withOpacity(0.15),
+                  : theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.shadow.withOpacity(0.03),
+                color: theme.colorScheme.shadow.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               )
@@ -102,7 +105,7 @@ class TemplateListItem extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.12),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -194,13 +197,13 @@ class _TagChip extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
         ),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary.withOpacity(0.8),
+          color: theme.colorScheme.primary.withValues(alpha: 0.8),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -231,7 +234,7 @@ class TagChipsRow extends StatelessWidget {
                 tag,
                 style: TextStyle(
                   fontSize: 13,
-                  color: theme.colorScheme.primary.withOpacity(0.85),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.85),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -239,7 +242,7 @@ class TagChipsRow extends StatelessWidget {
               deleteIcon: Icon(
                 Icons.close,
                 size: 18,
-                color: theme.colorScheme.primary.withOpacity(0.75),
+                color: theme.colorScheme.primary.withValues(alpha: 0.75),
               ),
               onDeleted: () => onRemove(tag),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -247,7 +250,8 @@ class TagChipsRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               shape: StadiumBorder(
                 side: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                  color:
+                      theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
                 ),
               ),
             ),
@@ -293,17 +297,17 @@ class TagInputField extends StatelessWidget {
                 hintText: 'Add tag and press +',
                 hintStyle: TextStyle(
                   fontSize: 12,
-                  color: theme.colorScheme.primary.withOpacity(0.5),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
                 prefixIcon: Icon(
                   Icons.tag,
                   size: 16,
-                  color: theme.colorScheme.primary.withOpacity(0.7),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.add,
                       size: 18,
-                      color: theme.colorScheme.primary.withOpacity(0.8)),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.8)),
                   tooltip: 'Add tag',
                   onPressed: () {
                     final value = controller.text.trim();
@@ -321,13 +325,15 @@ class TagInputField extends StatelessWidget {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                    color: theme.colorScheme.outlineVariant
+                        .withValues(alpha: 0.15),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.15),
+                    color: theme.colorScheme.outlineVariant
+                        .withValues(alpha: 0.15),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(

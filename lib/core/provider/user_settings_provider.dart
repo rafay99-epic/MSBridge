@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+
+// Project imports:
 import 'package:msbridge/core/models/user_settings_model.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
 

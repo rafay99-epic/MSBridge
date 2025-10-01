@@ -1,11 +1,16 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_section_header.dart';
 import 'package:msbridge/features/voice_notes/screens/shared_voice_notes_screen.dart';
 import 'package:msbridge/features/voice_notes/screens/voice_note_settings_screen.dart';
-import 'package:page_transition/page_transition.dart';
 
 class VoiceNotesBottomSheet extends StatelessWidget {
   const VoiceNotesBottomSheet({super.key});

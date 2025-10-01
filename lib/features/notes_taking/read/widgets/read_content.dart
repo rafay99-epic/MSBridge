@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_quill/flutter_quill.dart';
 
 class ReadContent extends StatefulWidget {
@@ -73,7 +76,7 @@ class _ReadContentState extends State<ReadContent> {
             Icon(
               Icons.menu_book_outlined,
               size: 20,
-              color: widget.theme.colorScheme.primary.withOpacity(0.7),
+              color: widget.theme.colorScheme.primary.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 8),
             Text(

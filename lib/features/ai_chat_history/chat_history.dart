@@ -1,12 +1,18 @@
 // Chat History Bottom Sheet
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
 
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});
@@ -30,7 +36,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: colorScheme.outline.withOpacity(0.3),
+              color: colorScheme.outline.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -97,20 +103,20 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                         Icon(
                           LineIcons.history,
                           size: 64,
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No chat history yet',
                           style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.7),
+                            color: colorScheme.primary.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Your conversations will appear here',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.5),
+                            color: colorScheme.primary.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -147,7 +153,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -156,10 +162,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.2),
+              color: colorScheme.primary.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -185,14 +191,14 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             Text(
               '${history.messages.length} messages',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.6),
+                color: colorScheme.primary.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Model: ${history.modelName}',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.5),
+                color: colorScheme.primary.withValues(alpha: 0.5),
                 fontFamily: 'monospace',
               ),
             ),
@@ -200,7 +206,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
             Text(
               _formatDate(history.lastUpdated),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withOpacity(0.4),
+                color: colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -209,7 +215,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
           tooltip: 'Actions',
           icon: Icon(
             Icons.more_horiz,
-            color: colorScheme.primary.withOpacity(0.7),
+            color: colorScheme.primary.withValues(alpha: 0.7),
           ),
           onPressed: () {
             showModalBottomSheet(
@@ -231,7 +237,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: colorScheme.outline.withOpacity(0.3),
+                            color: colorScheme.outline.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -240,10 +246,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: colorScheme.primary.withOpacity(0.2),
+                              color: colorScheme.primary.withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -266,10 +272,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorScheme.error.withOpacity(0.08),
+                            color: colorScheme.error.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: colorScheme.error.withOpacity(0.2),
+                              color: colorScheme.error.withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),

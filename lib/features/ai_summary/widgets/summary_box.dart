@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/features/ai_summary/ai_summary_display.dart';
 
 Widget buildSummaryText(
@@ -12,12 +17,12 @@ Widget buildSummaryText(
       color: colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: colorScheme.primary.withOpacity(0.05),
+          color: colorScheme.primary.withValues(alpha: 0.05),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
@@ -34,7 +39,7 @@ Widget buildSummaryText(
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -55,7 +60,7 @@ Widget buildSummaryText(
                   Text(
                     'Analyzing your notes with advanced AI',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.primary.withOpacity(0.7),
+                      color: colorScheme.primary.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -81,7 +86,7 @@ Widget buildSummaryText(
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: colorScheme.outline.withOpacity(0.1),
+                          color: colorScheme.outline.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -102,7 +107,7 @@ Widget buildSummaryText(
                       Text(
                         'Generate an AI summary to see it here',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.outline.withOpacity(0.7),
+                          color: colorScheme.outline.withValues(alpha: 0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),

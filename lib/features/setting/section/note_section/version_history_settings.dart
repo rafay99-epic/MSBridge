@@ -1,12 +1,17 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/repo/note_version_repo.dart';
+import 'package:msbridge/core/utils/version_download_utils.dart';
 import 'package:msbridge/widgets/build_modern_settings_tile.dart';
 import 'package:msbridge/widgets/build_section_header.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/core/utils/version_download_utils.dart';
-import 'package:msbridge/core/repo/note_version_repo.dart';
 
 class VersionHistorySettings extends StatefulWidget {
   const VersionHistorySettings({super.key});
@@ -93,17 +98,21 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
         await _loadStorageInfo();
 
         // Show success message
-        CustomSnackBar.show(
-          context,
-          "Version cleanup completed successfully!",
-          isSuccess: true,
-        );
-      } else if (mounted) {
-        CustomSnackBar.show(
-          context,
-          "Error during cleanup: ${result['message'] ?? 'Unknown error'}",
-          isSuccess: false,
-        );
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Version cleanup completed successfully!",
+            isSuccess: true,
+          );
+        }
+      } else {
+        if (mounted) {
+          CustomSnackBar.show(
+            context,
+            "Error during cleanup: ${result['message'] ?? 'Unknown error'}",
+            isSuccess: false,
+          );
+        }
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -205,7 +214,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
             onPressed: () async {
               Navigator.pop(context);
               await _saveSettings();
-              if (mounted) {
+              if (context.mounted) {
                 CustomSnackBar.show(
                   context,
                   "Maximum versions setting updated to $_maxVersionsToKeep",
@@ -258,7 +267,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                 onChanged: (value) async {
                   setState(() => _versionHistoryEnabled = value);
                   await _saveSettings();
-                  if (mounted) {
+                  if (context.mounted) {
                     CustomSnackBar.show(
                       context,
                       value
@@ -300,7 +309,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                 onChanged: (value) async {
                   setState(() => _autoCleanupEnabled = value);
                   await _saveSettings();
-                  if (mounted) {
+                  if (context.mounted) {
                     CustomSnackBar.show(
                       context,
                       value
@@ -323,10 +332,10 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.05),
+                color: colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.2),
+                  color: colorScheme.primary.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -390,7 +399,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: colorScheme.secondary.withOpacity(0.1),
+                      color: colorScheme.secondary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -410,10 +419,10 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.05),
+                color: colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.2),
+                  color: colorScheme.primary.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -444,7 +453,7 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
                     "• Version history helps you track changes and recover content\n"
                     "• Current limit: $_maxVersionsToKeep versions per note",
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary.withOpacity(0.8),
+                      color: colorScheme.primary.withValues(alpha: 0.8),
                       height: 1.4,
                     ),
                   ),
@@ -485,7 +494,8 @@ class _VersionHistorySettingsState extends State<VersionHistorySettings> {
           Text(
             label,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),

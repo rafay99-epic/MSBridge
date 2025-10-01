@@ -1,8 +1,13 @@
+// Dart imports:
 import 'dart:convert';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
 
 class NotesContextBuilder {
   static Future<String> buildJson({

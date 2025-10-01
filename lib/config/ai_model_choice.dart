@@ -1,3 +1,4 @@
+// Project imports:
 import 'package:msbridge/core/models/ai_model.dart';
 
 class AIModelsConfig {

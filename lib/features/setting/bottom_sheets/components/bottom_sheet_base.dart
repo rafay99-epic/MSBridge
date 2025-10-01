@@ -1,4 +1,6 @@
 // features/setting/components/bottom_sheet_base.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class BottomSheetBase extends StatelessWidget {
@@ -47,7 +49,7 @@ class BottomSheetBase extends StatelessWidget {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: colorScheme.outline.withOpacity(0.3),
+        color: colorScheme.outline.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(2),
       ),
     );

@@ -1,6 +1,6 @@
 name: msbridge
 description: "MS Bridge: A cross-platform app for seamless content reading with online/offline access, Firebase integration, and a user-friendly interface."
-version: 8.1.0+19
+version: 8.2.0+20
 
 environment:
   sdk: ">=3.4.3 <4.0.0"
@@ -42,7 +42,6 @@ dependencies:
   percent_indicator: ^4.2.3
   flutter_cache_manager: ^3.3.2
   share_plus: ^11.1.0
-  firebase_dynamic_links: ^6.0.8
   file_picker: ^10.3.2
   file_saver: ^0.3.1
   file_selector: ^1.0.1
@@ -90,6 +89,17 @@ flutter:
   assets:
     - assets/svg/
     - assets/icon/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -1,13 +1,18 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:share_plus/share_plus.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:flutter/services.dart';
 
 class SharedNotesPage extends StatefulWidget {
   const SharedNotesPage({super.key});
@@ -20,13 +25,13 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
   final Set<String> _disableInProgressNoteIds = <String>{};
 
   Future<List<SharedNoteMeta>> _loadSharedNotes() async {
-    return await ShareRepository.getSharedNotes();
+    return await DynamicLink.getSharedNotes();
   }
 
   Future<void> _disableSharing(String noteId, NoteTakingModel? note) async {
     final n = note ?? (await _getNote(noteId));
     if (n == null) return;
-    await ShareRepository.disableShare(n);
+    await DynamicLink.disableShare(n);
     if (mounted) {
       CustomSnackBar.show(context, 'Sharing disabled');
       setState(() {});
@@ -64,7 +69,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -77,7 +82,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   Text(
                     'Loading shared notes...',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.primary.withOpacity(0.7),
+                      color: colorScheme.primary.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -148,13 +153,13 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primary.withOpacity(0.05),
-            colorScheme.secondary.withOpacity(0.02),
+            colorScheme.primary.withValues(alpha: 0.05),
+            colorScheme.secondary.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.1),
+          color: colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -164,7 +169,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -192,7 +197,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
@@ -217,7 +222,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -238,7 +243,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
           Text(
             'Share your notes with others to collaborate and stay connected.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -259,12 +264,12 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -282,7 +287,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -317,10 +322,10 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.05),
+                color: colorScheme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -329,14 +334,14 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   Icon(
                     LineIcons.link,
                     size: 16,
-                    color: colorScheme.primary.withOpacity(0.7),
+                    color: colorScheme.primary.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       item.shareUrl,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary.withOpacity(0.7),
+                        color: colorScheme.primary.withValues(alpha: 0.7),
                         fontFamily: 'monospace',
                       ),
                       maxLines: 1,
@@ -360,7 +365,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   colorScheme.primary,
                   () async {
                     await Clipboard.setData(ClipboardData(text: item.shareUrl));
-                    if (mounted) {
+                    if (context.mounted) {
                       CustomSnackBar.show(context, 'Link copied to clipboard',
                           isSuccess: true);
                     }
@@ -371,7 +376,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                   'Share',
                   LineIcons.share,
                   colorScheme.secondary,
-                  () => Share.share(item.shareUrl),
+                  () => SharePlus.instance.share(item.shareUrl as ShareParams),
                 ),
                 _buildActionButton(
                   context,
@@ -400,7 +405,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
                           'Failed to disable sharing: $e',
                           StackTrace.current.toString());
                       FlutterBugfender.error('Failed to disable sharing: $e');
-                      if (mounted) {
+                      if (context.mounted) {
                         CustomSnackBar.show(
                             context, 'Failed to disable sharing: $e');
                       }
@@ -439,7 +444,7 @@ class _SharedNotesPageState extends State<SharedNotesPage> {
             style: const TextStyle(fontSize: 12),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             foregroundColor: color,
             elevation: 0,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),

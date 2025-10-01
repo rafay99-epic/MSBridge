@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/widgets/snakbar.dart';
 
 class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _isFingerprintEnabled = false;
@@ -139,14 +144,22 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
     try {
       bool canCheckBiometrics = await _auth.canCheckBiometrics;
       if (!canCheckBiometrics) {
-        CustomSnackBar.show(context, "Device doesn't support biometrics");
+        if (context.mounted) {
+          CustomSnackBar.show(context, "Device doesn't support biometrics");
+        }
         return false;
       }
 
       List<BiometricType> availableBiometrics =
           await _auth.getAvailableBiometrics();
       if (availableBiometrics.isEmpty) {
-        CustomSnackBar.show(context, "No biometrics are available.");
+        if (context.mounted) {
+          CustomSnackBar.show(context, "No biometrics are available.");
+        }
+        return false;
+      }
+
+      if (!context.mounted) {
         return false;
       }
 
@@ -169,6 +182,7 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
 
         // If authentication was cancelled and we can go back, go back
         if (canGoBack) {
+          if (!context.mounted) return false;
           Navigator.pop(context);
         }
       }
@@ -204,7 +218,9 @@ class FingerprintAuthProvider with ChangeNotifier, WidgetsBindingObserver {
         }
       }
       FlutterBugfender.sendCrash(errorMessage, StackTrace.current.toString());
-      CustomSnackBar.show(context, errorMessage);
+      if (context.mounted) {
+        CustomSnackBar.show(context, errorMessage);
+      }
       _logEvent('fingerprint_authentication_error', {'error': errorMessage});
       return false;
     }

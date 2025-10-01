@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
-import 'package:msbridge/core/provider/todo_provider.dart';
+
+// Package imports:
 import 'package:provider/provider.dart';
+
+// Project imports:
+import 'package:msbridge/core/provider/todo_provider.dart';
 
 class TodoRepository {
   Future<void> addTask(

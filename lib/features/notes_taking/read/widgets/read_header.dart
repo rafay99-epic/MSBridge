@@ -1,5 +1,10 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 
 class ReadHeader extends StatelessWidget {
@@ -13,10 +18,10 @@ class ReadHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.2),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -28,7 +33,7 @@ class ReadHeader extends StatelessWidget {
               Icon(
                 LineIcons.file,
                 size: 24,
-                color: theme.colorScheme.primary.withOpacity(0.8),
+                color: theme.colorScheme.primary.withValues(alpha: 0.8),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -50,7 +55,7 @@ class ReadHeader extends StatelessWidget {
               Icon(
                 LineIcons.clock,
                 size: 16,
-                color: theme.colorScheme.secondary.withOpacity(0.7),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 8),
               Text(
@@ -75,13 +80,13 @@ class ReadHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          theme.colorScheme.primary.withOpacity(0.1),
-                          theme.colorScheme.secondary.withOpacity(0.1),
+                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                          theme.colorScheme.secondary.withValues(alpha: 0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.2),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -91,7 +96,8 @@ class ReadHeader extends StatelessWidget {
                         Icon(
                           LineIcons.tag,
                           size: 14,
-                          color: theme.colorScheme.primary.withOpacity(0.7),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 6),
                         Text(

@@ -1,7 +1,12 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/theme/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/theme/colors.dart';
 
 class ThemeProvider with ChangeNotifier {
   static const String _themeKey = 'appTheme';

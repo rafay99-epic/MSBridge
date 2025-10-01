@@ -1,12 +1,18 @@
 // features/setting/bottom_sheets/profile_management_bottom_sheet.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/features/changePassword/change_password.dart';
 import 'package:msbridge/features/profile/profile_edit_page.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/features/setting/section/logout/logout_dialog.dart';
-import 'package:page_transition/page_transition.dart';
 
 class ProfileManagementBottomSheet extends StatelessWidget {
   const ProfileManagementBottomSheet({super.key});

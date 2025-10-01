@@ -1,26 +1,33 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:ui';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
+import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/folders/folders_page.dart';
+import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
+import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
-import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
 import 'package:msbridge/widgets/floatting_button.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:msbridge/features/templates/templates_hub.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
 
 enum NoteLayoutMode { grid, list }
 
@@ -341,7 +348,7 @@ class _NotetakingState extends State<Notetaking>
             backgroundColor: theme.colorScheme.surface,
             foregroundColor: theme.colorScheme.primary,
             elevation: 1,
-            shadowColor: theme.colorScheme.shadow.withOpacity(0.2),
+            shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.2),
             centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.settings),
@@ -361,17 +368,18 @@ class _NotetakingState extends State<Notetaking>
                 child: Container(
                   height: 40,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: TabBar(
                     dividerColor: Colors.transparent,
                     splashFactory: NoSplash.splashFactory,
-                    overlayColor: const MaterialStatePropertyAll<Color>(
-                        Colors.transparent),
+                    overlayColor:
+                        const WidgetStatePropertyAll<Color>(Colors.transparent),
                     indicator: UnderlineTabIndicator(
                       borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withOpacity(0.8),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
                         width: 3,
                       ),
                       insets: const EdgeInsets.symmetric(horizontal: 24),
@@ -379,7 +387,7 @@ class _NotetakingState extends State<Notetaking>
                     indicatorSize: TabBarIndicatorSize.label,
                     labelColor: theme.colorScheme.primary,
                     unselectedLabelColor:
-                        theme.colorScheme.primary.withOpacity(0.55),
+                        theme.colorScheme.primary.withValues(alpha: 0.55),
                     labelStyle: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,
@@ -443,7 +451,7 @@ class _NotetakingState extends State<Notetaking>
           Text(
             'Loading notes...',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -561,41 +569,56 @@ class _NotetakingState extends State<Notetaking>
                     style: theme.textTheme.titleMedium
                         ?.copyWith(color: theme.colorScheme.primary)),
               ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.updatedAt,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.updatedAt
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.updatedAt
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Last updated'),
-              ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.createdAt,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.updatedAt);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.createdAt
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.createdAt
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Date created'),
-              ),
-              RadioListTile<NoteSortField>(
-                value: NoteSortField.tag,
-                groupValue: _sortField,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortField = v);
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.createdAt);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortField == NoteSortField.tag
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortField == NoteSortField.tag
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Tag (A→Z)'),
+                onTap: () {
+                  setState(() => _sortField = NoteSortField.tag);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
               ),
               const Divider(height: 8),
               ListTile(
@@ -603,29 +626,39 @@ class _NotetakingState extends State<Notetaking>
                     style: theme.textTheme.titleMedium
                         ?.copyWith(color: theme.colorScheme.primary)),
               ),
-              RadioListTile<NoteSortOrder>(
-                value: NoteSortOrder.desc,
-                groupValue: _sortOrder,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortOrder = v);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
+              ListTile(
+                leading: Icon(
+                  _sortOrder == NoteSortOrder.desc
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortOrder == NoteSortOrder.desc
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Descending'),
-              ),
-              RadioListTile<NoteSortOrder>(
-                value: NoteSortOrder.asc,
-                groupValue: _sortOrder,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => _sortOrder = v);
+                onTap: () {
+                  setState(() => _sortOrder = NoteSortOrder.desc);
                   _saveSortPreference();
                   _recomputeSorting();
                   Navigator.pop(ctx);
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  _sortOrder == NoteSortOrder.asc
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: _sortOrder == NoteSortOrder.asc
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
                 title: const Text('Ascending'),
+                onTap: () {
+                  setState(() => _sortOrder = NoteSortOrder.asc);
+                  _saveSortPreference();
+                  _recomputeSorting();
+                  Navigator.pop(ctx);
+                },
               ),
               const SizedBox(height: 8),
             ],
@@ -702,7 +735,7 @@ class _NotetakingState extends State<Notetaking>
       childrenAnimation: ExpandableFabAnimation.rotate,
       distance: 70,
       overlayStyle: ExpandableFabOverlayStyle(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         blur: 12,
       ),
       children: [

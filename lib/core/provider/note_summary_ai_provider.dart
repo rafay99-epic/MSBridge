@@ -1,8 +1,13 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:msbridge/core/repo/note_summary_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/config/ai_model_choice.dart';
+import 'package:msbridge/core/repo/note_summary_repo.dart';
 
 class NoteSummaryProvider with ChangeNotifier {
   late NoteSummaryRepo _repository;

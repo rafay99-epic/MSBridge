@@ -1,6 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 class ContactService {
@@ -17,6 +22,7 @@ class ContactService {
           'message': message,
         },
       );
+      if (!context.mounted) return;
       CustomSnackBar.show(
         context,
         'Thank you for the Feedback',

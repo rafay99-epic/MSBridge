@@ -1,4 +1,7 @@
+// Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+// Project imports:
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
 

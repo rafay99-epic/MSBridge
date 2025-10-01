@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 Widget buildSubsectionHeader(
@@ -10,7 +11,7 @@ Widget buildSubsectionHeader(
       Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: colorScheme.secondary.withOpacity(0.1),
+          color: colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(

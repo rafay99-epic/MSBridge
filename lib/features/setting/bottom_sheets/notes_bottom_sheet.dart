@@ -1,7 +1,16 @@
 // features/setting/bottom_sheets/notes_bottom_sheet.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/share_link_provider.dart';
 import 'package:msbridge/core/repo/share_repo.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
@@ -11,9 +20,6 @@ import 'package:msbridge/features/setting/bottom_sheets/components/setting_toggl
 import 'package:msbridge/features/setting/section/note_section/shared_notes_page.dart';
 import 'package:msbridge/features/setting/section/note_section/version_history_settings.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class NotesBottomSheet extends StatelessWidget {
   const NotesBottomSheet({super.key});
@@ -183,7 +189,7 @@ class NotesBottomSheet extends StatelessWidget {
       );
       if (confirm != true) return;
       try {
-        await ShareRepository.disableAllShares();
+        await DynamicLink.disableAllShares();
       } catch (e) {
         FlutterBugfender.sendCrash('Failed to disable existing shares: $e',
             StackTrace.current.toString());

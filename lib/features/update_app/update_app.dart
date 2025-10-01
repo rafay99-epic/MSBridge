@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:line_icons/line_icons.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
+
+// Project imports:
+import 'package:msbridge/config/config.dart';
 import 'package:msbridge/core/repo/update_app_repo.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/config/config.dart';
 
 class UpdateApp extends StatefulWidget {
   const UpdateApp({super.key});
@@ -132,14 +137,14 @@ class _UpdateAppState extends State<UpdateApp> {
                     .surfaceContainerHighest, // Match search screen color
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color:
-                      colorScheme.primary.withOpacity(0.3), // Prominent border
+                  color: colorScheme.primary
+                      .withValues(alpha: 0.3), // Prominent border
                   width: 2, // Thicker border
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        colorScheme.shadow.withOpacity(0.2), // Enhanced shadow
+                    color: colorScheme.shadow
+                        .withValues(alpha: 0.2), // Enhanced shadow
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -152,11 +157,11 @@ class _UpdateAppState extends State<UpdateApp> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: colorScheme.primary
-                          .withOpacity(0.15), // More prominent
+                          .withValues(alpha: 0.15), // More prominent
                       shape: BoxShape.circle,
                       border: Border.all(
                         // Add border to icon container
-                        color: colorScheme.primary.withOpacity(0.4),
+                        color: colorScheme.primary.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                     ),
@@ -183,7 +188,7 @@ class _UpdateAppState extends State<UpdateApp> {
                   Text(
                     "Download the latest APK and install manually for the newest features and improvements.",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.8),
+                      color: colorScheme.onSurface.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
@@ -194,10 +199,10 @@ class _UpdateAppState extends State<UpdateApp> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface.withOpacity(0.7),
+                      color: colorScheme.surface.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: colorScheme.outline.withOpacity(0.2),
+                        color: colorScheme.outline.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -213,19 +218,21 @@ class _UpdateAppState extends State<UpdateApp> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<ReleaseType>(
-                          value: _selectedReleaseType,
+                          initialValue: _selectedReleaseType,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: colorScheme.primary.withOpacity(0.3),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: colorScheme.primary.withOpacity(0.3),
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
@@ -325,7 +332,7 @@ class _UpdateAppState extends State<UpdateApp> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 4,
-                    shadowColor: colorScheme.primary.withOpacity(0.3),
+                    shadowColor: colorScheme.primary.withValues(alpha: 0.3),
                   ),
                   onPressed: _downloadApk,
                 ),
@@ -350,15 +357,15 @@ class _UpdateAppState extends State<UpdateApp> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(0.4),
+          color: color.withValues(alpha: 0.4),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -369,10 +376,10 @@ class _UpdateAppState extends State<UpdateApp> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: color.withOpacity(0.4),
+                color: color.withValues(alpha: 0.4),
                 width: 1.5,
               ),
             ),
@@ -398,7 +405,7 @@ class _UpdateAppState extends State<UpdateApp> {
                 Text(
                   message,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: color.withOpacity(0.8),
+                    color: color.withValues(alpha: 0.8),
                     height: 1.4,
                   ),
                 ),
@@ -422,12 +429,12 @@ class _UpdateAppState extends State<UpdateApp> {
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.primary.withOpacity(0.3),
+          color: colorScheme.primary.withValues(alpha: 0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.2),
+            color: colorScheme.shadow.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -439,10 +446,10 @@ class _UpdateAppState extends State<UpdateApp> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.15),
+              color: colorScheme.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
               border: Border.all(
-                color: colorScheme.primary.withOpacity(0.4),
+                color: colorScheme.primary.withValues(alpha: 0.4),
                 width: 1.5,
               ),
             ),
@@ -461,7 +468,7 @@ class _UpdateAppState extends State<UpdateApp> {
             lineHeight: 16.0,
             percent: _downloadProgress,
             progressColor: colorScheme.primary,
-            backgroundColor: colorScheme.primary.withOpacity(0.2),
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
             barRadius: const Radius.circular(8),
             fillColor: colorScheme.surfaceContainerHighest,
           ),
@@ -490,7 +497,7 @@ class _UpdateAppState extends State<UpdateApp> {
             ),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              backgroundColor: Colors.red.withOpacity(0.1),
+              backgroundColor: Colors.red.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: const BorderSide(color: Colors.red),

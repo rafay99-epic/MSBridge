@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class ThemeSearchBar extends StatelessWidget {
@@ -25,12 +26,12 @@ class ThemeSearchBar extends StatelessWidget {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.1),
+          color: colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -42,7 +43,7 @@ class ThemeSearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search themes by name...',
           hintStyle: TextStyle(
-            color: colorScheme.primary.withOpacity(0.5),
+            color: colorScheme.primary.withValues(alpha: 0.5),
             fontSize: 16,
           ),
           prefixIcon: Icon(Icons.search, color: colorScheme.primary, size: 22),

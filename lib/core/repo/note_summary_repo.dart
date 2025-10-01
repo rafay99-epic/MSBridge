@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+
+// Package imports:
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class NoteSummaryRepo {

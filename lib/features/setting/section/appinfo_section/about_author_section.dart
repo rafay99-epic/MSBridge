@@ -1,9 +1,14 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+// Project imports:
 import 'package:msbridge/core/api/about_author_api.dart';
 
 class AboutAuthorSection extends StatefulWidget {
@@ -138,7 +143,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
             Text(
               errorMessage ?? 'Unknown error occurred',
               style: GoogleFonts.poppins(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
               ),
@@ -207,11 +212,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -226,7 +231,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                 backgroundImage: isValidAvatarUrl || avatar.startsWith('/')
                     ? NetworkImage(fullAvatarUrl)
                     : null,
-                backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                backgroundColor:
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
                 child: (isValidAvatarUrl || avatar.startsWith('/'))
                     ? null
                     : Icon(
@@ -268,7 +274,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.8),
                           height: 1.3,
                         ),
                       ),
@@ -285,7 +292,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
                 fontStyle: FontStyle.italic,
               ),
@@ -336,7 +343,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w400,
-            color: theme.colorScheme.onSurface.withOpacity(0.8),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
             height: 1.6,
             letterSpacing: 0.2,
           ),
@@ -360,10 +367,10 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
-            color: theme.colorScheme.secondary.withOpacity(0.08),
+            color: theme.colorScheme.secondary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.secondary.withOpacity(0.2),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.2),
             ),
           ),
           child: Row(
@@ -403,11 +410,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.03),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 1),
           ),
@@ -421,7 +428,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -457,18 +464,19 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      theme.colorScheme.secondary.withOpacity(0.12),
-                      theme.colorScheme.secondary.withOpacity(0.06),
+                      theme.colorScheme.secondary.withValues(alpha: 0.12),
+                      theme.colorScheme.secondary.withValues(alpha: 0.06),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.secondary.withOpacity(0.2),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.2),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.secondary.withOpacity(0.08),
+                      color:
+                          theme.colorScheme.secondary.withValues(alpha: 0.08),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -480,7 +488,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                     Icon(
                       _getToolIcon(tool.toString()),
                       size: 16,
-                      color: theme.colorScheme.secondary.withOpacity(0.8),
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -586,11 +594,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -630,7 +638,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         height: 1.3,
                       ),
                     ),
@@ -670,7 +679,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.8),
+                                    .withValues(alpha: 0.8),
                                 height: 1.4,
                               ),
                             ),
@@ -700,10 +709,12 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withOpacity(0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.secondary.withOpacity(0.3),
+                            color: theme.colorScheme.secondary
+                                .withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
@@ -761,11 +772,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -780,7 +791,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                 radius: 25,
                 backgroundImage:
                     isValidAvatarUrl ? NetworkImage(avatarUrl) : null,
-                backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                backgroundColor:
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
                 child: isValidAvatarUrl
                     ? null
                     : Icon(
@@ -808,7 +820,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         height: 1.3,
                       ),
                     ),
@@ -823,7 +836,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                           size: 20,
                           color: index < rating
                               ? Colors.amber
-                              : theme.colorScheme.onSurface.withOpacity(0.3),
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.3),
                         )),
               ),
             ],
@@ -834,7 +848,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               height: 1.5,
               letterSpacing: 0.2,
             ),
@@ -862,7 +876,8 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withOpacity(0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -909,11 +924,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -927,7 +942,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -956,7 +971,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               height: 1.5,
               letterSpacing: 0.2,
             ),
@@ -992,7 +1007,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.8),
+                                    .withValues(alpha: 0.8),
                                 height: 1.4,
                               ),
                             ),
@@ -1022,10 +1037,12 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withOpacity(0.1),
+                          color: theme.colorScheme.secondary
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.secondary.withOpacity(0.3),
+                            color: theme.colorScheme.secondary
+                                .withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
@@ -1120,10 +1137,10 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: theme.colorScheme.secondary.withOpacity(0.1),
+          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: theme.colorScheme.secondary.withOpacity(0.3),
+            color: theme.colorScheme.secondary.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -1162,11 +1179,11 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1180,7 +1197,7 @@ class _AboutAuthorSectionState extends State<AboutAuthorSection>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

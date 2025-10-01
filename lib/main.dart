@@ -1,45 +1,53 @@
+// Dart imports:
 import 'dart:isolate';
-import 'package:firebase_core/firebase_core.dart';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
+
+// Project imports:
+import 'package:msbridge/config/config.dart';
 import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
+import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
-import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/database/voice_notes/voice_note_model.dart';
+import 'package:msbridge/core/provider/ai_consent_provider.dart';
 import 'package:msbridge/core/provider/auto_save_note_provider.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
+import 'package:msbridge/core/provider/font_provider.dart';
+import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
+import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/core/provider/note_summary_ai_provider.dart';
+import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/provider/share_link_provider.dart';
+import 'package:msbridge/core/provider/streak_provider.dart';
 import 'package:msbridge/core/provider/sync_settings_provider.dart';
-import 'package:msbridge/core/provider/ai_consent_provider.dart';
-import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
+import 'package:msbridge/core/provider/template_settings_provider.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/provider/todo_provider.dart';
-import 'package:msbridge/core/provider/streak_provider.dart';
-import 'package:msbridge/core/provider/note_version_provider.dart';
+import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/core/provider/user_settings_provider.dart';
-import 'package:msbridge/core/provider/font_provider.dart';
-import 'package:msbridge/core/provider/template_settings_provider.dart';
+import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
+import 'package:msbridge/core/services/background/scheduler_registration.dart';
+import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
+import 'package:msbridge/core/services/database_migration_service.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/services/update_app/update_manager.dart';
 import 'package:msbridge/my_app.dart';
 import 'package:msbridge/utils/error.dart';
-import 'package:provider/provider.dart';
-import 'package:msbridge/config/config.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:msbridge/core/services/background/workmanager_dispatcher.dart';
-import 'package:msbridge/core/services/background/scheduler_registration.dart';
-import 'package:msbridge/core/provider/uploadthing_provider.dart';
-import 'package:msbridge/core/provider/voice_note_settings_provider.dart';
-import 'package:msbridge/core/provider/haptic_feedback_settings_provider.dart';
-import 'package:msbridge/core/services/update_app/update_manager.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -76,31 +84,29 @@ void main() async {
           'Hive init failed: $e', StackTrace.current.toString());
     }
 
+    // Register all Hive adapters
     Hive.registerAdapter(MSNoteAdapter());
-    await Hive.openBox<MSNote>('notesBox');
     Hive.registerAdapter(NoteTakingModelAdapter());
-    await Hive.openBox<NoteTakingModel>('notes');
-    await Hive.openBox<NoteTakingModel>('deleted_notes');
-
-    // Register note version adapter
     Hive.registerAdapter(NoteVersionAdapter());
-    await Hive.openBox<NoteVersion>('note_versions');
-
-    // Register chat history adapters
     Hive.registerAdapter(ChatHistoryAdapter());
     Hive.registerAdapter(ChatHistoryMessageAdapter());
-    await Hive.openBox<ChatHistory>('chat_history');
-
-    // Register templates adapter
     Hive.registerAdapter(NoteTemplateAdapter());
-    await Hive.openBox<NoteTemplate>('note_templates');
-
-    // Register voice notes adapter
     Hive.registerAdapter(VoiceNoteModelAdapter());
-    await Hive.openBox<VoiceNoteModel>('voice_notes');
+
+    // Safely open all Hive boxes with error handling
+    await DatabaseMigrationService.safeOpenBox<MSNote>('notesBox');
+    await DatabaseMigrationService.safeOpenBox<NoteTakingModel>('notes');
+    await DatabaseMigrationService.safeOpenBox<NoteTakingModel>(
+        'deleted_notes');
+    await DatabaseMigrationService.safeOpenBox<NoteVersion>('note_versions');
+    await DatabaseMigrationService.safeOpenBox<ChatHistory>('chat_history');
+    await DatabaseMigrationService.safeOpenBox<NoteTemplate>('note_templates');
+    await DatabaseMigrationService.safeOpenBox<VoiceNoteModel>('voice_notes');
 
     try {
-      await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+      await Workmanager().initialize(
+        callbackDispatcher,
+      );
       await SchedulerRegistration.registerAdaptive();
     } catch (e, st) {
       FlutterBugfender.log('Workmanager init failed: $e');

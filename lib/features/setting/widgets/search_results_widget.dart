@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/section/search/search_setting.dart';
 
 class SearchResultsWidget extends StatelessWidget {
@@ -26,13 +29,13 @@ class SearchResultsWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.search_off,
                 size: 64,
-                color: colorScheme.primary.withOpacity(0.4),
+                color: colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
             Padding(
@@ -40,7 +43,7 @@ class SearchResultsWidget extends StatelessWidget {
               child: Text(
                 "No settings found",
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: colorScheme.primary.withOpacity(0.7),
+                  color: colorScheme.primary.withValues(alpha: 0.7),
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w600,
                 ),
@@ -52,7 +55,7 @@ class SearchResultsWidget extends StatelessWidget {
               child: Text(
                 "Try searching with different keywords",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.primary.withOpacity(0.5),
+                  color: colorScheme.primary.withValues(alpha: 0.5),
                   fontFamily: 'Poppins',
                 ),
                 textAlign: TextAlign.center,
@@ -71,7 +74,7 @@ class SearchResultsWidget extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -128,12 +131,12 @@ class SearchResultTile extends StatelessWidget {
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.05),
+                  color: colorScheme.shadow.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -144,7 +147,7 @@ class SearchResultTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -170,7 +173,7 @@ class SearchResultTile extends StatelessWidget {
                       Text(
                         setting.subtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.primary.withOpacity(0.7),
+                          color: colorScheme.primary.withValues(alpha: 0.7),
                           fontFamily: 'Poppins',
                           height: 1.3,
                         ),
@@ -180,10 +183,10 @@ class SearchResultTile extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colorScheme.secondary.withOpacity(0.15),
+                          color: colorScheme.secondary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: colorScheme.secondary.withOpacity(0.3),
+                            color: colorScheme.secondary.withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -203,13 +206,13 @@ class SearchResultTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.chevron_right,
                     size: 20,
-                    color: colorScheme.primary.withOpacity(0.6),
+                    color: colorScheme.primary.withValues(alpha: 0.6),
                   ),
                 ),
               ],

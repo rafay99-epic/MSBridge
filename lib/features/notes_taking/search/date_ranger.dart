@@ -1,3 +1,4 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 
 class CustomDateRangePicker extends StatefulWidget {
@@ -69,7 +70,9 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
 
   void _selectDate(DateTime date) {
     // Selecting start date (no start yet or previous range completed)
-    if (_selectedFromDate == null || _selectedToDate != null || !_isSelectingEndDate) {
+    if (_selectedFromDate == null ||
+        _selectedToDate != null ||
+        !_isSelectingEndDate) {
       setState(() {
         _selectedFromDate = date;
         _selectedToDate = null;
@@ -156,7 +159,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 24,
                 offset: const Offset(0, -6),
               ),
@@ -184,7 +187,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-          color: widget.theme.colorScheme.onSurface.withOpacity(0.15),
+          color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -200,7 +203,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.close,
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+              color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
               size: 24,
             ),
             style: IconButton.styleFrom(
@@ -227,7 +230,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             tooltip: 'Clear selection',
             style: IconButton.styleFrom(
               backgroundColor:
-                  widget.theme.colorScheme.primary.withOpacity(0.1),
+                  widget.theme.colorScheme.primary.withValues(alpha: 0.1),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -251,7 +254,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
         color: widget.theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: widget.theme.colorScheme.outline.withOpacity(0.2),
+          color: widget.theme.colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -269,7 +272,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             margin: const EdgeInsets.symmetric(horizontal: 8),
             child: Icon(
               Icons.arrow_forward,
-              color: widget.theme.colorScheme.primary.withOpacity(0.6),
+              color: widget.theme.colorScheme.primary.withValues(alpha: 0.6),
               size: 18,
             ),
           ),
@@ -296,9 +299,9 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: isActive
-            ? widget.theme.colorScheme.primary.withOpacity(0.12)
+            ? widget.theme.colorScheme.primary.withValues(alpha: 0.12)
             : isSelected
-                ? widget.theme.colorScheme.primary.withOpacity(0.05)
+                ? widget.theme.colorScheme.primary.withValues(alpha: 0.05)
                 : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
@@ -310,7 +313,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
+              color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 4),
@@ -321,7 +324,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
               fontWeight: FontWeight.w600,
               color: isSelected
                   ? widget.theme.colorScheme.primary
-                  : widget.theme.colorScheme.onSurface.withOpacity(0.8),
+                  : widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -346,7 +349,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             ),
             style: IconButton.styleFrom(
               backgroundColor:
-                  widget.theme.colorScheme.primary.withOpacity(0.08),
+                  widget.theme.colorScheme.primary.withValues(alpha: 0.08),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -367,7 +370,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
             ),
             style: IconButton.styleFrom(
               backgroundColor:
-                  widget.theme.colorScheme.primary.withOpacity(0.08),
+                  widget.theme.colorScheme.primary.withValues(alpha: 0.08),
               padding: const EdgeInsets.all(8),
             ),
           ),
@@ -400,8 +403,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color:
-                            widget.theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: widget.theme.colorScheme.onSurface
+                            .withValues(alpha: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -444,7 +447,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                           ? widget.theme.colorScheme.primary
                           : isInRange
                               ? widget.theme.colorScheme.primary
-                                  .withOpacity(0.15)
+                                  .withValues(alpha: 0.15)
                               : Colors.transparent,
                       borderRadius: BorderRadius.circular(isSelected ? 12 : 10),
                       border: isToday && !isSelected
@@ -457,7 +460,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                           ? [
                               BoxShadow(
                                 color: widget.theme.colorScheme.primary
-                                    .withOpacity(0.3),
+                                    .withValues(alpha: 0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               )
@@ -500,7 +503,7 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
         color: widget.theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, -4),
           ),
@@ -514,7 +517,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
-                  color: widget.theme.colorScheme.outline.withOpacity(0.3),
+                  color:
+                      widget.theme.colorScheme.outline.withValues(alpha: 0.3),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -523,7 +527,8 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+                  color:
+                      widget.theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),
@@ -543,9 +548,9 @@ class CustomDateRangePickerState extends State<CustomDateRangePicker>
                 ),
                 elevation: canConfirm ? 2 : 0,
                 disabledBackgroundColor:
-                    widget.theme.colorScheme.primary.withOpacity(0.4),
+                    widget.theme.colorScheme.primary.withValues(alpha: 0.4),
                 disabledForegroundColor:
-                    widget.theme.colorScheme.onPrimary.withOpacity(0.8),
+                    widget.theme.colorScheme.onPrimary.withValues(alpha: 0.8),
               ),
               child: Text(
                 'Confirm',

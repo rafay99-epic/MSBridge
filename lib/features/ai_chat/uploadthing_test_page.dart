@@ -1,9 +1,16 @@
-// Testing Uploadthing UI 
+// Testing Uploadthing UI
 
+// Dart imports:
 import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/uploadthing_provider.dart';
 import 'package:msbridge/widgets/appbar.dart';
 
@@ -19,18 +26,18 @@ class _UploadThingTestPageState extends State<UploadThingTestPage> {
   String? _uploadedUrl;
 
   Future<void> _pickAndUpload() async {
+    final prov = Provider.of<UploadThingProvider>(context, listen: false);
+
     final picker = ImagePicker();
     final image =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (image == null) return;
 
-    // Optionally copy to temp dir; using picked file directly
     setState(() {
       _selected = File(image.path);
       _uploadedUrl = null;
     });
 
-    final prov = Provider.of<UploadThingProvider>(context, listen: false);
     final url = await prov.uploadImage(_selected!);
     if (!mounted) return;
     setState(() {

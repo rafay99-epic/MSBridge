@@ -1,8 +1,15 @@
-import 'package:flutter/material.dart';
+// Dart imports:
+import 'dart:io';
+
+// Flutter imports:
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
+
+// Project imports:
 import 'package:msbridge/widgets/snakbar.dart';
 
 class PermissionHandler {
@@ -40,7 +47,7 @@ class PermissionHandler {
       }
 
       if (status.isGranted) return true;
-
+      if (!context.mounted) return false;
       CustomSnackBar.show(
         context,
         "Storage access denied. Unable to save to Downloads without permission.",
@@ -50,9 +57,7 @@ class PermissionHandler {
     } catch (e) {
       FlutterBugfender.sendCrash('Error requesting Android permissions: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Error requesting Android permissions: $e',
-      );
+      if (!context.mounted) return false;
       CustomSnackBar.show(context, "Error requesting Android permissions: $e",
           isSuccess: false);
       return false;

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/features/setting/section/appinfo_section/app_info_settings_section.dart';
 import 'package:msbridge/widgets/appbar.dart';
 
@@ -31,7 +34,8 @@ class AppInfoPage extends StatelessWidget {
                   '© Syntax Lab Technology ${DateTime.now().year}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    color: theme.textTheme.bodyMedium?.color
+                        ?.withValues(alpha: 0.6),
                   ),
                   textAlign: TextAlign.center,
                 ),

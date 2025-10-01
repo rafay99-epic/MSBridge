@@ -1,13 +1,19 @@
 // features/setting/bottom_sheets/data_management_bottom_sheet.dart
+
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:page_transition/page_transition.dart';
+
+// Project imports:
 import 'package:msbridge/core/services/backup/backup_service.dart';
 import 'package:msbridge/features/notes_taking/recyclebin/recycle.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/bottom_sheet_base.dart';
 import 'package:msbridge/features/setting/bottom_sheets/components/setting_action_tile.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:page_transition/page_transition.dart';
 
 class DataManagementBottomSheet extends StatelessWidget {
   const DataManagementBottomSheet({super.key});

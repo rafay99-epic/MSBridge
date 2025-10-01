@@ -1,14 +1,19 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:intl/intl.dart';
+import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/todo_provider.dart';
 import 'package:msbridge/core/repo/todo_repo.dart';
 import 'package:msbridge/features/todo/create_task/create_task.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:provider/provider.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:intl/intl.dart';
 
 class ToDO extends StatefulWidget {
   const ToDO({super.key});
@@ -40,7 +45,7 @@ class _ToDOState extends State<ToDO> {
                 dividerColor: Colors.transparent,
                 labelColor: theme.colorScheme.primary,
                 unselectedLabelColor:
-                    theme.colorScheme.primary.withOpacity(0.6),
+                    theme.colorScheme.primary.withValues(alpha: 0.6),
                 indicatorColor: theme.colorScheme.secondary,
                 indicatorWeight: 3.0,
                 labelStyle: const TextStyle(
@@ -144,7 +149,8 @@ class _ToDOState extends State<ToDO> {
                     child: Text(
                       task.description!,
                       style: TextStyle(
-                          color: theme.colorScheme.primary.withOpacity(0.8),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.8),
                           fontSize: 14),
                     ),
                   ),
@@ -161,7 +167,7 @@ class _ToDOState extends State<ToDO> {
                   child: Text(
                     'Created: ${DateFormat('yyyy-MM-dd').format(task.createdAt)}',
                     style: TextStyle(
-                        color: theme.colorScheme.primary.withOpacity(0.6),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
                         fontSize: 12),
                   ),
                 ),
@@ -182,8 +188,10 @@ class _ToDOState extends State<ToDO> {
                     } catch (e) {
                       FlutterBugfender.sendCrash('Failed to toggle task.',
                           StackTrace.current.toString());
-                      FlutterBugfender.error('Failed to toggle task.');
-                      CustomSnackBar.show(context, e.toString());
+                      if (context.mounted) {
+                        CustomSnackBar.show(context, e.toString(),
+                            isSuccess: false);
+                      }
                     }
                   },
                 ),
@@ -197,8 +205,10 @@ class _ToDOState extends State<ToDO> {
                     } catch (e) {
                       FlutterBugfender.sendCrash('Failed to remove task.',
                           StackTrace.current.toString());
-                      FlutterBugfender.error('Failed to remove task.');
-                      CustomSnackBar.show(context, e.toString());
+                      if (context.mounted) {
+                        CustomSnackBar.show(context, e.toString(),
+                            isSuccess: false);
+                      }
                     }
                   },
                 ),

@@ -1,15 +1,20 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/provider/note_version_provider.dart';
 import 'package:msbridge/core/utils/version_download_utils.dart';
-import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/features/notes_taking/widget/build_content.dart';
+import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class VersionHistoryScreen extends StatefulWidget {
   final NoteTakingModel note;
@@ -75,9 +80,9 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,14 +108,14 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
           Text(
             "Last updated: ${DateFormat('MMM dd, yyyy HH:mm').format(widget.note.updatedAt)}",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             "Created: ${DateFormat('MMM dd, yyyy HH:mm').format(widget.note.createdAt)}",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -126,7 +131,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
           Icon(
             LineIcons.history,
             size: 64,
-            color: colorScheme.primary.withOpacity(0.5),
+            color: colorScheme.primary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -139,7 +144,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
           Text(
             "Versions will appear here when you edit this note",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary.withOpacity(0.7),
+              color: colorScheme.primary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -157,7 +162,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
           Icon(
             LineIcons.exclamationTriangle,
             size: 64,
-            color: colorScheme.error.withOpacity(0.5),
+            color: colorScheme.error.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -170,7 +175,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
           Text(
             versionProvider.error ?? "Unknown error occurred",
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.error.withOpacity(0.7),
+              color: colorScheme.error.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -220,7 +225,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
               Container(
                 width: 2,
                 height: 60,
-                color: colorScheme.primary.withOpacity(0.3),
+                color: colorScheme.primary.withValues(alpha: 0.3),
               ),
           ],
         ),
@@ -254,7 +259,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -274,7 +279,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           DateFormat('MMM dd, yyyy HH:mm')
                               .format(version.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.primary.withOpacity(0.7),
+                            color: colorScheme.primary.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -340,10 +345,10 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.secondary.withOpacity(0.05),
+                    color: colorScheme.secondary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: colorScheme.secondary.withOpacity(0.2),
+                      color: colorScheme.secondary.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -395,7 +400,8 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: colorScheme.secondary.withOpacity(0.1),
+                              color:
+                                  colorScheme.secondary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -432,12 +438,12 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.outline.withOpacity(0.2),
+              color: colorScheme.outline.withValues(alpha: 0.2),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
                 spreadRadius: 0,
@@ -451,7 +457,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -462,7 +468,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.2),
+                        color: colorScheme.primary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -489,7 +495,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                             DateFormat('MMM dd, yyyy HH:mm')
                                 .format(version.createdAt),
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.primary.withOpacity(0.7),
+                              color: colorScheme.primary.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -499,7 +505,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(
                         Icons.close,
-                        color: colorScheme.primary.withOpacity(0.7),
+                        color: colorScheme.primary.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -519,10 +525,12 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: colorScheme.secondary.withOpacity(0.05),
+                            color:
+                                colorScheme.secondary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: colorScheme.secondary.withOpacity(0.2),
+                              color:
+                                  colorScheme.secondary.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Column(
@@ -592,7 +600,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: colorScheme.outline.withOpacity(0.2),
+                            color: colorScheme.outline.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
@@ -621,7 +629,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                           color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: colorScheme.outline.withOpacity(0.2),
+                            color: colorScheme.outline.withValues(alpha: 0.2),
                           ),
                         ),
                         child: buildContent(version.noteContent, theme),
@@ -647,11 +655,11 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                                         horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: colorScheme.secondary
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: colorScheme.secondary
-                                            .withOpacity(0.3),
+                                            .withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Text(
@@ -682,7 +690,7 @@ class _VersionHistoryScreenState extends State<VersionHistoryScreen> {
                   ),
                   border: Border(
                     top: BorderSide(
-                      color: colorScheme.outline.withOpacity(0.1),
+                      color: colorScheme.outline.withValues(alpha: 0.1),
                     ),
                   ),
                 ),

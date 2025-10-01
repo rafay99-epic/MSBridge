@@ -1,10 +1,15 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:pinput/pinput.dart';
-import 'package:msbridge/widgets/snakbar.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
+import 'package:msbridge/widgets/snakbar.dart';
 
 class StartupPinLockScreen extends StatefulWidget {
   final Function() onPinCorrect;
@@ -222,7 +227,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     colorScheme.surface,
-                    colorScheme.surfaceContainerHighest.withOpacity(0.2),
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
                     colorScheme.surface,
                   ],
                 ),
@@ -254,13 +259,14 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                     colors: [
                                       colorScheme.primary,
                                       colorScheme.secondary,
-                                      colorScheme.primary.withOpacity(0.8),
+                                      colorScheme.primary
+                                          .withValues(alpha: 0.8),
                                     ],
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          colorScheme.primary.withOpacity(0.20),
+                                      color: colorScheme.primary
+                                          .withValues(alpha: 0.20),
                                       blurRadius: 12,
                                       offset: const Offset(0, 6),
                                     ),
@@ -294,7 +300,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                       Text(
                         'Enter your PIN to unlock the app',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           height: 1.4,
                         ),
                         textAlign: TextAlign.center,
@@ -310,12 +316,14 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                               color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: colorScheme.outline.withOpacity(0.2),
+                                color:
+                                    colorScheme.outline.withValues(alpha: 0.2),
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: colorScheme.shadow.withOpacity(0.10),
+                                  color: colorScheme.shadow
+                                      .withValues(alpha: 0.10),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -350,13 +358,13 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: colorScheme.outline
-                                            .withOpacity(0.25),
+                                            .withValues(alpha: 0.25),
                                         width: 1.5,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
                                           color: colorScheme.shadow
-                                              .withOpacity(0.08),
+                                              .withValues(alpha: 0.08),
                                           blurRadius: 6,
                                           offset: const Offset(0, 2),
                                         ),
@@ -381,7 +389,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                       boxShadow: [
                                         BoxShadow(
                                           color: colorScheme.primary
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                           blurRadius: 12,
                                           offset: const Offset(0, 4),
                                         ),
@@ -406,7 +414,7 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                                       boxShadow: [
                                         BoxShadow(
                                           color: colorScheme.error
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -476,7 +484,8 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                             Text(
                               'Verifying PIN...',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.6),
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.6),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -539,8 +548,8 @@ class _StartupPinLockScreenState extends State<StartupPinLockScreen>
                           Text(
                             'Syntax Lab Technologies',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color:
-                                  colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              color: colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.7),
                               fontWeight: FontWeight.w400,
                               letterSpacing: 0.2,
                             ),

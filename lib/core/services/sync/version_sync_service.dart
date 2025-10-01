@@ -1,11 +1,14 @@
+// Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports:
 import 'package:msbridge/core/database/note_taking/note_version.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class VersionSyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
