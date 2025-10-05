@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports:
 import 'package:msbridge/theme/colors.dart';
+import 'package:msbridge/core/models/custom_color_scheme_model.dart';
+import 'package:msbridge/core/repo/custom_color_scheme_repo.dart';
 
 class ThemeProvider with ChangeNotifier {
   static const String _themeKey = 'appTheme';
@@ -15,13 +17,21 @@ class ThemeProvider with ChangeNotifier {
   AppTheme _selectedTheme = AppTheme.dark;
   bool _dynamicColorsEnabled = false;
 
+  // Custom color scheme support
+  CustomColorSchemeModel? _customColorScheme;
+  bool _isCustomTheme = false;
+  final CustomColorSchemeRepo _customColorRepo = CustomColorSchemeRepo();
+
   // Cache ThemeData to avoid recomputation
   ThemeData? _cachedThemeData;
   AppTheme? _lastSelectedTheme;
   bool? _lastDynamicColorsEnabled;
+  CustomColorSchemeModel? _lastCustomColorScheme;
 
   AppTheme get selectedTheme => _selectedTheme;
   bool get dynamicColorsEnabled => _dynamicColorsEnabled;
+  CustomColorSchemeModel? get customColorScheme => _customColorScheme;
+  bool get isCustomTheme => _isCustomTheme;
 
   ThemeProvider() {
     _loadTheme();
@@ -32,12 +42,25 @@ class ThemeProvider with ChangeNotifier {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? themeName = prefs.getString(_themeKey);
       bool? dynamicColors = prefs.getBool(_dynamicColorsKey);
+      bool? isCustomTheme = prefs.getBool('isCustomTheme');
 
       _selectedTheme = _themeFromString(themeName);
       _dynamicColorsEnabled = dynamicColors ?? false;
+      _isCustomTheme = isCustomTheme ?? false;
+
+      // Load custom color scheme if active
+      if (_isCustomTheme) {
+        _customColorScheme = await _customColorRepo.getActiveScheme();
+        if (_customColorScheme == null) {
+          // If no active custom scheme found, fall back to regular theme
+          _isCustomTheme = false;
+          await prefs.setBool('isCustomTheme', false);
+        }
+      }
     } catch (e) {
       _selectedTheme = AppTheme.dark;
       _dynamicColorsEnabled = false;
+      _isCustomTheme = false;
       FlutterBugfender.sendCrash(
           'Error loading theme: $e', StackTrace.current.toString());
       FlutterBugfender.error(
@@ -68,12 +91,16 @@ class ThemeProvider with ChangeNotifier {
       return;
     }
 
+    // Clear custom theme when switching to regular theme
+    _isCustomTheme = false;
+    _customColorScheme = null;
     _selectedTheme = theme;
     notifyListeners();
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themeKey, theme.name);
+      await prefs.setBool('isCustomTheme', false);
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to set theme: $e', StackTrace.current.toString());
@@ -88,6 +115,8 @@ class ThemeProvider with ChangeNotifier {
 
     if (enabled) {
       _selectedTheme = AppTheme.dark;
+      _isCustomTheme = false;
+      _customColorScheme = null;
     }
 
     notifyListeners();
@@ -97,6 +126,7 @@ class ThemeProvider with ChangeNotifier {
       await prefs.setBool(_dynamicColorsKey, enabled);
       if (enabled) {
         await prefs.setString(_themeKey, AppTheme.dark.name);
+        await prefs.setBool('isCustomTheme', false);
       }
     } catch (e) {
       FlutterBugfender.sendCrash(
@@ -111,12 +141,40 @@ class ThemeProvider with ChangeNotifier {
     // Check if we can use cached ThemeData
     if (_cachedThemeData != null &&
         _lastSelectedTheme == _selectedTheme &&
-        _lastDynamicColorsEnabled == _dynamicColorsEnabled) {
+        _lastDynamicColorsEnabled == _dynamicColorsEnabled &&
+        _lastCustomColorScheme == _customColorScheme) {
       return _cachedThemeData!;
     }
 
     ThemeData themeData;
-    if (_dynamicColorsEnabled) {
+
+    if (_isCustomTheme && _customColorScheme != null) {
+      // Use custom color scheme
+      themeData = ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: _customColorScheme!.primary,
+          brightness: _isDarkTheme ? Brightness.dark : Brightness.light,
+          primary: _customColorScheme!.primary,
+          secondary: _customColorScheme!.secondary,
+          surface: _customColorScheme!.background,
+          onPrimary: _getContrastColor(_customColorScheme!.primary),
+          onSecondary: _getContrastColor(_customColorScheme!.secondary),
+          onSurface: _customColorScheme!.textColor,
+        ).copyWith(
+          onSurface: _customColorScheme!.textColor,
+          onBackground: _customColorScheme!.textColor,
+        ),
+        textTheme: AppThemes.themeMap[_selectedTheme]!.textTheme.copyWith(
+          bodyLarge: TextStyle(color: _customColorScheme!.textColor),
+          bodyMedium: TextStyle(color: _customColorScheme!.textColor),
+          bodySmall: TextStyle(color: _customColorScheme!.textColor),
+          titleLarge: TextStyle(color: _customColorScheme!.textColor),
+          titleMedium: TextStyle(color: _customColorScheme!.textColor),
+          titleSmall: TextStyle(color: _customColorScheme!.textColor),
+        ),
+      );
+    } else if (_dynamicColorsEnabled) {
       // Use a custom dynamic color theme that simulates Material You
       themeData = ThemeData(
         useMaterial3: true,
@@ -132,6 +190,7 @@ class ThemeProvider with ChangeNotifier {
     _cachedThemeData = themeData;
     _lastSelectedTheme = _selectedTheme;
     _lastDynamicColorsEnabled = _dynamicColorsEnabled;
+    _lastCustomColorScheme = _customColorScheme;
 
     return themeData;
   }
@@ -171,6 +230,20 @@ class ThemeProvider with ChangeNotifier {
     }
   }
 
+  // Helper method to determine if current theme is dark
+  bool get _isDarkTheme {
+    if (_isCustomTheme && _customColorScheme != null) {
+      // Determine brightness based on background color luminance
+      return _customColorScheme!.background.computeLuminance() < 0.5;
+    }
+    return _selectedTheme == AppTheme.dark;
+  }
+
+  // Helper method to get contrast color (black or white)
+  Color _getContrastColor(Color color) {
+    return color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+  }
+
   String get currentImagePath {
     if (_dynamicColorsEnabled) {
       return 'assets/svg/dynamic_colors.svg';
@@ -202,9 +275,209 @@ class ThemeProvider with ChangeNotifier {
 
   // Get the current effective theme name for display
   String get effectiveThemeName {
+    if (_isCustomTheme && _customColorScheme != null) {
+      return _customColorScheme!.name;
+    }
     if (_dynamicColorsEnabled) {
       return 'Dynamic Colors';
     }
     return _selectedTheme.name;
+  }
+
+  /// Debug method to verify textColor is being saved and loaded correctly
+  Future<void> debugTextColor() async {
+    if (_customColorScheme != null) {
+      FlutterBugfender.log('Custom Color Scheme Debug:');
+      FlutterBugfender.log('Name: ${_customColorScheme!.name}');
+      FlutterBugfender.log('Primary: ${_customColorScheme!.primary.value}');
+      FlutterBugfender.log('Secondary: ${_customColorScheme!.secondary.value}');
+      FlutterBugfender.log(
+          'Background: ${_customColorScheme!.background.value}');
+      FlutterBugfender.log('TextColor: ${_customColorScheme!.textColor.value}');
+      FlutterBugfender.log('Is Custom Theme: $_isCustomTheme');
+
+      // Also check what's stored in SharedPreferences
+      final activeScheme = await _customColorRepo.getActiveScheme();
+      if (activeScheme != null) {
+        FlutterBugfender.log('Active Scheme from Storage:');
+        FlutterBugfender.log('Name: ${activeScheme.name}');
+        FlutterBugfender.log('TextColor: ${activeScheme.textColor.value}');
+      }
+    }
+  }
+
+  // Custom Color Scheme Management Methods
+
+  /// Set a custom color scheme as active
+  Future<bool> setCustomColorScheme(CustomColorSchemeModel scheme) async {
+    try {
+      _customColorScheme = scheme;
+      _isCustomTheme = true;
+      notifyListeners();
+
+      // Save to local storage
+      await _customColorRepo.setActiveScheme(scheme);
+
+      // Update SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isCustomTheme', true);
+
+      // Debug textColor
+      await debugTextColor();
+
+      return true;
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to set custom color scheme: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to set custom color scheme: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Create a new custom color scheme
+  Future<CustomColorSchemeModel?> createCustomColorScheme({
+    required String name,
+    required Color primary,
+    required Color secondary,
+    required Color background,
+    required Color textColor,
+  }) async {
+    try {
+      final scheme = await _customColorRepo.createScheme(
+        name: name,
+        primary: primary,
+        secondary: secondary,
+        background: background,
+        textColor: textColor,
+      );
+
+      if (scheme != null) {
+        await setCustomColorScheme(scheme);
+      }
+
+      return scheme;
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to create custom color scheme: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to create custom color scheme: $e',
+      );
+      return null;
+    }
+  }
+
+  /// Update an existing custom color scheme
+  Future<bool> updateCustomColorScheme(CustomColorSchemeModel scheme) async {
+    try {
+      final success = await _customColorRepo.updateScheme(scheme);
+
+      if (success && _isCustomTheme && _customColorScheme?.id == scheme.id) {
+        _customColorScheme = scheme;
+        notifyListeners();
+      }
+
+      return success;
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to update custom color scheme: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to update custom color scheme: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Delete a custom color scheme
+  Future<bool> deleteCustomColorScheme(CustomColorSchemeModel scheme) async {
+    try {
+      final success = await _customColorRepo.deleteScheme(scheme);
+
+      if (success) {
+        // Clean up any orphaned data
+        await _customColorRepo.cleanupOrphanedData();
+
+        if (_isCustomTheme && _customColorScheme?.id == scheme.id) {
+          // If deleting the active scheme, fall back to default theme
+          // Clear custom theme state first
+          _customColorScheme = null;
+          _isCustomTheme = false;
+
+          // Update SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isCustomTheme', false);
+
+          // Notify listeners after state is fully updated
+          notifyListeners();
+        }
+      }
+
+      return success;
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to delete custom color scheme: $e',
+          StackTrace.current.toString());
+      return false;
+    }
+  }
+
+  /// Get all custom color schemes
+  Future<List<CustomColorSchemeModel>> getCustomColorSchemes() async {
+    try {
+      return await _customColorRepo.loadLocalSchemes();
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to get custom color schemes: $e',
+          StackTrace.current.toString());
+      return [];
+    }
+  }
+
+  /// Sync custom color schemes to Firebase
+  Future<bool> syncCustomColorSchemesToFirebase() async {
+    try {
+      return await _customColorRepo.syncAllToFirebase();
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to sync custom color schemes to Firebase: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to sync custom color schemes to Firebase: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Sync custom color schemes from Firebase
+  Future<bool> syncCustomColorSchemesFromFirebase() async {
+    try {
+      return await _customColorRepo.syncFromFirebase();
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to sync custom color schemes from Firebase: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to sync custom color schemes from Firebase: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Clear custom theme and fall back to regular theme
+  Future<void> clearCustomTheme() async {
+    try {
+      _isCustomTheme = false;
+      _customColorScheme = null;
+      notifyListeners();
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isCustomTheme', false);
+      await _customColorRepo.setActiveScheme(null);
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to clear custom theme: $e', StackTrace.current.toString());
+      FlutterBugfender.error(
+        'Failed to clear custom theme: $e',
+      );
+    }
   }
 }
