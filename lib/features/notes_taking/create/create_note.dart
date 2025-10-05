@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // Package imports:
-import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -69,7 +68,7 @@ class _CreateNoteState extends State<CreateNote>
   String _lastSavedContent = "";
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
-  bool _hasSelection = false;
+  // Removed: selection UI state (no custom copy/cut UI)
   bool _isShareOperationInProgress =
       false; // Added to prevent multiple share operations
   StreamSubscription? _docChangesSub;
@@ -153,7 +152,6 @@ class _CreateNoteState extends State<CreateNote>
 
     _attachControllerListeners();
 
-    // Add lightweight focus tracking
     _titleController.addListener(() {
       if (_titleController.text.isNotEmpty) {
         _currentFocusArea.value = 'title';
@@ -244,16 +242,7 @@ class _CreateNoteState extends State<CreateNote>
   }
 
   void _attachControllerListeners() {
-    // Selection tracking
-    _controller.addListener(() {
-      final selection = _controller.selection;
-      final bool hasSelection = selection.isValid && !selection.isCollapsed;
-      if (_hasSelection != hasSelection && mounted) {
-        setState(() {
-          _hasSelection = hasSelection;
-        });
-      }
-    });
+    // Selection tracking removed; no custom copy/cut UI
 
     // Debounced document changes for auto-save
     if (FeatureFlag.enableAutoSave) {
@@ -324,7 +313,6 @@ class _CreateNoteState extends State<CreateNote>
       } catch (e) {
         FlutterBugfender.sendCrash(
             'Failed to encode content: $e', StackTrace.current.toString());
-        FlutterBugfender.error('Failed to encode content: $e');
         content = _controller.document.toPlainText().trim();
       }
       if (title.isEmpty && content.isEmpty) {
@@ -354,7 +342,6 @@ class _CreateNoteState extends State<CreateNote>
             FlutterBugfender.sendCrash(
                 'Streak update failed on note creation: $e',
                 StackTrace.current.toString());
-            FlutterBugfender.error('Streak update failed on note creation: $e');
           }
         }
       }
@@ -376,7 +363,6 @@ class _CreateNoteState extends State<CreateNote>
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to save note: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to save note: $e');
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
@@ -472,109 +458,10 @@ class _CreateNoteState extends State<CreateNote>
     } catch (e) {
       FlutterBugfender.sendCrash('Streak update failed on note creation: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error('Streak update failed on note creation: $e');
     }
   }
 
-  // Compact copy/paste methods
-  Future<void> _copySelectedText() async {
-    try {
-      final selection = _controller.selection;
-      final fullText = _controller.document.toPlainText();
-      if (selection.isValid && !selection.isCollapsed) {
-        final start = selection.start.clamp(0, fullText.length);
-        final end = selection.end.clamp(0, fullText.length);
-        final selectedText = fullText.substring(start, end);
-        await Clipboard.setData(ClipboardData(text: selectedText));
-        if (mounted) {
-          CustomSnackBar.show(
-            context,
-            "Copied",
-            isSuccess: true,
-          );
-        }
-      }
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          'Failed to copy text: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to copy text: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Copy failed',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onError)),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(8),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _cutSelectedText() async {
-    try {
-      final selection = _controller.selection;
-      final fullText = _controller.document.toPlainText();
-      if (selection.isValid && !selection.isCollapsed) {
-        final start = selection.start.clamp(0, fullText.length);
-        final end = selection.end.clamp(0, fullText.length);
-        final selectedText = fullText.substring(start, end);
-        await Clipboard.setData(ClipboardData(text: selectedText));
-        _controller.replaceText(
-          selection.start,
-          selection.end - selection.start,
-          '',
-          selection,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Cut',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSecondary)),
-              duration: const Duration(seconds: 1),
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(8),
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          'Failed to cut text: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to cut text: $e');
-      FirebaseCrashlytics.instance.recordError(
-          Exception("Cut failed"), StackTrace.current,
-          reason: "Cut failed");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cut failed',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onError)),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(8),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    }
-  }
-
+  // Removed custom copy/cut methods; rely on platform selection menu
   Future<void> _pasteText() async {
     try {
       final data = await Clipboard.getData('text/plain');
@@ -654,18 +541,7 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          if (_hasSelection) ...[
-            IconButton(
-              tooltip: 'Copy',
-              icon: const Icon(Icons.copy, size: 20),
-              onPressed: _copySelectedText,
-            ),
-            IconButton(
-              tooltip: 'Cut',
-              icon: const Icon(Icons.content_cut, size: 20),
-              onPressed: _cutSelectedText,
-            ),
-          ],
+          // Removed custom copy/cut actions; rely on system selection toolbar
           IconButton(
             tooltip: 'Paste',
             icon: const Icon(Icons.paste, size: 20),

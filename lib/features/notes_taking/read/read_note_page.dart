@@ -38,6 +38,8 @@ class _ReadNotePageState extends State<ReadNotePage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   double _scrollProgress = 0.0; // 0..1
+  int _lastProgressUpdateMs = 0;
+  static const int _progressUpdateIntervalMs = 50; // throttle
 
   @override
   void initState() {
@@ -102,9 +104,12 @@ class _ReadNotePageState extends State<ReadNotePage> {
     final double max = _scrollController.position.maxScrollExtent;
     final double offset = _scrollController.offset.clamp(0, max);
     final double progress = max > 0 ? offset / max : 0.0;
-    if (progress != _scrollProgress && mounted) {
-      setState(() => _scrollProgress = progress);
-    }
+    final int now = DateTime.now().millisecondsSinceEpoch;
+    if (!mounted) return;
+    if ((now - _lastProgressUpdateMs) < _progressUpdateIntervalMs) return;
+    if ((progress - _scrollProgress).abs() < 0.02) return; // avoid tiny updates
+    _lastProgressUpdateMs = now;
+    setState(() => _scrollProgress = progress);
   }
 
   Document buildDocument(String content) {
