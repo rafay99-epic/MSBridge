@@ -224,10 +224,7 @@ class CustomColorSchemeRepo {
         throw Exception('User not authenticated');
       }
 
-      // Remove from local storage (SharedPreferences)
-      await _removeFromLocalStorage(scheme.id);
-
-      // Remove from Firebase if it was synced
+      // Remove from Firebase first if it was synced
       if (scheme.isSynced) {
         await _firestore
             .collection('users')
@@ -237,7 +234,10 @@ class CustomColorSchemeRepo {
             .delete();
       }
 
-      // If this was the active scheme, clear it
+      // Only remove from local storage after successful remote deletion
+      await _removeFromLocalStorage(scheme.id);
+
+      // If this was the active scheme, clear it after local removal
       final activeScheme = await getActiveScheme();
       if (activeScheme?.id == scheme.id) {
         await setActiveScheme(null);

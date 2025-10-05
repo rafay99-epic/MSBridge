@@ -28,9 +28,10 @@ class _ThemeGridState extends State<ThemeGrid> {
   @override
   Widget build(BuildContext context) {
     // Filter themes based on search
+    final lowerQuery = widget.searchQuery.trim().toLowerCase();
     final filteredThemes = AppTheme.values.where((theme) {
-      if (widget.searchQuery.isEmpty) return true;
-      return theme.name.toLowerCase().contains(widget.searchQuery);
+      if (lowerQuery.isEmpty) return true;
+      return theme.name.toLowerCase().contains(lowerQuery);
     }).toList();
 
     // Get custom color schemes
@@ -218,11 +219,18 @@ class _ThemeGridState extends State<ThemeGrid> {
 
               if (success) {
                 // Add a small delay to prevent UI jerk
+                if (!mounted) return;
                 await Future.delayed(const Duration(milliseconds: 150));
-                setState(() {
+
+                // Check mounted again after delay
+                if (!mounted) return;
+                setState(() {});
+
+                // Check context.mounted before showing SnackBar
+                if (context.mounted) {
                   CustomSnackBar.show(context, 'Theme deleted successfully!',
                       isSuccess: true);
-                });
+                }
               } else {
                 if (context.mounted) {
                   CustomSnackBar.show(context, 'Failed to delete theme',
