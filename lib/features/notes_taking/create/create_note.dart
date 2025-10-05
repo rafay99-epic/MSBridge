@@ -923,21 +923,23 @@ class _CreateNoteState extends State<CreateNote>
                 const SizedBox(height: 12),
                 Expanded(
                   child: SafeArea(
-                    child: QuillEditor.basic(
-                      controller: _controller,
-                      focusNode: _quillFocusNode,
-                      config: QuillEditorConfig(
-                        disableClipboard: false,
-                        autoFocus: true,
-                        placeholder: 'Note...',
-                        expands: true,
-                        onTapUp: (_, __) {
-                          if (!_quillFocusNode.hasFocus) {
-                            FocusScope.of(context)
-                                .requestFocus(_quillFocusNode);
-                          }
-                          return false;
-                        },
+                    child: RepaintBoundary(
+                      child: QuillEditor.basic(
+                        controller: _controller,
+                        focusNode: _quillFocusNode,
+                        config: QuillEditorConfig(
+                          disableClipboard: false,
+                          autoFocus: true,
+                          placeholder: 'Note...',
+                          expands: true,
+                          onTapUp: (_, __) {
+                            if (!_quillFocusNode.hasFocus) {
+                              FocusScope.of(context)
+                                  .requestFocus(_quillFocusNode);
+                            }
+                            return false;
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -953,60 +955,62 @@ class _CreateNoteState extends State<CreateNote>
               bottom: 8,
               child: SafeArea(
                 top: false,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor.withValues(alpha: 0.98),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
+                child: RepaintBoundary(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.cardColor.withValues(alpha: 0.98),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.2),
                       ),
-                    ],
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.2),
                     ),
-                  ),
-                  child: Listener(
-                    onPointerDown: (_) {
-                      if (!_quillFocusNode.hasFocus) {
-                        FocusScope.of(context).requestFocus(_quillFocusNode);
-                      }
-                    },
-                    child: QuillSimpleToolbar(
-                      controller: _controller,
-                      config: const QuillSimpleToolbarConfig(
-                        multiRowsDisplay: false,
-                        toolbarSize: 44,
-                        showCodeBlock: true,
-                        showQuote: true,
-                        showLink: true,
-                        showFontSize: true,
-                        showFontFamily: true,
-                        showIndent: true,
-                        showDividers: true,
-                        showUnderLineButton: true,
-                        showLeftAlignment: true,
-                        showCenterAlignment: true,
-                        showRightAlignment: true,
-                        showJustifyAlignment: true,
-                        showHeaderStyle: true,
-                        showListNumbers: true,
-                        showListBullets: true,
-                        showListCheck: true,
-                        showStrikeThrough: true,
-                        showInlineCode: true,
-                        showColorButton: true,
-                        showBackgroundColorButton: true,
-                        showClearFormat: true,
-                        showAlignmentButtons: true,
-                        showUndo: true,
-                        showRedo: true,
-                        showDirection: false,
-                        showSearchButton: true,
-                        headerStyleType: HeaderStyleType.buttons,
+                    child: Listener(
+                      onPointerDown: (_) {
+                        if (!_quillFocusNode.hasFocus) {
+                          FocusScope.of(context).requestFocus(_quillFocusNode);
+                        }
+                      },
+                      child: QuillSimpleToolbar(
+                        controller: _controller,
+                        config: const QuillSimpleToolbarConfig(
+                          multiRowsDisplay: false,
+                          toolbarSize: 44,
+                          showCodeBlock: true,
+                          showQuote: true,
+                          showLink: true,
+                          showFontSize: true,
+                          showFontFamily: true,
+                          showIndent: true,
+                          showDividers: true,
+                          showUnderLineButton: true,
+                          showLeftAlignment: true,
+                          showCenterAlignment: true,
+                          showRightAlignment: true,
+                          showJustifyAlignment: true,
+                          showHeaderStyle: true,
+                          showListNumbers: true,
+                          showListBullets: true,
+                          showListCheck: true,
+                          showStrikeThrough: true,
+                          showInlineCode: true,
+                          showColorButton: true,
+                          showBackgroundColorButton: true,
+                          showClearFormat: true,
+                          showAlignmentButtons: true,
+                          showUndo: true,
+                          showRedo: true,
+                          showDirection: false,
+                          showSearchButton: true,
+                          headerStyleType: HeaderStyleType.buttons,
+                        ),
                       ),
                     ),
                   ),

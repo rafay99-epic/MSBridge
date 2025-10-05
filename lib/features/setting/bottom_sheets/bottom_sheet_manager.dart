@@ -20,7 +20,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const AIFeaturesBottomSheet(),
     );
   }
@@ -29,7 +32,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const SecurityBottomSheet(),
     );
   }
@@ -38,7 +44,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const SyncBottomSheet(),
     );
   }
@@ -48,7 +57,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const DataManagementBottomSheet(),
     );
   }
@@ -57,7 +69,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const NotesBottomSheet(),
     );
   }
@@ -66,7 +81,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const AppearanceBottomSheet(),
     );
   }
@@ -76,7 +94,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const ProfileManagementBottomSheet(),
     );
   }
@@ -85,7 +106,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const TemplatesBottomSheet(),
     );
   }
@@ -94,7 +118,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const VoiceNotesBottomSheet(),
     );
   }
@@ -104,7 +131,10 @@ class BottomSheetManager {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      enableDrag: true,
+      isDismissible: true,
       builder: (context) => const BackgroundSyncBottomSheet(),
     );
   }

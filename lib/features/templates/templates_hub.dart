@@ -239,8 +239,6 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
       } catch (e) {
         FlutterBugfender.sendCrash('Failed to decode template content.',
             StackTrace.current.toString());
-        FlutterBugfender.error('Failed to decode template content.');
-        // Try interpreting stored content as plain text instead of blanking it
         _controller = QuillController(
           document: Document()..insert(0, widget.template!.contentJson),
           selection: const TextSelection.collapsed(offset: 0),
