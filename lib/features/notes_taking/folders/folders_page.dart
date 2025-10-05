@@ -29,7 +29,10 @@ class _FoldersPageState extends State<FoldersPage> {
   @override
   void initState() {
     super.initState();
-    _initializeListenable();
+    // Initialize Hive listenable after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeListenable();
+    });
   }
 
   Future<void> _initializeListenable() async {

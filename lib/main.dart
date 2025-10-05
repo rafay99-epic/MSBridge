@@ -10,12 +10,12 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
 // Project imports:
 import 'package:msbridge/config/config.dart';
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/database/note_reading/notes_model.dart';
@@ -71,6 +71,20 @@ void main() async {
   }
 
   try {
+    final config =
+        PostHogConfig('phc_AIWVs4aiSvdLJnmNliuVk7tmiurDmt9aS1qUwTGyVAP');
+    config.host = 'https://us.i.posthog.com';
+    config.debug = true;
+    config.captureApplicationLifecycleEvents = true;
+    // check https://posthog.com/docs/session-replay/installation?tab=Flutter
+    // for more config and to learn about how we capture sessions on mobile
+    // and what to expect
+    config.sessionReplay = true;
+    // choose whether to mask images or text
+    config.sessionReplayConfig.maskAllTexts = false;
+    config.sessionReplayConfig.maskAllImages = false;
+    await Posthog().setup(config);
+
     try {
       await Firebase.initializeApp();
     } catch (e) {
@@ -127,7 +141,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => UserSettingsProvider()),
           ChangeNotifierProvider(create: (_) => FontProvider()),
           ChangeNotifierProvider(create: (_) => FingerprintAuthProvider()),
-          if (FeatureFlag.enableAutoSave)
+          if (await Posthog().isFeatureEnabled('note_taking_autosave'))
             ChangeNotifierProvider(create: (_) => AutoSaveProvider()),
           ChangeNotifierProvider(create: (_) => ShareLinkProvider()),
           ChangeNotifierProvider(create: (_) => SyncSettingsProvider()),

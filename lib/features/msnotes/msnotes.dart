@@ -82,7 +82,10 @@ class _MSNotesScreenState extends State<Msnotes>
   void initState() {
     super.initState();
     fetchNotes();
-    _openHiveBox();
+    // Initialize Hive box after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openHiveBox();
+    });
   }
 
   @override

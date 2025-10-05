@@ -13,11 +13,11 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 // Project imports:
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/background_process/create_note_background.dart';
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
@@ -74,7 +74,7 @@ class _CreateNoteState extends State<CreateNote>
       false; // Added to prevent multiple share operations
   StreamSubscription? _docChangesSub;
 
-  void _addTag(String rawTag) {
+  Future<void> _addTag(String rawTag) async {
     final tag = rawTag.trim();
     if (tag.isEmpty) return;
     final current = List<String>.from(_tagsNotifier.value);
@@ -84,12 +84,14 @@ class _CreateNoteState extends State<CreateNote>
 
       _tagInputController.clear();
 
-      if (FeatureFlag.enableAutoSave) {
-        if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-        _debounceTimer = Timer(const Duration(seconds: 1), () {
-          _currentFocusArea.value = 'tags';
-          _saveNote();
-        });
+      if (await Posthog().isFeatureEnabled('note_taking_autosave')) {
+        {
+          if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+          _debounceTimer = Timer(const Duration(seconds: 1), () {
+            _currentFocusArea.value = 'tags';
+            _saveNote();
+          });
+        }
       }
     }
   }
@@ -98,6 +100,16 @@ class _CreateNoteState extends State<CreateNote>
   void initState() {
     super.initState();
 
+    _initializeController();
+
+    _addFocusListeners();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAsyncFeatures();
+    });
+  }
+
+  void _initializeController() {
     if (widget.note != null) {
       _titleController.text = widget.note!.noteTitle;
       final String raw = (widget.note!.noteContent).trim();
@@ -152,7 +164,9 @@ class _CreateNoteState extends State<CreateNote>
     }
 
     _attachControllerListeners();
+  }
 
+  void _addFocusListeners() {
     // Add lightweight focus tracking
     _titleController.addListener(() {
       if (_titleController.text.isNotEmpty) {
@@ -184,8 +198,15 @@ class _CreateNoteState extends State<CreateNote>
         _currentFocusArea.value = 'editor';
       }
     });
+  }
 
-    if (FeatureFlag.enableAutoSave) {
+  Future<void> _initializeAsyncFeatures() async {
+    if (!mounted) return;
+
+    final autoSaveProvider =
+        Provider.of<AutoSaveProvider>(context, listen: false);
+
+    if (await Posthog().isFeatureEnabled('note_taking_autosave')) {
       // Auto-save when tags change
       _tagsNotifier.addListener(() {
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
@@ -194,11 +215,13 @@ class _CreateNoteState extends State<CreateNote>
           _saveNote();
         });
       });
+
+      // Attach document change listeners
+      await _attachAutoSaveListeners();
     }
 
-    final autoSaveProvider =
-        Provider.of<AutoSaveProvider>(context, listen: false);
-    if (FeatureFlag.enableAutoSave && autoSaveProvider.autoSaveEnabled) {
+    if (await Posthog().isFeatureEnabled('note_taking_autosave') &&
+        autoSaveProvider.autoSaveEnabled) {
       startAutoSave();
     }
   }
@@ -254,9 +277,13 @@ class _CreateNoteState extends State<CreateNote>
         });
       }
     });
+  }
+
+  Future<void> _attachAutoSaveListeners() async {
+    if (!mounted) return;
 
     // Debounced document changes for auto-save
-    if (FeatureFlag.enableAutoSave) {
+    if (await Posthog().isFeatureEnabled('note_taking_autosave')) {
       _docChangesSub?.cancel();
       _docChangesSub = _controller.document.changes.listen((event) {
         if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
@@ -277,6 +304,8 @@ class _CreateNoteState extends State<CreateNote>
       selection: const TextSelection.collapsed(offset: 0),
     );
     _attachControllerListeners();
+    // Re-attach auto-save listeners if needed
+    _attachAutoSaveListeners();
   }
 
   Future<void> loadQuillContent(String noteContent) async {
@@ -806,13 +835,14 @@ class _CreateNoteState extends State<CreateNote>
                                             .withValues(alpha: 0.15),
                                       ),
                                     ),
-                                    onDeleted: () {
+                                    onDeleted: () async {
                                       final next = List<String>.from(tags)
                                         ..remove(tag);
                                       _tagsNotifier.value = next;
 
                                       // Auto-save when tag is deleted
-                                      if (FeatureFlag.enableAutoSave) {
+                                      if (await Posthog().isFeatureEnabled(
+                                          'note_taking_autosave')) {
                                         if (_debounceTimer?.isActive ?? false) {
                                           _debounceTimer!.cancel();
                                         }
@@ -1015,73 +1045,81 @@ class _CreateNoteState extends State<CreateNote>
             ),
 
             // Compact autosave bubble
-            if (FeatureFlag.enableAutoSave)
-              Positioned(
-                right: 16,
-                bottom: 64,
-                child: SafeArea(
-                  top: false,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _isSavingNotifier,
-                    builder: (context, isSaving, _) {
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: _showCheckmarkNotifier,
-                        builder: (context, showCheckmark, __) {
-                          if (!isSaving && !showCheckmark) {
-                            return const SizedBox.shrink();
-                          }
-                          return DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: isSaving
-                                  ? theme.colorScheme.secondary
-                                      .withValues(alpha: 0.95)
-                                  : Colors.green.withValues(alpha: 0.95),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                )
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (isSaving)
-                                    const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(
-                                            Colors.white),
-                                      ),
+            FutureBuilder<bool>(
+              future: Posthog().isFeatureEnabled('note_taking_autosave'),
+              builder: (context, snapshot) {
+                if (snapshot.data == true) {
+                  return Positioned(
+                    right: 16,
+                    bottom: 64,
+                    child: SafeArea(
+                      top: false,
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: _isSavingNotifier,
+                        builder: (context, isSaving, _) {
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: _showCheckmarkNotifier,
+                            builder: (context, showCheckmark, __) {
+                              if (!isSaving && !showCheckmark) {
+                                return const SizedBox.shrink();
+                              }
+                              return DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: isSaving
+                                      ? theme.colorScheme.secondary
+                                          .withValues(alpha: 0.95)
+                                      : Colors.green.withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.15),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     )
-                                  else
-                                    const Icon(LineIcons.checkCircleAlt,
-                                        size: 16, color: Colors.white),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isSaving ? 'Saving…' : 'Saved',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white),
+                                  ],
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (isSaving)
+                                        const SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation(
+                                                Colors.white),
+                                          ),
+                                        )
+                                      else
+                                        const Icon(LineIcons.checkCircleAlt,
+                                            size: 16, color: Colors.white),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isSaving ? 'Saving…' : 'Saved',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-                ),
-              ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           ],
         ),
       ),

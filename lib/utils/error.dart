@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // Package imports:
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 
 // import 'package:restart_app/restart_app.dart';
@@ -135,16 +134,7 @@ class ErrorApp extends StatelessWidget {
                           onPressed: () async {
                             await Clipboard.setData(
                                 ClipboardData(text: errorMessage));
-                            try {
-                              FirebaseCrashlytics.instance.log(
-                                  'Initialization error copied to clipboard');
-                            } catch (e) {
-                              FlutterBugfender.sendCrash(
-                                  'Failed to copy initialization error.',
-                                  StackTrace.current.toString());
-                              FlutterBugfender.error(
-                                  'Failed to copy initialization error.');
-                            }
+
                             if (context.mounted) {
                               const snackBar = SnackBar(
                                 content: Text('Error details copied'),
@@ -160,10 +150,12 @@ class ErrorApp extends StatelessWidget {
                           icon: const Icon(Icons.refresh),
                           label: const Text("Try Again"),
                           onPressed: () {
-                            // Restart.restartApp();
                             if (Navigator.of(context).canPop()) {
                               Navigator.of(context).pop();
                             }
+                            FlutterBugfender.sendCrash('Initialization error',
+                                StackTrace.current.toString());
+                            FlutterBugfender.error('Initialization error');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.secondary,

@@ -129,20 +129,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           int newIndex = _selectedIndex;
 
           if (details.primaryVelocity! > 0) {
-            // Swipe right - go to previous page
             if (_selectedIndex > 0) {
               newIndex = _selectedIndex - 1;
             }
           } else {
-            // Swipe left - go to next page
             if (_selectedIndex < _pages.length - 1) {
               newIndex = _selectedIndex + 1;
             }
           }
 
-          // Only animate if we're actually changing pages
           if (newIndex != _selectedIndex) {
-            // Trigger haptic feedback for gesture navigation
             final hapticProvider = Provider.of<HapticFeedbackSettingsProvider>(
                 context,
                 listen: false);

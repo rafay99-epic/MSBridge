@@ -63,6 +63,11 @@ class ThemeProvider with ChangeNotifier {
       return;
     }
 
+    // Don't update if theme is already selected
+    if (_selectedTheme == theme) {
+      return;
+    }
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themeKey, theme.name);

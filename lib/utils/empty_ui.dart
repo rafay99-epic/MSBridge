@@ -32,7 +32,6 @@ class EmptyNotesMessage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Illustrated header inside a themed circular container
                 Container(
                   width: 160,
                   height: 160,

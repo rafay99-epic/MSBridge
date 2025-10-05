@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 // Package imports:
 import 'package:line_icons/line_icons.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:provider/provider.dart';
 
 // Project imports:
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/provider/lock_provider/app_pin_lock_provider.dart';
 import 'package:msbridge/core/provider/lock_provider/fingerprint_provider.dart';
 import 'package:msbridge/features/lock/pin_setup_lock.dart';
@@ -275,42 +275,49 @@ class PinSetup extends StatelessWidget {
           },
         ),
 
-        if (FeatureFlag.enableFingerprintLock)
-          // Security & Privacy
-          Consumer<FingerprintAuthProvider>(
-            builder: (context, fingerprintProvider, child) {
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  _buildModernSettingsTile(
-                    context,
-                    title: "Fingerprint Lock",
-                    subtitle: "Use biometric authentication to secure the app",
-                    icon: LineIcons.fingerprint,
-                    trailing: Switch(
-                      value: fingerprintProvider.isFingerprintEnabled,
-                      onChanged: (value) async {
-                        if (value) {
-                          bool authenticated =
-                              await fingerprintProvider.authenticate(context);
-                          if (authenticated) {
-                            fingerprintProvider.setFingerprintEnabled(true);
-                          } else {
-                            if (context.mounted) {
-                              CustomSnackBar.show(context,
-                                  "Fingerprint authentication failed.");
+        FutureBuilder<bool>(
+          future: Posthog().isFeatureEnabled('finger_print_lock'),
+          builder: (context, snapshot) {
+            if (snapshot.data == true) {
+              return Consumer<FingerprintAuthProvider>(
+                builder: (context, fingerprintProvider, child) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _buildModernSettingsTile(
+                        context,
+                        title: "Fingerprint Lock",
+                        subtitle:
+                            "Use biometric authentication to secure the app",
+                        icon: LineIcons.fingerprint,
+                        trailing: Switch(
+                          value: fingerprintProvider.isFingerprintEnabled,
+                          onChanged: (value) async {
+                            if (value) {
+                              bool authenticated = await fingerprintProvider
+                                  .authenticate(context);
+                              if (authenticated) {
+                                fingerprintProvider.setFingerprintEnabled(true);
+                              } else {
+                                if (context.mounted) {
+                                  CustomSnackBar.show(context,
+                                      "Fingerprint authentication failed.");
+                                }
+                              }
+                            } else {
+                              fingerprintProvider.setFingerprintEnabled(false);
                             }
-                          }
-                        } else {
-                          fingerprintProvider.setFingerprintEnabled(false);
-                        }
-                      },
-                    ),
-                  ),
-                ],
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
-            },
-          ),
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ],
     );
   }

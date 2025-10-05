@@ -1613,6 +1613,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.3"
+  posthog_flutter:
+    dependency: "direct main"
+    description:
+      name: posthog_flutter
+      sha256: "7be6408dd164b40d6eed86f19c36f25d69db16d015f22029431fb2cb0a43ac60"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.5.0"
   printing:
     dependency: "direct main"
     description:
