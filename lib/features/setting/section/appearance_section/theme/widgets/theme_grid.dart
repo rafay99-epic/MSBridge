@@ -105,22 +105,41 @@ class _ThemeGridState extends State<ThemeGrid> {
 
   void _showCreateCustomThemeDialog() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CustomColorPicker(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomColorPicker(
           themeProvider: widget.themeProvider,
           onSchemeCreated: (scheme) {
             // Refresh the UI
             setState(() {});
           },
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Slide transition from right to left
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
 
   void _showEditDialog(CustomColorSchemeModel scheme) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CustomColorPicker(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomColorPicker(
           themeProvider: widget.themeProvider,
           existingScheme: scheme,
           onSchemeUpdated: (updatedScheme) {
@@ -128,6 +147,23 @@ class _ThemeGridState extends State<ThemeGrid> {
             setState(() {});
           },
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Slide transition from right to left
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
@@ -183,9 +219,10 @@ class _ThemeGridState extends State<ThemeGrid> {
               if (success) {
                 // Add a small delay to prevent UI jerk
                 await Future.delayed(const Duration(milliseconds: 150));
-                setState(() {});
-                CustomSnackBar.show(context, 'Theme deleted successfully!',
-                    isSuccess: true);
+                setState(() {
+                  CustomSnackBar.show(context, 'Theme deleted successfully!',
+                      isSuccess: true);
+                });
               } else {
                 if (context.mounted) {
                   CustomSnackBar.show(context, 'Failed to delete theme',

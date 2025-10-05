@@ -20,7 +20,7 @@ class ThemeProvider with ChangeNotifier {
   // Custom color scheme support
   CustomColorSchemeModel? _customColorScheme;
   bool _isCustomTheme = false;
-  final CustomColorSchemeRepo _customColorRepo = CustomColorSchemeRepo();
+  final CustomColorSchemeRepo _customColorRepo = CustomColorSchemeRepo.instance;
 
   // Cache ThemeData to avoid recomputation
   ThemeData? _cachedThemeData;
@@ -163,7 +163,6 @@ class ThemeProvider with ChangeNotifier {
           onSurface: _customColorScheme!.textColor,
         ).copyWith(
           onSurface: _customColorScheme!.textColor,
-          onBackground: _customColorScheme!.textColor,
         ),
         textTheme: AppThemes.themeMap[_selectedTheme]!.textTheme.copyWith(
           bodyLarge: TextStyle(color: _customColorScheme!.textColor),
@@ -284,28 +283,6 @@ class ThemeProvider with ChangeNotifier {
     return _selectedTheme.name;
   }
 
-  /// Debug method to verify textColor is being saved and loaded correctly
-  Future<void> debugTextColor() async {
-    if (_customColorScheme != null) {
-      FlutterBugfender.log('Custom Color Scheme Debug:');
-      FlutterBugfender.log('Name: ${_customColorScheme!.name}');
-      FlutterBugfender.log('Primary: ${_customColorScheme!.primary.value}');
-      FlutterBugfender.log('Secondary: ${_customColorScheme!.secondary.value}');
-      FlutterBugfender.log(
-          'Background: ${_customColorScheme!.background.value}');
-      FlutterBugfender.log('TextColor: ${_customColorScheme!.textColor.value}');
-      FlutterBugfender.log('Is Custom Theme: $_isCustomTheme');
-
-      // Also check what's stored in SharedPreferences
-      final activeScheme = await _customColorRepo.getActiveScheme();
-      if (activeScheme != null) {
-        FlutterBugfender.log('Active Scheme from Storage:');
-        FlutterBugfender.log('Name: ${activeScheme.name}');
-        FlutterBugfender.log('TextColor: ${activeScheme.textColor.value}');
-      }
-    }
-  }
-
   // Custom Color Scheme Management Methods
 
   /// Set a custom color scheme as active
@@ -322,16 +299,11 @@ class ThemeProvider with ChangeNotifier {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isCustomTheme', true);
 
-      // Debug textColor
-      await debugTextColor();
-
       return true;
     } catch (e) {
       FlutterBugfender.sendCrash('Failed to set custom color scheme: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Failed to set custom color scheme: $e',
-      );
+
       return false;
     }
   }

@@ -16,6 +16,21 @@ class CustomColorSchemeRepo {
   static const String _activeSchemeKey = 'active_custom_color_scheme';
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Memory cache for better performance
+  List<CustomColorSchemeModel>? cachedSchemes;
+  CustomColorSchemeModel? cachedActiveScheme;
+  DateTime? lastCacheUpdate;
+  static const Duration cacheExpiry = Duration(minutes: 5);
+
+  // Singleton instance for better memory management
+  static CustomColorSchemeRepo? _instance;
+  static CustomColorSchemeRepo get instance {
+    _instance ??= CustomColorSchemeRepo._internal();
+    return _instance!;
+  }
+
+  CustomColorSchemeRepo._internal();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// Get current user ID

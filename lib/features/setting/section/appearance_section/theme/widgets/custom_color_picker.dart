@@ -1,5 +1,6 @@
 // Flutter imports:
 import 'package:flutter/material.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 // Project imports:
@@ -94,27 +95,27 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Section
-            _buildHeaderSection(context),
+            buildHeaderSection(context),
 
             const SizedBox(height: 32),
 
             // Theme Name Input
-            _buildThemeNameSection(context),
+            buildThemeNameSection(context),
 
             const SizedBox(height: 32),
 
             // Color Pickers Section
-            _buildColorPickersSection(context),
+            buildColorPickersSection(context),
 
             const SizedBox(height: 32),
 
             // Preview Section
-            _buildPreviewSection(context),
+            buildPreviewSection(context),
 
             const SizedBox(height: 32),
 
             // Action Buttons
-            _buildActionButtons(context),
+            buildActionButtons(context),
 
             const SizedBox(height: 20),
           ],
@@ -123,7 +124,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildHeaderSection(BuildContext context) {
+  Widget buildHeaderSection(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -185,14 +186,14 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildThemeNameSection(BuildContext context) {
+  Widget buildThemeNameSection(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Theme Name', Icons.label_outline),
+        buildSectionHeader('Theme Name', Icons.label_outline),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
@@ -266,11 +267,11 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildColorPickersSection(BuildContext context) {
+  Widget buildColorPickersSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Choose Colors', Icons.color_lens_outlined),
+        buildSectionHeader('Choose Colors', Icons.color_lens_outlined),
         const SizedBox(height: 20),
 
         // Color pickers in a grid layout
@@ -282,25 +283,25 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
-            _buildColorPickerCard(
+            buildColorPickerCard(
               'Primary',
               _primaryColor,
               (color) => setState(() => _primaryColor = color),
               Icons.circle,
             ),
-            _buildColorPickerCard(
+            buildColorPickerCard(
               'Secondary',
               _secondaryColor,
               (color) => setState(() => _secondaryColor = color),
               Icons.circle_outlined,
             ),
-            _buildColorPickerCard(
+            buildColorPickerCard(
               'Background',
               _backgroundColor,
               (color) => setState(() => _backgroundColor = color),
               Icons.format_color_fill,
             ),
-            _buildColorPickerCard(
+            buildColorPickerCard(
               'Text',
               _textColor,
               (color) => setState(() => _textColor = color),
@@ -312,7 +313,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildColorPickerCard(
+  Widget buildColorPickerCard(
     String label,
     Color color,
     Function(Color) onChanged,
@@ -322,7 +323,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     final colorScheme = theme.colorScheme;
 
     return GestureDetector(
-      onTap: () => _showColorPicker(color, onChanged),
+      onTap: () => showColorPicker(color, onChanged),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -377,7 +378,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
             ),
             const SizedBox(height: 4),
             Text(
-              '#${color.value.toRadixString(16).substring(2).toUpperCase()}',
+              '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.6),
                 fontFamily: 'monospace',
@@ -389,18 +390,18 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildPreviewSection(BuildContext context) {
+  Widget buildPreviewSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Live Preview', Icons.visibility_outlined),
+        buildSectionHeader('Live Preview', Icons.visibility_outlined),
         const SizedBox(height: 16),
-        _buildColorPreview(),
+        buildColorPreview(),
       ],
     );
   }
 
-  Widget _buildColorPreview() {
+  Widget buildColorPreview() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -532,7 +533,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  Widget buildActionButtons(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -602,7 +603,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget buildSectionHeader(String title, IconData icon) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -632,7 +633,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
     );
   }
 
-  void _showColorPicker(Color currentColor, Function(Color) onChanged) {
+  void showColorPicker(Color currentColor, Function(Color) onChanged) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -707,8 +708,10 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
                 isSuccess: true);
           }
         } else {
-          CustomSnackBar.show(context, 'Failed to update theme',
-              isSuccess: false);
+          if (mounted) {
+            CustomSnackBar.show(context, 'Failed to update theme',
+                isSuccess: false);
+          }
         }
       } else {
         // Create new scheme
@@ -728,18 +731,25 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
                 isSuccess: true);
           }
         } else {
-          CustomSnackBar.show(context, 'Failed to create theme',
-              isSuccess: false);
+          if (mounted) {
+            CustomSnackBar.show(context, 'Failed to create theme',
+                isSuccess: false);
+          }
         }
       }
     } catch (e) {
       // Check if it's a permission error
       if (e.toString().contains('PERMISSION_DENIED') ||
           e.toString().contains('permission-denied')) {
-        CustomSnackBar.show(context, 'Theme saved locally (sync unavailable)',
-            isSuccess: false);
+        if (mounted) {
+          CustomSnackBar.show(context, 'Theme saved locally (sync unavailable)',
+              isSuccess: false);
+        }
       } else {
-        CustomSnackBar.show(context, 'An error occurred: $e', isSuccess: false);
+        if (mounted) {
+          CustomSnackBar.show(context, 'An error occurred: $e',
+              isSuccess: false);
+        }
       }
     } finally {
       if (mounted) {
@@ -807,11 +817,18 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
                 isSuccess: true);
           }
         } else {
-          CustomSnackBar.show(context, 'Failed to delete theme',
-              isSuccess: false);
+          if (mounted) {
+            CustomSnackBar.show(context, 'Failed to delete theme',
+                isSuccess: false);
+          }
         }
       } catch (e) {
-        CustomSnackBar.show(context, 'An error occurred: $e', isSuccess: false);
+        if (mounted) {
+          CustomSnackBar.show(context, 'An error occurred: $e',
+              isSuccess: false);
+        }
+        FlutterBugfender.sendCrash(
+            'Failed to delete theme: $e', StackTrace.current.toString());
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
