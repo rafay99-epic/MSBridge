@@ -15,6 +15,11 @@ class ThemeProvider with ChangeNotifier {
   AppTheme _selectedTheme = AppTheme.dark;
   bool _dynamicColorsEnabled = false;
 
+  // Cache ThemeData to avoid recomputation
+  ThemeData? _cachedThemeData;
+  AppTheme? _lastSelectedTheme;
+  bool? _lastDynamicColorsEnabled;
+
   AppTheme get selectedTheme => _selectedTheme;
   bool get dynamicColorsEnabled => _dynamicColorsEnabled;
 
@@ -63,11 +68,12 @@ class ThemeProvider with ChangeNotifier {
       return;
     }
 
+    _selectedTheme = theme;
+    notifyListeners();
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themeKey, theme.name);
-      _selectedTheme = theme;
-      notifyListeners();
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to set theme: $e', StackTrace.current.toString());
@@ -78,18 +84,20 @@ class ThemeProvider with ChangeNotifier {
   }
 
   Future<void> setDynamicColors(bool enabled) async {
+    _dynamicColorsEnabled = enabled;
+
+    if (enabled) {
+      _selectedTheme = AppTheme.dark;
+    }
+
+    notifyListeners();
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_dynamicColorsKey, enabled);
-      _dynamicColorsEnabled = enabled;
-
-      // If enabling dynamic colors, reset to default theme
       if (enabled) {
-        _selectedTheme = AppTheme.dark;
         await prefs.setString(_themeKey, AppTheme.dark.name);
       }
-
-      notifyListeners();
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to set dynamic colors: $e', StackTrace.current.toString());
@@ -100,17 +108,32 @@ class ThemeProvider with ChangeNotifier {
   }
 
   ThemeData getThemeData() {
+    // Check if we can use cached ThemeData
+    if (_cachedThemeData != null &&
+        _lastSelectedTheme == _selectedTheme &&
+        _lastDynamicColorsEnabled == _dynamicColorsEnabled) {
+      return _cachedThemeData!;
+    }
+
+    ThemeData themeData;
     if (_dynamicColorsEnabled) {
       // Use a custom dynamic color theme that simulates Material You
-      return ThemeData(
+      themeData = ThemeData(
         useMaterial3: true,
         colorScheme: _generateDynamicColorScheme(),
         // Apply some custom styling while keeping dynamic colors
         textTheme: AppThemes.themeMap[_selectedTheme]!.textTheme,
       );
+    } else {
+      themeData = AppThemes.themeMap[_selectedTheme]!;
     }
 
-    return AppThemes.themeMap[_selectedTheme]!;
+    // Cache the result
+    _cachedThemeData = themeData;
+    _lastSelectedTheme = _selectedTheme;
+    _lastDynamicColorsEnabled = _dynamicColorsEnabled;
+
+    return themeData;
   }
 
   // Generate a dynamic color scheme that simulates Material You
@@ -156,19 +179,19 @@ class ThemeProvider with ChangeNotifier {
   }
 
   Future<void> resetTheme() async {
+    // Update state immediately and notify listeners
+    _selectedTheme = AppTheme.dark;
+    _dynamicColorsEnabled = false;
+    notifyListeners();
+
+    // Persist to disk asynchronously to avoid blocking UI
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove(_themeKey);
       await prefs.remove(_dynamicColorsKey);
-      _selectedTheme = AppTheme.dark;
-      _dynamicColorsEnabled = false;
-      notifyListeners();
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to reset theme: $e', StackTrace.current.toString());
-      FlutterBugfender.error(
-        'Failed to reset theme: $e',
-      );
     }
   }
 
