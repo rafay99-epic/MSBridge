@@ -45,9 +45,9 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
           document: Document.fromJson(jsonDecode(widget.template!.contentJson)),
           selection: const TextSelection.collapsed(offset: 0),
         );
-      } catch (e) {
-        FlutterBugfender.sendCrash('Failed to decode template content.',
-            StackTrace.current.toString());
+      } catch (e, stackTrace) {
+        FlutterBugfender.sendCrash(
+            'Failed to decode template content.', stackTrace.toString());
         _controller = QuillController(
           document: Document()..insert(0, widget.template!.contentJson),
           selection: const TextSelection.collapsed(offset: 0),
@@ -143,12 +143,7 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
               focusNode: _tagFocusNode,
               onSubmit: _addTag,
             ),
-            ValueListenableBuilder<List<String>>(
-              valueListenable: _tagsNotifier,
-              builder: (_, tags, __) {
-                return const SizedBox.shrink();
-              },
-            ),
+
             const SizedBox(height: 8),
             Expanded(
               child: Column(
@@ -277,10 +272,9 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
     String contentJson;
     try {
       contentJson = jsonEncode(_controller.document.toDelta().toJson());
-    } catch (e) {
+    } catch (e, stackTrace) {
       FlutterBugfender.sendCrash(
-          'Failed to encode template content.', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to encode template content.');
+          'Failed to encode template content.', stackTrace.toString());
       final Document fallbackDoc = Document()
         ..insert(0, _controller.document.toPlainText());
       contentJson = jsonEncode(fallbackDoc.toDelta().toJson());
@@ -305,9 +299,9 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
         if (mounted) CustomSnackBar.show(context, 'Template updated');
       }
       if (mounted) Navigator.pop(context);
-    } catch (e) {
+    } catch (e, stackTrace) {
       FlutterBugfender.sendCrash(
-          'Failed to save template: $e', StackTrace.current.toString());
+          'Failed to save template: $e', stackTrace.toString());
       if (mounted) {
         CustomSnackBar.show(context, 'Failed to save template: $e',
             isSuccess: false);
