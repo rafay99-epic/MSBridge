@@ -135,8 +135,9 @@ class _ChatComposerState extends State<ChatComposer> {
                     // Queue indicator
                     Consumer<ChatProvider>(
                       builder: (context, chat, _) {
-                        if (chat.queueLength == 0)
+                        if (chat.queueLength == 0) {
                           return const SizedBox.shrink();
+                        }
                         return Align(
                           alignment: Alignment.centerRight,
                           child: Padding(

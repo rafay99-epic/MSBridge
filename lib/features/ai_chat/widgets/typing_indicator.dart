@@ -54,26 +54,54 @@ class TypingIndicator extends StatelessWidget {
   }
 }
 
-class _TypingDot extends StatelessWidget {
+class _TypingDot extends StatefulWidget {
   const _TypingDot({required this.index});
   final int index;
 
   @override
+  State<_TypingDot> createState() => _TypingDotState();
+}
+
+class _TypingDotState extends State<_TypingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curve;
+
+  @override
+  void initState() {
+    super.initState();
+    // Single controller that repeats; each dot gets a staggered interval
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    final double start = (0.15 * widget.index).clamp(0.0, 0.7);
+    final double end = (start + 0.6).clamp(0.0, 1.0);
+    _curve = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(start, end, curve: Curves.easeInOut),
+    );
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 700 + (index * 200)),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        final double opacity = 0.4 + (0.6 * value);
-        final double scale = 0.6 + (0.4 * value);
+    return AnimatedBuilder(
+      animation: _curve,
+      builder: (context, child) {
+        final double t = _curve.value; // 0..1
+        final double opacity = 0.4 + (0.6 * t);
+        final double scale = 0.6 + (0.4 * t);
         return Opacity(
           opacity: opacity,
-          child: Transform.scale(
-            scale: scale,
-            child: child!,
-          ),
+          child: Transform.scale(scale: scale, child: child),
         );
       },
       child: Container(

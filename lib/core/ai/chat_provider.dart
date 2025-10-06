@@ -1,4 +1,5 @@
 // Dart imports:
+import 'dart:collection';
 import 'dart:async';
 
 // Flutter imports:
@@ -39,7 +40,9 @@ class ChatMessage {
 }
 
 class ChatProvider extends ChangeNotifier {
-  final List<ChatMessage> messages = [];
+  final List<ChatMessage> _messages = <ChatMessage>[];
+  UnmodifiableListView<ChatMessage> get messages =>
+      UnmodifiableListView(_messages);
   GenerativeModel? _model;
   String? _contextJson;
   String _modelName = AIModelsConfig.models.first.modelName;
@@ -58,6 +61,7 @@ class ChatProvider extends ChangeNotifier {
   // Reliability: queue + cancel support
   final List<_QueuedRequest> _requestQueue = <_QueuedRequest>[];
   bool _cancelRequested = false;
+  static const int _maxQueueSize = 5;
 
   // Getters for UI state
   bool get isLoading => _isLoading;
@@ -201,6 +205,14 @@ class ChatProvider extends ChangeNotifier {
 
     // Queue when busy
     if (_isLoading) {
+      if (_requestQueue.length >= _maxQueueSize) {
+        _setError('Too many pending requests. Please wait.', null);
+        return null;
+      }
+      final List<String> attachments = List<String>.from(_pendingImageUrls);
+      _messages.add(ChatMessage(true, question, imageUrls: attachments));
+      _pendingImageUrls.clear();
+
       _requestQueue.add(_QueuedRequest(
         question: question,
         includePersonal: includePersonal,
@@ -236,7 +248,7 @@ class ChatProvider extends ChangeNotifier {
 
       // Add user message merged with any pending images
       final List<String> attachments = List<String>.from(_pendingImageUrls);
-      messages.add(ChatMessage(true, question, imageUrls: attachments));
+      _messages.add(ChatMessage(true, question, imageUrls: attachments));
       // Clear previews immediately after sending; the message keeps attachments
       _pendingImageUrls.clear();
       notifyListeners();
@@ -284,7 +296,7 @@ class ChatProvider extends ChangeNotifier {
       final text = response.text ?? 'No response received from AI.';
 
       // Add AI response
-      messages.add(ChatMessage(false, text));
+      _messages.add(ChatMessage(false, text));
 
       _isLoading = false;
       notifyListeners();
@@ -315,7 +327,7 @@ class ChatProvider extends ChangeNotifier {
 
       // Add error message to chat
       final errorMessage = _getUserFriendlyErrorMessage(e);
-      messages.add(
+      _messages.add(
           ChatMessage.error(false, errorMessage, errorDetails: e.toString()));
 
       // Persist history with the error message so restores match the UI state
@@ -399,15 +411,15 @@ class ChatProvider extends ChangeNotifier {
 
   // Retry the last question
   Future<String?> retryLastQuestion() async {
-    if (messages.isEmpty) return null;
+    if (_messages.isEmpty) return null;
 
     // Find the last user question
-    for (int i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].fromUser && !messages[i].isError) {
-        final question = messages[i].text;
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i].fromUser && !_messages[i].isError) {
+        final String question = _messages[i].text;
         // Remove the error message if it exists
-        if (i + 1 < messages.length && messages[i + 1].isError) {
-          messages.removeAt(i + 1);
+        if (i + 1 < _messages.length && _messages[i + 1].isError) {
+          _messages.removeAt(i + 1);
         }
         return await ask(question);
       }
@@ -417,7 +429,7 @@ class ChatProvider extends ChangeNotifier {
 
   // Clear all messages
   void clearChat() {
-    messages.clear();
+    _messages.clear();
     _clearError();
     notifyListeners();
   }
@@ -434,7 +446,6 @@ class ChatProvider extends ChangeNotifier {
     _hasError = true;
     _lastErrorMessage = message;
 
-    // Log to Firebase Crashlytics
     if (error != null) {
       FlutterBugfender.sendCrash(
           'Chat Provider Error: $message', StackTrace.current.toString());
@@ -506,7 +517,7 @@ class ChatProvider extends ChangeNotifier {
     bool includePersonal = true,
     bool includeMsNotes = true,
   }) async {
-    if (!_isHistoryEnabled || messages.isEmpty) return;
+    if (!_isHistoryEnabled || _messages.isEmpty) return;
 
     try {
       // Generate chat ID if not exists
@@ -514,10 +525,10 @@ class ChatProvider extends ChangeNotifier {
 
       // Create chat title from first user message
       String title = 'AI Chat';
-      if (messages.isNotEmpty) {
-        final firstUserMessage = messages.firstWhere(
+      if (_messages.isNotEmpty) {
+        final ChatMessage firstUserMessage = _messages.firstWhere(
           (msg) => msg.fromUser,
-          orElse: () => messages.first,
+          orElse: () => _messages.first,
         );
         title = firstUserMessage.text.length > 50
             ? '${firstUserMessage.text.substring(0, 50)}...'
@@ -525,7 +536,7 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Convert messages to history format
-      final historyMessages = messages
+      final List<ChatHistoryMessage> historyMessages = _messages
           .map((msg) => ChatHistoryMessage(
                 text: msg.text,
                 fromUser: msg.fromUser,
@@ -565,13 +576,13 @@ class ChatProvider extends ChangeNotifier {
   Future<void> loadChatFromHistory(ChatHistory chatHistory) async {
     try {
       // Clear current chat
-      messages.clear();
+      _messages.clear();
       _currentChatId = chatHistory.id;
       _modelName = chatHistory.modelName;
 
       // Convert history messages back to chat messages
       for (final historyMsg in chatHistory.messages) {
-        messages.add(ChatMessage(
+        _messages.add(ChatMessage(
           historyMsg.fromUser,
           historyMsg.text,
           isError: historyMsg.isError,
@@ -630,12 +641,23 @@ class ChatProvider extends ChangeNotifier {
 
   // Start new chat session
   void startNewChat() {
-    messages.clear();
+    _messages.clear();
     _currentChatId = null;
     _contextJson = null;
     _clearError();
     _requestQueue.clear();
     _cancelRequested = false;
+    notifyListeners();
+  }
+
+  // Ephemeral message helpers for UI placeholders
+  void addEphemeralMessage(ChatMessage message) {
+    _messages.add(message);
+    notifyListeners();
+  }
+
+  void removeMessage(ChatMessage message) {
+    _messages.remove(message);
     notifyListeners();
   }
 
@@ -646,6 +668,7 @@ class ChatProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     FlutterBugfender.log('Cancel requested by user - UI unlocked');
+    _processQueueIfIdle();
   }
 
   void _processQueueIfIdle() {

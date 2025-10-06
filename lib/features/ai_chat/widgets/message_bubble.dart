@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:msbridge/core/ai/chat_provider.dart';
-import 'package:msbridge/features/ai_chat/optimzed_markdown.dart';
+import 'package:msbridge/features/ai_chat/optimized_markdown.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message});

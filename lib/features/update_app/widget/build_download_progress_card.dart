@@ -74,20 +74,20 @@ Widget buildDownloadProgressCard(
         // Cancel Button
         TextButton.icon(
           onPressed: cancelDownload,
-          icon: const Icon(LineIcons.times, color: Colors.red),
-          label: const Text(
-            "Cancel Download",
+          icon: Icon(LineIcons.times, color: colorScheme.error),
+          label: Text(
+            'Cancel Download',
             style: TextStyle(
-              color: Colors.red,
+              color: colorScheme.error,
               fontWeight: FontWeight.w600,
             ),
           ),
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            backgroundColor: Colors.red.withValues(alpha: 0.1),
+            backgroundColor: colorScheme.error.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Colors.red),
+              side: BorderSide(color: colorScheme.error),
             ),
           ),
         ),

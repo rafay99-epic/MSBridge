@@ -41,6 +41,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   bool _isSending = false; // New state variable for sending status
   DateTime? _lastSendAt; // Rate limiting guard
   static const int _minSendIntervalMs = 1200; // Basic rate limit
+  int _prevMessagesLength = 0;
 
   @override
   void initState() {
@@ -115,9 +116,20 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             child: Consumer<ChatProvider>(
               builder: (context, chat, _) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (chat.messages.isNotEmpty) {
-                    _scrollToBottom();
+                  // Auto-scroll only when new messages are appended and user is near the bottom
+                  final int currentLen = chat.messages.length;
+                  if (currentLen > _prevMessagesLength &&
+                      _scrollController.hasClients) {
+                    // Guard against not attached / no positions
+                    final position = _scrollController.position;
+                    final double distanceFromBottom =
+                        (position.maxScrollExtent - position.pixels).abs();
+                    const double kAutoScrollThreshold = 200.0;
+                    if (distanceFromBottom < kAutoScrollThreshold) {
+                      _scrollToBottom();
+                    }
                   }
+                  _prevMessagesLength = currentLen;
                 });
                 if (chat.messages.isEmpty) {
                   return const ChatEmptyState();
