@@ -17,11 +17,17 @@ class ChatHistoryProvider extends ChangeNotifier {
   List<ChatHistory> _chatHistories = [];
   bool _isLoading = false;
   String? _error;
+  bool _isPaging = false;
+  bool _hasMore = true;
+  static const int _pageSize = 20;
+  int _currentOffset = 0;
 
   // Getters
   bool get isHistoryEnabled => _isHistoryEnabled;
   List<ChatHistory> get chatHistories => _chatHistories;
   bool get isLoading => _isLoading;
+  bool get isPaging => _isPaging;
+  bool get hasMore => _hasMore;
   String? get error => _error;
   int get historyCount => _chatHistories.length;
 
@@ -96,7 +102,14 @@ class ChatHistoryProvider extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      _chatHistories = await ChatHistoryRepo.getAllChatHistories();
+      _currentOffset = 0;
+      final firstPage = await ChatHistoryRepo.getChatHistoriesPage(
+        offset: _currentOffset,
+        limit: _pageSize,
+      );
+      _chatHistories = firstPage;
+      _currentOffset = _chatHistories.length;
+      _hasMore = _chatHistories.length == _pageSize;
 
       FlutterBugfender.sendCrash(
           'Loaded ${_chatHistories.length} chat histories',
@@ -113,6 +126,34 @@ class ChatHistoryProvider extends ChangeNotifier {
       _error = 'Failed to load chat histories: $e';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Load next page
+  Future<void> loadMore() async {
+    if (!_isHistoryEnabled || _isPaging || !_hasMore) return;
+    try {
+      _isPaging = true;
+      notifyListeners();
+      final next = await ChatHistoryRepo.getChatHistoriesPage(
+        offset: _currentOffset,
+        limit: _pageSize,
+      );
+      if (next.isEmpty) {
+        _hasMore = false;
+      } else {
+        _chatHistories.addAll(next);
+        _currentOffset += next.length;
+        if (next.length < _pageSize) _hasMore = false;
+      }
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to paginate chat histories: $e',
+          StackTrace.current.toString());
+      FlutterBugfender.error('Failed to paginate chat histories: $e');
+      _error = 'Failed to load more: $e';
+    } finally {
+      _isPaging = false;
       notifyListeners();
     }
   }

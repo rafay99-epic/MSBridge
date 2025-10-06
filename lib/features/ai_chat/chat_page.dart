@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-// markdown used inside widgets
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
 
@@ -40,6 +39,8 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
   bool _includeMsNotes = false;
   bool _isTyping = false;
   bool _isSending = false; // New state variable for sending status
+  DateTime? _lastSendAt; // Rate limiting guard
+  static const int _minSendIntervalMs = 1200; // Basic rate limit
 
   @override
   void initState() {
@@ -91,6 +92,15 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         actions: [
           IconButton(
             icon: Icon(
+              LineIcons.plusCircle,
+              color: colorScheme.onSurface,
+              size: 24,
+            ),
+            onPressed: () => _confirmStartNewChat(context),
+            tooltip: 'New Chat',
+          ),
+          IconButton(
+            icon: Icon(
               LineIcons.cog,
               color: colorScheme.onSurface,
               size: 24,
@@ -138,6 +148,52 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
               controller: _controller,
               onSend: () => _sendMessage(context),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmStartNewChat(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          'Start New Chat?',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'This will clear the current conversation view. Your previous chats stay saved in history.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              final chat = Provider.of<ChatProvider>(context, listen: false);
+              chat.startNewChat();
+              if (mounted) {
+                CustomSnackBar.show(context, 'Started a new chat',
+                    isSuccess: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            child: const Text('New Chat'),
           ),
         ],
       ),
@@ -206,6 +262,15 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final question = _controller.text.trim();
     if (question.isEmpty) return;
 
+    // Simple rate-limit to prevent API spam and accidental double taps
+    final now = DateTime.now();
+    if (_lastSendAt != null &&
+        now.difference(_lastSendAt!).inMilliseconds < _minSendIntervalMs) {
+      CustomSnackBar.show(context, 'Please wait a moment before sending again');
+      return;
+    }
+    _lastSendAt = now;
+
     if (_isSending) return;
 
     final consent = Provider.of<AiConsentProvider>(context, listen: false);
@@ -220,11 +285,17 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
           isSuccess: false);
     }
 
+    // Clear the input immediately and disable composer until response
+    _controller.clear();
+    FocusScope.of(context).unfocus();
     setState(() {
       _isSending = true;
       _isTyping = true;
     });
 
+    final Stopwatch sw = Stopwatch()..start();
+    final int promptLength = question.length;
+    int imageCount = 0;
     try {
       if (!chat.isReady) {
         try {
@@ -247,22 +318,52 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         }
       }
 
+      // Main request
       final response = await chat.ask(
         question,
         includePersonal: canIncludePersonal,
         includeMsNotes: shouldIncludeMsNotes,
       );
 
-      if (response != null) {
-        _controller.clear();
-      } else if (chat.hasError && context.mounted) {
+      sw.stop();
+
+      // Observability: record success metrics to Bugfender
+      try {
+        FlutterBugfender.error('AI chat success');
+        FlutterBugfender.error('ai_prompt_length=$promptLength');
+        FlutterBugfender.error('ai_include_personal=$canIncludePersonal');
+        FlutterBugfender.error('ai_include_msnotes=$shouldIncludeMsNotes');
+        FlutterBugfender.error('ai_latency_ms=${sw.elapsedMilliseconds}');
+        FlutterBugfender.error('ai_image_count=$imageCount');
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+          'AI chat success: $e',
+          StackTrace.current.toString(),
+        );
+      }
+
+      if (response == null && chat.hasError && context.mounted) {
         CustomSnackBar.show(context,
             'Failed to get AI response. You can retry using the retry button.');
       }
     } catch (e) {
       FlutterBugfender.error('Unexpected error: $e');
+      try {
+        sw.stop();
+        FlutterBugfender.sendCrash(
+          'AI chat request failed: $e | latency_ms=${sw.elapsedMilliseconds} | prompt_length=$promptLength | include_personal=$canIncludePersonal | include_msnotes=$shouldIncludeMsNotes',
+          StackTrace.current.toString(),
+        );
+        FlutterBugfender.error('AI chat error: $e');
+      } catch (e) {
+        FlutterBugfender.sendCrash(
+          'AI chat request failed: $e',
+          StackTrace.current.toString(),
+        );
+      }
       if (context.mounted) {
-        CustomSnackBar.show(context, 'Unexpected error: $e');
+        CustomSnackBar.show(context, 'Unexpected error, Please contact support',
+            isSuccess: false);
       }
     } finally {
       // Always reset both flags in finally block
@@ -277,10 +378,45 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
   void _clearChat(BuildContext context) {
     final chat = Provider.of<ChatProvider>(context, listen: false);
-    chat.clearChat();
-    if (context.mounted) {
-      CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
-    }
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surface,
+          title: Text(
+            'Clear chat?',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'This will remove all messages in the current conversation.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                chat.clearChat();
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'Chat cleared', isSuccess: true);
+                }
+              },
+              child: const Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showChatHistory(BuildContext context) {

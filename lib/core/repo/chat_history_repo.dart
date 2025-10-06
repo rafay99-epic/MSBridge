@@ -1,5 +1,6 @@
 // Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 // Project imports:
@@ -94,18 +95,36 @@ class ChatHistoryRepo {
     }
   }
 
+  // Get chat histories with simple in-memory pagination (sorted by lastUpdated desc)
+  static Future<List<ChatHistory>> getChatHistoriesPage({
+    required int offset,
+    required int limit,
+  }) async {
+    try {
+      final box = await getBox();
+      final List<ChatHistory> all = box.values.toList()
+        ..sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
+      if (offset >= all.length) return <ChatHistory>[];
+      final end = (offset + limit) > all.length ? all.length : (offset + limit);
+      final page = all.sublist(offset, end);
+      return page;
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to retrieve paged chat histories: $e',
+          StackTrace.current.toString());
+
+      throw Exception('Error retrieving paged chat histories: $e');
+    }
+  }
+
   // Get a specific chat history by ID
   static Future<ChatHistory?> getChatHistory(String id) async {
     try {
       final box = await getBox();
       return box.get(id);
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(
-        e,
-        stackTrace,
-        reason: 'Failed to retrieve specific chat history',
-        information: ['Chat ID: $id'],
-      );
+    } catch (e) {
+      FlutterBugfender.sendCrash('Failed to retrieve specific chat history: $e',
+          StackTrace.current.toString());
+
       throw Exception('Error retrieving chat history: $e');
     }
   }

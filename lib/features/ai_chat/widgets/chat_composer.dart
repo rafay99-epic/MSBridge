@@ -109,8 +109,8 @@ class _ChatComposerState extends State<ChatComposer> {
                   textInputAction: TextInputAction.send,
                   decoration: InputDecoration(
                     hintText: widget.isSending
-                        ? 'Sending message...'
-                        : 'Ask AI anything...',
+                        ? 'Waiting for AI response…'
+                        : 'Ask AI anything…',
                     hintStyle: TextStyle(
                       color: colorScheme.primary.withValues(alpha: 0.7),
                       fontSize: 16,
@@ -139,7 +139,7 @@ class _ChatComposerState extends State<ChatComposer> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.25),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -153,7 +153,8 @@ class _ChatComposerState extends State<ChatComposer> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                              colorScheme.onPrimary),
+                            colorScheme.onPrimary,
+                          ),
                         ),
                       )
                     : Icon(LineIcons.paperPlane,

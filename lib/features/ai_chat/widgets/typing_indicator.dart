@@ -41,9 +41,9 @@ class TypingIndicator extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: const [
                 _TypingDot(index: 0),
-                SizedBox(width: 4),
+                SizedBox(width: 6),
                 _TypingDot(index: 1),
-                SizedBox(width: 4),
+                SizedBox(width: 6),
                 _TypingDot(index: 2),
               ],
             ),
@@ -62,20 +62,25 @@ class _TypingDot extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + (index * 200)),
+      duration: Duration(milliseconds: 700 + (index * 200)),
       tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeInOutSine,
+      curve: Curves.easeInOut,
       builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.5 + (0.5 * value),
-          child: child!,
+        final double opacity = 0.4 + (0.6 * value);
+        final double scale = 0.6 + (0.4 * value);
+        return Opacity(
+          opacity: opacity,
+          child: Transform.scale(
+            scale: scale,
+            child: child!,
+          ),
         );
       },
       child: Container(
-        width: 8,
-        height: 8,
+        width: 10,
+        height: 10,
         decoration: BoxDecoration(
-          color: colorScheme.primary.withValues(alpha: 0.6),
+          color: colorScheme.primary,
           shape: BoxShape.circle,
         ),
       ),
