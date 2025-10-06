@@ -11,5 +11,5 @@ class FeatureFlag {
   static const bool enableReverseSyncLayer = true;
 
 //disable the update
-  static const bool enableUpdate = false;
+  static const bool enableUpdate = true;
 }
