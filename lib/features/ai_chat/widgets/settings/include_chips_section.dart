@@ -27,24 +27,46 @@ class IncludeChipsSection extends StatelessWidget {
       builder: (context, _) {
         final bool isGlobalConsentEnabled = aiConsentProvider.enabled;
 
-        Color getChipLabelColor(bool chipSelected, bool isEnabled) {
-          if (isEnabled) {
-            return chipSelected
+        Color getChipLabelColor(bool chipSelected, bool isEnabled) => isEnabled
+            ? (chipSelected
                 ? colorScheme.primary
-                : colorScheme.onSurface.withValues(alpha: 0.7);
-          } else {
-            return colorScheme.onSurface.withValues(alpha: 0.4);
-          }
-        }
+                : colorScheme.onSurface.withValues(alpha: 0.7))
+            : colorScheme.onSurface.withValues(alpha: 0.4);
 
-        Color getChipBorderColor(bool chipSelected, bool isEnabled) {
-          if (isEnabled) {
-            return chipSelected
+        Color getChipBorderColor(bool chipSelected, bool isEnabled) => isEnabled
+            ? (chipSelected
                 ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.3);
-          } else {
-            return colorScheme.onSurface.withValues(alpha: 0.2);
-          }
+                : colorScheme.outline.withValues(alpha: 0.3))
+            : colorScheme.onSurface.withValues(alpha: 0.2);
+
+        Widget buildIncludeChip(
+          String label,
+          bool selected,
+          ValueChanged<bool>? onSelected,
+        ) {
+          return FilterChip(
+            label: Text(label),
+            selected: selected,
+            onSelected: isGlobalConsentEnabled ? onSelected : null,
+            selectedColor: isGlobalConsentEnabled && selected
+                ? colorScheme.primary.withValues(alpha: 0.1)
+                : Colors.transparent,
+            checkmarkColor: isGlobalConsentEnabled && selected
+                ? colorScheme.primary
+                : Colors.transparent,
+            labelStyle: TextStyle(
+              color: getChipLabelColor(selected, isGlobalConsentEnabled),
+              fontWeight: selected && isGlobalConsentEnabled
+                  ? FontWeight.w600
+                  : FontWeight.w500,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: getChipBorderColor(selected, isGlobalConsentEnabled),
+              ),
+            ),
+          );
         }
 
         return Column(
@@ -62,57 +84,15 @@ class IncludeChipsSection extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilterChip(
-                  label: const Text('Personal Notes'),
-                  selected: includePersonal,
-                  onSelected:
-                      isGlobalConsentEnabled ? onIncludePersonalChanged : null,
-                  selectedColor: isGlobalConsentEnabled && includePersonal
-                      ? colorScheme.primary.withValues(alpha: 0.1)
-                      : Colors.transparent,
-                  checkmarkColor: isGlobalConsentEnabled && includePersonal
-                      ? colorScheme.primary
-                      : Colors.transparent,
-                  labelStyle: TextStyle(
-                    color: getChipLabelColor(
-                        includePersonal, isGlobalConsentEnabled),
-                    fontWeight: includePersonal && isGlobalConsentEnabled
-                        ? FontWeight.w600
-                        : FontWeight.w500,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: getChipBorderColor(
-                          includePersonal, isGlobalConsentEnabled),
-                    ),
-                  ),
+                buildIncludeChip(
+                  'Personal Notes',
+                  includePersonal,
+                  onIncludePersonalChanged,
                 ),
-                FilterChip(
-                  label: const Text('MS Notes'),
-                  selected: includeMsNotes,
-                  onSelected:
-                      isGlobalConsentEnabled ? onIncludeMsNotesChanged : null,
-                  selectedColor: isGlobalConsentEnabled && includeMsNotes
-                      ? colorScheme.primary.withValues(alpha: 0.1)
-                      : Colors.transparent,
-                  checkmarkColor: isGlobalConsentEnabled && includeMsNotes
-                      ? colorScheme.primary
-                      : Colors.transparent,
-                  labelStyle: TextStyle(
-                    color: getChipLabelColor(
-                        includeMsNotes, isGlobalConsentEnabled),
-                    fontWeight: includeMsNotes && isGlobalConsentEnabled
-                        ? FontWeight.w600
-                        : FontWeight.w500,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: getChipBorderColor(
-                          includeMsNotes, isGlobalConsentEnabled),
-                    ),
-                  ),
+                buildIncludeChip(
+                  'MS Notes',
+                  includeMsNotes,
+                  onIncludeMsNotesChanged,
                 ),
               ],
             ),

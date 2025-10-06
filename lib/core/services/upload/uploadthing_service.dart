@@ -1,7 +1,6 @@
 // Dart imports:
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 // Package imports:
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -54,15 +53,6 @@ class UploadThingService {
       FlutterBugfender.error('UploadThing uploadAudioFile failed: $e');
       rethrow;
     }
-  }
-
-  // Optional: bytes-based upload (stubbed for web compatibility handling upstream)
-  Future<String> uploadImageBytes(Uint8List bytes,
-      {required String fileName}) async {
-    // The current UploadThing client only accepts File objects.
-    // Callers should guard usage on web and avoid invoking this until supported.
-    throw UnimplementedError(
-        'uploadImageBytes is not supported by UploadThingService');
   }
 
   Future<List<Map<String, String>>> listRecent({int limit = 10}) async {

@@ -197,6 +197,7 @@ class ChatProvider extends ChangeNotifier {
     String question, {
     bool includePersonal = true,
     bool includeMsNotes = true,
+    ChatMessage? existingUserMessage,
   }) async {
     if (question.trim().isEmpty) {
       _setError('Question cannot be empty', null);
@@ -210,11 +211,13 @@ class ChatProvider extends ChangeNotifier {
         return null;
       }
       final List<String> attachments = List<String>.from(_pendingImageUrls);
-      _messages.add(ChatMessage(true, question, imageUrls: attachments));
+      final ChatMessage queuedMessage =
+          ChatMessage(true, question, imageUrls: attachments);
+      _messages.add(queuedMessage);
       _pendingImageUrls.clear();
 
       _requestQueue.add(_QueuedRequest(
-        question: question,
+        message: queuedMessage,
         includePersonal: includePersonal,
         includeMsNotes: includeMsNotes,
       ));
@@ -246,19 +249,24 @@ class ChatProvider extends ChangeNotifier {
         }
       }
 
-      // Add user message merged with any pending images
-      final List<String> attachments = List<String>.from(_pendingImageUrls);
-      _messages.add(ChatMessage(true, question, imageUrls: attachments));
-      // Clear previews immediately after sending; the message keeps attachments
-      _pendingImageUrls.clear();
-      notifyListeners();
+      // Add user message merged with any pending images only if not already added
+      if (existingUserMessage == null) {
+        final List<String> attachments = List<String>.from(_pendingImageUrls);
+        _messages.add(ChatMessage(true, question, imageUrls: attachments));
+        _pendingImageUrls.clear();
+        notifyListeners();
 
-      // Save to chat history if enabled
-      if (_isHistoryEnabled) {
-        await saveChatToHistory(
-          includePersonal: includePersonal,
-          includeMsNotes: includeMsNotes,
-        );
+        if (_isHistoryEnabled) {
+          await saveChatToHistory(
+            includePersonal: includePersonal,
+            includeMsNotes: includeMsNotes,
+          );
+        }
+      } else {
+        // Restore attachments from the queued message so they are included in content
+        _pendingImageUrls
+          ..clear()
+          ..addAll(existingUserMessage.imageUrls);
       }
 
       // Prepare content for AI (with or without notes context)
@@ -673,12 +681,13 @@ class ChatProvider extends ChangeNotifier {
 
   void _processQueueIfIdle() {
     if (_isLoading || _requestQueue.isEmpty) return;
-    final next = _requestQueue.removeAt(0);
-    // Fire-and-forget; UI will update via listeners
+    final _QueuedRequest next = _requestQueue.removeAt(0);
+    // Fire-and-forget; reuse the queued ChatMessage and its attachments
     ask(
-      next.question,
+      next.message.text,
       includePersonal: next.includePersonal,
       includeMsNotes: next.includeMsNotes,
+      existingUserMessage: next.message,
     );
   }
 }
@@ -696,11 +705,11 @@ class TimeoutException implements Exception {
 }
 
 class _QueuedRequest {
-  final String question;
+  final ChatMessage message;
   final bool includePersonal;
   final bool includeMsNotes;
   _QueuedRequest({
-    required this.question,
+    required this.message,
     required this.includePersonal,
     required this.includeMsNotes,
   });

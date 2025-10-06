@@ -33,6 +33,7 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
   final FocusNode _quillFocusNode = FocusNode();
   final FocusNode _titleFocusNode = FocusNode();
   final FocusNode _tagFocusNode = FocusNode();
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -88,8 +89,19 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
         foregroundColor: theme.colorScheme.primary,
         actions: [
           IconButton(
-            icon: const Icon(LineIcons.save),
-            onPressed: _saveTemplate,
+            icon: _isSaving
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary,
+                      ),
+                    ),
+                  )
+                : const Icon(LineIcons.save),
+            onPressed: _isSaving ? null : _saveTemplate,
             tooltip: 'Save',
           )
         ],
@@ -254,9 +266,12 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
   }
 
   Future<void> _saveTemplate() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
     final String title = _titleController.text.trim();
     if (title.isEmpty) {
       CustomSnackBar.show(context, 'Title required', isSuccess: false);
+      setState(() => _isSaving = false);
       return;
     }
     String contentJson;
@@ -270,24 +285,35 @@ class _TemplateEditorPageState extends State<TemplateEditorPage> {
         ..insert(0, _controller.document.toPlainText());
       contentJson = jsonEncode(fallbackDoc.toDelta().toJson());
     }
-    if (widget.template == null) {
-      final NoteTemplate t = NoteTemplate(
-        templateId: generateUuid(),
-        title: title,
-        contentJson: contentJson,
-        tags: _tagsNotifier.value,
-      );
-      await TemplateRepo.createTemplate(t);
-      if (mounted) CustomSnackBar.show(context, 'Template created');
-    } else {
-      widget.template!
-        ..title = title
-        ..contentJson = contentJson
-        ..tags = _tagsNotifier.value
-        ..updatedAt = DateTime.now();
-      await TemplateRepo.updateTemplate(widget.template!);
-      if (mounted) CustomSnackBar.show(context, 'Template updated');
+    try {
+      if (widget.template == null) {
+        final NoteTemplate t = NoteTemplate(
+          templateId: generateUuid(),
+          title: title,
+          contentJson: contentJson,
+          tags: _tagsNotifier.value,
+        );
+        await TemplateRepo.createTemplate(t);
+        if (mounted) CustomSnackBar.show(context, 'Template created');
+      } else {
+        widget.template!
+          ..title = title
+          ..contentJson = contentJson
+          ..tags = _tagsNotifier.value
+          ..updatedAt = DateTime.now();
+        await TemplateRepo.updateTemplate(widget.template!);
+        if (mounted) CustomSnackBar.show(context, 'Template updated');
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to save template: $e', StackTrace.current.toString());
+      if (mounted) {
+        CustomSnackBar.show(context, 'Failed to save template: $e',
+            isSuccess: false);
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
-    if (mounted) Navigator.pop(context);
   }
 }
