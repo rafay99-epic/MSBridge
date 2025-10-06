@@ -55,6 +55,9 @@ class ChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String? _lastErrorMessage;
+  // Reliability: queue + cancel support
+  final List<_QueuedRequest> _requestQueue = <_QueuedRequest>[];
+  bool _cancelRequested = false;
 
   // Getters for UI state
   bool get isLoading => _isLoading;
@@ -62,6 +65,7 @@ class ChatProvider extends ChangeNotifier {
   String? get lastErrorMessage => _lastErrorMessage;
   GenerativeModel? get model => _model;
   String get modelName => _modelName;
+  int get queueLength => _requestQueue.length;
 
   // Chat history getters
   String? get currentChatId => _currentChatId;
@@ -184,7 +188,7 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  // Ask a question to the AI
+  // Ask a question to the AI (queues if a request is running)
   Future<String?> ask(
     String question, {
     bool includePersonal = true,
@@ -195,9 +199,25 @@ class ChatProvider extends ChangeNotifier {
       return null;
     }
 
+    // Queue when busy
+    if (_isLoading) {
+      _requestQueue.add(_QueuedRequest(
+        question: question,
+        includePersonal: includePersonal,
+        includeMsNotes: includeMsNotes,
+      ));
+      try {
+        FlutterBugfender.log(
+            'Queued chat request. Queue length: ${_requestQueue.length}');
+      } catch (_) {}
+      notifyListeners();
+      return null;
+    }
+
     try {
       _clearError();
       _isLoading = true;
+      _cancelRequested = false;
       notifyListeners();
 
       // Ensure session/model based on toggles
@@ -252,6 +272,15 @@ class ChatProvider extends ChangeNotifier {
         },
       );
 
+      // If user requested cancel, ignore this response
+      if (_cancelRequested) {
+        FlutterBugfender.log('AI response ignored due to cancel');
+        _isLoading = false;
+        notifyListeners();
+        _processQueueIfIdle();
+        return null;
+      }
+
       final text = response.text ?? 'No response received from AI.';
 
       // Add AI response
@@ -278,6 +307,7 @@ class ChatProvider extends ChangeNotifier {
 
       // After a successful response, clear any pending attachments
       _pendingImageUrls.clear();
+      _processQueueIfIdle();
       return text;
     } catch (e) {
       _setError('Failed to generate AI response: ${e.toString()}', e);
@@ -297,6 +327,7 @@ class ChatProvider extends ChangeNotifier {
       }
 
       notifyListeners();
+      _processQueueIfIdle();
       return null;
     }
   }
@@ -603,7 +634,29 @@ class ChatProvider extends ChangeNotifier {
     _currentChatId = null;
     _contextJson = null;
     _clearError();
+    _requestQueue.clear();
+    _cancelRequested = false;
     notifyListeners();
+  }
+
+  // Best-effort cancel of the current in-flight request
+  void cancelCurrentRequest() {
+    if (!_isLoading) return;
+    _cancelRequested = true;
+    _isLoading = false;
+    notifyListeners();
+    FlutterBugfender.log('Cancel requested by user - UI unlocked');
+  }
+
+  void _processQueueIfIdle() {
+    if (_isLoading || _requestQueue.isEmpty) return;
+    final next = _requestQueue.removeAt(0);
+    // Fire-and-forget; UI will update via listeners
+    ask(
+      next.question,
+      includePersonal: next.includePersonal,
+      includeMsNotes: next.includeMsNotes,
+    );
   }
 }
 
@@ -617,4 +670,15 @@ class TimeoutException implements Exception {
   @override
   String toString() =>
       'TimeoutException: $message after ${duration.inSeconds} seconds';
+}
+
+class _QueuedRequest {
+  final String question;
+  final bool includePersonal;
+  final bool includeMsNotes;
+  _QueuedRequest({
+    required this.question,
+    required this.includePersonal,
+    required this.includeMsNotes,
+  });
 }

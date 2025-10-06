@@ -102,66 +102,127 @@ class _ChatComposerState extends State<ChatComposer> {
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: widget.controller,
-                  maxLines: null,
-                  enabled: !widget.isSending,
-                  textInputAction: TextInputAction.send,
-                  decoration: InputDecoration(
-                    hintText: widget.isSending
-                        ? 'Waiting for AI response…'
-                        : 'Ask AI anything…',
-                    hintStyle: TextStyle(
-                      color: colorScheme.primary.withValues(alpha: 0.7),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: widget.controller,
+                      maxLines: null,
+                      enabled: !widget.isSending,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: widget.isSending
+                            ? 'Waiting for AI response…'
+                            : 'Ask AI anything…',
+                        hintStyle: TextStyle(
+                          color: colorScheme.primary.withValues(alpha: 0.7),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontSize: 16,
+                      ),
+                      onSubmitted:
+                          widget.isSending ? null : (_) => widget.onSend(),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
+                    // Queue indicator
+                    Consumer<ChatProvider>(
+                      builder: (context, chat, _) {
+                        if (chat.queueLength == 0)
+                          return const SizedBox.shrink();
+                        return Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.only(right: 12, bottom: 6),
+                            child: Text(
+                              'Queued: ${chat.queueLength}',
+                              style: TextStyle(
+                                color:
+                                    colorScheme.primary.withValues(alpha: 0.7),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontSize: 16,
-                  ),
-                  onSubmitted: widget.isSending ? null : (_) => widget.onSend(),
+                  ],
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: widget.isSending
-                    ? colorScheme.primary.withValues(alpha: 0.5)
-                    : colorScheme.primary,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: widget.isSending
+                        ? colorScheme.primary.withValues(alpha: 0.5)
+                        : colorScheme.primary,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: widget.isSending
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Icon(LineIcons.paperPlane,
+                            color: colorScheme.onPrimary, size: 20),
+                    onPressed: widget.isSending ? null : widget.onSend,
+                    style:
+                        IconButton.styleFrom(padding: const EdgeInsets.all(16)),
+                  ),
+                ),
+                // Cancel button placed next to send button while sending
+                if (widget.isSending) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.error.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: colorScheme.error.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: Icon(LineIcons.stopCircle,
+                          color: colorScheme.error, size: 20),
+                      tooltip: 'Cancel',
+                      onPressed: () {
+                        final chat =
+                            Provider.of<ChatProvider>(context, listen: false);
+                        chat.cancelCurrentRequest();
+                      },
+                      style: IconButton.styleFrom(
+                          padding: const EdgeInsets.all(16)),
+                    ),
                   ),
                 ],
-              ),
-              child: IconButton(
-                icon: widget.isSending
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            colorScheme.onPrimary,
-                          ),
-                        ),
-                      )
-                    : Icon(LineIcons.paperPlane,
-                        color: colorScheme.onPrimary, size: 20),
-                onPressed: widget.isSending ? null : widget.onSend,
-                style: IconButton.styleFrom(padding: const EdgeInsets.all(16)),
-              ),
+              ],
             ),
           ],
         ),
