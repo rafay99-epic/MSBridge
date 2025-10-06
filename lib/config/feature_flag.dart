@@ -9,4 +9,7 @@ class FeatureFlag {
   static const bool enableInAppUpdate = true;
   //  enabale reverse  syncy layer
   static const bool enableReverseSyncLayer = true;
+
+//disable the update
+  static const bool enableUpdate = false;
 }

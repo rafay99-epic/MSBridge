@@ -20,6 +20,26 @@ This document highlights planned features and long-term goals.
   - [x] Logfinder: advanced debugging/diagnostics tool  
   - [x] In-app performance monitoring system  
 
+- [ ] In app Update 
+  - [x] Release Stable Version
+    - [x] Inform User about the New App Version 
+    - [x] Download the new version of the app
+  - [ ] Setup Beta Version
+    - [ ] Sign Up people for beta version of the app
+    - [ ] Download and config beta version of the app
+    - [ ] Open File manager when apk is downloaded
+
+- [ ] PostHosg Support
+  - [ ] Add API tracking for chatbot 
+  - [ ] Adding Session manager 
+
+- [ ] More AI model 
+  - [ ] using Open router Support 
+    - [ ] Claude Model 
+    - [ ] Open AI GTP 5 Model 
+    - [x] Google Studio MOdel 
+
+
 
 
 ## 2. Mid-Term Roadmap

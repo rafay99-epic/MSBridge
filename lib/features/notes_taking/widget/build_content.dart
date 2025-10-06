@@ -34,7 +34,6 @@ Widget buildContent(String content, ThemeData theme) {
   } catch (e) {
     FlutterBugfender.sendCrash(
         'Error building content: $e', StackTrace.current.toString());
-    FlutterBugfender.error('Error building content: $e');
     return Text(
       content,
       maxLines: 4,

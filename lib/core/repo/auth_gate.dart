@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // Project imports:
@@ -42,7 +43,8 @@ class AuthGate extends StatelessWidget {
                 await Permission.camera.request();
 
                 // Check for updates after permissions are set up
-                if (UpdateManager.shouldCheckForUpdates()) {
+                if (FeatureFlag.enableUpdate &&
+                    UpdateManager.shouldCheckForUpdates()) {
                   if (context.mounted) {
                     await UpdateManager.checkForUpdatesOnStartup(context);
                   }

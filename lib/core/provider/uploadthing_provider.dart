@@ -82,6 +82,15 @@ class UploadThingProvider extends ChangeNotifier {
     }
   }
 
+  // Web-friendly helper: not implemented by service yet; keep signature for UI guards
+  Future<String?> uploadImageBytes(List<int> bytes,
+      {required String fileName}) async {
+    // If you later add bytes support in the service, wire it here.
+    _error = 'Bytes upload is not supported on this platform';
+    notifyListeners();
+    return null;
+  }
+
   Future<String?> uploadAudio(File file) async {
     if (_isUploading) {
       _error = 'An upload is already in progress';
