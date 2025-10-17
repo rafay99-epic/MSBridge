@@ -83,29 +83,42 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: colorScheme.surface,
       appBar: CustomAppBar(
-        title: "Ask AI",
+        title: "AI Assistant",
         backbutton: false,
         actions: [
           IconButton(
             icon: Icon(
               LineIcons.plusCircle,
-              color: colorScheme.onSurface,
+              color: colorScheme.primary,
               size: 24,
             ),
             onPressed: () => _confirmStartNewChat(context),
             tooltip: 'New Chat',
+            style: IconButton.styleFrom(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
+          const SizedBox(width: 8),
           IconButton(
             icon: Icon(
               LineIcons.cog,
-              color: colorScheme.onSurface,
+              color: colorScheme.primary,
               size: 24,
             ),
             onPressed: () => _showChatSettingsBottomSheet(context),
             tooltip: 'AI Chat Settings',
+            style: IconButton.styleFrom(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -136,10 +149,11 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
                 }
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   itemCount: chat.messages.length,
-                  cacheExtent: 1000,
+                  cacheExtent: 500, // Reduced for better performance
                   itemBuilder: (context, index) => MessageBubble(
+                    key: ValueKey('${chat.messages[index].text}_$index'),
                     message: chat.messages[index],
                   ),
                 );
@@ -147,17 +161,10 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             ),
           ),
           if (_isTyping) TypingIndicator(colorScheme: colorScheme),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: ChatComposer(
-              isSending: _isSending,
-              controller: _controller,
-              onSend: () => _sendMessage(context),
-            ),
+          ChatComposer(
+            isSending: _isSending,
+            controller: _controller,
+            onSend: () => _sendMessage(context),
           ),
         ],
       ),

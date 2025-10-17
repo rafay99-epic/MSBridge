@@ -15,7 +15,7 @@ class MessageBubble extends StatelessWidget {
     final bool isUser = message.fromUser;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 20),
       child: RepaintBoundary(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,66 +23,47 @@ class MessageBubble extends StatelessWidget {
               isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             if (!isUser) ...[
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: message.isError
-                      ? colorScheme.error.withValues(alpha: 0.15)
-                      : colorScheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: message.isError
-                        ? colorScheme.error.withValues(alpha: 0.3)
-                        : colorScheme.primary.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  message.isError
-                      ? LineIcons.exclamationTriangle
-                      : LineIcons.robot,
-                  color:
-                      message.isError ? colorScheme.error : colorScheme.primary,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 8),
+              _buildAvatar(context, colorScheme, false),
+              const SizedBox(width: 12),
             ],
             Flexible(
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+                  maxWidth: MediaQuery.of(context).size.width * 0.78,
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: isUser
                       ? colorScheme.primary
                       : message.isError
                           ? colorScheme.errorContainer
-                          : colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16).copyWith(
+                          : colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(20).copyWith(
                     bottomLeft: isUser
-                        ? const Radius.circular(16)
-                        : const Radius.circular(4),
+                        ? const Radius.circular(20)
+                        : const Radius.circular(6),
                     bottomRight: isUser
-                        ? const Radius.circular(4)
-                        : const Radius.circular(16),
+                        ? const Radius.circular(6)
+                        : const Radius.circular(20),
                   ),
                   border: Border.all(
                     color: isUser
                         ? colorScheme.primary
                         : message.isError
-                            ? colorScheme.error
-                            : colorScheme.primary.withValues(alpha: 0.4),
-                    width: message.isError ? 2 : 2.0,
+                            ? colorScheme.error.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.15),
+                    width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isUser
-                          ? colorScheme.primary.withValues(alpha: 0.2)
-                          : colorScheme.primary.withValues(alpha: 0.1),
+                          ? colorScheme.primary.withValues(alpha: 0.12)
+                          : colorScheme.shadow.withValues(alpha: 0.06),
                       blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -90,26 +71,57 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
             if (isUser) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  LineIcons.user,
-                  color: colorScheme.primary,
-                  size: 16,
-                ),
-              ),
+              const SizedBox(width: 12),
+              _buildAvatar(context, colorScheme, true),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(
+      BuildContext context, ColorScheme colorScheme, bool isUser) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isUser
+              ? [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.8)
+                ]
+              : message.isError
+                  ? [
+                      colorScheme.error,
+                      colorScheme.error.withValues(alpha: 0.8)
+                    ]
+                  : [
+                      colorScheme.primary,
+                      colorScheme.primary.withValues(alpha: 0.8),
+                    ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: (isUser ? colorScheme.primary : colorScheme.error)
+                .withValues(alpha: 0.15),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Icon(
+        isUser
+            ? LineIcons.user
+            : message.isError
+                ? LineIcons.exclamationTriangle
+                : LineIcons.robot,
+        color: Colors.white,
+        size: 18,
       ),
     );
   }
@@ -118,9 +130,10 @@ class MessageBubble extends StatelessWidget {
     if (isUser) {
       return SelectableText(
         message.text,
-        style: theme.textTheme.bodyMedium?.copyWith(
+        style: theme.textTheme.bodyLarge?.copyWith(
           color: colorScheme.onPrimary,
           fontWeight: FontWeight.w500,
+          height: 1.4,
         ),
       );
     }
@@ -128,9 +141,10 @@ class MessageBubble extends StatelessWidget {
     if (message.isError) {
       return Text(
         message.text,
-        style: theme.textTheme.bodyMedium?.copyWith(
+        style: theme.textTheme.bodyLarge?.copyWith(
           color: colorScheme.onErrorContainer,
           fontWeight: FontWeight.w500,
+          height: 1.4,
         ),
       );
     }
@@ -138,36 +152,60 @@ class MessageBubble extends StatelessWidget {
     return OptimizedMarkdownBody(
       data: message.text,
       styleSheet: MarkdownStyleSheet(
-        p: theme.textTheme.bodyMedium?.copyWith(
+        p: theme.textTheme.bodyLarge?.copyWith(
           color: colorScheme.onSurface,
           height: 1.5,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
         ),
         h1: theme.textTheme.headlineSmall?.copyWith(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w700,
+          height: 1.3,
         ),
         h2: theme.textTheme.titleLarge?.copyWith(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w600,
+          height: 1.3,
         ),
         h3: theme.textTheme.titleMedium?.copyWith(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w600,
+          height: 1.3,
         ),
         code: theme.textTheme.bodyMedium?.copyWith(
-          backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
-          color: colorScheme.onSurface,
+          backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+          color: colorScheme.primary,
           fontFamily: 'monospace',
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
         codeblockDecoration: BoxDecoration(
-          color: colorScheme.primary.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.primary.withValues(alpha: 0.3),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        blockquoteDecoration: BoxDecoration(
+          color: colorScheme.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border(
+            left: BorderSide(
+              color: colorScheme.primary.withValues(alpha: 0.3),
+              width: 3,
+            ),
+          ),
+        ),
+        blockquotePadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
         ),
       ),
     );

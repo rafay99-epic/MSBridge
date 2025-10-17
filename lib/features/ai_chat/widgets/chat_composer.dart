@@ -66,39 +66,80 @@ class _ChatComposerState extends State<ChatComposer> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           border: Border(
             top: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.1),
+              color: colorScheme.outline.withValues(alpha: 0.08),
               width: 1,
             ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            IconButton(
-              onPressed: widget.isSending ? null : () => _attachImage(context),
-              icon: Icon(LineIcons.image, color: colorScheme.primary),
-              tooltip: 'Attach Image',
+            // Attach Image Button
+            Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.15),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.03),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed:
+                    widget.isSending ? null : () => _attachImage(context),
+                icon: Icon(
+                  LineIcons.image,
+                  color: widget.isSending
+                      ? colorScheme.onSurface.withValues(alpha: 0.4)
+                      : colorScheme.primary,
+                  size: 20,
+                ),
+                tooltip: 'Attach Image',
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(12),
+                  minimumSize: const Size(44, 44),
+                ),
+              ),
             ),
+            const SizedBox(width: 12),
+            // Input Field
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.4),
-                    width: 2.0,
+                    color: colorScheme.outline.withValues(alpha: 0.15),
+                    width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: colorScheme.shadow.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -110,12 +151,16 @@ class _ChatComposerState extends State<ChatComposer> {
                       maxLines: null,
                       enabled: !widget.isSending,
                       textInputAction: TextInputAction.send,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w400,
+                      ),
                       decoration: InputDecoration(
                         hintText: widget.isSending
                             ? 'Waiting for AI response…'
                             : 'Ask AI anything…',
                         hintStyle: TextStyle(
-                          color: colorScheme.primary.withValues(alpha: 0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                         ),
@@ -124,10 +169,6 @@ class _ChatComposerState extends State<ChatComposer> {
                           horizontal: 20,
                           vertical: 16,
                         ),
-                      ),
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontSize: 16,
                       ),
                       onSubmitted:
                           widget.isSending ? null : (_) => widget.onSend(),
@@ -138,19 +179,26 @@ class _ChatComposerState extends State<ChatComposer> {
                         if (chat.queueLength == 0) {
                           return const SizedBox.shrink();
                         }
-                        return Align(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.only(right: 12, bottom: 6),
-                            child: Text(
-                              'Queued: ${chat.queueLength}',
-                              style: TextStyle(
-                                color:
-                                    colorScheme.primary.withValues(alpha: 0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
+                        return Container(
+                          margin: const EdgeInsets.only(right: 12, bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            'Queued: ${chat.queueLength}',
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         );
@@ -161,20 +209,32 @@ class _ChatComposerState extends State<ChatComposer> {
               ),
             ),
             const SizedBox(width: 12),
+            // Action Buttons
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Send/Cancel Button
                 Container(
                   decoration: BoxDecoration(
-                    color: widget.isSending
-                        ? colorScheme.primary.withValues(alpha: 0.5)
-                        : colorScheme.primary,
-                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      colors: widget.isSending
+                          ? [
+                              colorScheme.primary.withValues(alpha: 0.6),
+                              colorScheme.primary.withValues(alpha: 0.4),
+                            ]
+                          : [
+                              colorScheme.primary,
+                              colorScheme.primary.withValues(alpha: 0.8),
+                            ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
                       ),
                     ],
                   ),
@@ -184,34 +244,49 @@ class _ChatComposerState extends State<ChatComposer> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                              strokeWidth: 2.5,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 colorScheme.onPrimary,
                               ),
                             ),
                           )
-                        : Icon(LineIcons.paperPlane,
-                            color: colorScheme.onPrimary, size: 20),
+                        : Icon(
+                            LineIcons.paperPlane,
+                            color: colorScheme.onPrimary,
+                            size: 20,
+                          ),
                     onPressed: widget.isSending ? null : widget.onSend,
-                    style:
-                        IconButton.styleFrom(padding: const EdgeInsets.all(16)),
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(12),
+                      minimumSize: const Size(44, 44),
+                    ),
                   ),
                 ),
-                // Cancel button placed next to send button while sending
+                // Cancel button (appears when sending)
                 if (widget.isSending) ...[
                   const SizedBox(width: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: colorScheme.error.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(24),
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(
-                        color: colorScheme.error.withValues(alpha: 0.3),
-                        width: 1.5,
+                        color: colorScheme.error.withValues(alpha: 0.2),
+                        width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.error.withValues(alpha: 0.08),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                     child: IconButton(
-                      icon: Icon(LineIcons.stopCircle,
-                          color: colorScheme.error, size: 20),
+                      icon: Icon(
+                        LineIcons.stopCircle,
+                        color: colorScheme.onErrorContainer,
+                        size: 20,
+                      ),
                       tooltip: 'Cancel',
                       onPressed: () {
                         final chat =
@@ -219,7 +294,9 @@ class _ChatComposerState extends State<ChatComposer> {
                         chat.cancelCurrentRequest();
                       },
                       style: IconButton.styleFrom(
-                          padding: const EdgeInsets.all(16)),
+                        padding: const EdgeInsets.all(12),
+                        minimumSize: const Size(44, 44),
+                      ),
                     ),
                   ),
                 ],
