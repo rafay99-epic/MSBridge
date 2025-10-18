@@ -14,6 +14,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/features/notes_taking/create/widget/auto_save_bubble.dart';
 import 'package:msbridge/features/notes_taking/create/widget/bottom_toolbar.dart';
+import 'package:msbridge/features/notes_taking/create/widget/build_bottom_sheet_action.dart';
 import 'package:msbridge/features/notes_taking/create/widget/editor_pane.dart';
 import 'package:msbridge/features/notes_taking/create/widget/title_field.dart';
 import 'package:provider/provider.dart';
@@ -543,25 +544,27 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          // Removed custom copy/cut actions; rely on system selection toolbar
+          // Only the most essential actions
           IconButton(
-            tooltip: 'Paste',
-            icon: const Icon(Icons.paste, size: 20),
-            onPressed: _pasteText,
-          ),
-          IconButton(
+            tooltip: 'AI Summary',
             icon: const Icon(LineIcons.robot, size: 22),
             onPressed: () => _generateAiSummary(context),
           ),
           IconButton(
-            icon: const Icon(LineIcons.fileExport, size: 22),
-            onPressed: () => showExportOptions(
-              context,
-              theme,
-              _titleController,
-              _controller,
-            ),
+            tooltip: 'Save',
+            icon: const Icon(LineIcons.save, size: 22),
+            onPressed: () async {
+              await manualSaveNote();
+            },
           ),
+
+          // Paste action - direct access
+          IconButton(
+            tooltip: 'Paste',
+            icon: const Icon(Icons.paste, size: 22),
+            onPressed: _pasteText,
+          ),
+          // Read action - direct access (if note exists)
           if (_currentNote != null)
             IconButton(
               tooltip: 'Read',
@@ -581,28 +584,11 @@ class _CreateNoteState extends State<CreateNote>
                 );
               },
             ),
+          // More actions button - opens bottom sheet
           IconButton(
-            tooltip: 'Templates',
-            icon: const Icon(LineIcons.clone, size: 22),
-            onPressed: _openTemplatesPicker,
-          ),
-          Consumer<ShareLinkProvider>(
-            builder: (context, shareProvider, _) {
-              if (!shareProvider.shareLinksEnabled || _currentNote == null) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                tooltip: 'Share link',
-                icon: const Icon(LineIcons.shareSquare, size: 22),
-                onPressed: _openShareSheet,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(LineIcons.save, size: 22),
-            onPressed: () async {
-              await manualSaveNote();
-            },
+            tooltip: 'More options',
+            icon: const Icon(Icons.more_vert, size: 22),
+            onPressed: () => _showMoreActionsBottomSheet(context),
           ),
         ],
       ),
@@ -670,6 +656,7 @@ class _CreateNoteState extends State<CreateNote>
     final theme = Theme.of(context);
     final listenable = await TemplateRepo.getTemplatesListenable();
     if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
@@ -678,64 +665,136 @@ class _CreateNoteState extends State<CreateNote>
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.6,
-            child: ValueListenableBuilder(
-              valueListenable: listenable,
-              builder: (context, Box<NoteTemplate> box, _) {
-                final items = box.values.toList()
-                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text('No templates yet',
-                        style: TextStyle(color: theme.colorScheme.primary)),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final t = items[index];
-                    return ListTile(
-                      title: Text(t.title,
-                          style: TextStyle(color: theme.colorScheme.primary)),
-                      subtitle: t.tags.isEmpty
-                          ? null
-                          : Text(t.tags.join(' · '),
-                              style: TextStyle(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.7))),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        await _applyTemplateInEditor(t);
-                      },
-                      trailing: IconButton(
-                        icon: const Icon(Icons.open_in_new),
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      const TemplatesHubPage(),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
-                                return FadeTransition(
-                                    opacity: animation, child: child);
-                              },
-                              transitionDuration:
-                                  const Duration(milliseconds: 300),
-                            ),
-                          );
-                        },
-                        tooltip: 'Manage templates',
+        return RepaintBoundary(
+          child: SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.6,
+              child: ValueListenableBuilder<Box<NoteTemplate>>(
+                valueListenable: listenable,
+                builder: (context, Box<NoteTemplate> box, _) {
+                  final items = box.values.toList();
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No templates yet',
+                        style: TextStyle(color: theme.colorScheme.primary),
                       ),
                     );
-                  },
-                );
-              },
+                  }
+
+                  // Sort only once when items change
+                  items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+                  return ListView.separated(
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final template = items[index];
+                      return RepaintBoundary(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () async {
+                                Navigator.pop(context);
+                                await _applyTemplateInEditor(template);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface
+                                      .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outline
+                                        .withValues(alpha: 0.1),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        LineIcons.fileAlt,
+                                        size: 24,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            template.title,
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  theme.colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          if (template.tags.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              template.tags.join(' · '),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                color: theme
+                                                    .colorScheme.onSurface
+                                                    .withValues(alpha: 0.7),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.open_in_new,
+                                          size: 20),
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+                                        await Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder: (context, animation,
+                                                    secondaryAnimation) =>
+                                                const TemplatesHubPage(),
+                                            transitionsBuilder: (context,
+                                                animation,
+                                                secondaryAnimation,
+                                                child) {
+                                              return FadeTransition(
+                                                  opacity: animation,
+                                                  child: child);
+                                            },
+                                            transitionDuration: const Duration(
+                                                milliseconds: 300),
+                                          ),
+                                        );
+                                      },
+                                      tooltip: 'Manage templates',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
         );
@@ -833,6 +892,99 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
+  void _showMoreActionsBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final shareProvider =
+        Provider.of<ShareLinkProvider>(context, listen: false);
+    final hasShareEnabled =
+        shareProvider.shareLinksEnabled && _currentNote != null;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return RepaintBoundary(
+            child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Title
+                Text(
+                  'More Actions',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Action buttons
+                buildBottomSheetAction(
+                  icon: LineIcons.fileExport,
+                  title: 'Export',
+                  subtitle: 'Export note to various formats',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showExportOptions(
+                      context,
+                      theme,
+                      _titleController,
+                      _controller,
+                    );
+                  },
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                buildBottomSheetAction(
+                  icon: LineIcons.clone,
+                  title: 'Templates',
+                  subtitle: 'Use or create note templates',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openTemplatesPicker();
+                  },
+                  theme: theme,
+                ),
+                if (hasShareEnabled) ...[
+                  const SizedBox(height: 12),
+                  buildBottomSheetAction(
+                    icon: LineIcons.shareSquare,
+                    title: 'Share Link',
+                    subtitle: 'Create a shareable link for this note',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _openShareSheet();
+                    },
+                    theme: theme,
+                  ),
+                ],
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ));
+      },
+    );
+  }
+
   Future<void> _openShareSheet() async {
     final theme = Theme.of(context);
     if (_currentNote == null) {
@@ -855,150 +1007,266 @@ class _CreateNoteState extends State<CreateNote>
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return StatefulBuilder(builder: (context, setStateSheet) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          return RepaintBoundary(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Share via link',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    Row(
-                      children: [
-                        if (_isShareOperationInProgress) ...[
-                          SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.secondary
-                                    .withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(3),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    theme.colorScheme.secondary,
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Title
+                    Text(
+                      'Share via Link',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Share toggle card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              LineIcons.shareSquare,
+                              size: 24,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Share Link',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
                                   ),
-                                  backgroundColor: theme.colorScheme.secondary
-                                      .withValues(alpha: 0.20),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  enabled
+                                      ? 'Link is active and shareable'
+                                      : 'Enable to generate a view-only link',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isShareOperationInProgress) ...[
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            Switch(
+                              value: enabled,
+                              onChanged: (value) async {
+                                if (_isShareOperationInProgress) return;
+
+                                setStateSheet(() {
+                                  _isShareOperationInProgress = true;
+                                });
+
+                                try {
+                                  if (value) {
+                                    final url =
+                                        await DynamicLink.enableShare(note);
+                                    setStateSheet(() {
+                                      enabled = true;
+                                      currentUrl = url;
+                                    });
+                                    if (context.mounted) {
+                                      CustomSnackBar.show(
+                                          context, 'Share link enabled',
+                                          isSuccess: true);
+                                    }
+                                  } else {
+                                    await DynamicLink.disableShare(note);
+                                    setStateSheet(() {
+                                      enabled = false;
+                                      currentUrl = null;
+                                    });
+                                    if (context.mounted) {
+                                      CustomSnackBar.show(
+                                          context, 'Share link disabled',
+                                          isSuccess: false);
+                                    }
+                                  }
+                                } catch (e) {
+                                  FlutterBugfender.sendCrash(
+                                      'Failed to enable/disable share: $e',
+                                      StackTrace.current.toString());
+                                  FlutterBugfender.error(
+                                      'Failed to enable/disable share: $e');
+                                  if (context.mounted) {
+                                    CustomSnackBar.show(context, e.toString(),
+                                        isSuccess: false);
+                                  }
+                                } finally {
+                                  setStateSheet(() {
+                                    _isShareOperationInProgress = false;
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (currentUrl != null) ...[
+                      const SizedBox(height: 16),
+                      // URL display card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.surface.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outline
+                                .withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Shareable Link',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SelectableText(
+                              currentUrl!,
+                              style: TextStyle(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.9),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                await Clipboard.setData(
+                                    ClipboardData(text: currentUrl!));
+                                if (context.mounted) {
+                                  CustomSnackBar.show(context, 'Link copied',
+                                      isSuccess: true);
+                                }
+                              },
+                              icon: const Icon(LineIcons.copy, size: 18),
+                              label: const Text('Copy Link'),
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                        ],
-                        Switch(
-                          value: enabled,
-                          onChanged: _isShareOperationInProgress
-                              ? null
-                              : (value) async {
-                                  // Prevent multiple taps while operation is in progress
-                                  if (_isShareOperationInProgress) return;
-
-                                  setStateSheet(() {
-                                    _isShareOperationInProgress = true;
-                                  });
-
-                                  try {
-                                    if (value) {
-                                      final url =
-                                          await DynamicLink.enableShare(note);
-                                      setStateSheet(() {
-                                        enabled = true;
-                                        currentUrl = url;
-                                      });
-                                      if (context.mounted) {
-                                        CustomSnackBar.show(
-                                            context, 'Share link enabled',
-                                            isSuccess: true);
-                                      }
-                                    } else {
-                                      await DynamicLink.disableShare(note);
-                                      setStateSheet(() {
-                                        enabled = false;
-                                        currentUrl = null;
-                                      });
-                                      if (context.mounted) {
-                                        CustomSnackBar.show(
-                                            context, 'Share link disabled',
-                                            isSuccess: false);
-                                      }
-                                    }
-                                  } catch (e) {
-                                    FlutterBugfender.sendCrash(
-                                        'Failed to enable/disable share: $e',
-                                        StackTrace.current.toString());
-                                    FlutterBugfender.error(
-                                        'Failed to enable/disable share: $e');
-                                    if (context.mounted) {
-                                      CustomSnackBar.show(context, e.toString(),
-                                          isSuccess: false);
-                                    }
-                                  } finally {
-                                    // Reset loading state
-                                    setStateSheet(() {
-                                      _isShareOperationInProgress = false;
-                                    });
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await SharePlus.instance.share(
+                                    ShareParams(
+                                      text: currentUrl!,
+                                      subject: 'Here is the link to the note',
+                                      title: 'Shared Note by MSBridge',
+                                    ),
+                                  );
+                                } catch (e) {
+                                  FlutterBugfender.sendCrash(
+                                    'Failed to share link: $e',
+                                    StackTrace.current.toString(),
+                                  );
+                                  if (context.mounted) {
+                                    CustomSnackBar.show(
+                                      context,
+                                      'Failed to share link: $e',
+                                      isSuccess: false,
+                                    );
                                   }
-                                },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (currentUrl != null) ...[
-                  SelectableText(
-                    currentUrl!,
-                    style: TextStyle(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.9)),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await Clipboard.setData(
-                              ClipboardData(text: currentUrl!));
-                          if (context.mounted) {
-                            CustomSnackBar.show(context, 'Link copied',
-                                isSuccess: true);
-                          }
-                        },
-                        icon: const Icon(LineIcons.copy),
-                        label: const Text('Copy'),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => SharePlus.instance
-                            .share(currentUrl! as ShareParams),
-                        icon: const Icon(LineIcons.share),
-                        label: const Text('Share'),
+                                }
+                              },
+                              icon: const Icon(LineIcons.share, size: 18),
+                              label: const Text('Share'),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ] else ...[
-                  Text(
-                    'Enable to generate a view-only link anyone can open.',
-                    style: TextStyle(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.7)),
-                  ),
-                ]
-              ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
             ),
           );
         });

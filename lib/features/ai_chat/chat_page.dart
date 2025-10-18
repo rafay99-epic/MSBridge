@@ -341,24 +341,9 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
         includePersonal: canIncludePersonal,
         includeMsNotes: shouldIncludeMsNotes,
       );
-
       sw.stop();
-
-      // Observability: record success metrics to Bugfender
-      try {
-        FlutterBugfender.error('AI chat success');
-        FlutterBugfender.error('ai_prompt_length=$promptLength');
-        FlutterBugfender.error('ai_include_personal=$canIncludePersonal');
-        FlutterBugfender.error('ai_include_msnotes=$shouldIncludeMsNotes');
-        FlutterBugfender.error('ai_latency_ms=${sw.elapsedMilliseconds}');
-        FlutterBugfender.error('ai_image_count=$imageCount');
-      } catch (e) {
-        FlutterBugfender.sendCrash(
-          'AI chat success: $e',
-          StackTrace.current.toString(),
-        );
-      }
-
+      FlutterBugfender.log(
+          'AI chat success: latency=${sw.elapsedMilliseconds}ms, prompt_len=$promptLength, personal=$canIncludePersonal, msnotes=$shouldIncludeMsNotes, images=$imageCount');
       if (response == null && chat.hasError && context.mounted) {
         CustomSnackBar.show(context,
             'Failed to get AI response. You can retry using the retry button.');
@@ -383,7 +368,6 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
             isSuccess: false);
       }
     } finally {
-      // Always reset both flags in finally block
       if (mounted) {
         setState(() {
           _isSending = false;
