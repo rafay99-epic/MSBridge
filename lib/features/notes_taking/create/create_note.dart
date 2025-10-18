@@ -662,138 +662,207 @@ class _CreateNoteState extends State<CreateNote>
       backgroundColor: theme.colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         return RepaintBoundary(
           child: SafeArea(
-            child: SizedBox(
-              height: MediaQuery.of(ctx).size.height * 0.6,
-              child: ValueListenableBuilder<Box<NoteTemplate>>(
-                valueListenable: listenable,
-                builder: (context, Box<NoteTemplate> box, _) {
-                  final items = box.values.toList();
-                  if (items.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No templates yet',
-                        style: TextStyle(color: theme.colorScheme.primary),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    );
-                  }
-
-                  // Sort only once when items change
-                  items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-
-                  return ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final template = items[index];
-                      return RepaintBoundary(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6.0),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () async {
-                                Navigator.pop(context);
-                                await _applyTemplateInEditor(template);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.surface
-                                      .withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: theme.colorScheme.outline
-                                        .withValues(alpha: 0.1),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title
+                  Text(
+                    'Select Template',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  // Templates list
+                  Flexible(
+                    child: SizedBox(
+                      height: MediaQuery.of(ctx).size.height * 0.5,
+                      child: ValueListenableBuilder<Box<NoteTemplate>>(
+                        valueListenable: listenable,
+                        builder: (context, Box<NoteTemplate> box, _) {
+                          final items = box.values.toList();
+                          if (items.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LineIcons.fileAlt,
+                                    size: 48,
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.3),
                                   ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        LineIcons.fileAlt,
-                                        size: 24,
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No templates yet',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.7),
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            template.title,
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                            ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Create your first template to get started',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          // Sort only once when items change
+                          items.sort(
+                              (a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+                          return ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final template = items[index];
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6.0),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () async {
+                                        Navigator.pop(context);
+                                        await _applyTemplateInEditor(template);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.surface
+                                              .withValues(alpha: 0.3),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: theme.colorScheme.outline
+                                                .withValues(alpha: 0.1),
                                           ),
-                                          if (template.tags.isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              template.tags.join(' · '),
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                color: theme
-                                                    .colorScheme.onSurface
-                                                    .withValues(alpha: 0.7),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 48,
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.primary
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                LineIcons.fileAlt,
+                                                size: 24,
+                                                color:
+                                                    theme.colorScheme.primary,
                                               ),
                                             ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    template.title,
+                                                    style: theme
+                                                        .textTheme.titleMedium
+                                                        ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: theme.colorScheme
+                                                          .onSurface,
+                                                    ),
+                                                  ),
+                                                  if (template
+                                                      .tags.isNotEmpty) ...[
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      template.tags.join(' · '),
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: theme.colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                                alpha: 0.7),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                  Icons.open_in_new,
+                                                  size: 20),
+                                              onPressed: () async {
+                                                Navigator.pop(context);
+                                                await Navigator.push(
+                                                  context,
+                                                  PageRouteBuilder(
+                                                    pageBuilder: (context,
+                                                            animation,
+                                                            secondaryAnimation) =>
+                                                        const TemplatesHubPage(),
+                                                    transitionsBuilder:
+                                                        (context,
+                                                            animation,
+                                                            secondaryAnimation,
+                                                            child) {
+                                                      return FadeTransition(
+                                                          opacity: animation,
+                                                          child: child);
+                                                    },
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 300),
+                                                  ),
+                                                );
+                                              },
+                                              tooltip: 'Manage templates',
+                                            ),
                                           ],
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.open_in_new,
-                                          size: 20),
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-                                        await Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder: (context, animation,
-                                                    secondaryAnimation) =>
-                                                const TemplatesHubPage(),
-                                            transitionsBuilder: (context,
-                                                animation,
-                                                secondaryAnimation,
-                                                child) {
-                                              return FadeTransition(
-                                                  opacity: animation,
-                                                  child: child);
-                                            },
-                                            transitionDuration: const Duration(
-                                                milliseconds: 300),
-                                          ),
-                                        );
-                                      },
-                                      tooltip: 'Manage templates',
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
