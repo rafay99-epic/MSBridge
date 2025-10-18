@@ -12,7 +12,6 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports:
@@ -22,7 +21,7 @@ import 'package:msbridge/core/repo/note_taking_actions_repo.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
 import 'package:msbridge/features/notes_taking/folders/folders_page.dart';
 import 'package:msbridge/features/notes_taking/search/advanced_search_screen.dart';
-import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/features/notes_taking/widget/optimized_note_card.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
 import 'package:msbridge/features/todo/to_do.dart';
 import 'package:msbridge/utils/empty_ui.dart';
@@ -320,14 +319,12 @@ class _NotetakingState extends State<Notetaking>
     FlutterBugfender.log("Entering search with ${currentNotes.length} notes");
     Navigator.push(
       context,
-      PageTransition(
-        child: AdvancedSearchScreen(
+      MaterialPageRoute(
+        builder: (context) => AdvancedSearchScreen(
           takingNotes: currentNotes,
           readingNotes: [],
           searchReadingNotes: false,
         ),
-        type: PageTransitionType.bottomToTop,
-        duration: const Duration(milliseconds: 300),
       ),
     );
   }
@@ -404,8 +401,8 @@ class _NotetakingState extends State<Notetaking>
           body: TabBarView(
             physics: const BouncingScrollPhysics(),
             children: [
-              _KeepAlive(child: _buildBody(theme)),
-              const _KeepAlive(child: FoldersPage()),
+              KeepAlive(child: _buildBody(theme)),
+              const KeepAlive(child: FoldersPage()),
             ],
           ),
           floatingActionButtonLocation: ExpandableFab.location,
@@ -464,7 +461,7 @@ class _NotetakingState extends State<Notetaking>
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      cacheExtent: 1000,
+      cacheExtent: 2000, // Increased cache extent for better performance
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(8.0, 20.0, 8.0, 28.0),
@@ -494,14 +491,8 @@ class _NotetakingState extends State<Notetaking>
           } else {
             await Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    CreateNote(note: note),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 300),
+              MaterialPageRoute(
+                builder: (context) => CreateNote(note: note),
               ),
             );
           }
@@ -511,7 +502,8 @@ class _NotetakingState extends State<Notetaking>
             _enterSelectionMode(note.noteId!);
           }
         },
-        child: NoteCard(
+        child: OptimizedNoteCard(
+          key: ValueKey(note.noteId ?? 'note_${note.hashCode}'),
           note: note,
           isSelected:
               note.noteId != null && _selectedNoteIds.contains(note.noteId!),
@@ -555,113 +547,132 @@ class _NotetakingState extends State<Notetaking>
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text('Sort by',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary)),
+        return RepaintBoundary(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title
+                  Text(
+                    'Sort Notes',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Sort by section
+                  Text(
+                    'Sort by',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSortOption(
+                    icon: LineIcons.clock,
+                    title: 'Last updated',
+                    subtitle: 'Sort by most recently modified',
+                    isSelected: _sortField == NoteSortField.updatedAt,
+                    onTap: () {
+                      setState(() => _sortField = NoteSortField.updatedAt);
+                      _saveSortPreference();
+                      _recomputeSorting();
+                      Navigator.pop(ctx);
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSortOption(
+                    icon: LineIcons.calendarPlus,
+                    title: 'Date created',
+                    subtitle: 'Sort by creation date',
+                    isSelected: _sortField == NoteSortField.createdAt,
+                    onTap: () {
+                      setState(() => _sortField = NoteSortField.createdAt);
+                      _saveSortPreference();
+                      _recomputeSorting();
+                      Navigator.pop(ctx);
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSortOption(
+                    icon: LineIcons.tag,
+                    title: 'Tag (A→Z)',
+                    subtitle: 'Sort alphabetically by first tag',
+                    isSelected: _sortField == NoteSortField.tag,
+                    onTap: () {
+                      setState(() => _sortField = NoteSortField.tag);
+                      _saveSortPreference();
+                      _recomputeSorting();
+                      Navigator.pop(ctx);
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 24),
+                  // Order section
+                  Text(
+                    'Order',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSortOption(
+                    icon: LineIcons.sortAmountDown,
+                    title: 'Descending',
+                    subtitle: 'Newest first',
+                    isSelected: _sortOrder == NoteSortOrder.desc,
+                    onTap: () {
+                      setState(() => _sortOrder = NoteSortOrder.desc);
+                      _saveSortPreference();
+                      _recomputeSorting();
+                      Navigator.pop(ctx);
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSortOption(
+                    icon: LineIcons.sortAmountUp,
+                    title: 'Ascending',
+                    subtitle: 'Oldest first',
+                    isSelected: _sortOrder == NoteSortOrder.asc,
+                    onTap: () {
+                      setState(() => _sortOrder = NoteSortOrder.asc);
+                      _saveSortPreference();
+                      _recomputeSorting();
+                      Navigator.pop(ctx);
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              ListTile(
-                leading: Icon(
-                  _sortField == NoteSortField.updatedAt
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _sortField == NoteSortField.updatedAt
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                title: const Text('Last updated'),
-                onTap: () {
-                  setState(() => _sortField = NoteSortField.updatedAt);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  _sortField == NoteSortField.createdAt
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _sortField == NoteSortField.createdAt
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                title: const Text('Date created'),
-                onTap: () {
-                  setState(() => _sortField = NoteSortField.createdAt);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  _sortField == NoteSortField.tag
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _sortField == NoteSortField.tag
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                title: const Text('Tag (A→Z)'),
-                onTap: () {
-                  setState(() => _sortField = NoteSortField.tag);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
-              ),
-              const Divider(height: 8),
-              ListTile(
-                title: Text('Order',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary)),
-              ),
-              ListTile(
-                leading: Icon(
-                  _sortOrder == NoteSortOrder.desc
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _sortOrder == NoteSortOrder.desc
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                title: const Text('Descending'),
-                onTap: () {
-                  setState(() => _sortOrder = NoteSortOrder.desc);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
-              ),
-              ListTile(
-                leading: Icon(
-                  _sortOrder == NoteSortOrder.asc
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: _sortOrder == NoteSortOrder.asc
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                title: const Text('Ascending'),
-                onTap: () {
-                  setState(() => _sortOrder = NoteSortOrder.asc);
-                  _saveSortPreference();
-                  _recomputeSorting();
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         );
       },
@@ -672,35 +683,231 @@ class _NotetakingState extends State<Notetaking>
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.sort),
-                title: const Text('Sort Notes'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _openSortBottomSheet();
-                },
+        final theme = Theme.of(ctx);
+        return RepaintBoundary(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title
+                  Text(
+                    'Note Options',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Sort Notes option
+                  _buildSettingsOption(
+                    icon: LineIcons.sort,
+                    title: 'Sort Notes',
+                    subtitle: 'Change how notes are organized',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _openSortBottomSheet();
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 12),
+                  // Layout option
+                  _buildSettingsOption(
+                    icon: _layoutMode == NoteLayoutMode.grid
+                        ? LineIcons.list
+                        : LineIcons.th,
+                    title: 'Arrange View (Layout)',
+                    subtitle: _layoutMode == NoteLayoutMode.grid
+                        ? 'Switch to list view'
+                        : 'Switch to grid view',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _toggleLayoutMode();
+                    },
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.dashboard_customize_outlined),
-                title: const Text('Arrange View (Layout)'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _toggleLayoutMode();
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSortOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required ThemeData theme,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                : theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: isSelected
+                ? Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1,
+                  )
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                      : theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required ThemeData theme,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                LineIcons.angleRight,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -748,14 +955,8 @@ class _NotetakingState extends State<Notetaking>
           onPressed: () async {
             await Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const CreateNote(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 300),
+              MaterialPageRoute(
+                builder: (context) => const CreateNote(),
               ),
             );
           },
@@ -769,14 +970,8 @@ class _NotetakingState extends State<Notetaking>
           onPressed: () async {
             await Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const TemplatesHubPage(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 300),
+              MaterialPageRoute(
+                builder: (context) => const TemplatesHubPage(),
               ),
             );
           },
@@ -790,14 +985,8 @@ class _NotetakingState extends State<Notetaking>
           onPressed: () async {
             await Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const ToDO(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 300),
+              MaterialPageRoute(
+                builder: (context) => const ToDO(),
               ),
             );
           },
@@ -807,14 +996,14 @@ class _NotetakingState extends State<Notetaking>
   }
 }
 
-class _KeepAlive extends StatefulWidget {
+class KeepAlive extends StatefulWidget {
   final Widget child;
-  const _KeepAlive({required this.child});
+  const KeepAlive({super.key, required this.child});
   @override
-  State<_KeepAlive> createState() => _KeepAliveState();
+  State<KeepAlive> createState() => KeepAliveState();
 }
 
-class _KeepAliveState extends State<_KeepAlive>
+class KeepAliveState extends State<KeepAlive>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;

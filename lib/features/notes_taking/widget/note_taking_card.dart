@@ -1,226 +1,226 @@
-// Flutter imports:
-import 'package:flutter/material.dart';
+// // Flutter imports:
+// import 'package:flutter/material.dart';
 
-// Package imports:
-import 'package:intl/intl.dart';
-import 'package:line_icons/line_icons.dart';
+// // Package imports:
+// import 'package:intl/intl.dart';
+// import 'package:line_icons/line_icons.dart';
 
-// Project imports:
-import 'package:msbridge/core/database/note_taking/note_taking.dart';
-import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
-import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
-import 'package:msbridge/features/notes_taking/widget/build_content.dart';
+// // Project imports:
+// import 'package:msbridge/core/database/note_taking/note_taking.dart';
+// import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
+// import 'package:msbridge/features/notes_taking/version_history/version_history_screen.dart';
+// import 'package:msbridge/features/notes_taking/widget/build_content.dart';
 
-class NoteCard extends StatefulWidget {
-  const NoteCard({
-    super.key,
-    required this.note,
-    required this.isSelected,
-    required this.isSelectionMode,
-    this.isGridLayout = false,
-  });
+// class NoteCard extends StatefulWidget {
+//   const NoteCard({
+//     super.key,
+//     required this.note,
+//     required this.isSelected,
+//     required this.isSelectionMode,
+//     this.isGridLayout = false,
+//   });
 
-  final NoteTakingModel note;
-  final bool isSelected;
-  final bool isSelectionMode;
-  final bool isGridLayout;
+//   final NoteTakingModel note;
+//   final bool isSelected;
+//   final bool isSelectionMode;
+//   final bool isGridLayout;
 
-  @override
-  State<NoteCard> createState() => _NoteCardState();
-}
+//   @override
+//   State<NoteCard> createState() => _NoteCardState();
+// }
 
-class _NoteCardState extends State<NoteCard> {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+// class _NoteCardState extends State<NoteCard> {
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
 
-    final lastUpdated = DateTime.parse(widget.note.updatedAt.toString());
-    final formattedDate = DateFormat('dd/MM/yyyy').format(lastUpdated);
+//     final lastUpdated = DateTime.parse(widget.note.updatedAt.toString());
+//     final formattedDate = DateFormat('dd/MM/yyyy').format(lastUpdated);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: widget.isSelected
-            ? theme.colorScheme.primary.withValues(alpha: 0.08)
-            : theme.cardColor,
-        border: widget.isSelected
-            ? Border.all(color: theme.colorScheme.primary, width: 2)
-            : Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
-              ),
-        boxShadow: widget.isSelected
-            ? [
-                BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 8)
-              ]
-            : [],
-      ),
-      child: Card(
-        elevation: widget.isSelected ? 6 : 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: theme.cardColor,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.35),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.note.noteTitle.isEmpty
-                                  ? 'Untitled'
-                                  : widget.note.noteTitle,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: theme.colorScheme.primary,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              formattedDate,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _showVersionHistory(context),
-                        splashRadius: 20,
-                        icon: Icon(
-                          LineIcons.history,
-                          size: 18,
-                          color: theme.colorScheme.secondary,
-                        ),
-                        tooltip: 'History',
-                      ),
-                      const SizedBox(width: 4),
-                      IconButton(
-                        onPressed: () => _openRead(context),
-                        splashRadius: 20,
-                        icon: Icon(
-                          LineIcons.eye,
-                          size: 18,
-                          color: theme.colorScheme.secondary,
-                        ),
-                        tooltip: 'Read',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: theme.colorScheme.outlineVariant
-                        .withValues(alpha: 0.15),
-                  ),
-                ],
-              ),
+//     return AnimatedContainer(
+//       duration: const Duration(milliseconds: 300),
+//       curve: Curves.easeInOut,
+//       decoration: BoxDecoration(
+//         borderRadius: BorderRadius.circular(16),
+//         color: widget.isSelected
+//             ? theme.colorScheme.primary.withValues(alpha: 0.08)
+//             : theme.cardColor,
+//         border: widget.isSelected
+//             ? Border.all(color: theme.colorScheme.primary, width: 2)
+//             : Border.all(
+//                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
+//               ),
+//         boxShadow: widget.isSelected
+//             ? [
+//                 BoxShadow(
+//                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
+//                     blurRadius: 8)
+//               ]
+//             : [],
+//       ),
+//       child: Card(
+//         elevation: widget.isSelected ? 6 : 2,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+//         color: theme.cardColor,
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // Header
+//               Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Row(
+//                     crossAxisAlignment: CrossAxisAlignment.center,
+//                     children: [
+//                       Container(
+//                         width: 6,
+//                         height: 28,
+//                         decoration: BoxDecoration(
+//                           color:
+//                               theme.colorScheme.primary.withValues(alpha: 0.35),
+//                           borderRadius: BorderRadius.circular(3),
+//                         ),
+//                       ),
+//                       const SizedBox(width: 12),
+//                       Expanded(
+//                         child: Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           children: [
+//                             Text(
+//                               widget.note.noteTitle.isEmpty
+//                                   ? 'Untitled'
+//                                   : widget.note.noteTitle,
+//                               style: theme.textTheme.titleLarge?.copyWith(
+//                                 fontWeight: FontWeight.w700,
+//                                 color: theme.colorScheme.primary,
+//                               ),
+//                               maxLines: 2,
+//                               overflow: TextOverflow.ellipsis,
+//                             ),
+//                             const SizedBox(height: 4),
+//                             Text(
+//                               formattedDate,
+//                               style: theme.textTheme.labelSmall?.copyWith(
+//                                 color: theme.colorScheme.secondary,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                       IconButton(
+//                         onPressed: () => _showVersionHistory(context),
+//                         splashRadius: 20,
+//                         icon: Icon(
+//                           LineIcons.history,
+//                           size: 18,
+//                           color: theme.colorScheme.secondary,
+//                         ),
+//                         tooltip: 'History',
+//                       ),
+//                       const SizedBox(width: 4),
+//                       IconButton(
+//                         onPressed: () => _openRead(context),
+//                         splashRadius: 20,
+//                         icon: Icon(
+//                           LineIcons.eye,
+//                           size: 18,
+//                           color: theme.colorScheme.secondary,
+//                         ),
+//                         tooltip: 'Read',
+//                       ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 12),
+//                   Divider(
+//                     height: 1,
+//                     thickness: 1,
+//                     color: theme.colorScheme.outlineVariant
+//                         .withValues(alpha: 0.15),
+//                   ),
+//                 ],
+//               ),
 
-              const SizedBox(height: 12),
+//               const SizedBox(height: 12),
 
-              buildContent(widget.note.noteContent, theme),
+//               buildContent(widget.note.noteContent, theme),
 
-              const SizedBox(height: 12),
+//               const SizedBox(height: 12),
 
-              if (widget.note.tags.isNotEmpty) ...[
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final tag in widget.note.tags.take(3))
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          tag,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
+//               if (widget.note.tags.isNotEmpty) ...[
+//                 Wrap(
+//                   spacing: 6,
+//                   runSpacing: 6,
+//                   children: [
+//                     for (final tag in widget.note.tags.take(3))
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 8, vertical: 4),
+//                         decoration: BoxDecoration(
+//                           color: theme.colorScheme.surfaceContainerHighest,
+//                           borderRadius: BorderRadius.circular(12),
+//                         ),
+//                         child: Text(
+//                           tag,
+//                           style: theme.textTheme.labelSmall?.copyWith(
+//                             color: theme.colorScheme.primary,
+//                           ),
+//                         ),
+//                       ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 12),
+//               ],
 
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.12),
-              ),
+//               Divider(
+//                 height: 1,
+//                 thickness: 1,
+//                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.12),
+//               ),
 
-              const SizedBox(height: 12),
+//               const SizedBox(height: 12),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(width: 1),
-                  if (widget.isSelectionMode)
-                    Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   const SizedBox(width: 1),
+//                   if (widget.isSelectionMode)
+//                     Icon(Icons.check_circle, color: theme.colorScheme.primary)
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
 
-  void _showVersionHistory(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            VersionHistoryScreen(note: widget.note),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 200),
-      ),
-    );
-  }
+//   void _showVersionHistory(BuildContext context) {
+//     Navigator.push(
+//       context,
+//       PageRouteBuilder(
+//         pageBuilder: (context, animation, secondaryAnimation) =>
+//             VersionHistoryScreen(note: widget.note),
+//         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+//           return FadeTransition(opacity: animation, child: child);
+//         },
+//         transitionDuration: const Duration(milliseconds: 200),
+//       ),
+//     );
+//   }
 
-  void _openRead(BuildContext context) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ReadNotePage(note: widget.note),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 200),
-      ),
-    );
-  }
-}
+//   void _openRead(BuildContext context) {
+//     Navigator.push(
+//       context,
+//       PageRouteBuilder(
+//         pageBuilder: (context, animation, secondaryAnimation) =>
+//             ReadNotePage(note: widget.note),
+//         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+//           return FadeTransition(opacity: animation, child: child);
+//         },
+//         transitionDuration: const Duration(milliseconds: 200),
+//       ),
+//     );
+//   }
+// }

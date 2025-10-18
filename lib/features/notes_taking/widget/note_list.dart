@@ -7,7 +7,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 // Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
-import 'package:msbridge/features/notes_taking/widget/note_taking_card.dart';
+import 'package:msbridge/features/notes_taking/widget/optimized_note_card.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 
 class NoteList extends StatelessWidget {
@@ -76,13 +76,16 @@ class NoteList extends StatelessWidget {
         itemCount: notesList.length,
         itemBuilder: (context, index) {
           final note = notesList[index];
-          return GestureDetector(
-            onTap: () => handleNoteTap(context, note),
-            onLongPress: () => handleNoteLongPress(note),
-            child: NoteCard(
-              note: note,
-              isSelected: selectedNoteIds.contains(note.noteId.toString()),
-              isSelectionMode: isSelectionMode,
+          return RepaintBoundary(
+            child: GestureDetector(
+              onTap: () => handleNoteTap(context, note),
+              onLongPress: () => handleNoteLongPress(note),
+              child: OptimizedNoteCard(
+                key: ValueKey(note.noteId ?? 'note_${note.hashCode}'),
+                note: note,
+                isSelected: selectedNoteIds.contains(note.noteId.toString()),
+                isSelectionMode: isSelectionMode,
+              ),
             ),
           );
         },
@@ -96,13 +99,8 @@ class NoteList extends StatelessWidget {
     } else {
       await Navigator.push(
         context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              CreateNote(note: note),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 200),
+        MaterialPageRoute(
+          builder: (context) => CreateNote(note: note),
         ),
       );
     }
