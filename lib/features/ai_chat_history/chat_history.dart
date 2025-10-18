@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-import 'package:line_icons/line_icons.dart';
+// removed: line_icons not used in this file after refactor
 import 'package:provider/provider.dart';
 
 // Project imports:
@@ -13,6 +13,9 @@ import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
+import 'package:msbridge/features/ai_chat_history/widgets/history_item.dart';
+import 'package:msbridge/features/ai_chat_history/widgets/history_header.dart';
+import 'package:msbridge/features/ai_chat_history/widgets/empty_history.dart';
 
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});
@@ -42,46 +45,10 @@ class ChatHistoryBottomSheet extends StatelessWidget {
           ),
 
           // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Icon(
-                  LineIcons.history,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Chat History',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Consumer<ChatHistoryProvider>(
-                  builder: (context, historyProvider, _) {
-                    return TextButton.icon(
-                      onPressed: historyProvider.chatHistories.isNotEmpty
-                          ? () => _clearAllHistory(context, historyProvider)
-                          : null,
-                      icon: Icon(
-                        LineIcons.trash,
-                        size: 16,
-                        color: colorScheme.error,
-                      ),
-                      label: Text(
-                        'Clear All',
-                        style: TextStyle(
-                          color: colorScheme.error,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+          HistoryHeader(
+            onClearAll: () => _clearAllHistory(
+              context,
+              Provider.of<ChatHistoryProvider>(context, listen: false),
             ),
           ),
 
@@ -96,42 +63,47 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                 }
 
                 if (historyProvider.chatHistories.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LineIcons.history,
-                          size: 64,
-                          color: colorScheme.primary.withValues(alpha: 0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No chat history yet',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.primary.withValues(alpha: 0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Your conversations will appear here',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.primary.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
+                  return const EmptyHistory();
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: historyProvider.chatHistories.length,
-                  itemBuilder: (context, index) {
-                    final history = historyProvider.chatHistories[index];
-                    return _buildHistoryItem(
-                        context, history, colorScheme, theme);
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.pixels >=
+                            notification.metrics.maxScrollExtent - 200 &&
+                        historyProvider.hasMore &&
+                        !historyProvider.isPaging) {
+                      historyProvider.loadMore();
+                    }
+                    return false;
                   },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: historyProvider.chatHistories.length +
+                        (historyProvider.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index >= historyProvider.chatHistories.length) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      final history = historyProvider.chatHistories[index];
+                      return HistoryItem(
+                        history: history,
+                        onLoad: () async => await _loadChat(context, history),
+                        onDelete: () => _deleteChat(context, history),
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -141,171 +113,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryItem(
-    BuildContext context,
-    ChatHistory history,
-    ColorScheme colorScheme,
-    ThemeData theme,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Icon(
-            LineIcons.robot,
-            color: colorScheme.primary,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          history.title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              '${history.messages.length} messages',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Model: ${history.modelName}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withValues(alpha: 0.5),
-                fontFamily: 'monospace',
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatDate(history.lastUpdated),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ),
-        trailing: IconButton(
-          tooltip: 'Actions',
-          icon: Icon(
-            Icons.more_horiz,
-            color: colorScheme.primary.withValues(alpha: 0.7),
-          ),
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              backgroundColor: colorScheme.surface,
-              isScrollControlled: false,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              builder: (ctx) {
-                return SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12, bottom: 4),
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: colorScheme.outline.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: colorScheme.primary.withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(Icons.refresh,
-                              color: colorScheme.primary, size: 18),
-                        ),
-                        title: Text(
-                          'Load Chat',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          await _loadChat(context, history);
-                        },
-                      ),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.error.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: colorScheme.error.withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(LineIcons.trash,
-                              color: colorScheme.error, size: 18),
-                        ),
-                        title: Text(
-                          'Delete',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          _deleteChat(context, history);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        onTap: () async => await _loadChat(context, history),
-      ),
-    );
-  }
+  // history item moved to widgets/history_item.dart
 
   Future<void> _loadChat(BuildContext context, ChatHistory history) async {
     final chat = Provider.of<ChatProvider>(context, listen: false);
@@ -412,18 +220,5 @@ class ChatHistoryBottomSheet extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-    } else {
-      return 'Just now';
-    }
-  }
+  // date formatting moved to history item or centralized utils if needed
 }

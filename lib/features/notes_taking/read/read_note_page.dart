@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:msbridge/features/setting/utils/wake_up.dart';
+import 'package:msbridge/features/setting/widgets/progress_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -36,6 +38,8 @@ class _ReadNotePageState extends State<ReadNotePage> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   double _scrollProgress = 0.0; // 0..1
+  int _lastProgressUpdateMs = 0;
+  static const int _progressUpdateIntervalMs = 50; // throttle
 
   @override
   void initState() {
@@ -95,26 +99,17 @@ class _ReadNotePageState extends State<ReadNotePage> {
     }
   }
 
-  Future<void> saveKeepAwake(bool value) async {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keepAwakePrefKey, value);
-      await WakelockPlus.toggle(enable: value);
-      FlutterBugfender.log('ReadMode: wakelock saved and applied -> $value');
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          'Error saving keep awake: $e', StackTrace.current.toString());
-    }
-  }
-
   void _updateScrollProgress() {
     if (!_scrollController.hasClients) return;
     final double max = _scrollController.position.maxScrollExtent;
     final double offset = _scrollController.offset.clamp(0, max);
     final double progress = max > 0 ? offset / max : 0.0;
-    if (progress != _scrollProgress && mounted) {
-      setState(() => _scrollProgress = progress);
-    }
+    final int now = DateTime.now().millisecondsSinceEpoch;
+    if (!mounted) return;
+    if ((now - _lastProgressUpdateMs) < _progressUpdateIntervalMs) return;
+    if ((progress - _scrollProgress).abs() < 0.02) return; // avoid tiny updates
+    _lastProgressUpdateMs = now;
+    setState(() => _scrollProgress = progress);
   }
 
   Document buildDocument(String content) {
@@ -174,12 +169,14 @@ class _ReadNotePageState extends State<ReadNotePage> {
                 children: [
                   ReadHeader(note: widget.note, theme: theme),
                   const SizedBox(height: 24),
-                  ReadContent(
-                    renderQuill: renderQuill,
-                    theme: theme,
-                    textScale: _textScale,
-                    plainText: widget.note.noteContent,
-                    buildDocument: buildDocument,
+                  RepaintBoundary(
+                    child: ReadContent(
+                      renderQuill: renderQuill,
+                      theme: theme,
+                      textScale: _textScale,
+                      plainText: widget.note.noteContent,
+                      buildDocument: buildDocument,
+                    ),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -188,7 +185,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildProgressBar(theme),
+      bottomNavigationBar: buildProgressBar(theme, _scrollProgress),
     );
   }
 
@@ -231,7 +228,7 @@ class _ReadNotePageState extends State<ReadNotePage> {
                   setStateSheet(() => _keepAwake = v);
                   setState(() {});
                   FlutterBugfender.log('ReadMode: keepAwake toggled -> $v');
-                  await saveKeepAwake(v);
+                  await saveKeepAwake(v, _keepAwakePrefKey);
                 },
               );
             }),
@@ -265,21 +262,6 @@ class _ReadNotePageState extends State<ReadNotePage> {
             ),
             const SizedBox(height: 20),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(ThemeData theme) {
-    return SizedBox(
-      height: 4,
-      child: LinearProgressIndicator(
-        value: _scrollProgress.clamp(0, 1),
-        minHeight: 4,
-        backgroundColor:
-            theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-        valueColor: AlwaysStoppedAnimation<Color>(
-          theme.colorScheme.primary.withValues(alpha: 0.9),
         ),
       ),
     );

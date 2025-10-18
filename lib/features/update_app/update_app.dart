@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:line_icons/line_icons.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:msbridge/features/update_app/widget/build_download_progress_card.dart';
+import 'package:msbridge/features/update_app/widget/build_status_card.dart';
 
 // Project imports:
 import 'package:msbridge/config/config.dart';
@@ -277,7 +278,7 @@ class _UpdateAppState extends State<UpdateApp> {
 
             // Status Cards
             if (_errorMessage.isNotEmpty) ...[
-              _buildStatusCard(
+              buildStatusCard(
                 context,
                 colorScheme,
                 theme,
@@ -291,7 +292,7 @@ class _UpdateAppState extends State<UpdateApp> {
             ],
 
             if (_downloadCompleted) ...[
-              _buildStatusCard(
+              buildStatusCard(
                 context,
                 colorScheme,
                 theme,
@@ -306,7 +307,8 @@ class _UpdateAppState extends State<UpdateApp> {
             ],
 
             if (_isDownloading) ...[
-              _buildDownloadProgressCard(context, colorScheme, theme),
+              buildDownloadProgressCard(context, colorScheme, theme,
+                  _downloadProgress, _cancelDownload),
               const SizedBox(height: 20),
             ],
 
@@ -339,172 +341,6 @@ class _UpdateAppState extends State<UpdateApp> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusCard(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ThemeData theme, {
-    required bool isError,
-    required String title,
-    required String message,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.4),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: color.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: color.withValues(alpha: 0.8),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDownloadProgressCard(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ThemeData theme,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.3),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Progress Icon
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: colorScheme.primary.withValues(alpha: 0.4),
-                width: 1.5,
-              ),
-            ),
-            child: Icon(
-              LineIcons.clock,
-              size: 32,
-              color: colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Progress Bar
-          LinearPercentIndicator(
-            width: MediaQuery.of(context).size.width * 0.7,
-            animation: true,
-            lineHeight: 16.0,
-            percent: _downloadProgress,
-            progressColor: colorScheme.primary,
-            backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
-            barRadius: const Radius.circular(8),
-            fillColor: colorScheme.surfaceContainerHighest,
-          ),
-          const SizedBox(height: 16),
-
-          // Progress Text
-          Text(
-            "Downloading: ${(_downloadProgress * 100).toStringAsFixed(1)}%",
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Cancel Button
-          TextButton.icon(
-            onPressed: _cancelDownload,
-            icon: const Icon(LineIcons.times, color: Colors.red),
-            label: const Text(
-              "Cancel Download",
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              backgroundColor: Colors.red.withValues(alpha: 0.1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Colors.red),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
