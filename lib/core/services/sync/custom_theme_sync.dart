@@ -118,10 +118,11 @@ class CustomThemeSyncService {
       final repo = CustomColorSchemeRepo.instance;
       // Use the existing Firebase deletion logic from the repo
       await repo.deleteFromFirebaseDirect(schemeId);
-    } catch (e) {
+    } catch (e, stackTrace) {
       FlutterBugfender.sendCrash(
           'Failed to delete custom theme from Firebase: $schemeId',
-          StackTrace.current.toString());
+          stackTrace.toString());
+      rethrow;
     }
   }
 

@@ -32,7 +32,7 @@ class TagInputField extends StatelessWidget {
               controller: controller,
               focusNode: focusNode,
               textInputAction: TextInputAction.done,
-              onSubmitted: (raw) => _submit(context),
+              onSubmitted: (String raw) => _submit(context),
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Add tag and press +',

@@ -380,7 +380,7 @@ class _CustomColorPickerState extends State<CustomColorPicker> {
             ),
             const SizedBox(height: 4),
             Text(
-              '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',  
+              '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.6),
                 fontFamily: 'monospace',

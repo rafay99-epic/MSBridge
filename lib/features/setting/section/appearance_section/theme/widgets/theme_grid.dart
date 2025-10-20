@@ -68,16 +68,17 @@ class _ThemeGridState extends State<ThemeGrid> {
       return scheme.name.toLowerCase().contains(lowerQuery);
     }).toList();
 
+    // Check if we have any themes or custom schemes
+    if (filteredThemes.isEmpty && filteredCustomSchemes.isEmpty) {
+      return _buildNoThemesFound(context);
+    }
+
     // Combine regular themes and custom schemes
     final allItems = <dynamic>[
       ...filteredThemes,
       ...filteredCustomSchemes,
       null, // Add button for creating new custom theme
     ];
-
-    if (allItems.isEmpty) {
-      return _buildNoThemesFound(context);
-    }
 
     return GridView.builder(
       shrinkWrap: true,

@@ -4,6 +4,9 @@ import 'dart:convert';
 // Flutter imports:
 import 'package:flutter/material.dart';
 
+// Package imports:
+import 'package:flutter_bugfender/flutter_bugfender.dart';
+
 class CustomColorSchemeModel {
   final String id;
   final String userId;
@@ -88,7 +91,45 @@ class CustomColorSchemeModel {
     };
   }
 
-  /// Create from Map (Firebase/Firestore)
+  static DateTime? _parseFirestoreDate(dynamic dateValue) {
+    if (dateValue == null) return null;
+
+    if (dateValue is int) {
+      return DateTime.fromMillisecondsSinceEpoch(dateValue);
+    }
+
+    if (dateValue is Object && dateValue.toString().contains('Timestamp')) {
+      try {
+        return (dateValue as dynamic).toDate();
+      } catch (e, stackTrace) {
+        FlutterBugfender.sendCrash(
+            'Error parsing date: $e', stackTrace.toString());
+        return DateTime.now();
+      }
+    }
+
+    if (dateValue is Map<String, dynamic>) {
+      final seconds = dateValue['seconds'] ?? dateValue['_seconds'];
+      final nanoseconds = dateValue['nanoseconds'] ?? dateValue['_nanoseconds'];
+
+      if (seconds != null) {
+        final milliseconds =
+            (seconds * 1000) + ((nanoseconds ?? 0) / 1000000).round();
+        return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+      }
+    }
+
+    if (dateValue is String) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+
+    return DateTime.now();
+  }
+
   factory CustomColorSchemeModel.fromMap(Map<String, dynamic> map) {
     return CustomColorSchemeModel(
       id: map['id'] ?? '',
@@ -98,17 +139,11 @@ class CustomColorSchemeModel {
       secondary: Color(map['secondary'] ?? 0xFF000000),
       background: Color(map['background'] ?? 0xFFFFFFFF),
       textColor: Color(map['textColor'] ?? 0xFF000000),
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'])
-          : DateTime.now(),
+      createdAt: _parseFirestoreDate(map['createdAt']) ?? DateTime.now(),
+      updatedAt: _parseFirestoreDate(map['updatedAt']) ?? DateTime.now(),
       isSynced: map['isSynced'] ?? false,
       isDeleted: map['isDeleted'] ?? false,
-      lastSyncedAt: map['lastSyncedAt'] != null
-          ? DateTime.parse(map['lastSyncedAt'])
-          : null,
+      lastSyncedAt: _parseFirestoreDate(map['lastSyncedAt']),
       deviceId: map['deviceId'],
     );
   }
