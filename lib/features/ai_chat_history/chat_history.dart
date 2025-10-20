@@ -18,7 +18,6 @@ import 'package:msbridge/widgets/snakbar.dart';
 
 // removed: line_icons not used in this file after refactor
 
-
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});
 
