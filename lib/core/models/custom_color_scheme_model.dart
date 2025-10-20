@@ -179,7 +179,11 @@ class CustomColorSchemeModel {
         other.primary == primary &&
         other.secondary == secondary &&
         other.background == background &&
-        other.textColor == textColor;
+        other.textColor == textColor &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.isSynced == isSynced &&
+        other.isDeleted == isDeleted;
   }
 
   @override
@@ -190,6 +194,10 @@ class CustomColorSchemeModel {
         primary.hashCode ^
         secondary.hashCode ^
         background.hashCode ^
-        textColor.hashCode;
+        textColor.hashCode ^
+        createdAt.hashCode ^
+        updatedAt.hashCode ^
+        isSynced.hashCode ^
+        isDeleted.hashCode;
   }
 }

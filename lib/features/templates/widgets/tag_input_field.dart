@@ -13,7 +13,7 @@ class TagInputField extends StatelessWidget {
   final ValueChanged<String> onSubmit;
 
   void _submit(BuildContext context) {
-    final value = controller.text.trim();
+    final String value = controller.text.trim();
     if (value.isEmpty) return;
     onSubmit(value);
     controller.clear();

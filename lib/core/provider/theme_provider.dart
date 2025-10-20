@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Project imports:
 import 'package:msbridge/core/models/custom_color_scheme_model.dart';
 import 'package:msbridge/core/repo/custom_color_scheme_repo.dart';
+import 'package:msbridge/core/services/sync/custom_theme_sync.dart';
 import 'package:msbridge/theme/colors.dart';
 
 class ThemeProvider with ChangeNotifier {
@@ -27,14 +28,29 @@ class ThemeProvider with ChangeNotifier {
   AppTheme? _lastSelectedTheme;
   bool? _lastDynamicColorsEnabled;
   CustomColorSchemeModel? _lastCustomColorScheme;
+  bool? _lastIsCustomTheme;
 
   AppTheme get selectedTheme => _selectedTheme;
   bool get dynamicColorsEnabled => _dynamicColorsEnabled;
   CustomColorSchemeModel? get customColorScheme => _customColorScheme;
   bool get isCustomTheme => _isCustomTheme;
 
+  /// Get all available custom color schemes
+  Future<List<CustomColorSchemeModel>> getAllCustomColorSchemes() async {
+    return await _customColorRepo.loadLocalSchemes();
+  }
+
   ThemeProvider() {
     _loadTheme();
+  }
+
+  /// Invalidate ThemeData cache when state changes
+  void _invalidateCache() {
+    _cachedThemeData = null;
+    _lastSelectedTheme = null;
+    _lastDynamicColorsEnabled = null;
+    _lastCustomColorScheme = null;
+    _lastIsCustomTheme = null;
   }
 
   Future<void> _loadTheme() async {
@@ -67,6 +83,7 @@ class ThemeProvider with ChangeNotifier {
         'Error loading theme: $e',
       );
     }
+    _invalidateCache();
     notifyListeners();
   }
 
@@ -95,6 +112,7 @@ class ThemeProvider with ChangeNotifier {
     _isCustomTheme = false;
     _customColorScheme = null;
     _selectedTheme = theme;
+    _invalidateCache();
     notifyListeners();
 
     try {
@@ -119,6 +137,7 @@ class ThemeProvider with ChangeNotifier {
       _customColorScheme = null;
     }
 
+    _invalidateCache();
     notifyListeners();
 
     try {
@@ -142,8 +161,16 @@ class ThemeProvider with ChangeNotifier {
     if (_cachedThemeData != null &&
         _lastSelectedTheme == _selectedTheme &&
         _lastDynamicColorsEnabled == _dynamicColorsEnabled &&
-        _lastCustomColorScheme == _customColorScheme) {
+        _lastCustomColorScheme == _customColorScheme &&
+        _lastIsCustomTheme == _isCustomTheme) {
       return _cachedThemeData!;
+    }
+
+    if (_isCustomTheme && _customColorScheme == null) {
+      FlutterBugfender.log(
+          'Warning: _isCustomTheme is true but _customColorScheme is null. Falling back to regular theme.');
+      _isCustomTheme = false;
+      _invalidateCache();
     }
 
     ThemeData themeData;
@@ -190,6 +217,7 @@ class ThemeProvider with ChangeNotifier {
     _lastSelectedTheme = _selectedTheme;
     _lastDynamicColorsEnabled = _dynamicColorsEnabled;
     _lastCustomColorScheme = _customColorScheme;
+    _lastIsCustomTheme = _isCustomTheme;
 
     return themeData;
   }
@@ -254,6 +282,9 @@ class ThemeProvider with ChangeNotifier {
     // Update state immediately and notify listeners
     _selectedTheme = AppTheme.dark;
     _dynamicColorsEnabled = false;
+    _isCustomTheme = false;
+    _customColorScheme = null;
+    _invalidateCache();
     notifyListeners();
 
     // Persist to disk asynchronously to avoid blocking UI
@@ -287,13 +318,22 @@ class ThemeProvider with ChangeNotifier {
 
   /// Set a custom color scheme as active
   Future<bool> setCustomColorScheme(CustomColorSchemeModel scheme) async {
+    // Store original state for rollback
+    final originalCustomTheme = _isCustomTheme;
+    final originalCustomColorScheme = _customColorScheme;
+
     try {
+      // Update state
       _customColorScheme = scheme;
       _isCustomTheme = true;
+      _invalidateCache();
       notifyListeners();
 
       // Save to local storage
-      await _customColorRepo.setActiveScheme(scheme);
+      final saveSuccess = await _customColorRepo.setActiveScheme(scheme);
+      if (!saveSuccess) {
+        throw Exception('Failed to save active scheme to repository');
+      }
 
       // Update SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -301,6 +341,12 @@ class ThemeProvider with ChangeNotifier {
 
       return true;
     } catch (e) {
+      // Rollback state on failure
+      _isCustomTheme = originalCustomTheme;
+      _customColorScheme = originalCustomColorScheme;
+      _invalidateCache();
+      notifyListeners();
+
       FlutterBugfender.sendCrash('Failed to set custom color scheme: $e',
           StackTrace.current.toString());
 
@@ -347,6 +393,7 @@ class ThemeProvider with ChangeNotifier {
 
       if (success && _isCustomTheme && _customColorScheme?.id == scheme.id) {
         _customColorScheme = scheme;
+        _invalidateCache();
         notifyListeners();
       }
 
@@ -375,6 +422,7 @@ class ThemeProvider with ChangeNotifier {
           // Clear custom theme state first
           _customColorScheme = null;
           _isCustomTheme = false;
+          _invalidateCache();
 
           // Update SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -404,10 +452,10 @@ class ThemeProvider with ChangeNotifier {
     }
   }
 
-  /// Sync custom color schemes to Firebase
+  /// Sync custom color schemes to Firebase (triggers background sync)
   Future<bool> syncCustomColorSchemesToFirebase() async {
     try {
-      return await _customColorRepo.syncAllToFirebase();
+      return await CustomThemeSyncService.syncNow();
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to sync custom color schemes to Firebase: $e',
@@ -439,6 +487,7 @@ class ThemeProvider with ChangeNotifier {
     try {
       _isCustomTheme = false;
       _customColorScheme = null;
+      _invalidateCache();
       notifyListeners();
 
       SharedPreferences prefs = await SharedPreferences.getInstance();

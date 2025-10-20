@@ -61,8 +61,9 @@ class CustomColorSchemeRepo {
       await prefs.setStringList(_prefsKey, schemesJson);
       return true;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to save custom color scheme locally');
+      FlutterBugfender.sendCrash(
+          'Failed to save custom color scheme locally: $e',
+          StackTrace.current.toString());
       return false;
     }
   }
@@ -78,8 +79,9 @@ class CustomColorSchemeRepo {
             try {
               return CustomColorSchemeModel.fromJson(json);
             } catch (e) {
-              FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-                  reason: 'Failed to parse custom color scheme: $json');
+              FlutterBugfender.sendCrash(
+                  'Failed to parse custom color scheme: $e',
+                  StackTrace.current.toString());
               return null;
             }
           })
@@ -87,8 +89,9 @@ class CustomColorSchemeRepo {
           .cast<CustomColorSchemeModel>()
           .toList();
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to load custom color schemes locally');
+      FlutterBugfender.sendCrash(
+          'Failed to load custom color schemes locally: $e',
+          StackTrace.current.toString());
       return [];
     }
   }
@@ -104,8 +107,8 @@ class CustomColorSchemeRepo {
       }
       return null;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to get active custom color scheme');
+      FlutterBugfender.sendCrash('Failed to get active custom color scheme: $e',
+          StackTrace.current.toString());
       return null;
     }
   }
@@ -122,8 +125,8 @@ class CustomColorSchemeRepo {
       }
       return true;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to set active custom color scheme');
+      FlutterBugfender.sendCrash('Failed to set active custom color scheme: $e',
+          StackTrace.current.toString());
       return false;
     }
   }
@@ -163,9 +166,9 @@ class CustomColorSchemeRepo {
         await saveLocalScheme(scheme);
         return false; // Return false to indicate sync failed but local save succeeded
       }
-
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to sync custom color scheme to Firebase');
+      FlutterBugfender.sendCrash(
+          'Failed to sync custom color scheme to Firebase: $e',
+          StackTrace.current.toString());
       return false;
     }
   }
@@ -192,8 +195,9 @@ class CustomColorSchemeRepo {
         return CustomColorSchemeModel.fromMap(data);
       }).toList();
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to load custom color schemes from Firebase');
+      FlutterBugfender.sendCrash(
+          'Failed to load custom color schemes from Firebase: $e',
+          StackTrace.current.toString());
       return [];
     }
   }
@@ -210,31 +214,17 @@ class CustomColorSchemeRepo {
 
       return true;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to sync custom color schemes from Firebase');
+      FlutterBugfender.sendCrash(
+          'Failed to sync custom color schemes from Firebase: $e',
+          StackTrace.current.toString());
       return false;
     }
   }
 
-  /// Delete custom color scheme (hard deletion - removes from all storage)
+  /// Delete custom color scheme (device-first deletion)
   Future<bool> deleteScheme(CustomColorSchemeModel scheme) async {
     try {
-      final userId = await _getCurrentUserId();
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Remove from Firebase first if it was synced
-      if (scheme.isSynced) {
-        await _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('customColorSchemes')
-            .doc(scheme.id)
-            .delete();
-      }
-
-      // Only remove from local storage after successful remote deletion
+      // Remove from local storage first for immediate response
       await _removeFromLocalStorage(scheme.id);
 
       // If this was the active scheme, clear it after local removal
@@ -243,13 +233,63 @@ class CustomColorSchemeRepo {
         await setActiveScheme(null);
       }
 
-      FirebaseCrashlytics.instance
-          .log('Custom color scheme hard deleted: ${scheme.id}');
+      // Mark for Firebase deletion in background (don't wait for it)
+      _markForFirebaseDeletion(scheme);
+
+      FlutterBugfender.sendCrash(
+          'Custom color scheme deleted locally: ${scheme.id}',
+          StackTrace.current.toString());
       return true;
     } catch (e) {
-      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
-          reason: 'Failed to delete custom color scheme');
+      FlutterBugfender.sendCrash('Failed to delete custom color scheme: $e',
+          StackTrace.current.toString());
       return false;
+    }
+  }
+
+  /// Mark scheme for Firebase deletion (background operation)
+  void _markForFirebaseDeletion(CustomColorSchemeModel scheme) {
+    // This will be handled by the background sync service
+    // We don't wait for it to complete for better performance
+    if (scheme.isSynced) {
+      // Store deletion info for background sync
+      _storeDeletionInfo(scheme.id);
+    }
+  }
+
+  /// Store deletion info for background sync
+  Future<void> _storeDeletionInfo(String schemeId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final deletedIds = prefs.getStringList('deleted_custom_themes') ?? [];
+      if (!deletedIds.contains(schemeId)) {
+        deletedIds.add(schemeId);
+        await prefs.setStringList('deleted_custom_themes', deletedIds);
+      }
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: 'Failed to store deletion info');
+    }
+  }
+
+  /// Delete a scheme directly from Firebase (for background sync)
+  Future<void> deleteFromFirebaseDirect(String schemeId) async {
+    try {
+      final userId = await _getCurrentUserId();
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('customColorSchemes')
+          .doc(schemeId)
+          .delete();
+    } catch (e) {
+      FlutterBugfender.sendCrash(
+          'Failed to delete custom theme from Firebase: $schemeId',
+          StackTrace.current.toString());
     }
   }
 
@@ -308,17 +348,8 @@ class CustomColorSchemeRepo {
         textColor: textColor,
       );
 
-      // Save locally first
+      // Save locally first - Firebase sync will happen in background
       await saveLocalScheme(scheme);
-
-      // Try to sync to Firebase (may fail due to permissions)
-      final syncSuccess = await syncToFirebase(scheme);
-
-      if (!syncSuccess) {
-        // Sync failed but local save succeeded - this is still a success
-        FirebaseCrashlytics.instance.log(
-            'Custom color scheme created locally (sync failed due to permissions)');
-      }
 
       return scheme;
     } catch (e) {
@@ -331,14 +362,8 @@ class CustomColorSchemeRepo {
   /// Update existing custom color scheme
   Future<bool> updateScheme(CustomColorSchemeModel scheme) async {
     try {
-      // Save locally first
+      // Save locally first - Firebase sync will happen in background
       await saveLocalScheme(scheme);
-
-      // Sync to Firebase if synced
-      if (scheme.isSynced) {
-        await syncToFirebase(scheme);
-      }
-
       return true;
     } catch (e) {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,

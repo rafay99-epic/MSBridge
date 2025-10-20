@@ -25,6 +25,34 @@ class ThemeGrid extends StatefulWidget {
 }
 
 class _ThemeGridState extends State<ThemeGrid> {
+  List<CustomColorSchemeModel> _customSchemes = [];
+  bool _hasLoadedSchemes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomSchemes();
+  }
+
+  @override
+  void didUpdateWidget(ThemeGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only reload if the search query changed or if we haven't loaded schemes yet
+    if (oldWidget.searchQuery != widget.searchQuery || !_hasLoadedSchemes) {
+      _loadCustomSchemes();
+    }
+  }
+
+  Future<void> _loadCustomSchemes() async {
+    final schemes = await widget.themeProvider.getAllCustomColorSchemes();
+    if (mounted) {
+      setState(() {
+        _customSchemes = schemes;
+        _hasLoadedSchemes = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Filter themes based on search
@@ -34,15 +62,16 @@ class _ThemeGridState extends State<ThemeGrid> {
       return theme.name.toLowerCase().contains(lowerQuery);
     }).toList();
 
-    // Get custom color schemes
-    final customSchemes = widget.themeProvider.customColorScheme != null
-        ? [widget.themeProvider.customColorScheme!]
-        : <dynamic>[];
+    // Filter custom schemes based on search
+    final filteredCustomSchemes = _customSchemes.where((scheme) {
+      if (lowerQuery.isEmpty) return true;
+      return scheme.name.toLowerCase().contains(lowerQuery);
+    }).toList();
 
     // Combine regular themes and custom schemes
     final allItems = <dynamic>[
       ...filteredThemes,
-      ...customSchemes,
+      ...filteredCustomSchemes,
       null, // Add button for creating new custom theme
     ];
 
@@ -111,8 +140,8 @@ class _ThemeGridState extends State<ThemeGrid> {
             CustomColorPicker(
           themeProvider: widget.themeProvider,
           onSchemeCreated: (scheme) {
-            // Refresh the UI
-            setState(() {});
+            // Refresh the custom schemes list
+            _loadCustomSchemes();
           },
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -144,8 +173,8 @@ class _ThemeGridState extends State<ThemeGrid> {
           themeProvider: widget.themeProvider,
           existingScheme: scheme,
           onSchemeUpdated: (updatedScheme) {
-            // Refresh the UI
-            setState(() {});
+            // Refresh the custom schemes list
+            _loadCustomSchemes();
           },
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -224,7 +253,8 @@ class _ThemeGridState extends State<ThemeGrid> {
 
                 // Check mounted again after delay
                 if (!mounted) return;
-                setState(() {});
+                // Refresh the custom schemes list
+                _loadCustomSchemes();
 
                 // Check context.mounted before showing SnackBar
                 if (context.mounted) {
