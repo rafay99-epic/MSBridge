@@ -113,8 +113,8 @@ class CustomColorSchemeModel {
       final nanoseconds = dateValue['nanoseconds'] ?? dateValue['_nanoseconds'];
 
       if (seconds != null) {
-        final milliseconds =
-            (seconds * 1000) + ((nanoseconds ?? 0) / 1000000).round();
+        final int milliseconds =
+            (seconds * 1000 + (nanoseconds ?? 0) / 1000000).round();
         return DateTime.fromMillisecondsSinceEpoch(milliseconds);
       }
     }
