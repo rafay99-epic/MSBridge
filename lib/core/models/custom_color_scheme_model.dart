@@ -183,7 +183,8 @@ class CustomColorSchemeModel {
 
   /// Generate a unique ID
   static String generateId() {
-    return 'custom_color_${DateTime.now().millisecondsSinceEpoch}_${(DateTime.now().microsecond % 1000).toString().padLeft(3, '0')}';
+    final now = DateTime.now();
+    return 'custom_color_${now.millisecondsSinceEpoch}_${(now.microsecond % 1000).toString().padLeft(3, '0')}';
   }
 
   /// Create default custom color scheme
