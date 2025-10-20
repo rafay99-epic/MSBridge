@@ -25,6 +25,7 @@ import 'package:msbridge/core/services/delete/deletion_sync_integration_service.
 import 'package:msbridge/core/services/device_ID/device_id_service.dart';
 import 'package:msbridge/core/services/notifications/streak_notification_service.dart';
 import 'package:msbridge/core/services/sync/auto_sync_scheduler.dart';
+import 'package:msbridge/core/services/sync/custom_theme_sync.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/reverse_sync.dart';
 import 'package:msbridge/core/services/sync/settings_sync_service.dart';
@@ -351,6 +352,27 @@ Future<void> callbackDispatcher() async {
               );
               overallSuccess = false;
               message = 'Settings sync failed';
+            }
+
+            // Custom color schemes bidirectional sync
+            try {
+              FirebaseCrashlytics.instance
+                  .log('Starting custom color schemes bidirectional sync');
+              await CustomThemeSyncService.syncNow();
+              FirebaseCrashlytics.instance
+                  .log('Custom color schemes sync completed successfully');
+
+              // Update last sync timestamp
+              await prefs.setString('custom_themes_sync_last_completed',
+                  DateTime.now().toIso8601String());
+            } catch (e) {
+              FirebaseCrashlytics.instance.recordError(
+                e,
+                StackTrace.current,
+                reason: 'Custom color schemes sync failed',
+              );
+              overallSuccess = false;
+              message = 'Custom color schemes sync failed';
             }
 
             // Streak (pull then push daily)
