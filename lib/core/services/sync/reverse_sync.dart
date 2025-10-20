@@ -331,6 +331,12 @@ class ReverseSyncService {
   /// Sync custom color schemes from Firebase
   Future<void> _syncCustomColorSchemesFromFirebase(String userId) async {
     try {
+      // Check if cloud sync is enabled before syncing custom color schemes
+      final isCloudSyncEnabled = await _isCloudSyncEnabled();
+      if (!isCloudSyncEnabled) {
+        return; // Don't sync custom color schemes if cloud sync is disabled
+      }
+
       final repo = CustomColorSchemeRepo.instance;
       await repo.syncFromFirebase();
     } catch (e) {

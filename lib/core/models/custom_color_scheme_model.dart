@@ -177,8 +177,8 @@ class CustomColorSchemeModel {
 
   /// Check if should be synced
   bool get shouldSync {
-    if (!isDeleted) return !isSynced;
-    return !isSynced; // Always sync deletions
+    if (isDeleted) return true; // Always sync deletions
+    return !isSynced; // Sync non-deleted items only if not already synced
   }
 
   /// Generate a unique ID

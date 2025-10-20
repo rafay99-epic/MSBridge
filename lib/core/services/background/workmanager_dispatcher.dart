@@ -358,17 +358,27 @@ Future<void> callbackDispatcher() async {
             try {
               FirebaseCrashlytics.instance
                   .log('Starting custom color schemes bidirectional sync');
-              await CustomThemeSyncService.syncNow();
-              FirebaseCrashlytics.instance
-                  .log('Custom color schemes sync completed successfully');
+              final bool result = await CustomThemeSyncService.syncNow();
+              if (result == false) {
+                overallSuccess = false;
+                message = 'Custom color schemes sync failed';
+                FirebaseCrashlytics.instance.recordError(
+                  Exception('CustomThemeSyncService.syncNow returned false'),
+                  StackTrace.current,
+                  reason: 'Custom color schemes sync failed',
+                );
+              } else {
+                FirebaseCrashlytics.instance
+                    .log('Custom color schemes sync completed successfully');
 
-              // Update last sync timestamp
-              await prefs.setString('custom_themes_sync_last_completed',
-                  DateTime.now().toIso8601String());
-            } catch (e) {
+                // Update last sync timestamp
+                await prefs.setString('custom_themes_sync_last_completed',
+                    DateTime.now().toIso8601String());
+              }
+            } catch (e, st) {
               FirebaseCrashlytics.instance.recordError(
                 e,
-                StackTrace.current,
+                st,
                 reason: 'Custom color schemes sync failed',
               );
               overallSuccess = false;
