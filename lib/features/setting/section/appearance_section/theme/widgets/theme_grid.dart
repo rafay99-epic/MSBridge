@@ -111,7 +111,11 @@ class _ThemeGridState extends State<ThemeGrid> {
             appTheme: appTheme,
             themeData: themeData,
             isSelected: isSelected,
-            onTap: () => widget.themeProvider.setTheme(appTheme),
+            onTap: () {
+              if (mounted) {
+                widget.themeProvider.setTheme(appTheme);
+              }
+            },
           );
         } else {
           // Custom color scheme
@@ -123,8 +127,11 @@ class _ThemeGridState extends State<ThemeGrid> {
             customScheme: customScheme,
             isSelected: isSelected,
             themeProvider: widget.themeProvider,
-            onTap: () =>
-                widget.themeProvider.setCustomColorScheme(customScheme),
+            onTap: () {
+              if (mounted) {
+                widget.themeProvider.setCustomColorScheme(customScheme);
+              }
+            },
             onEdit: () => _showEditDialog(customScheme),
             onDelete: () => _showDeleteDialog(customScheme),
           );
@@ -174,7 +181,9 @@ class _ThemeGridState extends State<ThemeGrid> {
           existingScheme: scheme,
           onSchemeUpdated: (updatedScheme) {
             // Refresh the custom schemes list
-            _loadCustomSchemes();
+            if (mounted) {
+              _loadCustomSchemes();
+            }
           },
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -21,6 +21,8 @@ import 'package:msbridge/widgets/snakbar.dart';
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});
 
+  static const double _paginationThreshold = 200;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -70,7 +72,8 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                 return NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
                     if (notification.metrics.pixels >=
-                            notification.metrics.maxScrollExtent - 200 &&
+                            notification.metrics.maxScrollExtent -
+                                _paginationThreshold &&
                         historyProvider.hasMore &&
                         !historyProvider.isPaging) {
                       historyProvider.loadMore();
@@ -100,7 +103,7 @@ class ChatHistoryBottomSheet extends StatelessWidget {
                       final history = historyProvider.chatHistories[index];
                       return HistoryItem(
                         history: history,
-                        onLoad: () async => await _loadChat(context, history),
+                        onLoad: () => _loadChat(context, history),
                         onDelete: () => _deleteChat(context, history),
                       );
                     },

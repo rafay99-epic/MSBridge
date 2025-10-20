@@ -100,12 +100,12 @@ class _ReadNotePageState extends State<ReadNotePage> {
   }
 
   void _updateScrollProgress() {
+    if (!mounted) return;
     if (!_scrollController.hasClients) return;
     final double max = _scrollController.position.maxScrollExtent;
-    final double offset = _scrollController.offset.clamp(0, max);
+    final double offset = _scrollController.offset.clamp(0.0, max);
     final double progress = max > 0 ? offset / max : 0.0;
     final int now = DateTime.now().millisecondsSinceEpoch;
-    if (!mounted) return;
     if ((now - _lastProgressUpdateMs) < _progressUpdateIntervalMs) return;
     if ((progress - _scrollProgress).abs() < 0.02) return; // avoid tiny updates
     _lastProgressUpdateMs = now;
