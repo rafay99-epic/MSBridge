@@ -314,8 +314,7 @@ class CustomColorSchemeRepo {
 
       // Update SharedPreferences with filtered list
       await prefs.setStringList(_prefsKey, updatedSchemes);
-      FlutterBugfender.sendCrash('Removed scheme $schemeId from local storage',
-          StackTrace.current.toString());
+      FlutterBugfender.log('Removed scheme $schemeId from local storage');
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to remove scheme from local storage: $e',
