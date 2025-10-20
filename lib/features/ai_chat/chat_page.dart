@@ -11,15 +11,16 @@ import 'package:provider/provider.dart';
 // Project imports:
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
-// removed unused imports after refactor
+import 'package:msbridge/features/ai_chat/widgets/chat_composer.dart';
+import 'package:msbridge/features/ai_chat/widgets/chat_settings_bottom_sheet.dart';
+import 'package:msbridge/features/ai_chat/widgets/empty_state.dart';
+import 'package:msbridge/features/ai_chat/widgets/message_bubble.dart';
+import 'package:msbridge/features/ai_chat/widgets/typing_indicator.dart';
 import 'package:msbridge/features/ai_chat_history/chat_history.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/features/ai_chat/widgets/chat_settings_bottom_sheet.dart';
-import 'package:msbridge/features/ai_chat/widgets/typing_indicator.dart';
-import 'package:msbridge/features/ai_chat/widgets/message_bubble.dart';
-import 'package:msbridge/features/ai_chat/widgets/chat_composer.dart';
-import 'package:msbridge/features/ai_chat/widgets/empty_state.dart';
+
+// removed unused imports after refactor
 
 // moved ChatSettingsBottomSheet to widgets/chat_settings_bottom_sheet.dart
 

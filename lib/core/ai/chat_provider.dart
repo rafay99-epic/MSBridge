@@ -1,6 +1,6 @@
 // Dart imports:
-import 'dart:collection';
 import 'dart:async';
+import 'dart:collection';
 
 // Flutter imports:
 import 'package:flutter/material.dart';

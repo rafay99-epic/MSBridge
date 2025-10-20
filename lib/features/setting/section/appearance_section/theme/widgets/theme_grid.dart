@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
+import 'package:msbridge/core/models/custom_color_scheme_model.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/theme/colors.dart';
-import 'package:msbridge/core/models/custom_color_scheme_model.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'theme_card.dart';
-import 'custom_theme_card.dart';
 import 'custom_color_picker.dart';
+import 'custom_theme_card.dart';
+import 'theme_card.dart';
 
 class ThemeGrid extends StatefulWidget {
   const ThemeGrid({

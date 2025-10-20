@@ -5,17 +5,19 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
-// removed: line_icons not used in this file after refactor
 import 'package:provider/provider.dart';
 
 // Project imports:
 import 'package:msbridge/core/ai/chat_provider.dart';
 import 'package:msbridge/core/database/chat_history/chat_history.dart';
 import 'package:msbridge/core/provider/chat_history_provider.dart';
-import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/features/ai_chat_history/widgets/history_item.dart';
-import 'package:msbridge/features/ai_chat_history/widgets/history_header.dart';
 import 'package:msbridge/features/ai_chat_history/widgets/empty_history.dart';
+import 'package:msbridge/features/ai_chat_history/widgets/history_header.dart';
+import 'package:msbridge/features/ai_chat_history/widgets/history_item.dart';
+import 'package:msbridge/widgets/snakbar.dart';
+
+// removed: line_icons not used in this file after refactor
+
 
 class ChatHistoryBottomSheet extends StatelessWidget {
   const ChatHistoryBottomSheet({super.key});

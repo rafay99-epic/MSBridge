@@ -1,6 +1,11 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
 
 class ConsentToggleRow extends StatelessWidget {

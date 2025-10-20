@@ -12,6 +12,14 @@ class TagInputField extends StatelessWidget {
   final FocusNode focusNode;
   final ValueChanged<String> onSubmit;
 
+  void _submit(BuildContext context) {
+    final value = controller.text.trim();
+    if (value.isEmpty) return;
+    onSubmit(value);
+    controller.clear();
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -24,13 +32,7 @@ class TagInputField extends StatelessWidget {
               controller: controller,
               focusNode: focusNode,
               textInputAction: TextInputAction.done,
-              onSubmitted: (raw) {
-                final value = raw.trim();
-                if (value.isEmpty) return;
-                onSubmit(value);
-                controller.clear();
-                FocusScope.of(context).unfocus();
-              },
+              onSubmitted: (raw) => _submit(context),
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Add tag and press +',
@@ -43,21 +45,28 @@ class TagInputField extends StatelessWidget {
                   size: 16,
                   color: theme.colorScheme.primary.withValues(alpha: 0.7),
                 ),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.add,
-                      size: 18,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.8)),
-                  tooltip: 'Add tag',
-                  onPressed: () {
-                    final value = controller.text.trim();
-                    if (value.isEmpty) return;
-                    onSubmit(value);
-                    controller.clear();
-                    FocusScope.of(context).unfocus();
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                suffixIcon: Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _submit(context),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.add,
+                          size: 18,
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 filled: true,
                 fillColor: theme.colorScheme.surface,

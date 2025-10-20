@@ -1,12 +1,12 @@
+// Flutter imports:
+import 'package:flutter/material.dart';
+
 // Package imports:
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// Flutter imports:
-import 'package:flutter/material.dart';
 
 // Project imports:
 import 'package:msbridge/core/models/custom_color_scheme_model.dart';

@@ -1,4 +1,7 @@
+// Flutter imports:
 import 'package:flutter/material.dart';
+
+// Project imports:
 import 'package:msbridge/core/provider/ai_consent_provider.dart';
 
 class IncludeChipsSection extends StatelessWidget {

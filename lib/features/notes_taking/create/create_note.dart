@@ -12,11 +12,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:msbridge/features/notes_taking/create/widget/auto_save_bubble.dart';
-import 'package:msbridge/features/notes_taking/create/widget/bottom_toolbar.dart';
-import 'package:msbridge/features/notes_taking/create/widget/build_bottom_sheet_action.dart';
-import 'package:msbridge/features/notes_taking/create/widget/editor_pane.dart';
-import 'package:msbridge/features/notes_taking/create/widget/title_field.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -34,6 +29,11 @@ import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
+import 'package:msbridge/features/notes_taking/create/widget/auto_save_bubble.dart';
+import 'package:msbridge/features/notes_taking/create/widget/bottom_toolbar.dart';
+import 'package:msbridge/features/notes_taking/create/widget/build_bottom_sheet_action.dart';
+import 'package:msbridge/features/notes_taking/create/widget/editor_pane.dart';
+import 'package:msbridge/features/notes_taking/create/widget/title_field.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
@@ -734,14 +734,15 @@ class _CreateNoteState extends State<CreateNote>
                             );
                           }
 
-                          // Sort only once when items change
-                          items.sort(
-                              (a, b) => b.updatedAt.compareTo(a.updatedAt));
+                          // Create a new sorted list to avoid mutating the original
+                          final sortedItems = List<NoteTemplate>.from(items)
+                            ..sort(
+                                (a, b) => b.updatedAt.compareTo(a.updatedAt));
 
                           return ListView.builder(
-                            itemCount: items.length,
+                            itemCount: sortedItems.length,
                             itemBuilder: (context, index) {
-                              final template = items[index];
+                              final template = sortedItems[index];
                               return RepaintBoundary(
                                 child: Padding(
                                   padding:

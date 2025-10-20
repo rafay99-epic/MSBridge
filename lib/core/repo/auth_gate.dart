@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 
 // Package imports:
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:msbridge/config/feature_flag.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // Project imports:
+import 'package:msbridge/config/feature_flag.dart';
 import 'package:msbridge/core/permissions/notification_permission.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
 import 'package:msbridge/core/services/update_app/update_manager.dart';

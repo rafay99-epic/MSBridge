@@ -10,11 +10,11 @@ import 'package:line_icons/line_icons.dart';
 import 'package:msbridge/core/database/templates/note_template.dart';
 import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/features/notes_taking/create/create_note.dart';
+import 'package:msbridge/features/templates/template_editor_page.dart';
 import 'package:msbridge/features/templates/widgets/templates_widgets.dart';
 import 'package:msbridge/utils/empty_ui.dart';
 import 'package:msbridge/widgets/appbar.dart';
 import 'package:msbridge/widgets/snakbar.dart';
-import 'package:msbridge/features/templates/template_editor_page.dart';
 import 'package:msbridge/widgets/warning_dialog_box.dart';
 
 class TemplatesHubPage extends StatefulWidget {

@@ -1,11 +1,13 @@
 // Flutter imports:
 import 'package:flutter/material.dart';
+
+// Package imports:
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 // Project imports:
-import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/core/models/custom_color_scheme_model.dart';
+import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/widgets/snakbar.dart';
 
 class CustomColorPicker extends StatefulWidget {
