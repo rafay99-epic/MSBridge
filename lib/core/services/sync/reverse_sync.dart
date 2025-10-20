@@ -220,6 +220,7 @@ class ReverseSyncService {
           // Don't fail the entire sync if settings sync fails
         }
 
+        // Sync custom color schemes from Firebase
         try {
           await _syncCustomColorSchemesFromFirebase(userId);
         } catch (e) {
