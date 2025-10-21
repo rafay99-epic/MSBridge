@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Project imports:
 import 'package:msbridge/core/database/note_taking/note_taking.dart';
 import 'package:msbridge/core/repo/auth_repo.dart';
+import 'package:msbridge/core/repo/custom_color_scheme_repo.dart';
 import 'package:msbridge/core/repo/hive_note_taking_repo.dart';
 import 'package:msbridge/core/repo/note_version_repo.dart';
 import 'package:msbridge/core/repo/user_settings_repo.dart';
@@ -219,6 +220,15 @@ class ReverseSyncService {
           // Don't fail the entire sync if settings sync fails
         }
 
+        // Sync custom color schemes from Firebase
+        try {
+          await _syncCustomColorSchemesFromFirebase(userId);
+        } catch (e) {
+          FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+              reason: "Failed to sync custom color schemes from Firebase");
+          // Don't fail the entire sync if color scheme sync fails
+        }
+
         // Force refresh the Hive box
         try {
           await box.flush();
@@ -315,6 +325,24 @@ class ReverseSyncService {
       FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
           reason: "Failed to sync settings from Firebase");
       // Don't throw - settings sync failure shouldn't break the entire operation
+    }
+  }
+
+  /// Sync custom color schemes from Firebase
+  Future<void> _syncCustomColorSchemesFromFirebase(String userId) async {
+    try {
+      // Check if cloud sync is enabled before syncing custom color schemes
+      final isCloudSyncEnabled = await _isCloudSyncEnabled();
+      if (!isCloudSyncEnabled) {
+        return; // Don't sync custom color schemes if cloud sync is disabled
+      }
+
+      final repo = CustomColorSchemeRepo.instance;
+      await repo.syncFromFirebase();
+    } catch (e) {
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current,
+          reason: "Failed to sync custom color schemes from Firebase");
+      // Don't throw - color scheme sync failure shouldn't break the entire operation
     }
   }
 

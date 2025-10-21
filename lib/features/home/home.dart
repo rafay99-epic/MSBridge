@@ -114,7 +114,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     final colorScheme = theme.colorScheme;
     final media = MediaQuery.of(context);
     final width = media.size.width;
-    final bottomInset = media.padding.bottom;
     final bool isCompact = width < 360;
     final double iconSz = isCompact ? 18 : 20;
     final double labelSz = isCompact ? 12 : 13;
@@ -166,8 +165,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           },
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
+      bottomNavigationBar: SafeArea(
         child: GNav(
           selectedIndex: _selectedIndex,
           onTabChange: _onItemTapped,

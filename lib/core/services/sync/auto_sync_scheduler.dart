@@ -6,6 +6,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports:
+import 'package:msbridge/core/services/sync/custom_theme_sync.dart';
 import 'package:msbridge/core/services/sync/note_taking_sync.dart';
 import 'package:msbridge/core/services/sync/streak_sync_service.dart';
 import 'package:msbridge/core/services/sync/templates_sync.dart';
@@ -29,6 +30,8 @@ class AutoSyncScheduler {
     final tMinutes = prefs.getInt(_templatesPrefKeyMinutes) ?? 0; // 0 = off
     _rescheduleTemplatesInternal(tMinutes);
     _rescheduleStreakInternal(30);
+    // Initialize custom theme sync
+    await CustomThemeSyncService.initialize();
   }
 
   static Future<void> setIntervalMinutes(int minutes) async {

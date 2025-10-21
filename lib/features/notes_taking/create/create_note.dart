@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // Package imports:
-import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import 'package:flutter_bugfender/flutter_bugfender.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -30,6 +29,11 @@ import 'package:msbridge/core/repo/template_repo.dart';
 import 'package:msbridge/core/services/network/internet_helper.dart';
 import 'package:msbridge/core/services/streak/streak_integration_service.dart';
 import 'package:msbridge/features/ai_summary/ai_summary_bottome_sheet.dart';
+import 'package:msbridge/features/notes_taking/create/widget/auto_save_bubble.dart';
+import 'package:msbridge/features/notes_taking/create/widget/bottom_toolbar.dart';
+import 'package:msbridge/features/notes_taking/create/widget/build_bottom_sheet_action.dart';
+import 'package:msbridge/features/notes_taking/create/widget/editor_pane.dart';
+import 'package:msbridge/features/notes_taking/create/widget/title_field.dart';
 import 'package:msbridge/features/notes_taking/export_notes/export_notes.dart';
 import 'package:msbridge/features/notes_taking/read/read_note_page.dart';
 import 'package:msbridge/features/templates/templates_hub.dart';
@@ -69,9 +73,7 @@ class _CreateNoteState extends State<CreateNote>
   String _lastSavedContent = "";
   NoteTakingModel? _currentNote;
   bool _isSaving = false;
-  bool _hasSelection = false;
-  bool _isShareOperationInProgress =
-      false; // Added to prevent multiple share operations
+  bool _isShareOperationInProgress = false;
   StreamSubscription? _docChangesSub;
 
   void _addTag(String rawTag) {
@@ -153,7 +155,6 @@ class _CreateNoteState extends State<CreateNote>
 
     _attachControllerListeners();
 
-    // Add lightweight focus tracking
     _titleController.addListener(() {
       if (_titleController.text.isNotEmpty) {
         _currentFocusArea.value = 'title';
@@ -244,16 +245,7 @@ class _CreateNoteState extends State<CreateNote>
   }
 
   void _attachControllerListeners() {
-    // Selection tracking
-    _controller.addListener(() {
-      final selection = _controller.selection;
-      final bool hasSelection = selection.isValid && !selection.isCollapsed;
-      if (_hasSelection != hasSelection && mounted) {
-        setState(() {
-          _hasSelection = hasSelection;
-        });
-      }
-    });
+    // Selection tracking removed; no custom copy/cut UI
 
     // Debounced document changes for auto-save
     if (FeatureFlag.enableAutoSave) {
@@ -324,7 +316,6 @@ class _CreateNoteState extends State<CreateNote>
       } catch (e) {
         FlutterBugfender.sendCrash(
             'Failed to encode content: $e', StackTrace.current.toString());
-        FlutterBugfender.error('Failed to encode content: $e');
         content = _controller.document.toPlainText().trim();
       }
       if (title.isEmpty && content.isEmpty) {
@@ -354,7 +345,6 @@ class _CreateNoteState extends State<CreateNote>
             FlutterBugfender.sendCrash(
                 'Streak update failed on note creation: $e',
                 StackTrace.current.toString());
-            FlutterBugfender.error('Streak update failed on note creation: $e');
           }
         }
       }
@@ -376,7 +366,6 @@ class _CreateNoteState extends State<CreateNote>
     } catch (e) {
       FlutterBugfender.sendCrash(
           'Failed to save note: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to save note: $e');
       if (mounted) {
         _isSavingNotifier.value = false;
         _showCheckmarkNotifier.value = false;
@@ -472,109 +461,10 @@ class _CreateNoteState extends State<CreateNote>
     } catch (e) {
       FlutterBugfender.sendCrash('Streak update failed on note creation: $e',
           StackTrace.current.toString());
-      FlutterBugfender.error('Streak update failed on note creation: $e');
     }
   }
 
-  // Compact copy/paste methods
-  Future<void> _copySelectedText() async {
-    try {
-      final selection = _controller.selection;
-      final fullText = _controller.document.toPlainText();
-      if (selection.isValid && !selection.isCollapsed) {
-        final start = selection.start.clamp(0, fullText.length);
-        final end = selection.end.clamp(0, fullText.length);
-        final selectedText = fullText.substring(start, end);
-        await Clipboard.setData(ClipboardData(text: selectedText));
-        if (mounted) {
-          CustomSnackBar.show(
-            context,
-            "Copied",
-            isSuccess: true,
-          );
-        }
-      }
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          'Failed to copy text: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to copy text: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Copy failed',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onError)),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(8),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _cutSelectedText() async {
-    try {
-      final selection = _controller.selection;
-      final fullText = _controller.document.toPlainText();
-      if (selection.isValid && !selection.isCollapsed) {
-        final start = selection.start.clamp(0, fullText.length);
-        final end = selection.end.clamp(0, fullText.length);
-        final selectedText = fullText.substring(start, end);
-        await Clipboard.setData(ClipboardData(text: selectedText));
-        _controller.replaceText(
-          selection.start,
-          selection.end - selection.start,
-          '',
-          selection,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Cut',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSecondary)),
-              duration: const Duration(seconds: 1),
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(8),
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      FlutterBugfender.sendCrash(
-          'Failed to cut text: $e', StackTrace.current.toString());
-      FlutterBugfender.error('Failed to cut text: $e');
-      FirebaseCrashlytics.instance.recordError(
-          Exception("Cut failed"), StackTrace.current,
-          reason: "Cut failed");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cut failed',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onError)),
-            duration: const Duration(seconds: 1),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(8),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    }
-  }
-
+  // Removed custom copy/cut methods; rely on platform selection menu
   Future<void> _pasteText() async {
     try {
       final data = await Clipboard.getData('text/plain');
@@ -654,36 +544,27 @@ class _CreateNoteState extends State<CreateNote>
       appBar: CustomAppBar(
         backbutton: true,
         actions: [
-          if (_hasSelection) ...[
-            IconButton(
-              tooltip: 'Copy',
-              icon: const Icon(Icons.copy, size: 20),
-              onPressed: _copySelectedText,
-            ),
-            IconButton(
-              tooltip: 'Cut',
-              icon: const Icon(Icons.content_cut, size: 20),
-              onPressed: _cutSelectedText,
-            ),
-          ],
+          // Only the most essential actions
           IconButton(
-            tooltip: 'Paste',
-            icon: const Icon(Icons.paste, size: 20),
-            onPressed: _pasteText,
-          ),
-          IconButton(
+            tooltip: 'AI Summary',
             icon: const Icon(LineIcons.robot, size: 22),
             onPressed: () => _generateAiSummary(context),
           ),
           IconButton(
-            icon: const Icon(LineIcons.fileExport, size: 22),
-            onPressed: () => showExportOptions(
-              context,
-              theme,
-              _titleController,
-              _controller,
-            ),
+            tooltip: 'Save',
+            icon: const Icon(LineIcons.save, size: 22),
+            onPressed: () async {
+              await manualSaveNote();
+            },
           ),
+
+          // Paste action - direct access
+          IconButton(
+            tooltip: 'Paste',
+            icon: const Icon(Icons.paste, size: 22),
+            onPressed: _pasteText,
+          ),
+          // Read action - direct access (if note exists)
           if (_currentNote != null)
             IconButton(
               tooltip: 'Read',
@@ -703,28 +584,11 @@ class _CreateNoteState extends State<CreateNote>
                 );
               },
             ),
+          // More actions button - opens bottom sheet
           IconButton(
-            tooltip: 'Templates',
-            icon: const Icon(LineIcons.clone, size: 22),
-            onPressed: _openTemplatesPicker,
-          ),
-          Consumer<ShareLinkProvider>(
-            builder: (context, shareProvider, _) {
-              if (!shareProvider.shareLinksEnabled || _currentNote == null) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                tooltip: 'Share link',
-                icon: const Icon(LineIcons.shareSquare, size: 22),
-                onPressed: _openShareSheet,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(LineIcons.save, size: 22),
-            onPressed: () async {
-              await manualSaveNote();
-            },
+            tooltip: 'More options',
+            icon: const Icon(Icons.more_vert, size: 22),
+            onPressed: () => _showMoreActionsBottomSheet(context),
           ),
         ],
       ),
@@ -735,352 +599,52 @@ class _CreateNoteState extends State<CreateNote>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: TextField(
-                    controller: _titleController,
-                    focusNode: _titleFocusNode,
-                    contextMenuBuilder: (BuildContext context,
-                        EditableTextState editableTextState) {
-                      return AdaptiveTextSelectionToolbar.editableText(
-                        editableTextState: editableTextState,
-                      );
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Title',
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      ),
-                      border: InputBorder.none,
-                    ),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                TitleField(
+                  controller: _titleController,
+                  focusNode: _titleFocusNode,
                 ),
-                // Compact Tags Section (Space Optimized)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Compact Tags Display
-                      ValueListenableBuilder<List<String>>(
-                        valueListenable: _tagsNotifier,
-                        builder: (context, tags, _) {
-                          if (tags.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return SizedBox(
-                            height: 30,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: tags.length,
-                              itemBuilder: (context, index) {
-                                final tag = tags[index];
-                                return Container(
-                                  margin: const EdgeInsets.only(right: 6),
-                                  child: Chip(
-                                    label: Text(
-                                      tag,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.85),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    backgroundColor: theme
-                                        .colorScheme.surfaceContainerHighest,
-                                    deleteIcon: Icon(
-                                      Icons.close,
-                                      size: 18,
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.75),
-                                    ),
-                                    shape: StadiumBorder(
-                                      side: BorderSide(
-                                        color: theme.colorScheme.outlineVariant
-                                            .withValues(alpha: 0.15),
-                                      ),
-                                    ),
-                                    onDeleted: () {
-                                      final next = List<String>.from(tags)
-                                        ..remove(tag);
-                                      _tagsNotifier.value = next;
-
-                                      // Auto-save when tag is deleted
-                                      if (FeatureFlag.enableAutoSave) {
-                                        if (_debounceTimer?.isActive ?? false) {
-                                          _debounceTimer!.cancel();
-                                        }
-                                        _debounceTimer = Timer(
-                                            const Duration(seconds: 1), () {
-                                          _currentFocusArea.value = 'tags';
-                                          _saveNote();
-                                        });
-                                      }
-                                    },
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Compact Tag Input (Floating Style)
-                      SizedBox(
-                        height: 40,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _tagInputController,
-                                focusNode: _tagFocusNode,
-                                textInputAction: TextInputAction.done,
-                                onSubmitted: (raw) {
-                                  final v = raw.trim();
-                                  if (v.isEmpty) return;
-                                  _addTag(v);
-                                  _tagInputController.clear();
-                                  FocusScope.of(context).unfocus();
-                                },
-                                contextMenuBuilder: (BuildContext context,
-                                    EditableTextState editableTextState) {
-                                  return AdaptiveTextSelectionToolbar
-                                      .editableText(
-                                    editableTextState: editableTextState,
-                                  );
-                                },
-                                style: const TextStyle(fontSize: 14),
-                                decoration: InputDecoration(
-                                  hintText: 'Add tag...',
-                                  hintStyle: TextStyle(
-                                      fontSize: 12,
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.5)),
-                                  prefixIcon: Icon(Icons.tag,
-                                      size: 16,
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.7)),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(Icons.add,
-                                        size: 18,
-                                        color: theme.colorScheme.primary
-                                            .withValues(alpha: 0.8)),
-                                    tooltip: 'Add tag',
-                                    onPressed: () {
-                                      final v = _tagInputController.text.trim();
-                                      if (v.isEmpty) return;
-                                      _addTag(v);
-                                      _tagInputController.clear();
-                                      FocusScope.of(context).unfocus();
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(
-                                        minWidth: 32, minHeight: 32),
-                                  ),
-                                  filled: true,
-                                  fillColor: theme.colorScheme.surface,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: BorderSide(
-                                        color: theme.colorScheme.outlineVariant
-                                            .withValues(alpha: 0.15)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: BorderSide(
-                                        color: theme.colorScheme.outlineVariant
-                                            .withValues(alpha: 0.15)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                    borderSide: BorderSide(
-                                        color: theme.colorScheme.primary,
-                                        width: 1.0),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                TagsSection(
+                  theme: theme,
+                  tagsNotifier: _tagsNotifier,
+                  tagInputController: _tagInputController,
+                  tagFocusNode: _tagFocusNode,
+                  onAddTag: _addTag,
+                  onAutoSave: () {
+                    if (FeatureFlag.enableAutoSave) {
+                      if (_debounceTimer?.isActive ?? false) {
+                        _debounceTimer!.cancel();
+                      }
+                      _debounceTimer = Timer(const Duration(seconds: 1), () {
+                        _currentFocusArea.value = 'tags';
+                        _saveNote();
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
                 Expanded(
-                  child: SafeArea(
-                    child: QuillEditor.basic(
-                      controller: _controller,
-                      focusNode: _quillFocusNode,
-                      config: QuillEditorConfig(
-                        disableClipboard: false,
-                        autoFocus: true,
-                        placeholder: 'Note...',
-                        expands: true,
-                        onTapUp: (_, __) {
-                          if (!_quillFocusNode.hasFocus) {
-                            FocusScope.of(context)
-                                .requestFocus(_quillFocusNode);
-                          }
-                          return false;
-                        },
-                      ),
-                    ),
+                  child: EditorPane(
+                    controller: _controller,
+                    focusNode: _quillFocusNode,
                   ),
                 ),
                 const SizedBox(height: 84),
               ],
             ),
-
-            // Floating toolbar container
-            Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
-              child: SafeArea(
-                top: false,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor.withValues(alpha: 0.98),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Listener(
-                    onPointerDown: (_) {
-                      if (!_quillFocusNode.hasFocus) {
-                        FocusScope.of(context).requestFocus(_quillFocusNode);
-                      }
-                    },
-                    child: QuillSimpleToolbar(
-                      controller: _controller,
-                      config: const QuillSimpleToolbarConfig(
-                        multiRowsDisplay: false,
-                        toolbarSize: 44,
-                        showCodeBlock: true,
-                        showQuote: true,
-                        showLink: true,
-                        showFontSize: true,
-                        showFontFamily: true,
-                        showIndent: true,
-                        showDividers: true,
-                        showUnderLineButton: true,
-                        showLeftAlignment: true,
-                        showCenterAlignment: true,
-                        showRightAlignment: true,
-                        showJustifyAlignment: true,
-                        showHeaderStyle: true,
-                        showListNumbers: true,
-                        showListBullets: true,
-                        showListCheck: true,
-                        showStrikeThrough: true,
-                        showInlineCode: true,
-                        showColorButton: true,
-                        showBackgroundColorButton: true,
-                        showClearFormat: true,
-                        showAlignmentButtons: true,
-                        showUndo: true,
-                        showRedo: true,
-                        showDirection: false,
-                        showSearchButton: true,
-                        headerStyleType: HeaderStyleType.buttons,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            BottomToolbar(
+              theme: theme,
+              controller: _controller,
+              ensureFocus: () {
+                if (!_quillFocusNode.hasFocus) {
+                  FocusScope.of(context).requestFocus(_quillFocusNode);
+                }
+              },
             ),
-
-            // Compact autosave bubble
             if (FeatureFlag.enableAutoSave)
-              Positioned(
-                right: 16,
-                bottom: 64,
-                child: SafeArea(
-                  top: false,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _isSavingNotifier,
-                    builder: (context, isSaving, _) {
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: _showCheckmarkNotifier,
-                        builder: (context, showCheckmark, __) {
-                          if (!isSaving && !showCheckmark) {
-                            return const SizedBox.shrink();
-                          }
-                          return DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: isSaving
-                                  ? theme.colorScheme.secondary
-                                      .withValues(alpha: 0.95)
-                                  : Colors.green.withValues(alpha: 0.95),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                )
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (isSaving)
-                                    const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(
-                                            Colors.white),
-                                      ),
-                                    )
-                                  else
-                                    const Icon(LineIcons.checkCircleAlt,
-                                        size: 16, color: Colors.white),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isSaving ? 'Saving…' : 'Saved',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
+              AutoSaveBubble(
+                theme: theme,
+                isSavingListenable: _isSavingNotifier,
+                showCheckmarkListenable: _showCheckmarkNotifier,
               ),
           ],
         ),
@@ -1092,72 +656,215 @@ class _CreateNoteState extends State<CreateNote>
     final theme = Theme.of(context);
     final listenable = await TemplateRepo.getTemplatesListenable();
     if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.6,
-            child: ValueListenableBuilder(
-              valueListenable: listenable,
-              builder: (context, Box<NoteTemplate> box, _) {
-                final items = box.values.toList()
-                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text('No templates yet',
-                        style: TextStyle(color: theme.colorScheme.primary)),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final t = items[index];
-                    return ListTile(
-                      title: Text(t.title,
-                          style: TextStyle(color: theme.colorScheme.primary)),
-                      subtitle: t.tags.isEmpty
-                          ? null
-                          : Text(t.tags.join(' · '),
-                              style: TextStyle(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.7))),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        await _applyTemplateInEditor(t);
-                      },
-                      trailing: IconButton(
-                        icon: const Icon(Icons.open_in_new),
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      const TemplatesHubPage(),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
-                                return FadeTransition(
-                                    opacity: animation, child: child);
-                              },
-                              transitionDuration:
-                                  const Duration(milliseconds: 300),
-                            ),
+        return RepaintBoundary(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title
+                  Text(
+                    'Select Template',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  // Templates list
+                  Flexible(
+                    child: SizedBox(
+                      height: MediaQuery.of(ctx).size.height * 0.5,
+                      child: ValueListenableBuilder<Box<NoteTemplate>>(
+                        valueListenable: listenable,
+                        builder: (context, Box<NoteTemplate> box, _) {
+                          final items = box.values.toList();
+                          if (items.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    LineIcons.fileAlt,
+                                    size: 48,
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No templates yet',
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Create your first template to get started',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          // Create a new sorted list to avoid mutating the original
+                          final sortedItems = List<NoteTemplate>.from(items)
+                            ..sort(
+                                (a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+                          return ListView.builder(
+                            itemCount: sortedItems.length,
+                            itemBuilder: (context, index) {
+                              final template = sortedItems[index];
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6.0),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () async {
+                                        Navigator.pop(context);
+                                        await _applyTemplateInEditor(template);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.surface
+                                              .withValues(alpha: 0.3),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: theme.colorScheme.outline
+                                                .withValues(alpha: 0.1),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 48,
+                                              height: 48,
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.primary
+                                                    .withValues(alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                LineIcons.fileAlt,
+                                                size: 24,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    template.title,
+                                                    style: theme
+                                                        .textTheme.titleMedium
+                                                        ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: theme.colorScheme
+                                                          .onSurface,
+                                                    ),
+                                                  ),
+                                                  if (template
+                                                      .tags.isNotEmpty) ...[
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      template.tags.join(' · '),
+                                                      style: theme
+                                                          .textTheme.bodySmall
+                                                          ?.copyWith(
+                                                        color: theme.colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                                alpha: 0.7),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                  Icons.open_in_new,
+                                                  size: 20),
+                                              onPressed: () async {
+                                                Navigator.pop(context);
+                                                await Navigator.push(
+                                                  context,
+                                                  PageRouteBuilder(
+                                                    pageBuilder: (context,
+                                                            animation,
+                                                            secondaryAnimation) =>
+                                                        const TemplatesHubPage(),
+                                                    transitionsBuilder:
+                                                        (context,
+                                                            animation,
+                                                            secondaryAnimation,
+                                                            child) {
+                                                      return FadeTransition(
+                                                          opacity: animation,
+                                                          child: child);
+                                                    },
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 300),
+                                                  ),
+                                                );
+                                              },
+                                              tooltip: 'Manage templates',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
-                        tooltip: 'Manage templates',
                       ),
-                    );
-                  },
-                );
-              },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -1255,6 +962,99 @@ class _CreateNoteState extends State<CreateNote>
     }
   }
 
+  void _showMoreActionsBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final shareProvider =
+        Provider.of<ShareLinkProvider>(context, listen: false);
+    final hasShareEnabled =
+        shareProvider.shareLinksEnabled && _currentNote != null;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return RepaintBoundary(
+            child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Title
+                Text(
+                  'More Actions',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Action buttons
+                buildBottomSheetAction(
+                  icon: LineIcons.fileExport,
+                  title: 'Export',
+                  subtitle: 'Export note to various formats',
+                  onTap: () {
+                    Navigator.pop(context);
+                    showExportOptions(
+                      context,
+                      theme,
+                      _titleController,
+                      _controller,
+                    );
+                  },
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                buildBottomSheetAction(
+                  icon: LineIcons.clone,
+                  title: 'Templates',
+                  subtitle: 'Use or create note templates',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openTemplatesPicker();
+                  },
+                  theme: theme,
+                ),
+                if (hasShareEnabled) ...[
+                  const SizedBox(height: 12),
+                  buildBottomSheetAction(
+                    icon: LineIcons.shareSquare,
+                    title: 'Share Link',
+                    subtitle: 'Create a shareable link for this note',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _openShareSheet();
+                    },
+                    theme: theme,
+                  ),
+                ],
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ));
+      },
+    );
+  }
+
   Future<void> _openShareSheet() async {
     final theme = Theme.of(context);
     if (_currentNote == null) {
@@ -1277,150 +1077,266 @@ class _CreateNoteState extends State<CreateNote>
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
         return StatefulBuilder(builder: (context, setStateSheet) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          return RepaintBoundary(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Share via link',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    Row(
-                      children: [
-                        if (_isShareOperationInProgress) ...[
-                          SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.secondary
-                                    .withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(3),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    theme.colorScheme.secondary,
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Title
+                    Text(
+                      'Share via Link',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Share toggle card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              LineIcons.shareSquare,
+                              size: 24,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Share Link',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
                                   ),
-                                  backgroundColor: theme.colorScheme.secondary
-                                      .withValues(alpha: 0.20),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  enabled
+                                      ? 'Link is active and shareable'
+                                      : 'Enable to generate a view-only link',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isShareOperationInProgress) ...[
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            Switch(
+                              value: enabled,
+                              onChanged: (value) async {
+                                if (_isShareOperationInProgress) return;
+
+                                setStateSheet(() {
+                                  _isShareOperationInProgress = true;
+                                });
+
+                                try {
+                                  if (value) {
+                                    final url =
+                                        await DynamicLink.enableShare(note);
+                                    setStateSheet(() {
+                                      enabled = true;
+                                      currentUrl = url;
+                                    });
+                                    if (context.mounted) {
+                                      CustomSnackBar.show(
+                                          context, 'Share link enabled',
+                                          isSuccess: true);
+                                    }
+                                  } else {
+                                    await DynamicLink.disableShare(note);
+                                    setStateSheet(() {
+                                      enabled = false;
+                                      currentUrl = null;
+                                    });
+                                    if (context.mounted) {
+                                      CustomSnackBar.show(
+                                          context, 'Share link disabled',
+                                          isSuccess: false);
+                                    }
+                                  }
+                                } catch (e) {
+                                  FlutterBugfender.sendCrash(
+                                      'Failed to enable/disable share: $e',
+                                      StackTrace.current.toString());
+                                  FlutterBugfender.error(
+                                      'Failed to enable/disable share: $e');
+                                  if (context.mounted) {
+                                    CustomSnackBar.show(context, e.toString(),
+                                        isSuccess: false);
+                                  }
+                                } finally {
+                                  setStateSheet(() {
+                                    _isShareOperationInProgress = false;
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (currentUrl != null) ...[
+                      const SizedBox(height: 16),
+                      // URL display card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.surface.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outline
+                                .withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Shareable Link',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            SelectableText(
+                              currentUrl!,
+                              style: TextStyle(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.9),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                await Clipboard.setData(
+                                    ClipboardData(text: currentUrl!));
+                                if (context.mounted) {
+                                  CustomSnackBar.show(context, 'Link copied',
+                                      isSuccess: true);
+                                }
+                              },
+                              icon: const Icon(LineIcons.copy, size: 18),
+                              label: const Text('Copy Link'),
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                        ],
-                        Switch(
-                          value: enabled,
-                          onChanged: _isShareOperationInProgress
-                              ? null
-                              : (value) async {
-                                  // Prevent multiple taps while operation is in progress
-                                  if (_isShareOperationInProgress) return;
-
-                                  setStateSheet(() {
-                                    _isShareOperationInProgress = true;
-                                  });
-
-                                  try {
-                                    if (value) {
-                                      final url =
-                                          await DynamicLink.enableShare(note);
-                                      setStateSheet(() {
-                                        enabled = true;
-                                        currentUrl = url;
-                                      });
-                                      if (context.mounted) {
-                                        CustomSnackBar.show(
-                                            context, 'Share link enabled',
-                                            isSuccess: true);
-                                      }
-                                    } else {
-                                      await DynamicLink.disableShare(note);
-                                      setStateSheet(() {
-                                        enabled = false;
-                                        currentUrl = null;
-                                      });
-                                      if (context.mounted) {
-                                        CustomSnackBar.show(
-                                            context, 'Share link disabled',
-                                            isSuccess: false);
-                                      }
-                                    }
-                                  } catch (e) {
-                                    FlutterBugfender.sendCrash(
-                                        'Failed to enable/disable share: $e',
-                                        StackTrace.current.toString());
-                                    FlutterBugfender.error(
-                                        'Failed to enable/disable share: $e');
-                                    if (context.mounted) {
-                                      CustomSnackBar.show(context, e.toString(),
-                                          isSuccess: false);
-                                    }
-                                  } finally {
-                                    // Reset loading state
-                                    setStateSheet(() {
-                                      _isShareOperationInProgress = false;
-                                    });
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await SharePlus.instance.share(
+                                    ShareParams(
+                                      text: currentUrl!,
+                                      subject: 'Here is the link to the note',
+                                      title: 'Shared Note by MSBridge',
+                                    ),
+                                  );
+                                } catch (e) {
+                                  FlutterBugfender.sendCrash(
+                                    'Failed to share link: $e',
+                                    StackTrace.current.toString(),
+                                  );
+                                  if (context.mounted) {
+                                    CustomSnackBar.show(
+                                      context,
+                                      'Failed to share link: $e',
+                                      isSuccess: false,
+                                    );
                                   }
-                                },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (currentUrl != null) ...[
-                  SelectableText(
-                    currentUrl!,
-                    style: TextStyle(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.9)),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await Clipboard.setData(
-                              ClipboardData(text: currentUrl!));
-                          if (context.mounted) {
-                            CustomSnackBar.show(context, 'Link copied',
-                                isSuccess: true);
-                          }
-                        },
-                        icon: const Icon(LineIcons.copy),
-                        label: const Text('Copy'),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => SharePlus.instance
-                            .share(currentUrl! as ShareParams),
-                        icon: const Icon(LineIcons.share),
-                        label: const Text('Share'),
+                                }
+                              },
+                              icon: const Icon(LineIcons.share, size: 18),
+                              label: const Text('Share'),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ] else ...[
-                  Text(
-                    'Enable to generate a view-only link anyone can open.',
-                    style: TextStyle(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.7)),
-                  ),
-                ]
-              ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
             ),
           );
         });

@@ -62,3 +62,6 @@ test_theme_engine/*
 test_ui_rendering/*
 test_voice_note/*
 test_integration/*
+
+
+flutter_quality_log_*.log

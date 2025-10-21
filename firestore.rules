@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isAdminOrOwner() {
+      return isSignedIn() && (request.auth.token.role == 'admin' || request.auth.token.role == 'owner');
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() &&
+                    request.auth.uid == userId &&
+                    !('role' in request.resource.data.diff(resource.data).affectedKeys());
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      // Notes
+      match /notes/{noteId} {
+        allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId;
+
+        // Versions
+        match /versions/{versionId} {
+          allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId;
+        }
+      }
+      
+      // Meta (streak sync lives here: users/{userId}/meta/streak)
+      match /meta/{docId} {
+        allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId;
+      }
+      
+      // Templates
+     match /templates/{templateId} 
+     { allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId; }
+
+     // Custom Color Schemes
+     match /customColorSchemes/{schemeId} {
+       allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId;
+     }
+
+     // Voice Notes
+     match /voiceNotes/{voiceNoteId} {
+       allow read, write, update, delete: if isSignedIn() && request.auth.uid == userId;
+     }
+    }
+
+    // Shared Notes
+    match /shared_notes/{shareId} {
+      allow get: if resource.data.viewOnly == true;
+      allow list: if false;
+      allow create: if isSignedIn() &&
+                     request.resource.data.ownerUid == request.auth.uid &&
+                     request.resource.data.viewOnly == true;
+      allow update: if isSignedIn() &&
+                     (resource.data.ownerUid == request.auth.uid || 
+                      request.resource.data.ownerUid == request.auth.uid);
+      allow delete: if isSignedIn() &&
+                     resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Shared Voice Notes - ADD THIS SECTION
+    match /shared_voice_notes/{shareId} {
+      allow get: if resource.data.viewOnly == true;
+      allow list: if false;
+      allow create: if isSignedIn() &&
+                     request.resource.data.ownerUid == request.auth.uid &&
+                     request.resource.data.viewOnly == true;
+      allow update: if isSignedIn() &&
+                     (resource.data.ownerUid == request.auth.uid || 
+                      request.resource.data.ownerUid == request.auth.uid);
+      allow delete: if isSignedIn() &&
+                     resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /contactMessages/{messageId} {
+      allow create: if true;
+      allow get: if false;
+      allow list: if false;
+      allow delete : if isAdminOrOwner();
+      allow update: if isAdminOrOwner();
+    }
+  }
+}

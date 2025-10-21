@@ -2,11 +2,15 @@
 import 'package:flutter/material.dart';
 
 // Project imports:
+import 'package:msbridge/core/models/custom_color_scheme_model.dart';
 import 'package:msbridge/core/provider/theme_provider.dart';
 import 'package:msbridge/theme/colors.dart';
+import 'package:msbridge/widgets/snakbar.dart';
+import 'custom_color_picker.dart';
+import 'custom_theme_card.dart';
 import 'theme_card.dart';
 
-class ThemeGrid extends StatelessWidget {
+class ThemeGrid extends StatefulWidget {
   const ThemeGrid({
     super.key,
     required this.searchQuery,
@@ -17,39 +21,275 @@ class ThemeGrid extends StatelessWidget {
   final ThemeProvider themeProvider;
 
   @override
+  State<ThemeGrid> createState() => _ThemeGridState();
+}
+
+class _ThemeGridState extends State<ThemeGrid> {
+  List<CustomColorSchemeModel> _customSchemes = [];
+  bool _hasLoadedSchemes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomSchemes();
+  }
+
+  @override
+  void didUpdateWidget(ThemeGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only reload if the search query changed or if we haven't loaded schemes yet
+    if (oldWidget.searchQuery != widget.searchQuery || !_hasLoadedSchemes) {
+      _loadCustomSchemes();
+    }
+  }
+
+  Future<void> _loadCustomSchemes() async {
+    final schemes = await widget.themeProvider.getAllCustomColorSchemes();
+    if (mounted) {
+      setState(() {
+        _customSchemes = schemes;
+        _hasLoadedSchemes = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Filter themes based on search
+    final lowerQuery = widget.searchQuery.trim().toLowerCase();
     final filteredThemes = AppTheme.values.where((theme) {
-      if (searchQuery.isEmpty) return true;
-      return theme.name.toLowerCase().contains(searchQuery);
+      if (lowerQuery.isEmpty) return true;
+      return theme.name.toLowerCase().contains(lowerQuery);
     }).toList();
 
-    if (filteredThemes.isEmpty) {
+    // Filter custom schemes based on search
+    final filteredCustomSchemes = _customSchemes.where((scheme) {
+      if (lowerQuery.isEmpty) return true;
+      return scheme.name.toLowerCase().contains(lowerQuery);
+    }).toList();
+
+    // Check if we have any themes or custom schemes
+    if (filteredThemes.isEmpty && filteredCustomSchemes.isEmpty) {
       return _buildNoThemesFound(context);
     }
+
+    // Combine regular themes and custom schemes
+    final allItems = <dynamic>[
+      ...filteredThemes,
+      ...filteredCustomSchemes,
+      null, // Add button for creating new custom theme
+    ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.0,
+        childAspectRatio: 0.85,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: filteredThemes.length,
+      itemCount: allItems.length,
       itemBuilder: (context, index) {
-        final appTheme = filteredThemes[index];
-        final isSelected = themeProvider.selectedTheme == appTheme;
-        final themeData = AppThemes.themeMap[appTheme]!;
+        final item = allItems[index];
 
-        return ThemeCard(
-          appTheme: appTheme,
-          themeData: themeData,
-          isSelected: isSelected,
-          onTap: () => themeProvider.setTheme(appTheme),
-        );
+        if (item == null) {
+          // Create custom theme button
+          return CustomThemeCard(
+            customScheme: null,
+            isSelected: false,
+            themeProvider: widget.themeProvider,
+            onTap: () => _showCreateCustomThemeDialog(),
+          );
+        } else if (item is AppTheme) {
+          // Regular theme
+          final appTheme = item;
+          final isSelected = !widget.themeProvider.isCustomTheme &&
+              widget.themeProvider.selectedTheme == appTheme;
+          final themeData = AppThemes.themeMap[appTheme]!;
+
+          return ThemeCard(
+            appTheme: appTheme,
+            themeData: themeData,
+            isSelected: isSelected,
+            onTap: () {
+              if (mounted) {
+                widget.themeProvider.setTheme(appTheme);
+              }
+            },
+          );
+        } else {
+          // Custom color scheme
+          final customScheme = item;
+          final isSelected = widget.themeProvider.isCustomTheme &&
+              widget.themeProvider.customColorScheme?.id == customScheme.id;
+
+          return CustomThemeCard(
+            customScheme: customScheme,
+            isSelected: isSelected,
+            themeProvider: widget.themeProvider,
+            onTap: () {
+              if (mounted) {
+                widget.themeProvider.setCustomColorScheme(customScheme);
+              }
+            },
+            onEdit: () => _showEditDialog(customScheme),
+            onDelete: () => _showDeleteDialog(customScheme),
+          );
+        }
       },
+    );
+  }
+
+  void _showCreateCustomThemeDialog() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomColorPicker(
+          themeProvider: widget.themeProvider,
+          onSchemeCreated: (scheme) {
+            // Refresh the custom schemes list
+            _loadCustomSchemes();
+          },
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Slide transition from right to left
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
+  }
+
+  void _showEditDialog(CustomColorSchemeModel scheme) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomColorPicker(
+          themeProvider: widget.themeProvider,
+          existingScheme: scheme,
+          onSchemeUpdated: (updatedScheme) {
+            // Refresh the custom schemes list
+            if (mounted) {
+              _loadCustomSchemes();
+            }
+          },
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Slide transition from right to left
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(CustomColorSchemeModel scheme) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Theme',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${scheme.name}"?',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              // Show loading indicator to prevent UI jerk
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              final success =
+                  await widget.themeProvider.deleteCustomColorScheme(scheme);
+
+              // Hide loading indicator
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+
+              if (success) {
+                // Add a small delay to prevent UI jerk
+                if (!mounted) return;
+                await Future.delayed(const Duration(milliseconds: 150));
+
+                // Check mounted again after delay
+                if (!mounted) return;
+                // Refresh the custom schemes list
+                _loadCustomSchemes();
+
+                // Check context.mounted before showing SnackBar
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'Theme deleted successfully!',
+                      isSuccess: true);
+                }
+              } else {
+                if (context.mounted) {
+                  CustomSnackBar.show(context, 'Failed to delete theme',
+                      isSuccess: false);
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(
+              'Delete',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

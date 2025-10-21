@@ -1,5 +1,6 @@
 // Dart imports:
 import 'dart:async';
+import 'dart:collection';
 
 // Flutter imports:
 import 'package:flutter/material.dart';
@@ -39,7 +40,9 @@ class ChatMessage {
 }
 
 class ChatProvider extends ChangeNotifier {
-  final List<ChatMessage> messages = [];
+  final List<ChatMessage> _messages = <ChatMessage>[];
+  UnmodifiableListView<ChatMessage> get messages =>
+      UnmodifiableListView(_messages);
   GenerativeModel? _model;
   String? _contextJson;
   String _modelName = AIModelsConfig.models.first.modelName;
@@ -55,6 +58,10 @@ class ChatProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String? _lastErrorMessage;
+  // Reliability: queue + cancel support
+  final List<_QueuedRequest> _requestQueue = <_QueuedRequest>[];
+  bool _cancelRequested = false;
+  static const int _maxQueueSize = 5;
 
   // Getters for UI state
   bool get isLoading => _isLoading;
@@ -62,6 +69,7 @@ class ChatProvider extends ChangeNotifier {
   String? get lastErrorMessage => _lastErrorMessage;
   GenerativeModel? get model => _model;
   String get modelName => _modelName;
+  int get queueLength => _requestQueue.length;
 
   // Chat history getters
   String? get currentChatId => _currentChatId;
@@ -184,20 +192,47 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  // Ask a question to the AI
+  // Ask a question to the AI (queues if a request is running)
   Future<String?> ask(
     String question, {
     bool includePersonal = true,
     bool includeMsNotes = true,
+    ChatMessage? existingUserMessage,
   }) async {
     if (question.trim().isEmpty) {
       _setError('Question cannot be empty', null);
       return null;
     }
 
+    // Queue when busy
+    if (_isLoading) {
+      if (_requestQueue.length >= _maxQueueSize) {
+        _setError('Too many pending requests. Please wait.', null);
+        return null;
+      }
+      final List<String> attachments = List<String>.from(_pendingImageUrls);
+      final ChatMessage queuedMessage =
+          ChatMessage(true, question, imageUrls: attachments);
+      _messages.add(queuedMessage);
+      _pendingImageUrls.clear();
+
+      _requestQueue.add(_QueuedRequest(
+        message: queuedMessage,
+        includePersonal: includePersonal,
+        includeMsNotes: includeMsNotes,
+      ));
+      try {
+        FlutterBugfender.log(
+            'Queued chat request. Queue length: ${_requestQueue.length}');
+      } catch (_) {}
+      notifyListeners();
+      return null;
+    }
+
     try {
       _clearError();
       _isLoading = true;
+      _cancelRequested = false;
       notifyListeners();
 
       // Ensure session/model based on toggles
@@ -214,19 +249,24 @@ class ChatProvider extends ChangeNotifier {
         }
       }
 
-      // Add user message merged with any pending images
-      final List<String> attachments = List<String>.from(_pendingImageUrls);
-      messages.add(ChatMessage(true, question, imageUrls: attachments));
-      // Clear previews immediately after sending; the message keeps attachments
-      _pendingImageUrls.clear();
-      notifyListeners();
+      // Add user message merged with any pending images only if not already added
+      if (existingUserMessage == null) {
+        final List<String> attachments = List<String>.from(_pendingImageUrls);
+        _messages.add(ChatMessage(true, question, imageUrls: attachments));
+        _pendingImageUrls.clear();
+        notifyListeners();
 
-      // Save to chat history if enabled
-      if (_isHistoryEnabled) {
-        await saveChatToHistory(
-          includePersonal: includePersonal,
-          includeMsNotes: includeMsNotes,
-        );
+        if (_isHistoryEnabled) {
+          await saveChatToHistory(
+            includePersonal: includePersonal,
+            includeMsNotes: includeMsNotes,
+          );
+        }
+      } else {
+        // Restore attachments from the queued message so they are included in content
+        _pendingImageUrls
+          ..clear()
+          ..addAll(existingUserMessage.imageUrls);
       }
 
       // Prepare content for AI (with or without notes context)
@@ -252,10 +292,19 @@ class ChatProvider extends ChangeNotifier {
         },
       );
 
+      // If user requested cancel, ignore this response
+      if (_cancelRequested) {
+        FlutterBugfender.log('AI response ignored due to cancel');
+        _isLoading = false;
+        notifyListeners();
+        _processQueueIfIdle();
+        return null;
+      }
+
       final text = response.text ?? 'No response received from AI.';
 
       // Add AI response
-      messages.add(ChatMessage(false, text));
+      _messages.add(ChatMessage(false, text));
 
       _isLoading = false;
       notifyListeners();
@@ -278,6 +327,7 @@ class ChatProvider extends ChangeNotifier {
 
       // After a successful response, clear any pending attachments
       _pendingImageUrls.clear();
+      _processQueueIfIdle();
       return text;
     } catch (e) {
       _setError('Failed to generate AI response: ${e.toString()}', e);
@@ -285,7 +335,7 @@ class ChatProvider extends ChangeNotifier {
 
       // Add error message to chat
       final errorMessage = _getUserFriendlyErrorMessage(e);
-      messages.add(
+      _messages.add(
           ChatMessage.error(false, errorMessage, errorDetails: e.toString()));
 
       // Persist history with the error message so restores match the UI state
@@ -297,6 +347,7 @@ class ChatProvider extends ChangeNotifier {
       }
 
       notifyListeners();
+      _processQueueIfIdle();
       return null;
     }
   }
@@ -368,15 +419,15 @@ class ChatProvider extends ChangeNotifier {
 
   // Retry the last question
   Future<String?> retryLastQuestion() async {
-    if (messages.isEmpty) return null;
+    if (_messages.isEmpty) return null;
 
     // Find the last user question
-    for (int i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].fromUser && !messages[i].isError) {
-        final question = messages[i].text;
+    for (int i = _messages.length - 1; i >= 0; i--) {
+      if (_messages[i].fromUser && !_messages[i].isError) {
+        final String question = _messages[i].text;
         // Remove the error message if it exists
-        if (i + 1 < messages.length && messages[i + 1].isError) {
-          messages.removeAt(i + 1);
+        if (i + 1 < _messages.length && _messages[i + 1].isError) {
+          _messages.removeAt(i + 1);
         }
         return await ask(question);
       }
@@ -386,7 +437,7 @@ class ChatProvider extends ChangeNotifier {
 
   // Clear all messages
   void clearChat() {
-    messages.clear();
+    _messages.clear();
     _clearError();
     notifyListeners();
   }
@@ -403,7 +454,6 @@ class ChatProvider extends ChangeNotifier {
     _hasError = true;
     _lastErrorMessage = message;
 
-    // Log to Firebase Crashlytics
     if (error != null) {
       FlutterBugfender.sendCrash(
           'Chat Provider Error: $message', StackTrace.current.toString());
@@ -475,7 +525,7 @@ class ChatProvider extends ChangeNotifier {
     bool includePersonal = true,
     bool includeMsNotes = true,
   }) async {
-    if (!_isHistoryEnabled || messages.isEmpty) return;
+    if (!_isHistoryEnabled || _messages.isEmpty) return;
 
     try {
       // Generate chat ID if not exists
@@ -483,10 +533,10 @@ class ChatProvider extends ChangeNotifier {
 
       // Create chat title from first user message
       String title = 'AI Chat';
-      if (messages.isNotEmpty) {
-        final firstUserMessage = messages.firstWhere(
+      if (_messages.isNotEmpty) {
+        final ChatMessage firstUserMessage = _messages.firstWhere(
           (msg) => msg.fromUser,
-          orElse: () => messages.first,
+          orElse: () => _messages.first,
         );
         title = firstUserMessage.text.length > 50
             ? '${firstUserMessage.text.substring(0, 50)}...'
@@ -494,7 +544,7 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Convert messages to history format
-      final historyMessages = messages
+      final List<ChatHistoryMessage> historyMessages = _messages
           .map((msg) => ChatHistoryMessage(
                 text: msg.text,
                 fromUser: msg.fromUser,
@@ -534,13 +584,13 @@ class ChatProvider extends ChangeNotifier {
   Future<void> loadChatFromHistory(ChatHistory chatHistory) async {
     try {
       // Clear current chat
-      messages.clear();
+      _messages.clear();
       _currentChatId = chatHistory.id;
       _modelName = chatHistory.modelName;
 
       // Convert history messages back to chat messages
       for (final historyMsg in chatHistory.messages) {
-        messages.add(ChatMessage(
+        _messages.add(ChatMessage(
           historyMsg.fromUser,
           historyMsg.text,
           isError: historyMsg.isError,
@@ -599,11 +649,46 @@ class ChatProvider extends ChangeNotifier {
 
   // Start new chat session
   void startNewChat() {
-    messages.clear();
+    _messages.clear();
     _currentChatId = null;
     _contextJson = null;
     _clearError();
+    _requestQueue.clear();
+    _cancelRequested = false;
     notifyListeners();
+  }
+
+  // Ephemeral message helpers for UI placeholders
+  void addEphemeralMessage(ChatMessage message) {
+    _messages.add(message);
+    notifyListeners();
+  }
+
+  void removeMessage(ChatMessage message) {
+    _messages.remove(message);
+    notifyListeners();
+  }
+
+  // Best-effort cancel of the current in-flight request
+  void cancelCurrentRequest() {
+    if (!_isLoading) return;
+    _cancelRequested = true;
+    _isLoading = false;
+    notifyListeners();
+    FlutterBugfender.log('Cancel requested by user - UI unlocked');
+    _processQueueIfIdle();
+  }
+
+  void _processQueueIfIdle() {
+    if (_isLoading || _requestQueue.isEmpty) return;
+    final _QueuedRequest next = _requestQueue.removeAt(0);
+    // Fire-and-forget; reuse the queued ChatMessage and its attachments
+    ask(
+      next.message.text,
+      includePersonal: next.includePersonal,
+      includeMsNotes: next.includeMsNotes,
+      existingUserMessage: next.message,
+    );
   }
 }
 
@@ -617,4 +702,15 @@ class TimeoutException implements Exception {
   @override
   String toString() =>
       'TimeoutException: $message after ${duration.inSeconds} seconds';
+}
+
+class _QueuedRequest {
+  final ChatMessage message;
+  final bool includePersonal;
+  final bool includeMsNotes;
+  _QueuedRequest({
+    required this.message,
+    required this.includePersonal,
+    required this.includeMsNotes,
+  });
 }
